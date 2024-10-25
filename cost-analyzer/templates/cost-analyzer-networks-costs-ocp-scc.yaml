@@ -3,6 +3,8 @@ apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
 metadata:
   name: {{ template "cost-analyzer.networkCostsName" . }}
+  annotations:
+    helm.sh/hook: pre-install
 priority: 10
 allowPrivilegedContainer: true
 allowHostDirVolumePlugin: true
