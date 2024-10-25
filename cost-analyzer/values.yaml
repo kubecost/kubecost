@@ -6,6 +6,7 @@ global:
     # insecureSkipVerify: false  # If true, kubecost will not check the TLS cert of prometheus
     # queryServiceBasicAuthSecretName: dbsecret # kubectl create secret generic dbsecret -n kubecost --from-file=USERNAME --from-file=PASSWORD
     # queryServiceBearerTokenSecretName: mcdbsecret  # kubectl create secret generic mcdbsecret -n kubecost --from-file=TOKEN
+    # kubeRBACProxy: false # If true, kubecost will use kube-rbac-proxy to authenticate with in cluster Prometheus for openshift
 
   grafana:
     enabled: true  # If false, Grafana will not be installed
@@ -54,6 +55,8 @@ global:
   # Learn more at https://grafana.com/docs/mimir/latest/operators-guide/secure/authentication-and-authorization/#without-an-authenticating-reverse-proxy
   mimirProxy:
     enabled: false
+    ## Annotations to be added to the Mimir Proxy deployment template
+    annotations: {}
     name: mimir-proxy
     image: nginxinc/nginx-unprivileged
     port: 8085
@@ -198,6 +201,10 @@ global:
         #     value: "service1" # corresponds to a value to filter cloud cost aggregate by service data on.
 
   podAnnotations: {}
+    # iam.amazonaws.com/role: role-arn
+
+  # Annotations to be added for all controllers (StatefulSets, Deployments, DaemonSets)
+  annotations: {}
     # iam.amazonaws.com/role: role-arn
 
   # Applies these labels to all Deployments, StatefulSets, DaemonSets, and their pod templates.
@@ -493,6 +500,9 @@ kubecostModel:
   # image provided (registry, image, tag) will be used for cost-model.
   # fullImageName:
 
+  # Log level for the cost model container. Options are "trace", "debug", "info", "warn", "error", "fatal", "panic"
+  logLevel: info
+
   # securityContext:
   #   readOnlyRootFilesystem: true
 
@@ -637,8 +647,6 @@ kubecostModel:
 
   # Optional. A list of extra environment variables to be added to the cost-model container.
   # extraEnv:
-  #   - name: LOG_LEVEL
-  #     value: trace
   #   - name: LOG_FORMAT
   #     value: json
   #   # When false, Kubecost will not show Asset costs for local disks physically
@@ -662,6 +670,8 @@ etlUtils:
   env: {}
   nodeSelector: {}
   tolerations: []
+  ## Annotations to be added to etlutils deployment
+  annotations: {}
   affinity: {}
 
 # Basic Kubecost ingress, more examples available at https://docs.kubecost.com/install-and-configure/install/ingress-examples
@@ -872,7 +882,7 @@ prometheus:
     emptyDir:
       sizeLimit: ""
     podAnnotations: {}
-    deploymentAnnotations: {}
+    annotations: {}
     podLabels: {}
     alertmanagers: []
     replicaCount: 1
@@ -999,10 +1009,12 @@ prometheus:
       # volumeBindingMode: ""
       subPath: ""
     podAnnotations: {}
+    annotations: {}
     podLabels: {}
     replicaCount: 1
     statefulSet:
       enabled: false
+      annotations: {}
       podManagementPolicy: OrderedReady
       headless:
         annotations: {}
@@ -1093,7 +1105,7 @@ prometheus:
     tolerations: []
     nodeSelector: {}
     podAnnotations: {}
-    deploymentAnnotations: {}
+    annotations: {}
     pod:
       labels: {}
     podDisruptionBudget:
@@ -1355,6 +1367,7 @@ networkCosts:
   # every 30 minutes.
   trafficLogging: true
 
+  # Log level for the network cost containers. Options are "trace", "debug", "info", "warn", "error", "fatal", "panic"
   logLevel: info
 
   # Port will set both the containerPort and hostPort to this value.
@@ -1444,6 +1457,7 @@ networkCosts:
     additionalLabels: {}
   additionalLabels: {}
   nodeSelector: {}
+  # Annotations to be added to network cost daemonset template and pod template annotations
   annotations: {}
   healthCheckProbes: {}
   additionalSecurityContext: {}
@@ -1487,6 +1501,7 @@ forecasting:
     name: ""
   nodeSelector: {}
   tolerations: []
+  annotations: {}
   affinity: {}
   readinessProbe:
     enabled: true
@@ -1522,6 +1537,7 @@ kubecostAggregator:
   # `deployMethod: "statefulset"`
   replicas: 1
 
+  # Log level for the aggregator container. Options are "trace", "debug", "info", "warn", "error", "fatal", "panic"
   logLevel: info
 
   # stagingEmptyDirSizeLimit changes how large the "staging"
@@ -1650,6 +1666,9 @@ kubecostAggregator:
   ## Define tolerations for the aggregator pod
   # tolerations: []
 
+  ## Annotations to be added for aggregator deployment or statefulset
+  # annotations: {}
+
   ## Define Pod affinity for the aggregator pod
   # affinity: {}
 
@@ -1761,6 +1780,8 @@ diagnostics:
     containerSecurityContext: {}
     nodeSelector: {}
     tolerations: []
+    ## Annotations to be added for diagnostics Deployment.
+    annotations: {}
     affinity: {}
 
 ## Provide a full name override for the diagnostics Deployment.
@@ -1775,6 +1796,9 @@ clusterController:
   imagePullPolicy: IfNotPresent
   priorityClassName: ""
   tolerations: []
+
+  ## Annotations to be added for cluster controller template
+  annotations: {}
   resources: {}
   affinity: {}
   nodeSelector: {}

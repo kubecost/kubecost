@@ -9,8 +9,11 @@ metadata:
     {{- with .Values.global.additionalLabels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-  {{- with .Values.global.podAnnotations}}
   annotations:
+  {{- with .Values.global.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.etlUtils.annotations }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
@@ -27,6 +30,10 @@ spec:
         app.kubernetes.io/instance: {{ .Release.Name }}
         app: {{ template "etlUtils.name" . }}
         {{- with .Values.global.additionalLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      annotations:
+        {{- with .Values.global.podAnnotations}}
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
@@ -103,7 +110,9 @@ spec:
 
     {{- if .Values.imagePullSecrets }}
       imagePullSecrets:
-      {{ toYaml .Values.imagePullSecrets | indent 2 }}
+      {{- range $.Values.imagePullSecrets }}
+        - name: {{ .name }}
+      {{- end }}
     {{- end }}
       {{- with .Values.etlUtils.nodeSelector }}
       nodeSelector:

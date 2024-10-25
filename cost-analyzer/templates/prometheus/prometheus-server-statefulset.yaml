@@ -4,10 +4,13 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-{{- if .Values.prometheus.server.statefulSet.annotations }}
   annotations:
-{{ toYaml .Values.prometheus.server.statefulSet.annotations | indent 4 }}
-{{- end }}
+  {{- with .Values.global.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- if .Values.prometheus.server.statefulSet.annotations }}
+    {{- toYaml .Values.prometheus.server.statefulSet.annotations | nindent 4 }}
+  {{- end }}
   labels:
     {{- include "prometheus.server.labels" . | nindent 4 }}
     {{- with .Values.global.additionalLabels }}
@@ -27,10 +30,13 @@ spec:
   podManagementPolicy: {{ .Values.prometheus.server.statefulSet.podManagementPolicy }}
   template:
     metadata:
-    {{- if .Values.prometheus.server.podAnnotations }}
       annotations:
-{{ toYaml .Values.prometheus.server.podAnnotations | indent 8 }}
-    {{- end }}
+        {{- with .Values.global.podAnnotations}}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}      
+        {{- if .Values.prometheus.server.podAnnotations }}
+          {{ toYaml .Values.prometheus.server.podAnnotations | indent 8 }}
+        {{- end }}
       labels:
         {{- include "prometheus.server.labels" . | nindent 8 }}
         {{- with .Values.global.additionalLabels }}
@@ -152,7 +158,9 @@ spec:
        {{- end }}
     {{- if .Values.prometheus.imagePullSecrets }}
       imagePullSecrets:
-       {{ toYaml .Values.prometheus.imagePullSecrets | indent 2 }}
+      {{- range $.Values.prometheus.imagePullSecrets}}
+        - name: {{ .name }}
+      {{- end }}
     {{- end }}
     {{- if .Values.prometheus.server.nodeSelector }}
       nodeSelector:

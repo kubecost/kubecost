@@ -12,8 +12,11 @@ metadata:
     {{- if and .Values.kubecostDeployment .Values.kubecostDeployment.labels }}
     {{- toYaml .Values.kubecostDeployment.labels | nindent 4 }}
     {{- end }}
-  {{- if and .Values.kubecostDeployment .Values.kubecostDeployment.annotations }}
   annotations:
+  {{- with .Values.global.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- if and .Values.kubecostDeployment .Values.kubecostDeployment.annotations }}
     {{- toYaml .Values.kubecostDeployment.annotations | nindent 4 }}
   {{- end }}
 spec:
@@ -75,16 +78,20 @@ spec:
           secret:
             secretName: {{ .Values.kubecostModel.plugins.secretName }}
             items:
-              - key: datadog_config.json
-                path: datadog_config.json
+              {{- range $key, $config := .Values.kubecostModel.plugins.enabledPlugins}}
+              - key: {{ $config }}_config.json
+                path: {{ $config }}_config.json
+            {{- end }}
         {{- end }}
         {{- if .Values.kubecostModel.plugins.existingCustomSecret.enabled }}
         - name: plugins-config
           secret:
             secretName: {{ .Values.kubecostModel.plugins.existingCustomSecret.name }}
             items:
-              - key: datadog_config.json
-                path: datadog_config.json
+            {{- range $key, $config := .Values.kubecostModel.plugins.enabledPlugins }}
+              - key: {{ $config }}_config.json
+                path: {{ $config }}_config.json
+            {{- end }}
         {{- end }}
         {{- if .Values.kubecostModel.plugins.install.enabled}}
         - name: install-script
@@ -539,19 +546,7 @@ spec:
             successThreshold: 1
             timeoutSeconds: 5
         {{- end }}
-        {{- if .Values.kubecostModel }}
-        {{- if .Values.kubecostModel.fullImageName }}
-        - image: {{ .Values.kubecostModel.fullImageName }}
-        {{- else if .Values.imageVersion }}
-        - image: {{ .Values.kubecostModel.image }}:{{ .Values.imageVersion }}
-        {{- else if eq "development" .Chart.AppVersion }}
-        - image: gcr.io/kubecost1/cost-model-nightly:latest
-        {{- else }}
-        - image: {{ .Values.kubecostModel.image }}:prod-{{ $.Chart.AppVersion }}
-        {{- end }}
-        {{- else }}
-        - image: gcr.io/kubecost1/cost-model:prod-{{ $.Chart.AppVersion }}
-        {{- end }}
+        - image: {{ include "cost-model.image" . | trim | quote}}
           name: cost-model
         {{- if .Values.kubecostModel.extraArgs }}
           args:
@@ -695,10 +690,14 @@ spec:
             {{- end }}
             {{- end }}
           env:
+            - name: CONTAINER_IMAGE_TAG
+              value: {{ include "cost-model.imagetag" . }}
             {{- if .Values.global.grafana }}
             - name: GRAFANA_ENABLED
               value: "{{ template "cost-analyzer.grafanaEnabled" . }}"
             {{- end}}
+            - name: LOG_LEVEL
+              value: {{ .Values.kubecostModel.logLevel }}
             {{- if .Values.kubecostModel.extraEnv -}}
             {{ toYaml .Values.kubecostModel.extraEnv | nindent 12 }}
             {{- end }}
@@ -817,6 +816,10 @@ spec:
             {{- if .Values.global.prometheus.insecureSkipVerify }}
             - name: INSECURE_SKIP_VERIFY
               value: {{ (quote .Values.global.prometheus.insecureSkipVerify) }}
+            {{- end }}
+            {{- if .Values.global.prometheus.kubeRBACProxy }}
+            - name: KUBE_RBAC_PROXY_ENABLED
+              value: {{ (quote .Values.global.prometheus.kubeRBACProxy) }}
             {{- end }}
             {{- if .Values.pricingCsv }}
             {{- if .Values.pricingCsv.enabled }}
@@ -1158,7 +1161,9 @@ spec:
 
     {{- if .Values.imagePullSecrets }}
       imagePullSecrets:
-      {{ toYaml .Values.imagePullSecrets | indent 2 }}
+      {{- range $.Values.imagePullSecrets }}
+        - name: {{ .name }}
+      {{- end }}
     {{- end }}
       {{- if .Values.priority }}
       {{- if .Values.priority.enabled }}

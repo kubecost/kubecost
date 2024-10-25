@@ -4,10 +4,13 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-{{- if .Values.prometheus.server.deploymentAnnotations }}
   annotations:
-{{ toYaml .Values.prometheus.server.deploymentAnnotations | indent 4 }}
-{{- end }}
+  {{- with .Values.global.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- if .Values.prometheus.server.annotations }}
+    {{- toYaml .Values.prometheus.server.annotations | nindent 4 }}
+  {{- end }}
   labels:
     {{- include "prometheus.server.labels" . | nindent 4 }}
     {{- with .Values.global.additionalLabels }}
@@ -27,9 +30,12 @@ spec:
   template:
     metadata:
       annotations:
-    {{- if .Values.prometheus.server.podAnnotations }}
-{{ toYaml .Values.prometheus.server.podAnnotations | indent 8 }}
-    {{- end }}
+        {{- with .Values.global.podAnnotations}}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- if .Values.prometheus.server.podAnnotations }}
+          {{ toYaml .Values.prometheus.server.podAnnotations | nindent 8 }}
+        {{- end }}
         checksum/configs: {{ include "configsChecksum" . }}
       labels:
         {{- include "prometheus.server.labels" . | nindent 8 }}
@@ -177,7 +183,9 @@ spec:
       {{- end }}
     {{- if .Values.prometheus.imagePullSecrets }}
       imagePullSecrets:
-        {{ toYaml .Values.prometheus.imagePullSecrets | indent 0 }}
+      {{- range $.Values.prometheus.imagePullSecrets}}
+        - name: {{ .name }}
+      {{- end }}
     {{- end }}
     {{- if .Values.prometheus.server.nodeSelector }}
       nodeSelector:

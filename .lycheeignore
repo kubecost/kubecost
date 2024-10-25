@@ -7,6 +7,7 @@ prometheus.monitor.azure.com
 
 # Prometheus
 cost-analyzer-prometheus-server
+prometheus-k8s
 kubecost-prometheus-server
 kubecost-cost-analyzer-mimir-proxy
 prometheus-operated

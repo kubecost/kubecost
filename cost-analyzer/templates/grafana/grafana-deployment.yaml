@@ -11,10 +11,13 @@ metadata:
     {{- with .Values.global.additionalLabels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-{{- with .Values.grafana.annotations }}
   annotations:
-{{ toYaml . | indent 4 }}
-{{- end }}
+  {{- with .Values.global.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.grafana.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   replicas: {{ .Values.grafana.replicas }}
   selector:
