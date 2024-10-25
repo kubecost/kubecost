@@ -1,6 +1,6 @@
 global:
   prometheus:
-    enabled: true  # Kubecost depends on Prometheus data, it is not optional. When enabled: false, Prometheus will not be installed and you must configure your own Prometheus to scrape kubecost as well as provide the fqdn below. -- Warning: Before changing this setting, please read to understand the risks https://docs.kubecost.com/install-and-configure/install/custom-prom
+    enabled: false  # Kubecost depends on Prometheus data, it is not optional. When enabled: false, Prometheus will not be installed and you must configure your own Prometheus to scrape kubecost as well as provide the fqdn below. -- Warning: Before changing this setting, please read to understand the risks https://docs.kubecost.com/install-and-configure/install/custom-prom
     fqdn: https://prometheus-k8s.openshift-monitoring.svc.cluster.local:9091  # example address of a prometheus to connect to. Include protocol (http:// or https://) Ignored if enabled: true
     insecureSkipVerify: false  # If true, kubecost will not check the TLS cert of prometheus
     # queryServiceBearerTokenSecretName: mcdbsecret  # kubectl create secret generic mcdbsecret -n kubecost --from-file=TOKEN
@@ -25,24 +25,27 @@ global:
       # Create Security Context Constraint resources for the DaemonSets requiring additional privileges.
       scc:
         nodeExporter: false  # Creates an SCC for Prometheus Node Exporter. This requires Node Exporter be enabled.
-        networkCosts: false  # Creates an SCC for Kubecost network-costs. This requires network-costs be enabled.
+        networkCosts: true  # Creates an SCC for Kubecost network-costs. This requires network-costs be enabled.
       # When OpenShift is enabled, the following securityContext will be applied to all resources unless they define their own.
       securityContext:
         runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
 
-# networkCosts:
-#   enabled: true  # Enable network costs.
+networkCosts:
+  enabled: true  # Enable network costs.
 # prometheus:
 #   nodeExporter:
 #     enabled: true  # Enable Prometheus Node Exporter.
-
 serviceMonitor:
   enabled: true
   # additionalLabels:
   #   label-key: label-value
-  # networkCosts:
-  #   enabled: true
+  networkCosts:
+    enabled: true
     # additionalLabels:
     #   label-key: label-value
+prometheusRule:
+  enabled: true
+  # additionalLabels:
+  #   label-key: label-value
