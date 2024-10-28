@@ -190,6 +190,13 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+  annotations:
+  {{- with .Values.global.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.clusterController.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   strategy:
     rollingUpdate:

@@ -5,6 +5,13 @@ kind: StatefulSet
 metadata:
   labels:
     {{- include "prometheus.alertmanager.labels" . | nindent 4 }}
+  annotations:
+  {{- with .Values.global.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.prometheus.alertmanager.statefulSet.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   name: {{ template "prometheus.alertmanager.fullname" . }}
   namespace: {{ .Release.Namespace }}
 spec:
@@ -16,10 +23,13 @@ spec:
   podManagementPolicy: {{ .Values.prometheus.alertmanager.statefulSet.podManagementPolicy }}
   template:
     metadata:
-    {{- if .Values.prometheus.alertmanager.podAnnotations }}
       annotations:
-{{ toYaml .Values.prometheus.alertmanager.podAnnotations | indent 8 }}
-    {{- end }}
+        {{- with .Values.global.podAnnotations}}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- if .Values.prometheus.alertmanager.podAnnotations }}
+          {{ toYaml .Values.prometheus.alertmanager.podAnnotations | nindent 8 }}
+        {{- end }}
       labels:
         {{- include "prometheus.alertmanager.labels" . | nindent 8 }}
     spec:
@@ -103,7 +113,9 @@ spec:
         {{- end }}
     {{- if .Values.prometheus.imagePullSecrets }}
       imagePullSecrets:
-      {{ toYaml .Values.prometheus.imagePullSecrets | indent 2 }}
+      {{- range $.Values.prometheus.imagePullSecrets}}
+        - name: {{ .name }}
+      {{- end }}
     {{- end }}
     {{- if .Values.prometheus.alertmanager.nodeSelector }}
       nodeSelector:

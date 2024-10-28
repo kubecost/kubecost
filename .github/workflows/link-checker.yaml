@@ -19,7 +19,7 @@ jobs:
       ## Ref: https://github.com/lycheeverse/lychee#commandline-parameters
       - name: Link Checker
         id: lychee
-        uses: lycheeverse/lychee-action@v1
+        uses: lycheeverse/lychee-action@v2
         with:
           fail: true
           debug: false

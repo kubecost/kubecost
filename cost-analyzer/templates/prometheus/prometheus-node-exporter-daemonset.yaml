@@ -3,10 +3,13 @@
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-{{- if .Values.prometheus.nodeExporter.deploymentAnnotations }}
   annotations:
-{{ toYaml .Values.prometheus.nodeExporter.deploymentAnnotations | indent 4 }}
-{{- end }}
+  {{- with .Values.global.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- if .Values.prometheus.nodeExporter.annotations }}
+    {{- toYaml .Values.prometheus.nodeExporter.annotations | nindent 4 }}
+  {{- end }}
   labels:
     {{- include "prometheus.nodeExporter.labels" . | nindent 4 }}
     {{- with .Values.global.additionalLabels }}
@@ -24,10 +27,13 @@ spec:
   {{- end }}
   template:
     metadata:
-    {{- if .Values.prometheus.nodeExporter.podAnnotations }}
       annotations:
-{{ toYaml .Values.prometheus.nodeExporter.podAnnotations | indent 8 }}
-    {{- end }}
+        {{- with .Values.global.podAnnotations}}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- if .Values.prometheus.nodeExporter.podAnnotations }}
+          {{ toYaml .Values.prometheus.nodeExporter.podAnnotations | indent 8 }}
+        {{- end }}
       labels:
         {{- include "prometheus.nodeExporter.labels" . | nindent 8 }}
         {{- with .Values.global.additionalLabels }}
@@ -97,7 +103,9 @@ spec:
           {{- end }}
     {{- if .Values.prometheus.imagePullSecrets }}
       imagePullSecrets:
-      {{ toYaml .Values.prometheus.imagePullSecrets | indent 2 }}
+      {{- range $.Values.prometheus.imagePullSecrets}}
+        - name: {{ .name }}
+      {{- end }}
     {{- end }}
     {{- if .Values.prometheus.nodeExporter.hostNetwork }}
       hostNetwork: true

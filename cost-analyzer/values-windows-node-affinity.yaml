@@ -1,8 +1,3 @@
-kubecostMetrics:
-  exporter:
-    nodeSelector:
-      kubernetes.io/os: linux
-
 nodeSelector:
   kubernetes.io/os: linux
 
