@@ -3,12 +3,6 @@ apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
 metadata:
   name: {{ template "cost-analyzer.networkCostsName" . }}
-  # Add a pre-install hook to the Security Context Constraints (SCC) to ensure it is created before the network-costs DaemonSet.
-  # This is crucial because the DaemonSet relies on the SCC for proper security configurations.
-  # By using a pre-install hook, we guarantee that the SCC is in place before the DaemonSet is deployed, preventing potential installation failures.
-  # https://helm.sh/docs/topics/charts_hooks/#the-available-hooks
-  annotations:
-    helm.sh/hook: pre-install
 priority: 10
 allowPrivilegedContainer: true
 allowHostDirVolumePlugin: true
