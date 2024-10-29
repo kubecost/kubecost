@@ -1,0 +1,38 @@
+{{ if .Values.global.prometheus.enabled }}
+{{- if and .Values.prometheus.pushgateway.enabled .Values.prometheus.pushgateway.ingress.enabled -}}
+{{- $releaseName := .Release.Name -}}
+{{- $serviceName := include "prometheus.pushgateway.fullname" . }}
+{{- $servicePort := .Values.prometheus.pushgateway.service.servicePort -}}
+{{- $extraPaths := .Values.prometheus.pushgateway.ingress.extraPaths -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+{{- if .Values.prometheus.pushgateway.ingress.annotations }}
+  annotations:
+{{ toYaml .Values.prometheus.pushgateway.ingress.annotations | indent 4}}
+{{- end }}
+  labels:
+    {{- include "prometheus.pushgateway.labels" . | nindent 4 }}
+  name: {{ template "prometheus.pushgateway.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  rules:
+  {{- range .Values.prometheus.pushgateway.ingress.hosts }}
+    {{- $url := splitList "/" . }}
+    - host: {{ first $url }}
+      http:
+        paths:
+{{ if $extraPaths }}
+{{ toYaml $extraPaths | indent 10 }}
+{{- end }}
+          - path: /{{ rest $url | join "/" }}
+            backend:
+              serviceName: {{ $serviceName }}
+              servicePort: {{ $servicePort }}
+  {{- end -}}
+{{- if .Values.prometheus.pushgateway.ingress.tls }}
+  tls:
+{{ toYaml .Values.prometheus.pushgateway.ingress.tls | indent 4 }}
+  {{- end -}}
+{{- end -}}
+{{ end }}

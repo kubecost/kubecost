@@ -10,13 +10,6 @@ metadata:
     {{- if .Values.networkCosts.additionalLabels }}
     {{- toYaml .Values.networkCosts.additionalLabels | nindent 4 }}
     {{- end }}
-  annotations:
-  {{- with .Values.global.annotations }}
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
-  {{- with .Values.networkCosts.annotations }}
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
 spec:
   {{- if .Values.networkCosts.updateStrategy }}
   updateStrategy:
@@ -27,13 +20,10 @@ spec:
       {{- include "networkcosts.selectorLabels" . | nindent 6 }}
   template:
     metadata:
+      {{- with .Values.networkCosts.annotations }}
       annotations:
-        {{- with .Values.global.podAnnotations}}
         {{- toYaml . | nindent 8 }}
-        {{- end }}
-        {{- with .Values.networkCosts.annotations }}
-          {{- toYaml . | nindent 8 }}
-        {{- end }}
+      {{- end }}
       labels:
         {{- include "networkcosts.commonLabels" . | nindent 8 }}
         {{- if .Values.networkCosts.additionalLabels }}
@@ -42,9 +32,7 @@ spec:
     spec:
     {{- if .Values.imagePullSecrets }}
       imagePullSecrets:
-      {{- range $.Values.imagePullSecrets }}
-        - name: {{ .name }}
-      {{- end }}
+      {{ toYaml .Values.imagePullSecrets | indent 2 }}
     {{- end }}
       hostNetwork: true
       serviceAccountName: {{ template "cost-analyzer.serviceAccountName" . }}
@@ -81,7 +69,7 @@ spec:
         - name: TRAFFIC_LOGGING_ENABLED
           value: {{ (quote .Values.networkCosts.trafficLogging) | default (quote true) }}
         - name: LOG_LEVEL
-          value: {{ .Values.networkCosts.logLevel }}
+          value: {{ .Values.networkCosts.logLevel | default "info" }}
         {{- if .Values.networkCosts.softMemoryLimit }}
         - name: GOMEMLIMIT
           value: {{ .Values.networkCosts.softMemoryLimit }}

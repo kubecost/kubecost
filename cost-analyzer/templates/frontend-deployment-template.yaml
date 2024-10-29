@@ -12,11 +12,8 @@ metadata:
     {{- if and .Values.kubecostDeployment .Values.kubecostDeployment.labels }}
     {{- toYaml .Values.kubecostDeployment.labels | nindent 4 }}
     {{- end }}
-  annotations:
-  {{- with .Values.global.annotations }}
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
   {{- if and .Values.kubecostDeployment .Values.kubecostDeployment.annotations }}
+  annotations:
     {{- toYaml .Values.kubecostDeployment.annotations | nindent 4 }}
   {{- end }}
 spec:
@@ -190,9 +187,7 @@ spec:
           {{- end }}
     {{- if .Values.imagePullSecrets }}
       imagePullSecrets:
-      {{- range $.Values.imagePullSecrets }}
-        - name: {{ .name }}
-      {{- end }}
+      {{ toYaml .Values.imagePullSecrets | indent 2 }}
     {{- end }}
       {{- if .Values.priority }}
       {{- if .Values.priority.enabled }}

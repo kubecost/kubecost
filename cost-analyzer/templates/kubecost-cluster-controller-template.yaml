@@ -7,7 +7,7 @@ metadata:
   name: {{ template "kubecost.clusterControllerName" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{ include "cost-analyzer.commonLabels" . | nindent 4 }}
 ---
 #
 # NOTE: 
@@ -19,7 +19,7 @@ kind: ClusterRole
 metadata:
   name: {{ template "kubecost.clusterControllerName" . }}
   labels:
-    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{ include "cost-analyzer.commonLabels" . | nindent 4 }}
 rules:
   - apiGroups:
       - kubecost.com
@@ -173,7 +173,7 @@ kind: ClusterRoleBinding
 metadata:
   name: {{ template "kubecost.clusterControllerName" . }}
   labels:
-    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{ include "cost-analyzer.commonLabels" . | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -190,13 +190,6 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
-  annotations:
-  {{- with .Values.global.annotations }}
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
-  {{- with .Values.clusterController.annotations }}
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
 spec:
   strategy:
     rollingUpdate:
@@ -272,14 +265,6 @@ spec:
       tolerations:
       {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.clusterController.nodeSelector }}
-      nodeSelector:
-      {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.clusterController.affinity }}
-      affinity:
-      {{- toYaml . | nindent 8 }}
-      {{- end }}
       volumes:
       - name: cluster-controller-keys
         secret:
@@ -296,7 +281,7 @@ metadata:
   name: {{ template "kubecost.clusterControllerName" . }}-service
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{ include "cost-analyzer.commonLabels" . | nindent 4 }}
 spec:
   type: ClusterIP
   ports:

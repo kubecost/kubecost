@@ -1,0 +1,22 @@
+{{ if .Values.global.prometheus.enabled }}
+{{- if and .Values.prometheus.pushgateway.enabled .Values.networkPolicy.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ template "prometheus.pushgateway.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "prometheus.pushgateway.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "prometheus.pushgateway.matchLabels" . | nindent 6 }}
+  ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            {{- include "prometheus.server.matchLabels" . | nindent 12 }}
+    - ports:
+      - port: 9091
+{{- end -}}
+{{ end }}

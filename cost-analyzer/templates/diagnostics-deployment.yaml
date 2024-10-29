@@ -18,13 +18,6 @@ metadata:
     {{- if .Values.diagnostics.deployment.labels }}
     {{- toYaml .Values.diagnostics.deployment.labels | nindent 4 }}
     {{- end }}
-  annotations:
-  {{- with .Values.global.annotations }}
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
-  {{- with .Values.diagnostics.deployment.annotations }}
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
 spec:
   replicas: 1
   selector:
@@ -85,9 +78,7 @@ spec:
           {{- end }}
           {{- if .Values.imagePullSecrets }}
           imagePullSecrets:
-            {{- range $.Values.imagePullSecrets }}
-            - name: {{ .name }}
-            {{- end }}
+          {{ toYaml .Values.imagePullSecrets | indent 2 }}
           {{- end }}
           {{- if .Values.diagnostics.deployment.containerSecurityContext }}
           securityContext:

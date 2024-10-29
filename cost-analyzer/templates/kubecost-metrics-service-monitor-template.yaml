@@ -1,0 +1,41 @@
+{{- if .Values.kubecostMetrics }}
+{{- if .Values.kubecostMetrics.exporter }}
+{{- if .Values.kubecostMetrics.exporter.enabled }}
+{{- if .Values.kubecostMetrics.exporter.serviceMonitor }}
+{{- if .Values.kubecostMetrics.exporter.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "kubecost.kubeMetricsName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{ include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- if .Values.kubecostMetrics.exporter.serviceMonitor.additionalLabels }}
+    {{ toYaml .Values.kubecostMetrics.exporter.serviceMonitor.additionalLabels | nindent 4 }}
+    {{- end }}
+spec:
+  endpoints:
+    - port: tcp-metrics
+      honorLabels: true
+      interval: 1m
+      scrapeTimeout: 10s
+      path: /metrics
+      scheme: http
+      {{- with .Values.kubecostMetrics.exporter.serviceMonitor.metricRelabelings }}
+      metricRelabelings: {{ toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.kubecostMetrics.exporter.serviceMonitor.relabelings }}
+      relabelings: {{ toYaml . | nindent 8 }}
+      {{- end }}
+  namespaceSelector:
+    matchNames:
+      - {{ .Release.Namespace }}
+  selector:
+    matchLabels:
+      app: {{ include "kubecost.kubeMetricsName" . }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+

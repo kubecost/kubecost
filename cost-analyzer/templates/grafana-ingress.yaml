@@ -1,0 +1,53 @@
+{{- /*
+This template is not needed and is not supported.
+It is here for backwards compatibility.
+Kubecost exposes grafana by default with the
+top level ingress template under /grafana/
+*/ -}}
+{{- if (eq (include "cost-analyzer.grafanaEnabled" .) "true") }}
+{{- if .Values.grafana.ingress.enabled -}}
+{{- $fullName := include "grafana.fullname" . -}}
+{{- $servicePort := .Values.service.port -}}
+{{- $ingressPath := .Values.ingress.path -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $fullName }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ template "grafana.name" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+{{- if .Values.grafana.ingress.labels }}
+{{ toYaml .Values.grafana.ingress.labels | indent 4 }}
+{{- end }}
+{{- with .Values.grafana.ingress.annotations }}
+  annotations:
+{{ toYaml . | indent 4 }}
+{{- end }}
+spec:
+{{- if .Values.grafana.ingress.tls }}
+  tls:
+  {{- range .Values.grafana.ingress.tls }}
+    - hosts:
+      {{- range .hosts }}
+        - {{ . | quote }}
+      {{- end }}
+      secretName: {{ .secretName }}
+  {{- end }}
+{{- end }}
+  rules:
+  {{- range .Values.grafana.ingress.hosts }}
+    - host: {{ . }}
+      http:
+        paths:
+          - path: {{ $ingressPath }}
+            pathType: {{ $.Values.grafana.ingress.pathType }}
+            backend:
+              service:
+                name: {{ $fullName }}
+                port:
+                  number: {{ $servicePort }}
+  {{- end }}
+{{- end }}
+{{ end }}

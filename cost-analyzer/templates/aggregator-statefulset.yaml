@@ -11,13 +11,6 @@ metadata:
     {{- with .Values.global.additionalLabels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-  annotations:
-  {{- with .Values.global.annotations }}
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
-  {{- with .Values.kubecostAggregator.annotations }}
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
 spec:
   replicas: {{ .Values.kubecostAggregator.replicas }}
   serviceName: {{ template "aggregator.serviceName" . }}
@@ -188,9 +181,7 @@ spec:
 
     {{- if .Values.imagePullSecrets }}
       imagePullSecrets:
-      {{- range $.Values.imagePullSecrets }}
-        - name: {{ .name }}
-      {{- end }}
+      {{ toYaml .Values.imagePullSecrets | indent 2 }}
     {{- end }}
       {{- if .Values.kubecostAggregator.priority }}
       {{- if .Values.kubecostAggregator.priority.enabled }}

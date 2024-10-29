@@ -1,0 +1,35 @@
+{{ if .Values.global.prometheus.enabled }}
+{{- if .Values.prometheus.pushgateway.enabled -}}
+{{- if .Values.prometheus.pushgateway.persistentVolume.enabled -}}
+{{- if not .Values.prometheus.pushgateway.persistentVolume.existingClaim -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  {{- if .Values.prometheus.pushgateway.persistentVolume.annotations }}
+  annotations:
+{{ toYaml .Values.prometheus.pushgateway.persistentVolume.annotations | indent 4 }}
+  {{- end }}
+  labels:
+    {{- include "prometheus.pushgateway.labels" . | nindent 4 }}
+  name: {{ template "prometheus.pushgateway.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  accessModes:
+{{ toYaml .Values.prometheus.pushgateway.persistentVolume.accessModes | indent 4 }}
+{{- if .Values.prometheus.pushgateway.persistentVolume.storageClass }}
+{{- if (eq "-" .Values.prometheus.pushgateway.persistentVolume.storageClass) }}
+  storageClassName: ""
+{{- else }}
+  storageClassName: "{{ .Values.prometheus.pushgateway.persistentVolume.storageClass }}"
+{{- end }}
+{{- end }}
+{{- if .Values.prometheus.pushgateway.persistentVolume.volumeBindingMode }}
+  volumeBindingModeName: "{{ .Values.prometheus.pushgateway.persistentVolume.volumeBindingMode }}"
+{{- end }}
+  resources:
+    requests:
+      storage: "{{ .Values.prometheus.pushgateway.persistentVolume.size }}"
+{{- end -}}
+{{- end -}}
+{{ end }}
+{{- end -}}

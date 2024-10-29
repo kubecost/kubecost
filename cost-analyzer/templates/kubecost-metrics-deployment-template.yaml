@@ -1,0 +1,341 @@
+{{- if .Values.kubecostMetrics }}
+{{- if .Values.kubecostMetrics.exporter }}
+{{- if or (or .Values.kubecostMetrics.exporter.enabled .Values.agent) .Values.cloudAgent }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "kubecost.kubeMetricsName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{ unset (include "cost-analyzer.commonLabels" . | fromYaml) "app" | toYaml | nindent 4 }}
+    app: {{ template "kubecost.kubeMetricsName" . }}
+    {{- with .Values.global.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+{{- with .Values.kubecostMetrics.exporter.labels }}
+{{ toYaml . | indent 4 }}
+{{- end }}
+spec:
+  replicas: {{ .Values.kubecostMetrics.exporter.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app: {{ include "kubecost.kubeMetricsName" . }}
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: {{ template "kubecost.kubeMetricsName" . }}
+        {{- if .Values.global.additionalLabels }}
+        {{ toYaml .Values.global.additionalLabels | nindent 8 }}
+        {{- end }}
+{{- with .Values.kubecostMetrics.exporter.labels }}
+{{ toYaml . | indent 8 }}
+{{- end }}
+      {{- with .Values.global.podAnnotations}}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- if .Values.kubecostFrontend.tls }}
+      {{- if .Values.kubecostFrontend.tls.enabled }}
+      securityContext:
+        runAsUser: 0
+      {{- else }}
+      securityContext:
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+      {{- end }}
+      {{- else }}
+      securityContext:
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+      {{- end }}
+      restartPolicy: Always
+      serviceAccountName: {{ template "cost-analyzer.serviceAccountName" . }}
+      volumes:
+        {{- if .Values.agent }}
+        - name: config-store
+          {{- if ((.Values.agentCsi).enabled) }}
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: "{{ .Values.agentCsi.secretProvider.name }}"
+          {{- else }}
+          secret:
+            secretName: {{ .Values.agentKeySecretName }}
+          {{- end }}
+        {{- end }}
+        {{- if .Values.kubecostProductConfigs }}
+        {{- if .Values.kubecostProductConfigs.gcpSecretName }}
+        - name: gcp-key-secret
+          secret:
+            secretName: {{ .Values.kubecostProductConfigs.gcpSecretName }}
+            items:
+            - key: {{ .Values.kubecostProductConfigs.gcpSecretKeyName | default "compute-viewer-kubecost-key.json" }}
+              path: service-key.json
+        {{- end }}
+        {{- if .Values.kubecostProductConfigs.serviceKeySecretName }}
+        - name: service-key-secret
+          secret:
+            secretName: {{ .Values.kubecostProductConfigs.serviceKeySecretName }}
+        {{- else if .Values.kubecostProductConfigs.createServiceKeySecret }}
+        - name: service-key-secret
+          secret:
+            secretName: cloud-service-key
+        {{- end }}
+        {{- if .Values.kubecostProductConfigs.azureStorageSecretName }}
+        - name: azure-storage-config
+          secret:
+            secretName: {{ .Values.kubecostProductConfigs.azureStorageSecretName }}
+            items:
+              - key: azure-storage-config.json
+                path: azure-storage-config.json
+        {{- else if .Values.kubecostProductConfigs.azureStorageCreateSecret }}
+        - name: azure-storage-config
+          secret:
+            secretName: azure-storage-config
+        {{- end }}
+        {{- if .Values.kubecostProductConfigs.cloudIntegrationSecret }}
+        - name: cloud-integration
+          secret:
+            secretName: {{ .Values.kubecostProductConfigs.cloudIntegrationSecret }}
+            items:
+              - key: cloud-integration.json
+                path: cloud-integration.json
+        {{- else if or .Values.kubecostProductConfigs.cloudIntegrationJSON  ((.Values.kubecostProductConfigs).athenaBucketName) }}
+        - name: cloud-integration
+          secret:
+            secretName: cloud-integration
+            items:
+              - key: cloud-integration.json
+                path: cloud-integration.json
+        {{- end }}
+        {{- end }}
+        - name: persistent-configs
+{{- if .Values.persistentVolume }}
+{{- if .Values.persistentVolume.enabled }}
+          persistentVolumeClaim:
+{{- if .Values.persistentVolume.existingClaim }}
+            claimName: {{ .Values.persistentVolume.existingClaim }}
+{{- else }}
+            claimName: {{ template "cost-analyzer.fullname" . }}
+{{- end -}}
+{{- else }}
+          emptyDir: {}
+{{- end -}}
+{{- else }}
+          persistentVolumeClaim:
+            claimName: {{ template "cost-analyzer.fullname" . }}
+{{- end }}
+      initContainers:
+{{- if .Values.supportNFS }}
+        - name: config-db-perms-fix
+        {{- if .Values.initChownDataImage }}
+          image: {{ .Values.initChownDataImage }}
+        {{- else }}
+          image: busybox
+        {{- end }}
+          resources:
+{{ toYaml .Values.initChownData.resources | indent 12 }}
+          command: ["sh", "-c", "/bin/chmod -R 777 /var/configs"]
+          volumeMounts:
+            - name: persistent-configs
+              mountPath: /var/configs
+          securityContext:
+            runAsUser: 0
+{{- end }}
+      containers:
+        {{- if .Values.kubecostModel }}
+        {{- if .Values.kubecostModel.fullImageName }}
+        - image: {{ .Values.kubecostModel.fullImageName }}
+        {{- else if .Values.imageVersion }}
+        - image: {{ .Values.kubecostModel.image }}:{{ .Values.imageVersion }}
+        {{- else if eq "development" .Chart.AppVersion }}
+        - image: gcr.io/kubecost1/cost-model-nightly:latest
+        {{- else }}
+        - image: {{ .Values.kubecostModel.image }}:prod-{{ $.Chart.AppVersion }}
+        {{ end }}
+        {{- else }}
+        - image: gcr.io/kubecost1/cost-model:prod-{{ $.Chart.AppVersion }}
+        {{ end }}
+        {{- if .Values.kubecostModel.imagePullPolicy }}
+          imagePullPolicy: {{ .Values.kubecostModel.imagePullPolicy }}
+        {{- else }}
+          imagePullPolicy: Always
+        {{- end }}
+          name: {{ template "kubecost.kubeMetricsName" . }}
+          ports:
+            - name: tcp-metrics
+              protocol: TCP
+              containerPort: {{ .Values.kubecostMetrics.exporter.port | default 9005 }}
+          resources:
+{{ toYaml .Values.kubecostMetrics.exporter.resources | indent 12 }}
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.kubecostMetrics.exporter.port | default 9005 }}
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 200
+          volumeMounts:
+            - name: persistent-configs
+              mountPath: /var/configs
+            {{- if .Values.agent }}
+            - name: config-store
+              mountPath: /var/secrets
+            {{- end }}
+            {{- if .Values.kubecostProductConfigs }}
+            {{- if .Values.kubecostProductConfigs.gcpSecretName }}
+            - name: gcp-key-secret
+              mountPath: /var/secrets
+            {{- end }}
+            {{- if or .Values.kubecostProductConfigs.azureStorageSecretName .Values.kubecostProductConfigs.azureStorageCreateSecret }}
+            - name: azure-storage-config
+              mountPath: /var/azure-storage-config
+            {{- end }}
+            {{- if or (.Values.kubecostProductConfigs.cloudIntegrationSecret) (.Values.kubecostProductConfigs.cloudIntegrationJSON) ((.Values.kubecostProductConfigs).athenaBucketName) }}
+            - name: cloud-integration
+              mountPath: /var/configs/cloud-integration
+            {{- end }}
+            {{- if or .Values.kubecostProductConfigs.serviceKeySecretName .Values.kubecostProductConfigs.createServiceKeySecret }}
+            - name: service-key-secret
+              mountPath: /var/secrets
+            {{- end }}
+            {{- end }}
+          args:
+            {{- if .Values.cloudAgent }}
+            - cloud-agent
+            {{- else }}
+            - agent
+            {{- end }}
+            {{- if .Values.kubecostMetrics.exporter.extraArgs }}
+            {{ toYaml .Values.kubecostMetrics.exporter.extraArgs | nindent 12 }}
+            {{- end }}
+          env:
+            - name: PROMETHEUS_SERVER_ENDPOINT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ template "cost-analyzer.fullname" . }}
+                  key: prometheus-server-endpoint
+            {{- if .Values.cloudAgent }}
+            - name: CLOUD_AGENT_KEY
+              value: {{ .Values.cloudAgentKey }}
+            - name: CLOUD_REPORTING_SERVER
+              value: {{ .Values.cloudReportingServer }}
+            {{- end }}
+            - name: CLOUD_PROVIDER_API_KEY
+              value: "AIzaSyDXQPG_MHUEy9neR7stolq6l0ujXmjJlvk" # The GCP Pricing API requires a key.
+            {{- if .Values.kubecostProductConfigs }}
+            {{- if .Values.kubecostProductConfigs.gcpSecretName }}
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: /var/configs/key.json
+            {{- end }}
+            {{- end }}
+            - name: CONFIG_PATH
+              value: /var/configs/
+            - name: KUBECOST_METRICS_PORT
+              value: {{ (quote .Values.kubecostMetrics.exporter.port) | default (quote 9005) }}
+            {{- if .Values.agent }}
+            - name: KUBECOST_CONFIG_BUCKET
+              value: /var/secrets/object-store.yaml
+            - name: EXPORT_CLUSTER_INFO_ENABLED
+              value: {{ (quote .Values.kubecostMetrics.exporter.exportClusterInfo) | default (quote true) }}
+            - name: EXPORT_CLUSTER_CACHE_ENABLED
+              value: {{ (quote .Values.kubecostMetrics.exporter.exportClusterCache) | default (quote true) }}
+            {{- end }}
+            - name: EMIT_POD_ANNOTATIONS_METRIC
+              value: {{ (quote .Values.kubecostMetrics.emitPodAnnotations) | default (quote false) }}
+            - name: EMIT_NAMESPACE_ANNOTATIONS_METRIC
+              value: {{ (quote .Values.kubecostMetrics.emitNamespaceAnnotations) | default (quote false) }}
+            - name: EMIT_KSM_V1_METRICS
+              value: {{ (quote .Values.kubecostMetrics.emitKsmV1Metrics) | default (quote true) }}
+            - name: EMIT_KSM_V1_METRICS_ONLY # ONLY emit KSM v1 metrics that do not exist in KSM 2 by default
+              value: {{ (quote .Values.kubecostMetrics.emitKsmV1MetricsOnly) | default (quote false) }}
+            - name: MAX_QUERY_CONCURRENCY
+              value: {{ (quote .Values.kubecostModel.maxQueryConcurrency) | default (quote 5) }}
+            {{- if .Values.global.prometheus.queryServiceBasicAuthSecretName}}
+            - name: DB_BASIC_AUTH_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.prometheus.queryServiceBasicAuthSecretName }}
+                  key: USERNAME
+            - name: DB_BASIC_AUTH_PW
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.prometheus.queryServiceBasicAuthSecretName }}
+                  key: PASSWORD
+            {{- end }}
+            {{- if .Values.global.prometheus.queryServiceBearerTokenSecretName }}
+            - name: DB_BEARER_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.prometheus.queryServiceBearerTokenSecretName }}
+                  key: TOKEN
+            {{- end }}
+            {{- if .Values.global.prometheus.insecureSkipVerify }}
+            - name: INSECURE_SKIP_VERIFY
+              value: {{ (quote .Values.global.prometheus.insecureSkipVerify) }}
+            {{- end }}
+            {{- if .Values.cloudAgentClusterId }}
+            - name: CLUSTER_ID
+              value: {{ .Values.cloudAgentClusterId }}
+            {{- else if and (.Values.prometheus.server.global.external_labels.cluster_id) (not .Values.prometheus.server.clusterIDConfigmap) }}
+            - name: CLUSTER_ID
+              value: {{ .Values.prometheus.server.global.external_labels.cluster_id }}
+            {{- end }}
+            {{- if .Values.prometheus.server.clusterIDConfigmap }}
+            - name: CLUSTER_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.prometheus.server.clusterIDConfigmap }}
+                  key: CLUSTER_ID
+            {{- end }}
+            {{- if .Values.kubecostModel.promClusterIDLabel }}
+            - name: PROM_CLUSTER_ID_LABEL
+              value: {{ .Values.kubecostModel.promClusterIDLabel }}
+            {{- end }}
+            - name: PV_ENABLED
+              value: {{ (quote .Values.persistentVolume.enabled) | default (quote true) }}
+            - name: RELEASE_NAME
+              value: {{ .Release.Name }}
+            - name: KUBECOST_NAMESPACE
+              value: {{ .Release.Namespace }}
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.name
+            - name: KUBECOST_TOKEN
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ template "cost-analyzer.fullname" . }}
+                  key: kubecost-token
+    {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+      {{ toYaml .Values.imagePullSecrets | indent 2 }}
+    {{- end }}
+      {{- if .Values.kubecostMetrics.exporter.priorityClassName }}
+      priorityClassName: {{ .Values.kubecostMetrics.exporter.priorityClassName }}
+      {{- end }}
+      {{- with .Values.kubecostMetrics.exporter.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.kubecostMetrics.exporter.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.kubecostMetrics.exporter.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,16 @@
+{{- if and (.Values.global.prometheus.enabled) (.Values.prometheus.server.enabled) (.Values.networkPolicy.enabled) }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ template "prometheus.server.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "prometheus.server.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "prometheus.server.matchLabels" . | nindent 6 }}
+  ingress:
+    - ports:
+      - port: 9090
+{{- end }}

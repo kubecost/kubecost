@@ -1,0 +1,48 @@
+{{- if .Values.networkPolicy -}}
+{{- if .Values.networkPolicy.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+{{- if .Values.networkPolicy.denyEgress }}
+metadata:
+  name: deny-egress
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "cost-analyzer.selectorLabels" . | nindent 6 }}
+  policyTypes:
+  - Egress
+{{- else }}
+{{- if .Values.networkPolicy.sameNamespace}}
+metadata:
+  name: shared-namespace
+  namespace: {{ default "kubecost" .Values.networkPolicy.namespace}}
+spec:
+  podSelector:
+    matchLabels:
+      app: prometheus
+      component: server
+{{- else }}
+metadata:
+  name: closed-traffic
+  namespace: {{ default "kubecost" .Values.networkPolicy.namespace}}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: cost-analyzer
+{{- end  }}
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: cost-analyzer
+    - namespaceSelector:
+        matchLabels:
+          name: k8s-kubecost
+{{- end  }}
+{{- end -}}
+{{- end -}}

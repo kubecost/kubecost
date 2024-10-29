@@ -1,0 +1,21 @@
+{{- if (((.Values.grafana).sidecar).dashboards).enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-attached-disk-metrics
+  {{- if $.Values.grafana.namespace_dashboards }}
+  namespace: {{ $.Values.grafana.namespace_dashboards }}
+  {{- end }}
+  labels:
+    {{ include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- if $.Values.grafana.sidecar.dashboards.label }}
+    {{ $.Values.grafana.sidecar.dashboards.label }}: "{{ $.Values.grafana.sidecar.dashboards.labelValue }}"
+    {{- else }}
+    grafana_dashboard: "1"
+    {{- end }}
+  annotations:
+{{- toYaml .Values.grafana.sidecar.dashboards.annotations | nindent 4 }}
+data:
+  attached-disks.json: |-
+{{- .Files.Get "grafana-dashboards/attached-disks.json" | nindent 4 }}
+{{- end -}}

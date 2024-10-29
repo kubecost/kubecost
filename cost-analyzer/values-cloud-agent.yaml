@@ -1,0 +1,45 @@
+# Kubecost running as an Agent is designed for external hosting. The current setup deploys a
+# kubecost-agent pod and prometheus server
+global:
+  thanos:
+    enabled: false 
+  grafana:
+    enabled: false 
+    proxy: false 
+
+# Cloud Agent enables specific features designed to enhance the metrics exporter deployment
+# with enhancements designed for Kubecost Cloud 
+cloudAgent: true 
+cloudAgentKey: ""
+
+# No Grafana configuration is required.
+grafana:
+  sidecar:
+    dashboards:
+      enabled: false
+    datasources:
+      defaultDatasourceEnabled: false
+
+# Exporter Pod
+kubecostMetrics: 
+  exporter:
+    enabled: true 
+    exportClusterInfo: false
+    exportClusterCache: false
+
+# Disable KSM and NodeExporter (?)
+prometheus:
+  nodeExporter:
+    enabled: false
+  extraScrapeConfigs: |
+    - job_name: kubecost-cloud-agent
+      honor_labels: true
+      scrape_interval: 1m
+      scrape_timeout: 60s
+      metrics_path: /metrics
+      scheme: http
+      dns_sd_configs:
+      - names:
+        - {{ .Release.Name }}-cloud-agent
+        type: 'A'
+        port: 9005

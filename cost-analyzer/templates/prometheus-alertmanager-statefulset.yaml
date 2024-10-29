@@ -1,0 +1,155 @@
+{{ if .Values.global.prometheus.enabled }}
+{{- if and .Values.prometheus.alertmanager.enabled .Values.prometheus.alertmanager.statefulSet.enabled -}}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    {{- include "prometheus.alertmanager.labels" . | nindent 4 }}
+  name: {{ template "prometheus.alertmanager.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  serviceName: {{ template "prometheus.alertmanager.fullname" . }}-headless
+  selector:
+    matchLabels:
+      {{- include "prometheus.alertmanager.matchLabels" . | nindent 6 }}
+  replicas: {{ .Values.prometheus.alertmanager.replicaCount }}
+  podManagementPolicy: {{ .Values.prometheus.alertmanager.statefulSet.podManagementPolicy }}
+  template:
+    metadata:
+    {{- if .Values.prometheus.alertmanager.podAnnotations }}
+      annotations:
+{{ toYaml .Values.prometheus.alertmanager.podAnnotations | indent 8 }}
+    {{- end }}
+      labels:
+        {{- include "prometheus.alertmanager.labels" . | nindent 8 }}
+    spec:
+{{- if .Values.prometheus.alertmanager.affinity }}
+      affinity:
+{{ toYaml .Values.prometheus.alertmanager.affinity | indent 8 }}
+{{- end }}
+{{- if .Values.prometheus.alertmanager.schedulerName }}
+      schedulerName: "{{ .Values.prometheus.alertmanager.schedulerName }}"
+{{- end }}
+      serviceAccountName: {{ template "prometheus.serviceAccountName.alertmanager" . }}
+{{- if .Values.prometheus.alertmanager.priorityClassName }}
+      priorityClassName: "{{ .Values.prometheus.alertmanager.priorityClassName }}"
+{{- end }}
+      containers:
+        - name: {{ template "prometheus.name" . }}-{{ .Values.prometheus.alertmanager.name }}
+          image: "{{ .Values.prometheus.alertmanager.image.repository }}:{{ .Values.prometheus.alertmanager.image.tag }}"
+          imagePullPolicy: "{{ .Values.prometheus.alertmanager.image.pullPolicy }}"
+          env:
+            {{- range $key, $value := .Values.prometheus.alertmanager.extraEnv }}
+            - name: {{ $key }}
+              value: {{ $value }}
+            {{- end }}
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.podIP
+          args:
+            - --config.file=/etc/config/alertmanager.yml
+            - --storage.path={{ .Values.prometheus.alertmanager.persistentVolume.mountPath }}
+            - --cluster.advertise-address=$(POD_IP):6783
+          {{- if .Values.prometheus.alertmanager.statefulSet.headless.enableMeshPeer }}
+            - --cluster.listen-address=0.0.0.0:6783
+          {{- range $n := until (.Values.prometheus.alertmanager.replicaCount | int) }}
+            - --cluster.peer={{ template "prometheus.alertmanager.fullname" $ }}-{{ $n }}.{{ template "prometheus.alertmanager.fullname" $ }}-headless:6783
+          {{- end }}
+          {{- end }}
+          {{- range $key, $value := .Values.prometheus.alertmanager.extraArgs }}
+            - --{{ $key }}={{ $value }}
+          {{- end }}
+          {{- if .Values.prometheus.alertmanager.baseURL }}
+            - --web.external-url={{ .Values.prometheus.alertmanager.baseURL }}
+          {{- end }}
+
+          ports:
+            - containerPort: 9093
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.prometheus.alertmanager.prefixURL }}/#/status
+              port: 9093
+            initialDelaySeconds: 30
+            timeoutSeconds: 30
+          resources:
+{{ toYaml .Values.prometheus.alertmanager.resources | indent 12 }}
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/config
+            - name: storage-volume
+              mountPath: "{{ .Values.prometheus.alertmanager.persistentVolume.mountPath }}"
+              subPath: "{{ .Values.prometheus.alertmanager.persistentVolume.subPath }}"
+          {{- range .Values.prometheus.alertmanager.extraSecretMounts }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+              subPath: {{ .subPath }}
+              readOnly: {{ .readOnly }}
+          {{- end }}
+        {{- if .Values.prometheus.configmapReload.alertmanager.enabled }}
+        - name: {{ template "prometheus.name" . }}-{{ .Values.prometheus.alertmanager.name }}-{{ .Values.prometheus.configmapReload.alertmanager.name }}
+          image: "{{ .Values.prometheus.configmapReload.alertmanager.image.repository }}:{{ .Values.prometheus.configmapReload.alertmanager.image.tag }}"
+          imagePullPolicy: "{{ .Values.prometheus.configmapReload.alertmanager.image.pullPolicy }}"
+          args:
+            - --watched-dir=/etc/config
+            - --reload-url=http://localhost:9093{{ .Values.prometheus.alertmanager.prefixURL }}/-/reload
+          resources:
+{{ toYaml .Values.prometheus.configmapReload.alertmanager.resources | indent 12 }}
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/config
+              readOnly: true
+        {{- end }}
+    {{- if .Values.prometheus.imagePullSecrets }}
+      imagePullSecrets:
+      {{ toYaml .Values.prometheus.imagePullSecrets | indent 2 }}
+    {{- end }}
+    {{- if .Values.prometheus.alertmanager.nodeSelector }}
+      nodeSelector:
+{{ toYaml .Values.prometheus.alertmanager.nodeSelector | indent 8 }}
+    {{- end }}
+    {{- if .Values.prometheus.alertmanager.securityContext }}
+      securityContext:
+{{ toYaml .Values.prometheus.alertmanager.securityContext | indent 8 }}
+    {{- end }}
+    {{- if .Values.prometheus.alertmanager.tolerations }}
+      tolerations:
+{{ toYaml .Values.prometheus.alertmanager.tolerations | indent 8 }}
+    {{- end }}
+      volumes:
+        - name: config-volume
+          configMap:
+            name: {{ if .Values.prometheus.alertmanager.configMapOverrideName }}{{ .Release.Name }}-{{ .Values.prometheus.alertmanager.configMapOverrideName }}{{- else }}{{ template "prometheus.alertmanager.fullname" . }}{{- end }}
+      {{- range .Values.prometheus.alertmanager.extraSecretMounts }}
+        - name: {{ .name }}
+          secret:
+            secretName: {{ .secretName }}
+      {{- end }}
+{{- if .Values.prometheus.alertmanager.persistentVolume.enabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: storage-volume
+        {{- if .Values.prometheus.alertmanager.persistentVolume.annotations }}
+        annotations:
+{{ toYaml .Values.prometheus.alertmanager.persistentVolume.annotations | indent 10 }}
+        {{- end }}
+      spec:
+        accessModes:
+{{ toYaml .Values.prometheus.alertmanager.persistentVolume.accessModes | indent 10 }}
+        resources:
+          requests:
+            storage: "{{ .Values.prometheus.alertmanager.persistentVolume.size }}"
+      {{- if .Values.prometheus.server.persistentVolume.storageClass }}
+      {{- if (eq "-" .Values.prometheus.server.persistentVolume.storageClass) }}
+        storageClassName: ""
+      {{- else }}
+        storageClassName: "{{ .Values.prometheus.alertmanager.persistentVolume.storageClass }}"
+      {{- end }}
+      {{- end }}
+{{- else }}
+        - name: storage-volume
+          emptyDir: {}
+{{- end }}
+{{- end }}
+{{ end }}

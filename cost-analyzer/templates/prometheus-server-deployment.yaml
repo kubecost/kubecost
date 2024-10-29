@@ -1,0 +1,260 @@
+{{ if .Values.global.prometheus.enabled }}
+{{- if .Values.prometheus.server.enabled -}}
+{{- if not .Values.prometheus.server.statefulSet.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+{{- if .Values.prometheus.server.deploymentAnnotations }}
+  annotations:
+{{ toYaml .Values.prometheus.server.deploymentAnnotations | indent 4 }}
+{{- end }}
+  labels:
+    {{- include "prometheus.server.labels" . | nindent 4 }}
+    {{- with .Values.global.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  name: {{ template "prometheus.server.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "prometheus.server.matchLabels" . | nindent 6 }}
+  replicas: {{ .Values.prometheus.server.replicaCount }}
+  {{- if .Values.prometheus.server.strategy }}
+  strategy:
+{{ toYaml .Values.prometheus.server.strategy | indent 4 }}
+  {{- end }}
+  template:
+    metadata:
+      annotations:
+    {{- if .Values.prometheus.server.podAnnotations }}
+{{ toYaml .Values.prometheus.server.podAnnotations | indent 8 }}
+    {{- end }}
+        checksum/configs: {{ include "configsChecksum" . }}
+      labels:
+        {{- include "prometheus.server.labels" . | nindent 8 }}
+        {{- with .Values.global.additionalLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- if .Values.prometheus.server.podLabels}}
+        {{ toYaml .Values.prometheus.server.podLabels | nindent 8 }}
+        {{- end}}
+    spec:
+{{- if .Values.prometheus.server.priorityClassName }}
+      priorityClassName: "{{ .Values.prometheus.server.priorityClassName }}"
+{{- end }}
+{{- if .Values.prometheus.server.schedulerName }}
+      schedulerName: "{{ .Values.prometheus.server.schedulerName }}"
+{{- end }}
+      serviceAccountName: {{ template "prometheus.serviceAccountName.server" . }}
+      {{- if .Values.prometheus.server.extraInitContainers }}
+      initContainers:
+{{ toYaml .Values.prometheus.server.extraInitContainers | indent 8 }}
+      {{- end }}
+      containers:
+        {{- if .Values.prometheus.configmapReload.prometheus.enabled }}
+        - name: {{ template "prometheus.name" . }}-{{ .Values.prometheus.server.name }}-{{ .Values.prometheus.configmapReload.prometheus.name }}
+          image: "{{ .Values.prometheus.configmapReload.prometheus.image.repository }}:{{ .Values.prometheus.configmapReload.prometheus.image.tag }}"
+          imagePullPolicy: "{{ .Values.prometheus.configmapReload.prometheus.image.pullPolicy }}"
+          args:
+            - --watched-dir=/etc/config
+            - --reload-url=http://127.0.0.1:9090{{ .Values.prometheus.server.prefixURL }}/-/reload
+          {{- range $key, $value := .Values.prometheus.configmapReload.prometheus.extraArgs }}
+            - --{{ $key }}={{ $value }}
+          {{- end }}
+          {{- range .Values.prometheus.configmapReload.prometheus.extraVolumeDirs }}
+            - --watched-dir={{ . }}
+          {{- end }}
+          resources:
+          {{- toYaml .Values.prometheus.configmapReload.prometheus.resources | nindent 12 }}
+          securityContext:
+          {{- if .Values.global.containerSecurityContext }}
+            {{- toYaml .Values.global.containerSecurityContext | nindent 12 }}
+          {{- else }}
+            {{- toYaml .Values.prometheus.configmapReload.prometheus.containerSecurityContext | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            {{- if .Values.prometheus.selfsignedCertConfigMapName }}
+            - name: {{ .Values.prometheus.selfsignedCertConfigMapName }}
+              mountPath: /etc/ssl/certs/my-cert.pem
+              subPath: my-cert.pem
+              readOnly: false
+            {{- end }}
+            - name: config-volume
+              mountPath: /etc/config
+              readOnly: true
+          {{- range .Values.prometheus.configmapReload.prometheus.extraConfigmapMounts }}
+            - name: {{ $.Values.prometheus.configmapReload.prometheus.name }}-{{ .name }}
+              mountPath: {{ .mountPath }}
+              subPath: {{ .subPath }}
+              readOnly: {{ .readOnly }}
+          {{- end }}
+        {{- end }}
+
+        - name: {{ template "prometheus.name" . }}-{{ .Values.prometheus.server.name }}
+          image: "{{ .Values.prometheus.server.image.repository }}:{{ .Values.prometheus.server.image.tag }}"
+          imagePullPolicy: "{{ .Values.prometheus.server.image.pullPolicy }}"
+          {{- if .Values.prometheus.server.env }}
+          env:
+{{ toYaml .Values.prometheus.server.env | indent 12}}
+          {{- end }}
+          args:
+          {{- if .Values.prometheus.server.retention }}
+            - --storage.tsdb.retention.time={{ .Values.prometheus.server.retention }}
+          {{- end }}
+          {{- if .Values.prometheus.server.retentionSize }}
+            - --storage.tsdb.retention.size={{ .Values.prometheus.server.retentionSize }}
+          {{- end }}
+            - --config.file={{ .Values.prometheus.server.configPath }}
+            - --storage.tsdb.path={{ .Values.prometheus.server.persistentVolume.mountPath }}
+            - --web.console.libraries=/etc/prometheus/console_libraries
+            - --web.console.templates=/etc/prometheus/consoles
+          {{- range .Values.prometheus.server.extraFlags }}
+            - --{{ . }}
+          {{- end }}
+          {{- if .Values.prometheus.server.baseURL }}
+            - --web.external-url={{ .Values.prometheus.server.baseURL }}
+          {{- end }}
+
+          {{- range $key, $value := .Values.prometheus.server.extraArgs }}
+            - --{{ $key }}={{ $value }}
+          {{- end }}
+          ports:
+            - containerPort: 9090
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.prometheus.server.prefixURL }}/-/ready
+              port: 9090
+            initialDelaySeconds: {{ .Values.prometheus.server.readinessProbeInitialDelay }}
+            timeoutSeconds: {{ .Values.prometheus.server.readinessProbeTimeout }}
+            failureThreshold: {{ .Values.prometheus.server.readinessProbeFailureThreshold }}
+            successThreshold: {{ .Values.prometheus.server.readinessProbeSuccessThreshold }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.prometheus.server.prefixURL }}/-/healthy
+              port: 9090
+            initialDelaySeconds: {{ .Values.prometheus.server.livenessProbeInitialDelay }}
+            timeoutSeconds: {{ .Values.prometheus.server.livenessProbeTimeout }}
+            failureThreshold: {{ .Values.prometheus.server.livenessProbeFailureThreshold }}
+            successThreshold: {{ .Values.prometheus.server.livenessProbeSuccessThreshold }}
+          resources:
+          {{- toYaml .Values.prometheus.server.resources | nindent 12 }}
+          securityContext:
+          {{- if .Values.global.containerSecurityContext }}
+            {{- toYaml .Values.global.containerSecurityContext | nindent 12 }}
+          {{- else }}
+            {{- toYaml .Values.prometheus.server.containerSecurityContext | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/config
+            - name: storage-volume
+              mountPath: {{ .Values.prometheus.server.persistentVolume.mountPath }}
+              subPath: "{{ .Values.prometheus.server.persistentVolume.subPath }}"
+          {{- range .Values.prometheus.server.extraHostPathMounts }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+              subPath: {{ .subPath }}
+              readOnly: {{ .readOnly }}
+          {{- end }}
+          {{- range .Values.prometheus.server.extraConfigmapMounts }}
+            - name: {{ $.Values.prometheus.server.name }}-{{ .name }}
+              mountPath: {{ .mountPath }}
+              subPath: {{ .subPath }}
+              readOnly: {{ .readOnly }}
+          {{- end }}
+          {{- range .Values.prometheus.server.extraSecretMounts }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+              subPath: {{ .subPath }}
+              readOnly: {{ .readOnly }}
+          {{- end }}
+          {{- if .Values.prometheus.server.extraVolumeMounts }}
+            {{ toYaml .Values.prometheus.server.extraVolumeMounts | nindent 12 }}
+          {{- end }}
+      {{- if .Values.prometheus.server.sidecarContainers }}
+      {{- toYaml .Values.prometheus.server.sidecarContainers | nindent 8 }}
+      {{- end }}
+    {{- if .Values.prometheus.imagePullSecrets }}
+      imagePullSecrets:
+        {{ toYaml .Values.prometheus.imagePullSecrets | indent 0 }}
+    {{- end }}
+    {{- if .Values.prometheus.server.nodeSelector }}
+      nodeSelector:
+      {{- toYaml .Values.prometheus.server.nodeSelector | nindent 8 }}
+    {{- end }}
+    {{- if .Values.prometheus.server.securityContext }}
+      securityContext:
+        {{- if not .Values.prometheus.server.securityContext.fsGroup }}
+        fsGroupChangePolicy: OnRootMismatch
+        fsGroup: 1001
+        {{- end }}
+    {{- toYaml .Values.prometheus.server.securityContext | nindent 8 }}
+    {{- else if and (.Values.global.platforms.openshift.enabled) (.Values.global.platforms.openshift.securityContext) }}
+      securityContext:
+    {{- toYaml .Values.global.platforms.openshift.securityContext | nindent 8 }}
+    {{- else if .Values.global.securityContext }}
+      securityContext:
+    {{- toYaml .Values.global.securityContext | nindent 8 }}
+    {{- end }}
+    {{- if .Values.prometheus.server.tolerations }}
+      tolerations:
+{{ toYaml .Values.prometheus.server.tolerations | indent 8 }}
+    {{- end }}
+    {{- if .Values.prometheus.server.affinity }}
+      affinity:
+{{ toYaml .Values.prometheus.server.affinity | indent 8 }}
+    {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.prometheus.server.terminationGracePeriodSeconds }}
+      volumes:
+        {{- if .Values.prometheus.selfsignedCertConfigMapName }}
+        - name: {{ .Values.prometheus.selfsignedCertConfigMapName }}
+          configMap:
+            name: {{ .Values.prometheus.selfsignedCertConfigMapName }}
+        {{- end }}
+        - name: config-volume
+          configMap:
+            name: {{ if .Values.prometheus.server.configMapOverrideName }}{{ .Release.Name }}-{{ .Values.prometheus.server.configMapOverrideName }}{{- else }}{{ template "prometheus.server.fullname" . }}{{- end }}
+        - name: storage-volume
+        {{- if .Values.prometheus.server.persistentVolume.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ if .Values.prometheus.server.persistentVolume.existingClaim }}{{ .Values.prometheus.server.persistentVolume.existingClaim }}{{- else }}{{ template "prometheus.server.fullname" . }}{{- end }}
+        {{- else }}
+          emptyDir:
+          {{- if .Values.prometheus.server.emptyDir.sizeLimit }}
+            sizeLimit: {{ .Values.prometheus.server.emptyDir.sizeLimit }}
+          {{- else }}
+            {}
+          {{- end -}}
+        {{- end -}}
+{{- if .Values.prometheus.server.extraVolumes }}
+{{ toYaml .Values.prometheus.server.extraVolumes | indent 8}}
+{{- end }}
+      {{- range .Values.prometheus.server.extraHostPathMounts }}
+        - name: {{ .name }}
+          hostPath:
+            path: {{ .hostPath }}
+      {{- end }}
+      {{- range .Values.prometheus.configmapReload.prometheus.extraConfigmapMounts }}
+        - name: {{ $.Values.prometheus.configmapReload.prometheus.name }}-{{ .name }}
+          configMap:
+            name: {{ .configMap }}
+      {{- end }}
+      {{- range .Values.prometheus.server.extraConfigmapMounts }}
+        - name: {{ $.Values.prometheus.server.name }}-{{ .name }}
+          configMap:
+            name: {{ .configMap }}
+      {{- end }}
+      {{- range .Values.prometheus.server.extraSecretMounts }}
+        - name: {{ .name }}
+          secret:
+            secretName: {{ tpl .secretName $ }}
+      {{- end }}
+      {{- range .Values.prometheus.configmapReload.prometheus.extraConfigmapMounts }}
+        - name: {{ .name }}
+          configMap:
+            name: {{ .configMap }}
+      {{- end }}
+{{- end -}}
+{{- end -}}
+{{ end }}

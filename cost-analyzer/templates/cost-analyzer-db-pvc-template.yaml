@@ -1,0 +1,35 @@
+{{- if .Values.persistentVolume -}}
+{{- if not .Values.persistentVolume.dbExistingClaim -}}
+{{- if .Values.persistentVolume.enabled -}}
+{{- if .Values.persistentVolume.dbPVEnabled -}}
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{ template "cost-analyzer.fullname" . }}-db
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{ include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- with .Values.persistentVolume.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.persistentVolume.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  {{- if .Values.persistentVolume.dbStorageClass }}
+  storageClassName: {{ .Values.persistentVolume.dbStorageClass }}
+  {{ end }}
+  resources:
+    requests:
+    {{- if .Values.persistentVolume }}
+      storage: {{ .Values.persistentVolume.dbSize }}
+    {{- else }}
+      storage: 32.0Gi
+    {{ end }}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
