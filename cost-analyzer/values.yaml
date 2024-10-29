@@ -374,19 +374,19 @@ oidc:
   rbac:
     enabled: false
     # groups:
-    #   - name: admin
-    #     enabled: false  # If admin is disabled, all authenticated users will be able to make configuration changes to the kubecost frontend
+    #   - name: admin  # Admins have permissions to edit Kubecost settings and save reports
+    #     enabled: false
     #     claimName: "roles"  # Kubecost matches this string against the JWT's payload key containing RBAC info (this value is unique across identity providers)
     #     claimValues:  # Kubecost matches these strings with the roles created in your identity provider
     #       - "admin"
     #       - "superusers"
-    #   - name: readonly
-    #     enabled: false  # If readonly is disabled, all authenticated users will default to readonly
+    #   - name: readonly  # Readonly users do not have permissions to edit Kubecost settings or save reports.
+    #     enabled: false
     #     claimName: "roles"
     #     claimValues:
     #       - "readonly"
-    #   - name: editor
-    #     enabled: false  # If editor is enabled, editors will be allowed to edit reports/alerts scoped to them, and act as readers otherwise. Users will never default to editor.
+    #   - name: editor  # Editors have permissions to edit reports/alerts and act as readers otherwise
+    #     enabled: false
     #     claimName: "roles"
     #     claimValues:
     #       - "editor"
