@@ -30,7 +30,7 @@ global:
     prometheusServerEndpoint: http://localhost:8085/  # The prometheus service endpoint used by kubecost. The calls are forwarded through the GMP Prom proxy side car to the GMP database.
     gmpProxy:
       enabled: false
-      image: gke.gcr.io/prometheus-engine/frontend:v0.4.1-gke.0  # GMP Prometheus proxy image that serve as an endpoint to query metrics from GMP
+      image: gke.gcr.io/prometheus-engine/frontend:v0.14.0-gke.0  # GMP Prometheus proxy image that serve as an endpoint to query metrics from GMP
       imagePullPolicy: IfNotPresent
       name: gmp-proxy
       port: 8085
