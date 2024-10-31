@@ -512,7 +512,7 @@ sigV4Proxy:
   #   value: <secret_key>
   resources: {}
 
-## Kubecost cost-analyzer
+## Kubecost cost-model container inside the cost-analyzer pod
 ##
 kubecostModel:
   image: "gcr.io/kubecost1/cost-model"
@@ -640,7 +640,7 @@ kubecostModel:
     failureThreshold: 200
   extraArgs: []
 
-  # Optional. A list of extra environment variables to be added to the cost-model container.
+  ## Optional. A list of extra environment variables to be added to the cost-model container.
   # extraEnv:
   #   - name: LOG_FORMAT
   #     value: json
@@ -667,7 +667,9 @@ etlUtils:
   annotations: {}
   affinity: {}
 
-# Basic Kubecost ingress, more examples available at https://docs.kubecost.com/install-and-configure/install/ingress-examples
+## Ingress to the Kubecost frontend. More examples available at
+## https://docs.kubecost.com/install-and-configure/install/ingress-examples
+##
 ingress:
   enabled: false
   # className: nginx
@@ -677,7 +679,7 @@ ingress:
   annotations:
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
-  paths: ["/"]  # There's no need to route specifically to the pods-- we have an nginx deployed that handles routing
+  paths: ["/"]  # There's no need to route specifically to the pods. Kubecost has an nginx deployed that handles routing
   pathType: ImplementationSpecific
   hosts:
     - cost-analyzer.local
@@ -686,6 +688,8 @@ ingress:
   #    hosts:
   #      - cost-analyzer.local
 
+## Configurations for the cost-analyzer deployment.
+##
 nodeSelector: {}
 tolerations: []
 affinity: {}
@@ -695,16 +699,13 @@ priority:
   name: ""
 extraVolumes: []
 extraVolumeMounts: []
-
-# Define persistence volume for cost-analyzer, more information at https://docs.kubecost.com/install-and-configure/install/storage
 persistentVolume:
   size: 32Gi
   enabled: true  # Note that setting this to false means configurations will be wiped out on pod restart.
-  # storageClass: "-" #
-  # existingClaim: kubecost-cost-analyzer # a claim in the same namespace as kubecost
+  storageClass: ""
+  existingClaim: ""  # An existing persistentVolumeClaim if one exists in the same namespace as Kubecost
   labels: {}
   annotations: {}
-
 service:
   type: ClusterIP
   port: 9090
@@ -712,20 +713,19 @@ service:
   nodePort: {}
   labels: {}
   annotations: {}
-  # loadBalancerSourceRanges: []
+  loadBalancerSourceRanges: []
   sessionAffinity:
     enabled: false  # Makes sure that connections from a client are passed to the same Pod each time, when set to `true`. You should set it when you enabled authentication through OIDC or SAML integration.
     timeoutSeconds: 10800
 
+## Kubecost-bundled Prometheus. Full configuration options.
+##
 prometheus:
-  ## Provide a full name override for Prometheus.
-  # fullnameOverride: ""
-  ## Provide a name override for Prometheus.
-  # nameOverride: ""
+  fullnameOverride: ""
+  nameOverride: ""
 
   rbac:
-    create: true  # Create the RBAC resources for Prometheus.
-
+    create: true  # Create the necessary ClusterRole and ClusterRoleBinding for Prometheus.
   serviceAccounts:
     alertmanager:
       create: true
@@ -744,7 +744,7 @@ prometheus:
   ##
   # selfsignedCertConfigMapName: ""
 
-  imagePullSecrets:
+  imagePullSecrets: []
 
   extraScrapeConfigs: |
     - job_name: kubecost
@@ -799,14 +799,13 @@ prometheus:
           regex: (?i)(.*dcgm-exporter.*|.*dcgm-exporter.*|.*dcgm-exporter.*)
 
   server:
-    # If clusterIDConfigmap is defined, instead use user-generated configmap with key CLUSTER_ID
-    # to use as unique cluster ID in kubecost cost-analyzer deployment.
-    # This overrides the cluster_id set in prometheus.server.global.external_labels.
-    # NOTE: This does not affect the external_labels set in prometheus config.
-    # clusterIDConfigmap: cluster-id-configmap
+    ## Optional: Specify a configmap defining a CLUSTER_ID key to uniquely
+    ## identify this Kubecost deployment. This takes precedence over
+    ## `.Values.prometheus.server.global.external_labels`. This only affects the
+    ## cost-analyzer deployment, not Prometheus external_labels.
+    clusterIDConfigmap: ""
 
-    ## Provide a full name override for the Prometheus server.
-    # fullnameOverride: ""
+    fullnameOverride: ""
 
     enabled: true
     name: server
@@ -845,15 +844,13 @@ prometheus:
     configMapOverrideName: ""
     ingress:
       enabled: false
-      # className: nginx
+      className: ""
       annotations: {}
       extraLabels: {}
       hosts: []
       pathType: "Prefix"
       extraPaths: []
       tls: []
-    # strategy:
-    #   type: Recreate
     tolerations: []
     nodeSelector: {}
     affinity: {}
@@ -869,8 +866,8 @@ prometheus:
       existingClaim: ""
       mountPath: /data
       size: 32Gi
-      # storageClass: "-"
-      # volumeBindingMode: ""
+      storageClass: ""
+      volumeBindingMode: ""
       subPath: ""
     emptyDir:
       sizeLimit: ""
@@ -950,13 +947,12 @@ prometheus:
     ## version change. 4 days should provide enough time for most users to
     ## notice a problem and initiate corrective action.
     retention: 97h
-    # retentionSize: should be significantly greater than the storage used in the number of hours set in etlHourlyStoreDurationHours
+    
+    retentionSize: ""  # Should be significantly greater than the storage used in the number of hours set in etlHourlyStoreDurationHours
 
-  # Install Prometheus Alert Manager
   alertmanager:
     enabled: false
-    ## Provide a full name override for Prometheus alertmanager.
-    # fullnameOverride: ""
+    fullnameOverride: ""
     strategy:
       type: Recreate
       rollingUpdate: null
@@ -981,8 +977,6 @@ prometheus:
       hosts: []
       extraPaths: []
       tls: []
-    # strategy:
-    #   type: Recreate
     tolerations: []
     nodeSelector: {}
     affinity: {}
@@ -998,8 +992,8 @@ prometheus:
       existingClaim: ""
       mountPath: /data
       size: 2Gi
-      # storageClass: "-"
-      # volumeBindingMode: ""
+      storageClass: ""
+      volumeBindingMode: ""
       subPath: ""
     podAnnotations: {}
     annotations: {}
@@ -1058,7 +1052,6 @@ prometheus:
       extraConfigmapMounts: []
       resources: {}
       containerSecurityContext: {}
-
     alertmanager:
       enabled: false
       name: configmap-reload
@@ -1071,14 +1064,11 @@ prometheus:
       extraConfigmapMounts: []
       resources: {}
 
+  ## As of Kubecost 2.0 node-exporter is disabled by default, though it can be
+  ## enabled as needed.
   nodeExporter:
-    ## If false, node-exporter will not be installed.
-    ## This is disabled by default in Kubecost 2.0, though it can be enabled as needed.
-    ##
     enabled: false
-
-    ## Provide a full name override for node exporter.
-    # fullnameOverride: ""
+    fullnameOverride: ""
 
     hostNetwork: true
     hostPID: true
@@ -1094,7 +1084,7 @@ prometheus:
     extraArgs: {}
     extraHostPathMounts: []
     extraConfigmapMounts: []
-    # affinity:
+    affinity: {}
     tolerations: []
     nodeSelector: {}
     podAnnotations: {}
@@ -1340,8 +1330,10 @@ prometheus:
   networkPolicy:
     enabled: false
 
-## Optional daemonset to more accurately attribute network costs to the correct workload
-## https://docs.kubecost.com/install-and-configure/advanced-configuration/network-costs-configuration
+## Kubecost Network Costs (optional)
+## Can be enabled to more accurately attribute network costs to the correct workload.
+## Ref: https://docs.kubecost.com/install-and-configure/advanced-configuration/network-costs-configuration
+##
 networkCosts:
   enabled: false
   image:
@@ -1360,13 +1352,15 @@ networkCosts:
   # every 30 minutes.
   trafficLogging: true
 
-  # Log level for the network cost containers. Options are "trace", "debug", "info", "warn", "error", "fatal", "panic"
-  logLevel: info
+  logLevel: info  # Options are "trace", "debug", "info", "warn", "error", "fatal", "panic"
 
   # Port will set both the containerPort and hostPort to this value.
   # These must be identical due to network-costs being run on hostNetwork
   port: 3001
-  # this daemonset can use significant resources on large clusters: https://guide.kubecost.com/hc/en-us/articles/4407595973527-Network-Traffic-Cost-Allocation
+
+  ## This daemonset can use significant resources on large clusters. To throttle
+  ## resource usage, it is recommended to set a CPU limit. Do not set a memory
+  ## limit.
   resources:
     limits:  # remove the limits by setting cpu: null
       cpu: 500m  # can be less, will depend on cluster size
@@ -1374,6 +1368,7 @@ networkCosts:
     requests:
       cpu: 50m
       memory: 20Mi
+
   extraArgs: []
   config:
     # Configuration for traffic destinations, including specific classification
@@ -1450,7 +1445,6 @@ networkCosts:
     additionalLabels: {}
   additionalLabels: {}
   nodeSelector: {}
-  # Annotations to be added to network cost daemonset template and pod template annotations
   annotations: {}
   healthCheckProbes: {}
   additionalSecurityContext: {}
@@ -1463,18 +1457,13 @@ kubecostDeployment:
   labels: {}
   annotations: {}
 
-## Kubecost Forecasting forecasts future cost patterns based on historical
-## patterns observed by Kubecost.
+## Kubecost Forecasting
+## Forecasts future cost patterns based on historical patterns observed by Kubecost.
+##
 forecasting:
   enabled: true
-
-  # fullImageName overrides the default image construction logic. The exact
-  # image provided (registry, image, tag) will be used for the forecasting
-  # container.
   fullImageName: gcr.io/kubecost1/kubecost-modeling:v0.1.18
   imagePullPolicy: IfNotPresent
-
-  # Resource specification block for the forecasting container.
   resources:
     requests:
       cpu: 200m
@@ -1482,13 +1471,10 @@ forecasting:
     limits:
       cpu: 1500m
       memory: 1Gi
-
-  # Set environment variables for the forecasting container as key/value pairs.
   env:
     # -t is the worker timeout which primarily affects model training time;
     # if it is not high enough, training workers may die mid training
     "GUNICORN_CMD_ARGS": "--log-level info -t 1200"
-
   priority:
     enabled: false
     name: ""
@@ -1773,14 +1759,14 @@ diagnostics:
     containerSecurityContext: {}
     nodeSelector: {}
     tolerations: []
-    ## Annotations to be added for diagnostics Deployment.
     annotations: {}
     affinity: {}
 
-## Provide a full name override for the diagnostics Deployment.
-# diagnosticsFullnameOverride: ""
+diagnosticsFullnameOverride: ""
 
-# Kubecost Cluster Controller for Right Sizing and Cluster Turndown
+## Kubecost Cluster Controller for Right Sizing and Cluster Turndown
+## Ref: https://docs.kubecost.com/install-and-configure/advanced-configuration/cluster-controller 
+##
 clusterController:
   enabled: false
   image:
@@ -1789,15 +1775,13 @@ clusterController:
   imagePullPolicy: IfNotPresent
   priorityClassName: ""
   tolerations: []
-
-  ## Annotations to be added for cluster controller template
   annotations: {}
   resources: {}
   affinity: {}
   nodeSelector: {}
   actionConfigs:
-    # this configures the Kubecost Cluster Turndown action
-    # for more details, see documentation at https://github.com/kubecost/cluster-turndown/tree/develop?tab=readme-ov-file#setting-a-turndown-schedule
+    ## Configures the Kubecost Cluster Turndown action
+    ## Ref: https://github.com/kubecost/cluster-turndown/tree/develop?tab=readme-ov-file#setting-a-turndown-schedule
     clusterTurndown: []
       # - name: my-schedule
       #   start: "2024-02-09T00:00:00Z"
@@ -1807,8 +1791,8 @@ clusterController:
       #   start: "2024-02-09T00:00:00Z"
       #   end: "2024-02-09T01:00:00Z"
       #   repeat: weekly
-    # this configures the Kubecost Namespace Turndown action
-    # for more details, see documentation at https://docs.kubecost.com/using-kubecost/navigating-the-kubecost-ui/savings/savings-actions#namespace-turndown
+    ## Configures the Kubecost Namespace Turndown action
+    ## Ref: https://docs.kubecost.com/using-kubecost/navigating-the-kubecost-ui/savings/savings-actions#namespace-turndown
     namespaceTurndown:
       # - name: my-ns-turndown-action
       #   dryRun: false
@@ -1822,8 +1806,8 @@ clusterController:
       #     turndown: ignore
       #   params:
       #     minNamespaceAge: 4h
-    # this configures the Kubecost Cluster Sizing action
-    # for more details, see documentation at https://docs.kubecost.com/using-kubecost/navigating-the-kubecost-ui/savings/savings-actions#cluster-sizing
+    ## Configures the Kubecost Cluster Sizing action
+    ## Ref: https://docs.kubecost.com/using-kubecost/navigating-the-kubecost-ui/savings/savings-actions#cluster-sizing
     clusterRightsize:
         # startTime: '2024-01-02T15:04:05Z'
         # frequencyMinutes: 1440
@@ -1889,7 +1873,6 @@ clusterController:
     # If true, will cause all (supported) workloads to be have their requests
     # automatically right-sized on a regular basis.
     defaultResizeAll: false
-#  fqdn: kubecost-cluster-controller.kubecost.svc.cluster.local:9731
   namespaceTurndown:
     rbac:
       enabled: true
