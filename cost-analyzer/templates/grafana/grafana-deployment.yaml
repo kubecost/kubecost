@@ -146,9 +146,6 @@ spec:
             - name: config
               mountPath: "/etc/grafana/grafana.ini"
               subPath: grafana.ini
-            - name: ldap
-              mountPath: "/etc/grafana/ldap.toml"
-              subPath: ldap.toml
 {{- if .Values.grafana.dashboards }}
   {{- range $provider, $dashboards := .Values.grafana.dashboards }}
     {{- range $key, $value := $dashboards }}
@@ -222,18 +219,6 @@ spec:
                   name: {{ template "grafana.fullname" . }}
                   key: plugins
             {{- end }}
-            {{- if .Values.grafana.smtp.existingSecret }}
-            - name: GF_SMTP_USER
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.grafana.smtp.existingSecret }}
-                  key: user
-            - name: GF_SMTP_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.grafana.smtp.existingSecret }}
-                  key: password
-            {{- end }}
 {{- range $key, $value := .Values.grafana.env }}
             - name: "{{ $key }}"
               value: "{{ $value }}"
@@ -279,16 +264,6 @@ spec:
             name: {{ $name }}
           {{- end }}
         {{- end }}
-        - name: ldap
-          secret:
-            {{- if .Values.grafana.ldap.existingSecret }}
-            secretName: {{ .Values.grafana.ldap.existingSecret }}
-            {{- else }}
-            secretName: {{ template "grafana.fullname" . }}
-            {{- end }}
-            items:
-              - key: ldap-toml
-                path: ldap.toml
         - name: storage
       {{- if .Values.grafana.persistence.enabled }}
           persistentVolumeClaim:

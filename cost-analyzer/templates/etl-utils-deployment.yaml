@@ -1,5 +1,4 @@
 {{- if .Values.etlUtils.enabled }}
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -56,9 +55,7 @@ spec:
       containers:
         - name: {{ template "etlUtils.name" . }}
           {{- if .Values.kubecostModel }}
-          {{- if .Values.kubecostModel.openSourceOnly }}
-          {{- fail "ETL Utils cannot be used with open source only" }}
-          {{- else if .Values.etlUtils.fullImageName }}
+          {{- if .Values.etlUtils.fullImageName }}
           image: {{ .Values.etlUtils.fullImageName }}
           {{- else if .Values.kubecostModel.fullImageName }}
           image: {{ .Values.kubecostModel.fullImageName }}

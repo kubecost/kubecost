@@ -1,5 +1,4 @@
 {{- if .Values.etlUtils.enabled }}
-
 kind: Service
 apiVersion: v1
 metadata:

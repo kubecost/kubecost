@@ -63,12 +63,6 @@ spec:
       restartPolicy: Always
       serviceAccountName: {{ template "cloudCost.serviceAccountName" . }}
       volumes:
-        {{- if .Values.kubecostModel.etlBucketConfigSecret }}
-        - name: etl-bucket-config
-          secret:
-            defaultMode: 420
-            secretName: {{ .Values.kubecostModel.etlBucketConfigSecret }}
-        {{- end }}
         {{- if or .Values.kubecostModel.federatedStorageConfigSecret .Values.kubecostModel.federatedStorageConfig }}
         - name: federated-storage-config
           secret:

@@ -79,15 +79,6 @@ Kubecost 2.0 preconditions
     {{- end -}}
   {{- end -}}
 
-  {{- if not .Values.kubecostModel.etlFileStoreEnabled -}}
-    {{- fail "\n\nKubecost 2.0 does not support running fully in-memory. Some file system must be available to store cost data." -}}
-  {{- end -}}
-
-
-  {{- if .Values.kubecostModel.openSourceOnly -}}
-    {{- fail "In Kubecost 2.0, kubecostModel.openSourceOnly is not supported" -}}
-  {{- end -}}
-
   {{/* Aggregator config reconciliation and common config */}}
   {{- if eq (include "aggregator.deployMethod" .) "statefulset" -}}
     {{- if .Values.kubecostAggregator -}}
@@ -1278,10 +1269,6 @@ Begin Kubecost 2.0 templates
     - name: federated-storage-config
       mountPath: /var/configs/etl/federated
       readOnly: true
-  {{- else if .Values.kubecostModel.etlBucketConfigSecret }}
-    - name: etl-bucket-config
-      mountPath: /var/configs/etl
-      readOnly: true
   {{- end }}
   {{- if or (.Values.kubecostProductConfigs).cloudIntegrationSecret (.Values.kubecostProductConfigs).cloudIntegrationJSON ((.Values.kubecostProductConfigs).athenaBucketName) }}
     - name: cloud-integration
@@ -1304,10 +1291,6 @@ Begin Kubecost 2.0 templates
   env:
     - name: CONFIG_PATH
       value: /var/configs/
-    {{- if .Values.kubecostModel.etlBucketConfigSecret }}
-    - name: ETL_BUCKET_CONFIG
-      value: /var/configs/etl/object-store.yaml
-    {{- end}}
     {{- if or .Values.kubecostModel.federatedStorageConfigSecret .Values.kubecostModel.federatedStorageConfig }}
     - name: FEDERATED_STORE_CONFIG
       value: /var/configs/etl/federated/federated-store.yaml
@@ -1379,7 +1362,7 @@ Groups is only used when using external RBAC.
 Backups configured flag for nginx configmap
 */}}
 {{- define "dataBackupConfigured" -}}
-  {{- if or (.Values.kubecostModel).etlBucketConfigSecret (.Values.kubecostModel).federatedStorageConfigSecret (.Values.kubecostModel).federatedStorageConfig -}}
+  {{- if or (.Values.kubecostModel).federatedStorageConfigSecret (.Values.kubecostModel).federatedStorageConfig -}}
     {{- printf "true" -}}
   {{- else -}}
     {{- printf "false" -}}
@@ -1500,7 +1483,6 @@ for more information
   "alibaba-service-key-secret.yaml"
   "aws-service-key-secret.yaml"
   "azure-service-key-secret.yaml"
-  "azure-storage-config-secret.yaml"
   "cloud-integration-secret.yaml"
   "cost-analyzer-account-mapping-configmap.yaml"
   "cost-analyzer-alerts-configmap.yaml"
@@ -1519,14 +1501,12 @@ for more information
   "cost-analyzer-smtp-configmap.yaml"
   "external-grafana-config-map-template.yaml"
   "gcpstore-config-map-template.yaml"
-  "grafana-secret.yaml"
+  "grafana/grafana-secret.yaml"
   "install-plugins.yaml"
   "integrations-postgres-queries-configmap.yaml"
   "integrations-postgres-secret.yaml"
-  "kubecost-agent-secret-template.yaml"
-  "kubecost-agent-secretprovider-template.yaml"
+  "kubecost-cluster-context-switcher.yaml"
   "kubecost-cluster-controller-actions-config.yaml"
-  "kubecost-cluster-manager-configmap-template.yaml"
   "kubecost-oidc-secret-template.yaml"
   "kubecost-saml-secret-template.yaml"
   "mimir-proxy-configmap-template.yaml"

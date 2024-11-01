@@ -104,12 +104,6 @@ spec:
           configMap:
             name: ubbagent-config
         {{- end }}
-        {{- if .Values.hosted }}
-        - name: config-store
-          secret:
-            defaultMode: 420
-            secretName: kubecost-thanos
-        {{- end }}
         - name: tmp
           emptyDir: {}
         {{- if and .Values.kubecostFrontend.enabled (not .Values.federatedETL.agentOnly) (not (eq (include "frontend.deployMethod" .) "haMode")) }}
@@ -125,19 +119,6 @@ spec:
           emptyDir: { }
         - name: cache
           emptyDir: { }
-        {{- end }}
-        {{- /*
-          To opt out of ETL backups, set .Values.kubecostModel.etlBucketConfigSecret=""
-        */}}
-        {{- $etlBackupBucketSecret := "" }}
-        {{- if .Values.kubecostModel.etlBucketConfigSecret }}
-            {{- $etlBackupBucketSecret = .Values.kubecostModel.etlBucketConfigSecret }}
-        {{- end }}
-        {{- if $etlBackupBucketSecret }}
-        - name: etl-bucket-config
-          secret:
-           defaultMode: 420
-           secretName: {{ $etlBackupBucketSecret }}
         {{- end }}
         {{- if or .Values.kubecostModel.federatedStorageConfigSecret .Values.kubecostModel.federatedStorageConfig }}
         - name: federated-storage-config
@@ -180,18 +161,6 @@ spec:
         - name: service-key-secret
           secret:
             secretName: cloud-service-key
-        {{- end }}
-        {{- if .Values.kubecostProductConfigs.azureStorageSecretName }}
-        - name: azure-storage-config
-          secret:
-            secretName: {{ .Values.kubecostProductConfigs.azureStorageSecretName }}
-            items:
-              - key: azure-storage-config.json
-                path: azure-storage-config.json
-        {{- else if .Values.kubecostProductConfigs.azureStorageCreateSecret }}
-        - name: azure-storage-config
-          secret:
-            secretName: azure-storage-config
         {{- end }}
         {{- if .Values.kubecostProductConfigs.cloudIntegrationSecret }}
         - name: cloud-integration
@@ -631,22 +600,13 @@ spec:
           {{- toYaml .Values.global.containerSecuritycontext | nindent 12 }}
           {{- end }}
           volumeMounts:
-            {{- if .Values.hosted }}
-            - name: config-store
-              mountPath: /var/secrets
-              readOnly: true
-            {{- end }}
             - name: persistent-configs
               mountPath: /var/configs
             {{- if .Values.extraVolumeMounts }}
             # Extra volume mount(s)
             {{- toYaml .Values.extraVolumeMounts | nindent 12 }}
             {{- end }}
-            {{- if $etlBackupBucketSecret }}
-            - name: etl-bucket-config
-              mountPath: /var/configs/etl
-              readOnly: true
-            {{- else if .Values.persistentVolume.dbPVEnabled }}
+            {{- if .Values.persistentVolume.dbPVEnabled }}
             - name: persistent-db
               mountPath: /var/db
             {{- end }}
@@ -675,10 +635,6 @@ spec:
             {{- if .Values.kubecostProductConfigs.gcpSecretName }}
             - name: gcp-key-secret
               mountPath: /var/secrets
-            {{- end }}
-            {{- if or .Values.kubecostProductConfigs.azureStorageSecretName .Values.kubecostProductConfigs.azureStorageCreateSecret }}
-            - name: azure-storage-config
-              mountPath: /var/azure-storage-config
             {{- end }}
             {{- if or .Values.kubecostProductConfigs.serviceKeySecretName .Values.kubecostProductConfigs.createServiceKeySecret }}
             - name: service-key-secret
@@ -917,16 +873,6 @@ spec:
               value: "https://71964476292e4087af8d5072afe43abd@o394722.ingest.sentry.io/5245431"
             {{- end }}
             {{- end }}
-            - name: LEGACY_EXTERNAL_API_DISABLED
-              value: {{ (quote .Values.kubecostModel.legacyOutOfClusterAPIDisabled) | default (quote false) }}
-            - name: CACHE_WARMING_ENABLED
-              value: {{ (quote .Values.kubecostModel.warmCache) | default (quote true) }}
-            - name: SAVINGS_ENABLED
-              value: {{ (quote .Values.kubecostModel.warmSavingsCache) | default (quote true) }}
-            {{- if $etlBackupBucketSecret }}
-            - name: ETL_BUCKET_CONFIG
-              value: "/var/configs/etl/object-store.yaml"
-            {{- end }}
             {{- if or .Values.kubecostModel.federatedStorageConfigSecret .Values.kubecostModel.federatedStorageConfig }}
             - name: FEDERATED_STORE_CONFIG
               value: "/var/configs/etl/federated/federated-store.yaml"
@@ -959,11 +905,6 @@ spec:
               value: {{ (quote .Values.kubecostModel.etlDailyStoreDurationDays) }}
             - name: ETL_HOURLY_STORE_DURATION_HOURS
               value: {{ (quote .Values.kubecostModel.etlHourlyStoreDurationHours) | default (quote 49) }}
-            - name: ETL_FILE_STORE_ENABLED
-              value: {{ (quote .Values.kubecostModel.etlFileStoreEnabled) | default (quote true) }}
-            - name: ETL_ASSET_RECONCILIATION_ENABLED
-              value: {{ (quote .Values.kubecostModel.etlAssetReconciliationEnabled) | default (quote true) }}
-
             {{- if .Values.kubecostModel }}
             {{- if .Values.kubecostModel.allocation }}
             {{- if .Values.kubecostModel.allocation.nodeLabels }}
@@ -978,8 +919,6 @@ spec:
             {{- end }}
             - name: CONTAINER_STATS_ENABLED
               value: {{ (quote .Values.kubecostModel.containerStatsEnabled) | default (quote false) }}
-            - name: RECONCILE_NETWORK
-              value: {{ (quote .Values.kubecostModel.reconcileNetwork) | default (quote true) }}
             {{- if .Values.systemProxy.enabled }}
             - name: HTTP_PROXY
               value: {{ .Values.systemProxy.httpProxyUrl }}
@@ -993,12 +932,6 @@ spec:
               value:  {{ .Values.systemProxy.noProxy }}
             - name: no_proxy
               value:  {{ .Values.systemProxy.noProxy }}
-            {{- end }}
-            {{- if .Values.kubecostMetrics }}
-            {{- if .Values.kubecostMetrics.exporter }}
-            - name: KUBECOST_METRICS_POD_ENABLED
-              value: {{ (quote .Values.kubecostMetrics.exporter.enabled) | default (quote false) }}
-            {{- end }}
             {{- end }}
             - name: PV_ENABLED
               value: {{ (quote .Values.persistentVolume.enabled) | default (quote true) }}
@@ -1083,14 +1016,6 @@ spec:
             {{- if .Values.kubecostModel.promClusterIDLabel }}
             - name: PROM_CLUSTER_ID_LABEL
               value: {{ .Values.kubecostModel.promClusterIDLabel }}
-            {{- end }}
-            {{- if .Values.hosted }}
-            - name: KUBECOST_CONFIG_BUCKET
-              value: /var/secrets/object-store.yaml
-            - name: CLUSTER_INFO_FILE_ENABLED
-              value: "true"
-            - name: CLUSTER_CACHE_FILE_ENABLED
-              value: "true"
             {{- end }}
             {{- if .Values.reporting.googleAnalyticsTag }}
             - name: GOOGLE_ANALYTICS_TAG
