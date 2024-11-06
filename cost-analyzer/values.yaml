@@ -253,11 +253,12 @@ global:
   ## Ref: https://docs.kubecost.com/integrations
   integrations:
     turbonomic:
-      enabled: false     # Set to true to enable the Turbonomic integration
-      clientId: ""       # Client ID generated from the OAuth Client created
-      clientSecret: ""   # Client Secret generated from the OAuth Client created
-      role: ""           # Role that the OAuth Client was created with (e.g. ADMINISTRATOR, SITE_ADMIN, etc.)
-      host: ""           # URL to your turbonomic API. EG: https://turbonomic.example.com/
+      enabled: false        # Set to true to enable the Turbonomic integration
+      clientId: ""          # Client ID generated from the OAuth Client created
+      clientSecret: ""      # Client Secret generated from the OAuth Client created
+      role: ""              # Role that the OAuth Client was created with (e.g. ADMINISTRATOR, SITE_ADMIN, etc.)
+      host: ""              # URL to your turbonomic API. EG: https://turbonomic.example.com/
+      insecureClient: false # Do not verify certificate
     postgres:
       enabled: false
       runInterval: "12h"      # How frequently to run the integration.
