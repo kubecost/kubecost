@@ -176,6 +176,11 @@ spec:
           configMap:
             name: kubecost-integrations-postgres-queries
         {{- end }}
+        {{- if .Values.global.integrations.turbonomic.enabled }}
+        - name: turbonomic-credentials
+          secret:
+            secretName: kubecost-integrations-turbonomic
+        {{- end }}
         {{- if .Values.kubecostAggregator.extraVolumes }}
         {{- toYaml .Values.kubecostAggregator.extraVolumes | nindent 8 }}
         {{- end }}
