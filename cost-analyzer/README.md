@@ -75,7 +75,7 @@ The following table lists commonly used configuration parameters for the Kubecos
 
 ## Adjusting Log Output
 
-You can adjust the log output while deploying through Helm by using the `logLevel` property and/or the `LOG_FORMAT` environment variable.
+You can adjust the log output by using the `logLevel` Helm value and/or the `LOG_FORMAT` environment variable.
 
 ### Adjusting Log Level
 
