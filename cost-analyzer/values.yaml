@@ -800,7 +800,7 @@ prometheus:
     ## Enables scraping of NVIDIA GPU metrics via dcgm-exporter. Scrapes all
     ## endpoints which contain "dcgm-exporter" in labels "app",
     ## "app.kubernetes.io/component", or "app.kubernetes.io/name" with a case
-    ## insensitive match.
+    ## insensitive match. The label must be present on the K8s service endpoints and not just pods.
     ## Refs:
     ## https://github.com/NVIDIA/gpu-operator/blob/d4316a415bbd684ce8416a88042305fc1a093aa4/assets/state-dcgm-exporter/0600_service.yaml#L7
     ## https://github.com/NVIDIA/dcgm-exporter/blob/54fd1ca137c66511a87a720390613680b9bdabdd/deployment/templates/service.yaml#L23
