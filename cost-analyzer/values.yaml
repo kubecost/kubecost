@@ -459,6 +459,8 @@ kubecostFrontend:
   # hideDiagnostics: false  # useful if the primary is not monitored. Supported in limited environments.
   # hideOrphanedResources: false  # OrphanedResources works on the primary-cluster's cloud-provider only.
 
+  orchestratorEnabled: true  # controls the green progress bar on the frontend. This option is experimental and should not be used without Kubecost support.
+
   # set to true to set all upstreams to use <service>.<namespace>.svc.cluster.local instead of just <service>.<namespace>
   useDefaultFqdn: false
 #  api:
