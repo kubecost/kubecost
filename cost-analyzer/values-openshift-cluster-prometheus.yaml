@@ -22,7 +22,6 @@ global:
 
       # Create Security Context Constraint resources for the DaemonSets requiring additional privileges.
       scc:
-        nodeExporter: false  # Creates an SCC for Prometheus Node Exporter. This requires Node Exporter be enabled.
         networkCosts: false  # Creates an SCC for Kubecost network-costs. This requires network-costs be enabled.
       # When OpenShift is enabled, the following securityContext will be applied to all resources unless they define their own.
       securityContext:
@@ -37,13 +36,8 @@ global:
 #     enabled: true  # Enable Prometheus Node Exporter.
 serviceMonitor:
   enabled: true
-  # additionalLabels:
-  #   label-key: label-value
   # networkCosts:
   #   enabled: false
-    # additionalLabels:
-    #   label-key: label-value
+
 prometheusRule:
   enabled: true
-  # additionalLabels:
-  #   label-key: label-value
