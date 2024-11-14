@@ -1015,6 +1015,10 @@ Begin Kubecost 2.0 templates
     {{- if and .Values.kubecostAggregator.extraVolumeMounts (eq (include "aggregator.deployMethod" .) "statefulset") }}
     {{- toYaml .Values.kubecostAggregator.extraVolumeMounts | nindent 4 }}
     {{- end }}
+    {{- if .Values.global.integrations.turbonomic.enabled }}
+    - name: turbonomic-credentials
+      mountPath: /var/configs/turbonomic
+    {{- end }}
   env:
     {{- if and (.Values.prometheus.server.global.external_labels.cluster_id) (not .Values.prometheus.server.clusterIDConfigmap) }}
     - name: CLUSTER_ID
@@ -1157,6 +1161,10 @@ Begin Kubecost 2.0 templates
       value: {{ (quote .Values.kubecostAggregator.collections.cache.enabled) | default (quote true) }}
     {{- end }}
     {{- end }}
+    {{- end }}
+    {{- if .Values.global.integrations.turbonomic.enabled }}
+    - name: TURBONOMIC_ENABLED
+      value: "true"
     {{- end }}
     {{- if .Values.saml }}
     {{- if .Values.saml.enabled }}

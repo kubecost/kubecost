@@ -252,6 +252,13 @@ global:
   ## Kubecost Integrations
   ## Ref: https://docs.kubecost.com/integrations
   integrations:
+    turbonomic:
+      enabled: false         # Set to true to enable the Turbonomic integration
+      clientId: ""           # Client ID generated from the OAuth Client created
+      clientSecret: ""       # Client Secret generated from the OAuth Client created
+      role: ""               # Role that the OAuth Client was created with (e.g. ADMINISTRATOR, SITE_ADMIN, etc.)
+      host: ""               # URL to your turbonomic API. EG: https://turbonomic.example.com/
+      insecureClient: false  # Do not verify certificate
     postgres:
       enabled: false
       runInterval: "12h"      # How frequently to run the integration.
@@ -374,19 +381,19 @@ oidc:
   rbac:
     enabled: false
     # groups:
-    #   - name: admin
-    #     enabled: false  # If admin is disabled, all authenticated users will be able to make configuration changes to the kubecost frontend
+    #   - name: admin  # Admins have permissions to edit Kubecost settings and save reports
+    #     enabled: false
     #     claimName: "roles"  # Kubecost matches this string against the JWT's payload key containing RBAC info (this value is unique across identity providers)
     #     claimValues:  # Kubecost matches these strings with the roles created in your identity provider
     #       - "admin"
     #       - "superusers"
-    #   - name: readonly
-    #     enabled: false  # If readonly is disabled, all authenticated users will default to readonly
+    #   - name: readonly  # Readonly users do not have permissions to edit Kubecost settings or save reports.
+    #     enabled: false
     #     claimName: "roles"
     #     claimValues:
     #       - "readonly"
-    #   - name: editor
-    #     enabled: false  # If editor is enabled, editors will be allowed to edit reports/alerts scoped to them, and act as readers otherwise. Users will never default to editor.
+    #   - name: editor  # Editors have permissions to edit reports/alerts and act as readers otherwise
+    #     enabled: false
     #     claimName: "roles"
     #     claimValues:
     #       - "editor"
@@ -793,7 +800,7 @@ prometheus:
     ## Enables scraping of NVIDIA GPU metrics via dcgm-exporter. Scrapes all
     ## endpoints which contain "dcgm-exporter" in labels "app",
     ## "app.kubernetes.io/component", or "app.kubernetes.io/name" with a case
-    ## insensitive match.
+    ## insensitive match. The label must be present on the K8s service endpoints and not just pods.
     ## Refs:
     ## https://github.com/NVIDIA/gpu-operator/blob/d4316a415bbd684ce8416a88042305fc1a093aa4/assets/state-dcgm-exporter/0600_service.yaml#L7
     ## https://github.com/NVIDIA/dcgm-exporter/blob/54fd1ca137c66511a87a720390613680b9bdabdd/deployment/templates/service.yaml#L23
@@ -1478,7 +1485,7 @@ forecasting:
   # fullImageName overrides the default image construction logic. The exact
   # image provided (registry, image, tag) will be used for the forecasting
   # container.
-  fullImageName: gcr.io/kubecost1/kubecost-modeling:v0.1.16
+  fullImageName: gcr.io/kubecost1/kubecost-modeling:v0.1.18
   imagePullPolicy: IfNotPresent
 
   # Resource specification block for the forecasting container.

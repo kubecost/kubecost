@@ -18,7 +18,7 @@ kubecostModel:
   image: public.ecr.aws/kubecost/cost-model
 
 forecasting:
-  fullImageName: public.ecr.aws/kubecost/kubecost-modeling:v0.1.16
+  fullImageName: public.ecr.aws/kubecost/kubecost-modeling:v0.1.18
 
 networkCosts:
   image:
