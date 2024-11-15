@@ -74,12 +74,6 @@ spec:
     {{- end }}
       serviceAccountName: {{ template "aggregator.serviceAccountName" . }}
       volumes:
-        - name: saved-report-configs
-          configMap:
-            name: {{ .Values.savedReportConfigmapName | default "saved-report-configs" }}
-            items:
-            - key: saved-reports.json
-              path: reports.json
         - name: aggregator-staging
           emptyDir:
             sizeLimit: {{ .Values.kubecostAggregator.stagingEmptyDirSizeLimit }}

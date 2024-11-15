@@ -960,9 +960,6 @@ Begin Kubecost 2.0 templates
       # This hasn't been observed as a problem in cost-analyzer, likely because
       # of the init container that gives everything under /var/configs 777.
       mountPath: /var/configs/waterfowl
-    - name: saved-report-configs
-      mountPath: /var/configs/reports.json
-      subPath: reports.json
     {{- end }}
     {{- if and ((.Values.kubecostProductConfigs).productKey).enabled ((.Values.kubecostProductConfigs).productKey).secretname (eq (include "aggregator.deployMethod" .) "statefulset") }}
     - name: productkey-secret
