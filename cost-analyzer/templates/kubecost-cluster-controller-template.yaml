@@ -257,6 +257,8 @@ spec:
         - name: http-server
           containerPort: 9731
           hostPort: 9731
+        resources:
+          {{- toYaml .Values.clusterController.resources | nindent 12 }}
       serviceAccount: {{ template "kubecost.clusterControllerName" . }}
       serviceAccountName: {{ template "kubecost.clusterControllerName" . }}
       {{- with .Values.clusterController.tolerations }}

@@ -112,6 +112,12 @@ spec:
               port: 9090
             initialDelaySeconds: {{ .Values.prometheus.server.livenessProbeInitialDelay }}
             timeoutSeconds: {{ .Values.prometheus.server.livenessProbeTimeout }}
+          securityContext:
+          {{- if .Values.prometheus.server.containerSecurityContext }}
+            {{- toYaml .Values.prometheus.server.containerSecurityContext | nindent 12 }}
+          {{- else }}
+            {{- toYaml .Values.global.containerSecurityContext | nindent 12 }}
+          {{- end }}
           resources:
 {{ toYaml .Values.prometheus.server.resources | indent 12 }}
           volumeMounts:

@@ -2803,6 +2803,7 @@ clusterController:
   priorityClassName: ""
   # Set custom tolerations for the cluster controller.
   tolerations: []
+  resources: {}
   actionConfigs:
     # this configures the Kubecost Cluster Turndown action
     # for more details, see documentation at https://github.com/kubecost/cluster-turndown/tree/develop?tab=readme-ov-file#setting-a-turndown-schedule
