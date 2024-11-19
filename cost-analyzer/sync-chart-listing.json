@@ -1,7 +1,7 @@
 {
   "Version": {
     "ReleaseNotes": "https://github.com/kubecost/cost-analyzer-helm-chart/releases/",
-    "VersionTitle": "2.4.1"
+    "VersionTitle": "2.4.2"
   },
   "DeliveryOptions": [
     {
@@ -11,8 +11,8 @@
             "EKS"
           ],
           "ContainerImages": [
-            "709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/cost-model:prod-2.4.1",
-            "709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/frontend:prod-2.4.1",
+            "709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/cost-model:prod-2.4.2",
+            "709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/frontend:prod-2.4.2",
             "709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/kubecost-network-costs:v0.17.6",
             "709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/cluster-controller:v0.16.9",
             "709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/quay.io/prometheus:kc-2.4",
@@ -22,7 +22,7 @@
             "709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/jimmidyson/configmap-reload:kc-2.4",
             "709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/node-exporter:kc-2.4"
           ],
-          "HelmChartUri": "709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/helm/cost-analyzer:2.4.1-eks1",
+          "HelmChartUri": "709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/helm/cost-analyzer:2.4.2-eks1",
           "Description": "Automatically create new Amazon EKS cluster and installs the kubecost server on Amazon EKS cluster with CloudFormation template",
           "UsageInstructions": "Product install instructions are available at https://docs.kubecost.com/install-and-configure/install/provider-installations/aws-eks-cost-monitoring#deploying-kubecost-on-amazon-eks-cluster-using-amazon-eks-add-on",
           "QuickLaunchEnabled": false,

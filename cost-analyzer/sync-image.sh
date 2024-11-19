@@ -3,7 +3,7 @@
 # This script is used for manually performing copying of a container image from a source registry
 # to AWS ECR. Requires skopeo to be installed.
 
-export IMAGETAG='prod-2.4.1'
+export IMAGETAG='prod-2.4.2'
 # May not need to assume role as a human, only service account
 export role_arn='arn:aws:iam::297945954695:role/kubecost-add-on-role-maintainer'
 export role_session_name='ecr'

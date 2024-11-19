@@ -3,7 +3,7 @@
 # This script is used for manually performing copying of a Helm chart as an OCI artifact from a source registry
 # to AWS ECR. Currently, Helm versions 3.13.0-2 have known bugs and cannot be used to execute this command.
 
-export HELMTAG='2.4.1'
+export HELMTAG='2.4.2'
 export role_arn='arn:aws:iam::297945954695:role/kubecost-add-on-role-maintainer'
 export role_session_name='ecr'
 export profile_name='ecr'
