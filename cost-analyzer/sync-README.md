@@ -1,0 +1,1 @@
+run the sync-git-branch.sh script to sync the git branch first to pull in the latest images

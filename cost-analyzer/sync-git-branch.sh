@@ -1,0 +1,1 @@
+git merge --squash v2.4.2 --strategy resolve

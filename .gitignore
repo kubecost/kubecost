@@ -4,3 +4,5 @@
 .gopath
 .dist
 .manifest
+.tmp/
+.kubeconfig

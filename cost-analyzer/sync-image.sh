@@ -15,13 +15,15 @@ export AWS_ACCESS_KEY_ID=$(echo $temp_role | jq -r .Credentials.AccessKeyId)
 export AWS_SECRET_ACCESS_KEY=$(echo $temp_role | jq -r .Credentials.SecretAccessKey)
 export AWS_SESSION_TOKEN=$(echo $temp_role | jq -r .Credentials.SessionToken)
 
+export CLUSTER_CONTROLLER_TAG=$(yq '.clusterController.image.tag' values.yaml)
+
 # Use AWS_PROFILE=EngineeringDeveloper when running as a human
 aws ecr get-login-password --region us-east-1 | skopeo login --username AWS --password-stdin 709825985650.dkr.ecr.us-east-1.amazonaws.com
-skopeo copy -a docker://gcr.io/kubecost1/cost-model:$IMAGETAG docker://709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/cost-model:${IMAGETAG}-eks1
-skopeo copy -a docker://gcr.io/kubecost1/frontend:$IMAGETAG docker://709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/frontend:${IMAGETAG}-eks1
+skopeo copy -a docker://gcr.io/kubecost1/cost-model:$IMAGETAG docker://709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/cost-model:${IMAGETAG}
+skopeo copy -a docker://gcr.io/kubecost1/frontend:$IMAGETAG docker://709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/frontend:${IMAGETAG}
 skopeo copy -a docker://gcr.io/kubecost1/kubecost-modeling:v0.1.16 docker://709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/kubecost-modeling:v0.1.16
 skopeo copy -a docker://gcr.io/kubecost1/kubecost-network-costs:v0.17.6 docker://709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/kubecost-network-costs:v0.17.6
-skopeo copy -a docker://gcr.io/kubecost1/cluster-controller:v0.16.9 docker://709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/cluster-controller:v0.16.9
+skopeo copy -a docker://gcr.io/kubecost1/cluster-controller:$CLUSTER_CONTROLLER_TAG docker://709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/cluster-controller:$CLUSTER_CONTROLLER_TAG
 skopeo copy -a docker://cgr.dev/chainguard/prometheus:latest docker://709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/quay.io/prometheus:kc-2.4
 skopeo copy -a docker://cgr.dev/chainguard/prometheus-alertmanager:latest docker://709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/quay.io/prometheus/alertmanager:kc-2.4
 skopeo copy -a docker://cgr.dev/chainguard/prometheus-config-reloader:latest docker://709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/prometheus-config-reloader:kc-2.4

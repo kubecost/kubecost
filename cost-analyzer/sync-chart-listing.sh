@@ -43,3 +43,4 @@ aws marketplace-catalog start-change-set \
 # --catalog "AWSMarketplace" \
 # --change-set-id "876hgo0wi2z7bspsvotbxp18e \
 # --region us-east-1 | jq -r ".Status"
+echo "Change set submitted. see https://aws.amazon.com/marketplace/management/requests"
