@@ -3,7 +3,7 @@
 # This script is used for manually performing copying of a container image from a source registry
 # to AWS ECR. Requires skopeo to be installed.
 
-export IMAGETAG='prod-2.4.2'
+export IMAGETAG='prod-2.4.3'
 # May not need to assume role as a human, only service account
 export role_arn='arn:aws:iam::297945954695:role/kubecost-add-on-role-maintainer'
 export role_session_name='ecr'
@@ -17,18 +17,23 @@ export AWS_SESSION_TOKEN=$(echo $temp_role | jq -r .Credentials.SessionToken)
 
 export CLUSTER_CONTROLLER_TAG=$(yq '.clusterController.image.tag' values.yaml)
 
-# Use AWS_PROFILE=EngineeringDeveloper when running as a human
-aws ecr get-login-password --region us-east-1 | skopeo login --username AWS --password-stdin 709825985650.dkr.ecr.us-east-1.amazonaws.com
+# Use AWS_PROFILE=EngineeringAdmin when running as a human
+aws ecr get-login-password --region us-east-1 --profile EngineeringAdmin | skopeo login --username AWS --password-stdin 709825985650.dkr.ecr.us-east-1.amazonaws.com
 skopeo copy -a docker://gcr.io/kubecost1/cost-model:$IMAGETAG docker://709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/cost-model:${IMAGETAG}
 skopeo copy -a docker://gcr.io/kubecost1/frontend:$IMAGETAG docker://709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/frontend:${IMAGETAG}
 skopeo copy -a docker://gcr.io/kubecost1/kubecost-modeling:v0.1.16 docker://709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/kubecost-modeling:v0.1.16
 skopeo copy -a docker://gcr.io/kubecost1/kubecost-network-costs:v0.17.6 docker://709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/kubecost-network-costs:v0.17.6
 skopeo copy -a docker://gcr.io/kubecost1/cluster-controller:$CLUSTER_CONTROLLER_TAG docker://709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/cluster-controller:$CLUSTER_CONTROLLER_TAG
-skopeo copy -a docker://cgr.dev/chainguard/prometheus:latest docker://709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/quay.io/prometheus:kc-2.4
-skopeo copy -a docker://cgr.dev/chainguard/prometheus-alertmanager:latest docker://709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/quay.io/prometheus/alertmanager:kc-2.4
-skopeo copy -a docker://cgr.dev/chainguard/prometheus-config-reloader:latest docker://709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/prometheus-config-reloader:kc-2.4
-skopeo copy -a docker://cgr.dev/chainguard/grafana:latest docker://709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/grafana/grafana:kc-2.4
-skopeo copy -a docker://cgr.dev/chainguard/k8s-sidecar:latest docker://709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/k8s-sidecar:kc-2.4
-skopeo copy -a docker://cgr.dev/chainguard/prometheus-config-reloader:latest docker://709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/quay.io/prometheus-operator/prometheus-config-reloader:kc-2.4
+skopeo copy -a docker://quay.io/prometheus/prometheus:v2.55.1 docker://709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/quay.io/prometheus:v2.55.1
+# skopeo copy -a docker://quay.io/prometheus/prometheus:v2.55.1 docker://709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/quay.io/prometheus/prometheus:v2.55.1
+skopeo copy -a docker://quay.io/prometheus/alertmanager:v0.27.0 docker://709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/quay.io/prometheus/alertmanager:v0.27.0
+skopeo copy -a docker://quay.io/prometheus-operator/prometheus-config-reloader:v0.78.2 docker://709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/prometheus-config-reloader:v0.78.2
+skopeo copy -a docker://quay.io/prometheus-operator/prometheus-config-reloader:v0.78.2 docker://709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/quay.io/prometheus/prometheus-config-reloader:v0.78.2
+skopeo copy -a docker://grafana/grafana:11.3.1 docker://709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/grafana/grafana:11.3.1
+skopeo copy -a docker://ghcr.io/kiwigrid/k8s-sidecar:1.28.0 docker://709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/k8s-sidecar:1.28.0
+skopeo copy -a docker://quay.io/prometheus/node-exporter:v1.8.2 docker://709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/node-exporter:v1.8.2
+
 skopeo copy -a docker://gcr.io/kubecost1/awsstore:latest docker://709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/awsstore:latest
 
+# after updating the values file, test images with:
+# for img in $(helm template kubecost ./ --set networkCosts.enabled=true --set clusterController.enabled=true --set prometheus.nodeExporter.enabled=true --version 2.4.3 | yq '..|.image? | select(.)' | sort -u); do echo "=== $img ==="; docker pull --quiet $img ; done

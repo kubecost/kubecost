@@ -974,8 +974,8 @@ prometheus:
     ## Prometheus server container image
     ##
     image:
-      repository: 709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/quay.io/prometheus/prometheus
-      tag: kc-2.4
+      repository: 709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/quay.io/prometheus
+      tag: v2.55.1
       pullPolicy: IfNotPresent
 
     ## prometheus server priorityClassName
@@ -1386,7 +1386,7 @@ prometheus:
     ##
     image:
       repository: 709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/quay.io/prometheus/alertmanager
-      tag: kc-2.4
+      tag: v0.27.0
       pullPolicy: IfNotPresent
 
     ## alertmanager priorityClassName
@@ -1671,8 +1671,8 @@ prometheus:
       ## configmap-reload container image
       ##
       image:
-        repository: 709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/quay.io/prometheus-operator/prometheus-config-reloader
-        tag: kc-2.4
+        repository: 709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/quay.io/prometheus/prometheus-config-reloader
+        tag: v0.78.2
         pullPolicy: IfNotPresent
 
       ## Additional configmap-reload container arguments
@@ -1711,8 +1711,8 @@ prometheus:
       ## configmap-reload container image
       ##
       image:
-        repository: 709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/quay.io/prometheus-operator/prometheus-config-reloader
-        tag: kc-2.4
+        repository: 709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/quay.io/prometheus/prometheus-config-reloader:v0.78.2
+        tag: v0.78.2
         pullPolicy: IfNotPresent
 
       ## Additional configmap-reload container arguments
@@ -3013,7 +3013,7 @@ grafana:
   ## Container image settings for the Grafana deployment
   image:
     repository: 709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/grafana/grafana
-    tag: kc-2.4
+    tag: 11.3.1
     pullPolicy: IfNotPresent
 
     ## Optionally specify an array of imagePullSecrets.
@@ -3210,7 +3210,7 @@ grafana:
   sidecar:
     image:
       repository: 709825985650.dkr.ecr.us-east-1.amazonaws.com/stackwatch/eks/k8s-sidecar
-      tag: kc-2.4
+      tag: 1.28.0
       pullPolicy: IfNotPresent
     resources: {}
     dashboards:
