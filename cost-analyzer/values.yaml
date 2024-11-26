@@ -829,8 +829,8 @@ prometheus:
       type: Recreate
       rollingUpdate: null
     image:
-      repository: cgr.dev/chainguard/prometheus
-      tag: latest
+      repository: quay.io/prometheus/prometheus
+      tag: v2.55.1
       pullPolicy: IfNotPresent
     priorityClassName: ""
     prefixURL: ""
@@ -976,8 +976,8 @@ prometheus:
       rollingUpdate: null
     name: alertmanager
     image:
-      repository: cgr.dev/chainguard/prometheus-alertmanager
-      tag: latest
+      repository: quay.io/prometheus/alertmanager
+      tag: v0.27.0
       pullPolicy: IfNotPresent
     priorityClassName: ""
     extraArgs: {}
@@ -1064,8 +1064,8 @@ prometheus:
       enabled: false
       name: configmap-reload
       image:
-        repository: cgr.dev/chainguard/prometheus-config-reloader
-        tag: latest
+        repository: quay.io/prometheus-operator/prometheus-config-reloader
+        tag: v0.78.2
         pullPolicy: IfNotPresent
       extraArgs: {}
       extraVolumeDirs: []
@@ -1077,8 +1077,8 @@ prometheus:
       enabled: false
       name: configmap-reload
       image:
-        repository: cgr.dev/chainguard/prometheus-config-reloader
-        tag: latest
+        repository: quay.io/prometheus-operator/prometheus-config-reloader
+        tag: v0.78.2
         pullPolicy: IfNotPresent
       extraArgs: {}
       extraVolumeDirs: []
@@ -2007,8 +2007,8 @@ grafana:
     timeoutSeconds: 30
     failureThreshold: 10
   image:
-    repository: cgr.dev/chainguard/grafana
-    tag: latest
+    repository: grafana/grafana
+    tag: 11.3.1
     pullPolicy: IfNotPresent
     # pullSecrets:
   securityContext: {}
@@ -2053,8 +2053,8 @@ grafana:
   ## Requires at least Grafana 5 to work and can't be used together with parameters dashboardProviders, datasources and dashboards
   sidecar:
     image:
-      repository: cgr.dev/chainguard/k8s-sidecar
-      tag: latest
+      repository: ghcr.io/kiwigrid/k8s-sidecar
+      tag: 1.28.0
       pullPolicy: IfNotPresent
     resources: {}
     dashboards:
