@@ -23657,7 +23657,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: grafana-sc-dashboard
-          image: "cgr.dev/chainguard/k8s-sidecar:latest"
+          image: "ghcr.io/kiwigrid/k8s-sidecar:1.28.0"
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
@@ -23785,7 +23785,7 @@ spec:
       containers:
 
         - name: prometheus-server
-          image: "cgr.dev/chainguard/prometheus:latest"
+          image: "quay.io/prometheus/prometheus:v2.55.1"
           imagePullPolicy: "IfNotPresent"
           args:
             - --storage.tsdb.retention.time=97h
