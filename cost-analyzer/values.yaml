@@ -3,10 +3,10 @@ global:
   prometheus:
     enabled: true  # Kubecost depends on Prometheus data, it is not optional. When enabled: false, Prometheus will not be installed and you must configure your own Prometheus to scrape kubecost as well as provide the fqdn below. -- Warning: Before changing this setting, please read to understand the risks https://docs.kubecost.com/install-and-configure/install/custom-prom
     fqdn: http://cost-analyzer-prometheus-server.default.svc  # example address of a prometheus to connect to. Include protocol (http:// or https://) Ignored if enabled: true
-    # insecureSkipVerify: false  # If true, kubecost will not check the TLS cert of prometheus
+    insecureSkipVerify: false  # If true, kubecost will not check the TLS cert of prometheus
     # queryServiceBasicAuthSecretName: dbsecret # kubectl create secret generic dbsecret -n kubecost --from-file=USERNAME --from-file=PASSWORD
     # queryServiceBearerTokenSecretName: mcdbsecret  # kubectl create secret generic mcdbsecret -n kubecost --from-file=TOKEN
-    # kubeRBACProxy: false # If true, kubecost will use kube-rbac-proxy to authenticate with in cluster Prometheus for openshift
+    kubeRBACProxy: false  # If true, kubecost will use kube-rbac-proxy to authenticate with in cluster Prometheus for openshift
 
   grafana:
     enabled: true  # If false, Grafana will not be installed
@@ -235,6 +235,13 @@ global:
         enabled: false  # Create an OpenShift Route.
         annotations: {}  # Add annotations to the Route.
         # host: kubecost.apps.okd4.example.com  # Add a custom host for your Route.
+
+        # OPTIONAL. The following configs only to be enabled when using a Prometheus instance already installed in the cluster.
+        createMonitoringClusterRoleBinding: false  # Create a ClusterRoleBinding to grant the Kubecost serviceaccount access to query Prometheus.
+        createMonitoringResourceReaderRoleBinding: false  # Create a Role and Role Binding to allow Prometheus to list and watch Kubecost resources.
+        monitoringServiceAccountName: prometheus-k8s  # Name of the Prometheus serviceaccount to bind to the Resource Reader Role Binding.
+        monitoringServiceAccountNamespace: openshift-monitoring  # Namespace of the Prometheus serviceaccount to bind to the Resource Reader Role Binding.
+
       # Create Security Context Constraint resources for the DaemonSets requiring additional privileges.
       scc:
         nodeExporter: false  # Creates an SCC for Prometheus Node Exporter. This requires Node Exporter be enabled.

@@ -8,7 +8,7 @@ metadata:
 subjects:
 - kind: ServiceAccount
   name: {{ .Values.global.platforms.openshift.monitoringServiceAccountName | quote }}
-  namespace: openshift-monitoring
+  namespace: {{ .Values.global.platforms.openshift.monitoringServiceAccountNamespace | quote }}
 roleRef:
   kind: Role
   name: {{ template "cost-analyzer.fullname" . }}-reader
