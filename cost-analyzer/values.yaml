@@ -686,9 +686,15 @@ ingress:
   enabled: false
   # className: nginx
   labels:
+    ## Starting in kubernetes v1.18, `kubernetes.io/ingress.class` annotation is deprecated.
+    ## Use `spec.ingressClassName` instead of this annotation.
+    ## See: https://kubernetes.io/docs/concepts/services-networking/ingress/#deprecated-annotation
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
   annotations:
+    ## Starting in kubernetes v1.18, `kubernetes.io/ingress.class` annotation is deprecated.
+    ## Use `spec.ingressClassName` instead of this annotation.
+    ## See: https://kubernetes.io/docs/concepts/services-networking/ingress/#deprecated-annotation
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
   paths: ["/"]  # There's no need to route specifically to the pods-- we have an nginx deployed that handles routing
