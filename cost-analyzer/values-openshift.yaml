@@ -1,35 +1,8 @@
+# This Helm values file is a modified version of `values.yaml`.
+# This file is meant to be used by users deploying Kubecost to OpenShift (OCP) clusters. For more configuration options, see `values.yaml`.
 global:
-  prometheus:
-    enabled: true  # Kubecost depends on Prometheus data, it is not optional. When enabled: false, Prometheus will not be installed and you must configure your own Prometheus to scrape kubecost as well as provide the fqdn below. -- Warning: Before changing this setting, please read to understand the risks https://docs.kubecost.com/install-and-configure/install/custom-prom
-    fqdn: https://prometheus-k8s.openshift-monitoring.svc.cluster.local:9091  # example address of a prometheus to connect to. Include protocol (http:// or https://) Ignored if enabled: true
-    # insecureSkipVerify: false  # If true, kubecost will not check the TLS cert of prometheus
-    # queryServiceBearerTokenSecretName: mcdbsecret  # kubectl create secret generic mcdbsecret -n kubecost --from-file=TOKEN
-    # kubeRBACProxy: false # If true, kubecost will use kube-rbac-proxy to authenticate with in cluster Prometheus for openshift
-
   # Platforms is a higher-level abstraction for platform-specific values and settings.
   platforms:
     # Deploying to OpenShift (OCP) requires enabling this option.
     openshift:
       enabled: true  # Deploy Kubecost to OpenShift.
-      # createMonitoringClusterRoleBinding: false  # Create a Cluster Role Binding to allow using in-cluster prometheus or thanos.
-      # createMonitoringResourceReaderRoleBinding: false  # Create a Role and Role Binding to allow in-cluster prometheus or thanos to list and watch resources. This will be necessary if you are not using bundled prometheus and need to add scrape config for resources.
-      # monitoringServiceAccountName: prometheus-k8s  # Name of the service account to bind to the Resource Reader Role Binding.
-      route:
-        enabled: false  # Create an OpenShift Route.
-        annotations: {}  # Add annotations to the Route.
-        # host: kubecost.apps.okd4.example.com  # Add a custom host for your Route.
-      # Create Security Context Constraint resources for the DaemonSets requiring additional privileges.
-      scc:
-        nodeExporter: false  # Creates an SCC for Prometheus Node Exporter. This requires Node Exporter be enabled.
-        networkCosts: false  # Creates an SCC for Kubecost network-costs. This requires network-costs be enabled.
-      # When OpenShift is enabled, the following securityContext will be applied to all resources unless they define their own.
-      securityContext:
-        runAsNonRoot: true
-        seccompProfile:
-          type: RuntimeDefault
-
-# networkCosts:
-#   enabled: true  # Enable network costs.
-# prometheus:
-#   nodeExporter:
-#     enabled: true  # Enable Prometheus Node Exporter.

@@ -1,0 +1,26 @@
+# This Helm values file is a modified version of `values-openshift.yaml`.
+# The primary difference is that this file is configured to disable the Kubecost-bundled Prometheus, and instead leverage the Prometheus instance that is typically pre-installed in OpenShift clusters.
+global:
+  prometheus:
+    enabled: false  # Kubecost depends on Prometheus data, it is not optional. When enabled: false, Prometheus will not be installed and you must configure your in-cluster Prometheus to scrape kubecost as well as provide the fqdn below. -- Warning: Before changing using this setting, please read to understand the risks https://docs.kubecost.com/install-and-configure/install/custom-prom
+    fqdn: https://prometheus-k8s.openshift-monitoring.svc.cluster.local:9091  # example address of a Prometheus to connect to. Include protocol (http:// or https://) Ignored if enabled: true
+    kubeRBACProxy: true # If true, kubecost will use kube-rbac-proxy to authenticate with in cluster Prometheus for openshift
+  grafana:
+    enabled: false  # If false, Grafana will not be installed
+    domainName: grafana.grafana
+    proxy: false
+
+  platforms:
+    # Deploying to OpenShift (OCP) requires enabling this option.
+    openshift:
+      enabled: true  # Deploy Kubecost to OpenShift.
+      createMonitoringClusterRoleBinding: true  # Create a ClusterRoleBinding to grant the Kubecost serviceaccount access to query Prometheus.
+      createMonitoringResourceReaderRoleBinding: true  # Create a Role and Role Binding to allow Prometheus to list and watch Kubecost resources.
+      monitoringServiceAccountName: prometheus-k8s  # Name of the Prometheus serviceaccount to bind to the Resource Reader Role Binding.
+      monitoringServiceAccountNamespace: openshift-monitoring  # Namespace of the Prometheus serviceaccount to bind to the Resource Reader Role Binding.
+
+serviceMonitor:
+  enabled: true
+
+prometheusRule:
+  enabled: true
