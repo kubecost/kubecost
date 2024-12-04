@@ -128,9 +128,8 @@ spec:
         {{- end }}
         {{- if or .Values.kubecostModel.caCertsConfigMap }}
         - name: ca-certs-config
-          secret:
-           defaultMode: 420
-           secretName: {{ .Values.kubecostModel.caCertsConfigMap}}
+          configMap:
+           name: {{ .Values.kubecostModel.caCertsConfigMap}}
         {{- end }}
         {{- if .Values.kubecostProductConfigs }}
         {{- if and ((.Values.kubecostProductConfigs).productKey).enabled ((.Values.kubecostProductConfigs).productKey).secretname }}
