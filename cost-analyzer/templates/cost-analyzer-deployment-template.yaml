@@ -126,6 +126,12 @@ spec:
            defaultMode: 420
            secretName: {{ .Values.kubecostModel.federatedStorageConfigSecret | default "federated-store" }}
         {{- end }}
+        {{- if or .Values.kubecostModel.caCertsConfigMap }}
+        - name: ca-certs-config
+          secret:
+           defaultMode: 420
+           secretName: {{ .Values.kubecostModel.caCertsConfigMap}}
+        {{- end }}
         {{- if .Values.kubecostProductConfigs }}
         {{- if and ((.Values.kubecostProductConfigs).productKey).enabled ((.Values.kubecostProductConfigs).productKey).secretname }}
         - name: productkey-secret
@@ -613,6 +619,11 @@ spec:
             {{- if or .Values.kubecostModel.federatedStorageConfigSecret .Values.kubecostModel.federatedStorageConfig }}
             - name: federated-storage-config
               mountPath: /var/configs/etl/federated
+              readOnly: true
+            {{- end }}
+            {{- if or .Values.kubecostModel.caCertsConfigMap }}
+            - name: ca-certs-config
+              mountPath: /etc/pki/ca-trust/source/anchors
               readOnly: true
             {{- end }}
             {{- if .Values.kubecostAdmissionController }}

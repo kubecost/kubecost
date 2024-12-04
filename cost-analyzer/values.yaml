@@ -575,6 +575,9 @@ kubecostModel:
   #         "client_x509_cert_url": ""
   #       }
 
+  # the name of the ConfigMap containing custom CA certs to mount to cost model container
+  caCertsConfigMap: ca-certs-config
+
   # Installs Kubecost/OpenCost plugins
   plugins:
     enabled: false
