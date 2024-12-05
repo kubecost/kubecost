@@ -126,11 +126,12 @@ spec:
            defaultMode: 420
            secretName: {{ .Values.kubecostModel.federatedStorageConfigSecret | default "federated-store" }}
         {{- end }}
-        {{- if .Values.kubecostModel.caCertsSecret }}
-        - name: ca-certs-secret
-          secret:
-           defaultMode: 420
-           secretName: {{ .Values.kubecostModel.caCertsSecret}}
+        {{- if .Values.kubecostModel.caCertsConfig }}
+        - name: ca-certs-config
+          configMap:
+            name: {{ .Values.kubecostModel.caCertsConfig}}
+        - name: ssl-path
+          emptyDir: {}
         {{- end }}
         {{- if .Values.kubecostProductConfigs }}
         {{- if and ((.Values.kubecostProductConfigs).productKey).enabled ((.Values.kubecostProductConfigs).productKey).secretname }}
@@ -351,6 +352,28 @@ spec:
           securityContext:
             runAsUser: 0
 {{ end }}
+        {{- if .Values.kubecostModel.caCertsConfig }}
+        - name: "sslsetup"
+          image: redhat/ubi9-minimal:latest
+          imagePullPolicy: Always
+          securityContext:
+            privileged: true
+            runAsUser: 0
+            runAsGroup: 0
+            runAsNonRoot: false
+          command:
+            - 'sh'
+            - '-c'
+            - >
+              mkdir -p /etc/pki/ca-trust/extracted/{edk2,java,openssl,pem};
+              /usr/bin/update-ca-trust extract;
+          volumeMounts:
+            - name: ca-certs-config
+              mountPath: "/etc/pki/ca-trust/source/anchors"
+            - name: ssl-path
+              mountPath: "/etc/pki/ca-trust/extracted"
+              readOnly: false
+              {{- end}}
       containers:
         {{- if .Values.global.gmp.enabled }}
         - name: {{ .Values.global.gmp.gmpProxy.name }}
@@ -621,9 +644,12 @@ spec:
               mountPath: /var/configs/etl/federated
               readOnly: true
             {{- end }}
-            {{- if .Values.kubecostModel.caCertsSecret }}
-            - name: ca-certs-secret
-              mountPath: /etc/pki/ca-trust/source/anchors
+            {{- if .Values.kubecostModel.caCertsConfig }}
+            - name: ca-certs-config
+              mountPath: "/etc/pki/ca-trust/source/anchors"
+            - name: ssl-path
+              mountPath: "/etc/pki/ca-trust/extracted"
+              readOnly: false
             {{- end }}
             {{- if .Values.kubecostAdmissionController }}
             {{- if .Values.kubecostAdmissionController.enabled }}
