@@ -88,14 +88,23 @@ Parameter | Description | Default
 
 ## Adjusting Log Output
 
-The log output can be customized during deployment by using the `LOG_LEVEL` and/or `LOG_FORMAT` environment variables.
+You can adjust the log output by using the `logLevel` Helm value and/or the `LOG_FORMAT` environment variable.
 
 ### Adjusting Log Level
 
-Adjusting the log level increases or decreases the level of verbosity written to the logs. To set the log level to `trace`, the following flag can be added to the `helm` command.
+Adjusting the log level increases or decreases the level of verbosity written to the logs. The `logLevel` property accepts the following values:
+
+* `trace`
+* `debug`
+* `info`
+* `warn`
+* `error`
+* `fatal`
+
+For example, to set the log level to `debug`, add the following flag to the Helm command:
 
 ```sh
---set 'kubecostModel.extraEnv[0].name=LOG_LEVEL,kubecostModel.extraEnv[0].value=trace'
+--set 'kubecostModel.logLevel=debug'
 ```
 
 ### Adjusting Log Format
