@@ -575,7 +575,7 @@ kubecostModel:
   #         "client_x509_cert_url": ""
   #       }
 
-  # Install the cost-model with a custom CA certificate. 
+  # Install the cost-model with a custom CA certs. 
   # The following configuration is for an init container to update the CA trust.  
   updateCaTrust:
     enabled: false # Set to true to enable the init container for updating CA trust
@@ -586,7 +586,7 @@ kubecostModel:
       runAsGroup: 0
       runAsNonRoot: false
     caCertsSecret: ca-certs-secret  # The name of the Secret containing custom CA certificates to mount to the cost-model container.
-    resources: {}
+    resources: {} # Resource requests and limits for the init container.
     caCertsMountPath: /etc/pki/ca-trust/source/anchors # The path where the custom CA certificates will be mounted in the init container
 
   # Installs Kubecost/OpenCost plugins
