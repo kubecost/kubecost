@@ -354,9 +354,9 @@ spec:
             runAsUser: 0
 {{ end }}
         {{- if .Values.kubecostModel.updateCaTrust.enabled }}
-        - name: "update-ca-trust"
+        - name: update-ca-trust
           image: {{ include "cost-model.image" . | trim | quote}}
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           {{- with .Values.kubecostModel.updateCaTrust.securityContext }}
           securityContext: {{- toYaml . | nindent 12 }}
           {{- end }}
