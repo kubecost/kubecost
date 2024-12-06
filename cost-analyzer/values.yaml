@@ -581,10 +581,13 @@ kubecostModel:
     enabled: false  # Set to true to enable the init container for updating CA trust
     # Security context settings for the init container.
     securityContext:
-      privileged: true
       runAsUser: 0
       runAsGroup: 0
       runAsNonRoot: false
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      seccompProfile:
+        type: RuntimeDefault
     caCertsSecret: ca-certs-secret  # The name of the Secret containing custom CA certificates to mount to the cost-model container.
     resources: {}  # Resource requests and limits for the init container.
     caCertsMountPath: /etc/pki/ca-trust/source/anchors  # The path where the custom CA certificates will be mounted in the init container
