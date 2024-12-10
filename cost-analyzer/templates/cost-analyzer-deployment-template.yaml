@@ -128,9 +128,14 @@ spec:
         {{- end }}
         {{- if .Values.kubecostModel.updateCaTrust.enabled }}
         - name: ca-certs-secret
+          {{- if .Values.kubecostModel.updateCaTrust.caCertsSecret }}
           secret:
             defaultMode: 420
             secretName: {{ .Values.kubecostModel.updateCaTrust.caCertsSecret }}
+          {{- else }}
+          configMap:
+            name: {{ .Values.kubecostModel.updateCaTrust.caCertsConfig }}
+          {{- end }}
         - name: ssl-path
           emptyDir: {}
         {{- end }}
@@ -356,7 +361,11 @@ spec:
         {{- if .Values.kubecostModel.updateCaTrust.enabled }}
         - name: update-ca-trust
           image: {{ include "cost-model.image" . | trim | quote}}
-          imagePullPolicy: IfNotPresent
+          {{- if .Values.kubecostModel.imagePullPolicy }}
+          imagePullPolicy: {{ .Values.kubecostModel.imagePullPolicy }}
+          {{- else }}
+          imagePullPolicy: Always
+          {{- end }}
           {{- with .Values.kubecostModel.updateCaTrust.securityContext }}
           securityContext: {{- toYaml . | nindent 12 }}
           {{- end }}

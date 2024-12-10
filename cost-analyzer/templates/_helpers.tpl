@@ -1447,6 +1447,16 @@ for more information
 {{- end }}
 {{- end }}
 
+{{- define "caCertsSecretConfigCheck" }}
+  {{- if .Values.kubecostModel.updateCaTrust.enabled }}
+    {{- if and .Values.kubecostModel.updateCaTrust.caCertsSecret .Values.kubecostModel.updateCaTrust.caCertsConfig }}
+      {{- fail "Both caCertsSecret and caCertsConfig are defined. Please specify only one." }}
+    {{- else if and (not .Values.kubecostModel.updateCaTrust.caCertsSecret) (not .Values.kubecostModel.updateCaTrust.caCertsConfig) }}
+      {{- fail "Neither caCertsSecret nor caCertsConfig is defined, but updateCaTrust is enabled. Please specify one." }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+
 {{- define "clusterControllerEnabled" }}
 {{- if (.Values.clusterController).enabled }}
 {{- printf "true" -}}
