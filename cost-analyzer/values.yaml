@@ -575,9 +575,6 @@ kubecostModel:
   #         "client_x509_cert_url": ""
   #       }
 
-  # the name of the Secret containing custom CA certs to mount to cost model container
-  # caCertsSecret: ca-certs-secret
-
   # Installs Kubecost/OpenCost plugins
   plugins:
     enabled: false
@@ -840,7 +837,7 @@ prometheus:
       rollingUpdate: null
     image:
       repository: quay.io/prometheus/prometheus
-      tag: v3.0.1
+      tag: v2.55.1
       pullPolicy: IfNotPresent
     priorityClassName: ""
     prefixURL: ""
