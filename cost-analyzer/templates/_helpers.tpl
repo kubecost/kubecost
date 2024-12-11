@@ -1447,6 +1447,16 @@ for more information
 {{- end }}
 {{- end }}
 
+{{- define "caCertsSecretConfigCheck" }}
+  {{- if .Values.global.updateCaTrust.enabled }}
+    {{- if and .Values.global.updateCaTrust.caCertsSecret .Values.global.updateCaTrust.caCertsConfig }}
+      {{- fail "Both caCertsSecret and caCertsConfig are defined. Please specify only one." }}
+    {{- else if and (not .Values.global.updateCaTrust.caCertsSecret) (not .Values.global.updateCaTrust.caCertsConfig) }}
+      {{- fail "Neither caCertsSecret nor caCertsConfig is defined, but updateCaTrust is enabled. Please specify one." }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+
 {{- define "clusterControllerEnabled" }}
 {{- if (.Values.clusterController).enabled }}
 {{- printf "true" -}}
