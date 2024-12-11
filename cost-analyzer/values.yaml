@@ -226,8 +226,7 @@ global:
       drop:
       - ALL
 
-  # Install the cost-model with a custom CA certs.
-  # The following configuration is for an init container to update the CA trust.
+  # Installs custom CA certificates onto Kubecost pods
   updateCaTrust:
     enabled: false  # Set to true to enable the init container for updating CA trust
     # Security context settings for the init container.
