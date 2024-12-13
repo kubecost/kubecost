@@ -226,6 +226,23 @@ global:
       drop:
       - ALL
 
+  # Installs custom CA certificates onto Kubecost pods
+  updateCaTrust:
+    enabled: false  # Set to true to enable the init container for updating CA trust
+    # Security context settings for the init container.
+    securityContext:
+      runAsUser: 0
+      runAsGroup: 0
+      runAsNonRoot: false
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      seccompProfile:
+        type: RuntimeDefault
+    caCertsSecret: ca-certs-secret  # The name of the Secret containing custom CA certificates to mount to the cost-model container.
+    # caCertsConfig: ca-certs-config  # The name of the ConfigMap containing the CA trust configuration.
+    resources: {}  # Resource requests and limits for the init container.
+    caCertsMountPath: /etc/pki/ca-trust/source/anchors  # The path where the custom CA certificates will be mounted in the init container
+
   # Platforms is a higher-level abstraction for platform-specific values and settings.
   platforms:
     # Deploying to OpenShift (OCP) requires enabling this option.
@@ -837,7 +854,7 @@ prometheus:
       rollingUpdate: null
     image:
       repository: quay.io/prometheus/prometheus
-      tag: v3.0.1
+      tag: v2.55.1
       pullPolicy: IfNotPresent
     priorityClassName: ""
     prefixURL: ""
@@ -2061,7 +2078,7 @@ grafana:
   sidecar:
     image:
       repository: ghcr.io/kiwigrid/k8s-sidecar
-      tag: 1.28.0
+      tag: 1.28.1
       pullPolicy: IfNotPresent
     resources: {}
     dashboards:

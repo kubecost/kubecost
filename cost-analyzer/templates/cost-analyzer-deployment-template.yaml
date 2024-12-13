@@ -126,6 +126,19 @@ spec:
            defaultMode: 420
            secretName: {{ .Values.kubecostModel.federatedStorageConfigSecret | default "federated-store" }}
         {{- end }}
+        {{- if .Values.global.updateCaTrust.enabled }}
+        - name: ca-certs-secret
+          {{- if .Values.global.updateCaTrust.caCertsSecret }}
+          secret:
+            defaultMode: 420
+            secretName: {{ .Values.global.updateCaTrust.caCertsSecret }}
+          {{- else }}
+          configMap:
+            name: {{ .Values.global.updateCaTrust.caCertsConfig }}
+          {{- end }}
+        - name: ssl-path
+          emptyDir: {}
+        {{- end }}
         {{- if .Values.kubecostProductConfigs }}
         {{- if and ((.Values.kubecostProductConfigs).productKey).enabled ((.Values.kubecostProductConfigs).productKey).secretname }}
         - name: productkey-secret
@@ -345,6 +358,34 @@ spec:
           securityContext:
             runAsUser: 0
 {{ end }}
+        {{- if .Values.global.updateCaTrust.enabled }}
+        - name: update-ca-trust
+          image: {{ include "cost-model.image" . | trim | quote}}
+          {{- if .Values.kubecostModel.imagePullPolicy }}
+          imagePullPolicy: {{ .Values.kubecostModel.imagePullPolicy }}
+          {{- else }}
+          imagePullPolicy: Always
+          {{- end }}
+          {{- with .Values.global.updateCaTrust.securityContext }}
+          securityContext: {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.global.updateCaTrust.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          command:
+            - 'sh'
+            - '-c'
+            - >
+              mkdir -p /etc/pki/ca-trust/extracted/{edk2,java,openssl,pem};
+              /usr/bin/update-ca-trust extract;
+          volumeMounts:
+            - name: ca-certs-secret
+              mountPath: {{ .Values.global.updateCaTrust.caCertsMountPath | quote }}
+            - name: ssl-path
+              mountPath: "/etc/pki/ca-trust/extracted"
+              readOnly: false
+        {{- end}}
       containers:
         {{- if .Values.global.gmp.enabled }}
         - name: {{ .Values.global.gmp.gmpProxy.name }}
@@ -614,6 +655,13 @@ spec:
             - name: federated-storage-config
               mountPath: /var/configs/etl/federated
               readOnly: true
+            {{- end }}
+            {{- if .Values.global.updateCaTrust.enabled }}
+            - name: ca-certs-secret
+              mountPath: {{ .Values.global.updateCaTrust.caCertsMountPath | quote }}
+            - name: ssl-path
+              mountPath: "/etc/pki/ca-trust/extracted"
+              readOnly: false
             {{- end }}
             {{- if .Values.kubecostAdmissionController }}
             {{- if .Values.kubecostAdmissionController.enabled }}

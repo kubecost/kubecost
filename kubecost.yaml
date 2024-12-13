@@ -23657,7 +23657,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: grafana-sc-dashboard
-          image: "ghcr.io/kiwigrid/k8s-sidecar:1.28.0"
+          image: "ghcr.io/kiwigrid/k8s-sidecar:1.28.1"
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
