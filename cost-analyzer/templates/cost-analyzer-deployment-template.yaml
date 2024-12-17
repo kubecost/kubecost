@@ -1153,6 +1153,8 @@ spec:
             - name: tmp
               mountPath: /var/lib/nginx/tmp
             - name: tmp
+              mountPath: /var/lib/nginx/logs
+            - name: tmp
               mountPath: /var/run
             - name: nginx-conf
               mountPath: /etc/nginx/conf.d/
