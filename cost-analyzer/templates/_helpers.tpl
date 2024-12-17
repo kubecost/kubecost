@@ -158,6 +158,15 @@ will result in failure. Users are asked to select one of the two presently-avail
 {{- end -}}
 
 {{/*
+RBAC exclusivity check: make sure either RBAC or RBAC Teams is enabled, not both
+*/}}
+{{- define "rbacCheck" -}}
+  {{- if or (and ((.Values.saml).rbac).teamsEnabled ((.Values.saml).rbac).enabled) (and ((.Values.oidc).rbac).teamsEnabled ((.Values.oidc).rbac).enabled) -}}
+    {{- fail "\nSimple RBAC and RBAC Teams are mutually exclusive. Please specify only one." -}}
+  {{- end -}}
+{{- end -}}
+
+{{/*
 Federated Storage source contents check. Either the Secret must be specified or the JSON, not both.
 */}}
 {{- define "federatedStorageSourceCheck" -}}
@@ -1005,6 +1014,10 @@ Begin Kubecost 2.0 templates
     {{- end }}
     {{- end }}
     {{- end }}
+    {{- if or .Values.oidc.rbac.teamsEnabled .Values.saml.rbac.teamsEnabled }}
+    - name: kubecost-rbac-secret
+      mountPath: /var/configs/kubecost-rbac-secret
+    {{- end }}
     {{- if .Values.global.integrations.postgres.enabled }}
     - name: postgres-creds
       mountPath: /var/configs/integrations/postgres-creds
@@ -1153,6 +1166,10 @@ Begin Kubecost 2.0 templates
       value: "true"
     - name: OIDC_SKIP_ONLINE_VALIDATION
       value: {{ (quote .Values.oidc.skipOnlineTokenValidation) | default (quote false) }}
+    {{- if .Values.oidc.rbac.teamsEnabled }}
+    - name: OIDC_RBAC_TEAMS_ENABLED
+      value: "true"
+    {{- end }}
     {{- end}}
     {{- if .Values.kubecostAggregator }}
     {{- if .Values.kubecostAggregator.collections }}
@@ -1196,6 +1213,10 @@ Begin Kubecost 2.0 templates
     {{- end}}
     {{- if .Values.saml.rbac.enabled }}
     - name: SAML_RBAC_ENABLED
+      value: "true"
+    {{- end }}
+    {{- if .Values.saml.rbac.teamsEnabled }}
+    - name: SAML_RBAC_TEAMS_ENABLED
       value: "true"
     {{- end }}
     {{- if and .Values.saml.encryptionCertSecret .Values.saml.decryptionKeySecret }}
