@@ -369,6 +369,7 @@ saml:
   # authSecretName: ""  # Name of K8s secret where the authSecret will be stored. Defaults to "kubecost-saml-secret" if not provided.
   rbac:
     enabled: false
+    teamsEnabled: false
     # groups:
     #   - name: admin
     #     enabled: false  # If admin is disabled, all SAML users will be able to make configuration changes to the Kubecost frontend
@@ -405,6 +406,7 @@ oidc:
   hostedDomain: ""  # Optional, blocks access to the auth domain specified in the hd claim of the provider ID token
   rbac:
     enabled: false
+    teamsEnabled: false
     # groups:
     #   - name: admin  # Admins have permissions to edit Kubecost settings and save reports
     #     enabled: false

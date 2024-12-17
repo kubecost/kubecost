@@ -261,6 +261,11 @@ spec:
           configMap:
             name: {{ template "cost-analyzer.fullname" . }}-saml
         {{- end }}
+        {{- if .Values.saml.rbac.teamsEnabled }}
+        - name: kubecost-rbac-secret
+          secret:
+            secretName: kubecost-rbac-secret
+        {{- end }}
         {{- end }}
         {{- end }}
         {{- if .Values.oidc }}
@@ -277,6 +282,11 @@ spec:
         - name: oidc-client-secret
           secret:
             secretName: {{ .Values.oidc.existingCustomSecret.name }}
+        {{- end }}
+        {{- if .Values.oidc.rbac.teamsEnabled }}
+        - name: kubecost-rbac-secret
+          secret:
+            secretName: kubecost-rbac-secret
         {{- end }}
         {{- end }}
         {{- end }}
@@ -737,6 +747,10 @@ spec:
             {{- end }}
             {{- end }}
             {{- end }}
+            {{- if or .Values.oidc.rbac.teamsEnabled .Values.saml.rbac.teamsEnabled }}
+            - name: kubecost-rbac-secret
+              mountPath: /var/configs/kubecost-rbac-secret
+            {{- end }}
           env:
             - name: CONTAINER_IMAGE_TAG
               value: {{ include "cost-model.imagetag" . }}
@@ -1000,7 +1014,7 @@ spec:
             {{- else}}
             - name: ADVANCED_NETWORK_STATS
               value: "false"
-            {{- end}}
+            {{- end }}
             {{- end }}
             {{- end }}
             {{- end }}
@@ -1009,7 +1023,11 @@ spec:
               value: "true"
             - name: OIDC_SKIP_ONLINE_VALIDATION
               value: {{ (quote .Values.oidc.skipOnlineTokenValidation) | default (quote false) }}
-            {{- end}}
+            {{- if .Values.oidc.rbac.teamsEnabled }}
+            - name: OIDC_RBAC_TEAMS_ENABLED
+              value: "true"
+            {{- end }}
+            {{- end }}
             {{- if .Values.saml }}
             {{- if .Values.saml.enabled }}
             - name: SAML_ENABLED
@@ -1046,6 +1064,10 @@ spec:
             - name: SAML_RESPONSE_ENCRYPTED
               value: "true"
             {{- end}}
+            {{- if .Values.saml.rbac.teamsEnabled }}
+            - name: SAML_RBAC_TEAMS_ENABLED
+              value: "true"
+            {{- end }}
             {{- end }}
             {{- end }}
             {{- if and (.Values.prometheus.server.global.external_labels.cluster_id) (not .Values.prometheus.server.clusterIDConfigmap) }}
