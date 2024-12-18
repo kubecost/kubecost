@@ -186,6 +186,8 @@ jobs:
           --set global.platforms.openshift.route.enabled=true \
           --set global.platforms.openshift.scc.nodeExporter=true \
           --set global.platforms.openshift.scc.networkCosts=true \
+          --set global.platforms.openshift.scc.clusterController=true \
+          --set clusterController.enabled=true \
           --set networkCosts.enabled=true \
           --set prometheus.nodeExporter.enabled=true
         # run: ct install --namespace kubecost --chart-dirs=cost-analyzer/ --charts cost-analyzer/
