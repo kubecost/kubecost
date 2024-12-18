@@ -253,9 +253,21 @@ spec:
         - name: CC_LOG_LEVEL
           value: {{ .Values.clusterController.logLevel | default "info" }}
         - name: CC_KUBESCALER_COST_MODEL_PATH
+          {{- if .Values.clusterController.primaryKubecostURL }}
+          value: {{ .Values.clusterController.primaryKubecostURL }}/model
+          {{- else }}
           value: http://{{ $serviceName }}.{{ .Release.Namespace }}:{{ .Values.service.targetPort | default 9090 }}/model
+          {{- end }}
         - name: CC_CCL_COST_MODEL_PATH
+          {{- if .Values.clusterController.primaryKubecostURL }}
+          value: {{ .Values.clusterController.primaryKubecostURL }}/model
+          {{- else }}
           value: http://{{ $serviceName }}.{{ .Release.Namespace }}:{{ .Values.service.targetPort | default 9090 }}/model
+          {{- end }}
+        {{- if .Values.clusterController.kubecostAPIKey }}
+        - name: KUBECOST_API_KEY
+          value: {{ .Values.clusterController.kubecostAPIKey }}
+        {{- end }}
         {{- if .Values.clusterController.kubescaler }}
         - name: CC_KUBESCALER_DEFAULT_RESIZE_ALL
           value: {{ .Values.clusterController.kubescaler.defaultResizeAll | default "false" | quote }}
