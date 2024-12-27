@@ -1011,6 +1011,13 @@ Begin Kubecost 2.0 templates
     - name: postgres-queries
       mountPath: /var/configs/integrations/postgres-queries
     {{- end }}
+    {{- if .Values.global.updateCaTrust.enabled }}
+    - name: ca-certs-secret
+      mountPath: {{ .Values.global.updateCaTrust.caCertsMountPath | quote }}
+    - name: ssl-path
+      mountPath: "/etc/pki/ca-trust/extracted"
+      readOnly: false
+    {{- end }}
     {{- /* Only adds extraVolumeMounts if aggregator is running as its own pod */}}
     {{- if and .Values.kubecostAggregator.extraVolumeMounts (eq (include "aggregator.deployMethod" .) "statefulset") }}
     {{- toYaml .Values.kubecostAggregator.extraVolumeMounts | nindent 4 }}
@@ -1287,6 +1294,13 @@ Begin Kubecost 2.0 templates
     - mountPath: {{ $.Values.kubecostModel.plugins.folder }}/config
       name: plugins-config
       readOnly: true
+    {{- end }}
+    {{- if .Values.global.updateCaTrust.enabled }}
+    - name: ca-certs-secret
+      mountPath: {{ .Values.global.updateCaTrust.caCertsMountPath | quote }}
+    - name: ssl-path
+      mountPath: "/etc/pki/ca-trust/extracted"
+      readOnly: false
     {{- end }}
   {{- /* Only adds extraVolumeMounts when cloudcosts is running as its own pod */}}
   {{- if and .Values.kubecostAggregator.cloudCost.extraVolumeMounts (eq (include "aggregator.deployMethod" .) "statefulset") }}
