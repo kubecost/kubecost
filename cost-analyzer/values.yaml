@@ -263,6 +263,7 @@ global:
       scc:
         nodeExporter: false  # Creates an SCC for Prometheus Node Exporter. This requires Node Exporter be enabled.
         networkCosts: false  # Creates an SCC for Kubecost network-costs. This requires network-costs be enabled.
+        clusterController: false  # Creates an SCC for Kubecost Cluster Controller. This requires clusterController be enabled.
       # When OpenShift is enabled, the following securityContext will be applied to all resources unless they define their own.
       securityContext:
         runAsNonRoot: true
@@ -1087,7 +1088,7 @@ prometheus:
       name: configmap-reload
       image:
         repository: quay.io/prometheus-operator/prometheus-config-reloader
-        tag: v0.78.2
+        tag: v0.79.1
         pullPolicy: IfNotPresent
       extraArgs: {}
       extraVolumeDirs: []
@@ -1100,7 +1101,7 @@ prometheus:
       name: configmap-reload
       image:
         repository: quay.io/prometheus-operator/prometheus-config-reloader
-        tag: v0.78.2
+        tag: v0.79.1
         pullPolicy: IfNotPresent
       extraArgs: {}
       extraVolumeDirs: []
@@ -2033,7 +2034,7 @@ grafana:
     failureThreshold: 10
   image:
     repository: grafana/grafana
-    tag: 11.3.1
+    tag: 11.4.0
     pullPolicy: IfNotPresent
     # pullSecrets:
   securityContext: {}
