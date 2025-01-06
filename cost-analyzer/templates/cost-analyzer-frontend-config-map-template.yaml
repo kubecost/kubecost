@@ -51,16 +51,6 @@ data:
         text/x-component
         text/x-cross-domain-policy;
 
-    upstream api {
-{{- if .Values.kubecostFrontend.useDefaultFqdn }}
-        server {{ $serviceName }}.{{ .Release.Namespace }}.svc.cluster.local:9001;
-{{- else if (.Values.kubecostFrontend.api).fqdn }}
-        server {{ .Values.kubecostFrontend.api.fqdn }};
-{{- else }}
-        server {{ $serviceName }}.{{ .Release.Namespace }}:9001;
-{{- end }}
-    }
-
     upstream model {
 {{- if .Values.kubecostFrontend.useDefaultFqdn }}
         server {{ $serviceName }}.{{ .Release.Namespace }}.svc.cluster.local:9003;
@@ -226,17 +216,7 @@ data:
         listen [::]:{{ .Values.service.targetPort }};
 {{- end }}
 {{- end }}
-        location /api/ {
-            {{- if or .Values.saml.enabled .Values.oidc.enabled }}
-            auth_request /auth;
-            {{- end }}
-            proxy_pass http://api/;
-            proxy_redirect off;
-            proxy_http_version 1.1;
-            proxy_set_header Connection "";
-            proxy_set_header  X-Real-IP  $remote_addr;
-            proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
-        }
+        
         location /model/ {
             proxy_connect_timeout       {{ .Values.kubecostFrontend.timeoutSeconds | default 300 }};
             proxy_send_timeout          {{ .Values.kubecostFrontend.timeoutSeconds | default 300 }};
@@ -533,9 +513,9 @@ data:
             proxy_set_header  X-Real-IP  $remote_addr;
             proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
         }
-        location ~* /model/savings/gpuUtilization(.*) {
+        location ~* /model/savings/gpuWorkloadUtilization(.*) {
             proxy_read_timeout          {{ .Values.kubecostFrontend.timeoutSeconds | default 300 }};
-            proxy_pass http://aggregator/savings/gpuUtilization$1$is_args$args;
+            proxy_pass http://aggregator/savings/gpuWorkloadUtilization$1$is_args$args;
             proxy_redirect off;
             proxy_set_header Connection "";
             proxy_set_header  X-Real-IP  $remote_addr;

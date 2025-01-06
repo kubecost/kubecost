@@ -1014,6 +1014,13 @@ Begin Kubecost 2.0 templates
     - name: postgres-queries
       mountPath: /var/configs/integrations/postgres-queries
     {{- end }}
+    {{- if .Values.global.updateCaTrust.enabled }}
+    - name: ca-certs-secret
+      mountPath: {{ .Values.global.updateCaTrust.caCertsMountPath | quote }}
+    - name: ssl-path
+      mountPath: "/etc/pki/ca-trust/extracted"
+      readOnly: false
+    {{- end }}
     {{- /* Only adds extraVolumeMounts if aggregator is running as its own pod */}}
     {{- if and .Values.kubecostAggregator.extraVolumeMounts (eq (include "aggregator.deployMethod" .) "statefulset") }}
     {{- toYaml .Values.kubecostAggregator.extraVolumeMounts | nindent 4 }}
@@ -1291,6 +1298,13 @@ Begin Kubecost 2.0 templates
       name: plugins-config
       readOnly: true
     {{- end }}
+    {{- if .Values.global.updateCaTrust.enabled }}
+    - name: ca-certs-secret
+      mountPath: {{ .Values.global.updateCaTrust.caCertsMountPath | quote }}
+    - name: ssl-path
+      mountPath: "/etc/pki/ca-trust/extracted"
+      readOnly: false
+    {{- end }}
   {{- /* Only adds extraVolumeMounts when cloudcosts is running as its own pod */}}
   {{- if and .Values.kubecostAggregator.cloudCost.extraVolumeMounts (eq (include "aggregator.deployMethod" .) "statefulset") }}
     {{- toYaml .Values.kubecostAggregator.cloudCost.extraVolumeMounts | nindent 4 }}
@@ -1448,6 +1462,16 @@ for more information
 {{- if ((.Values.kubecostProductConfigs).azureStorageContainer) }}
 {{- fail (include "azureCloudIntegrationJSON" .) }}
 {{- end }}
+{{- end }}
+
+{{- define "caCertsSecretConfigCheck" }}
+  {{- if .Values.global.updateCaTrust.enabled }}
+    {{- if and .Values.global.updateCaTrust.caCertsSecret .Values.global.updateCaTrust.caCertsConfig }}
+      {{- fail "Both caCertsSecret and caCertsConfig are defined. Please specify only one." }}
+    {{- else if and (not .Values.global.updateCaTrust.caCertsSecret) (not .Values.global.updateCaTrust.caCertsConfig) }}
+      {{- fail "Neither caCertsSecret nor caCertsConfig is defined, but updateCaTrust is enabled. Please specify one." }}
+    {{- end }}
+  {{- end }}
 {{- end }}
 
 {{- define "clusterControllerEnabled" }}

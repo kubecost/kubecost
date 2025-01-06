@@ -86,7 +86,7 @@ jobs:
         uses: helm/chart-testing-action@e6669bcd63d7cb57cb4380c33043eebe5d111992 # v2.6.1
 
       - name: Create KinD cluster
-        uses: helm/kind-action@0025e74a8c7512023d06dc019c617aa3cf561fde # v1.10.0
+        uses: helm/kind-action@a1b0e391336a6ee6713a0583f8c6240d70863de3 # v1.12.0
         with:
           version: v0.20.0
           node_image: kindest/node:${{ matrix.k8s-version.version }}
@@ -186,8 +186,10 @@ jobs:
           --set global.platforms.openshift.route.enabled=true \
           --set global.platforms.openshift.scc.nodeExporter=true \
           --set global.platforms.openshift.scc.networkCosts=true \
+          --set global.platforms.openshift.scc.clusterController=true \
           --set networkCosts.enabled=true \
-          --set prometheus.nodeExporter.enabled=true
+          --set clusterController.enabled=true \
+          --set prometheus.nodeExporter.enabled=true 
         # run: ct install --namespace kubecost --chart-dirs=cost-analyzer/ --charts cost-analyzer/
       - name: Wait for ready 
         run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/name=cost-analyzer --timeout=120s

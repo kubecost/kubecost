@@ -3,10 +3,10 @@ global:
   prometheus:
     enabled: true  # Kubecost depends on Prometheus data, it is not optional. When enabled: false, Prometheus will not be installed and you must configure your own Prometheus to scrape kubecost as well as provide the fqdn below. -- Warning: Before changing this setting, please read to understand the risks https://docs.kubecost.com/install-and-configure/install/custom-prom
     fqdn: http://cost-analyzer-prometheus-server.default.svc  # example address of a prometheus to connect to. Include protocol (http:// or https://) Ignored if enabled: true
-    # insecureSkipVerify: false  # If true, kubecost will not check the TLS cert of prometheus
+    insecureSkipVerify: false  # If true, kubecost will not check the TLS cert of prometheus
     # queryServiceBasicAuthSecretName: dbsecret # kubectl create secret generic dbsecret -n kubecost --from-file=USERNAME --from-file=PASSWORD
     # queryServiceBearerTokenSecretName: mcdbsecret  # kubectl create secret generic mcdbsecret -n kubecost --from-file=TOKEN
-    # kubeRBACProxy: false # If true, kubecost will use kube-rbac-proxy to authenticate with in cluster Prometheus for openshift
+    kubeRBACProxy: false  # If true, kubecost will use kube-rbac-proxy to authenticate with in cluster Prometheus for openshift
 
   grafana:
     enabled: true  # If false, Grafana will not be installed
@@ -226,6 +226,23 @@ global:
       drop:
       - ALL
 
+  # Installs custom CA certificates onto Kubecost pods
+  updateCaTrust:
+    enabled: false  # Set to true to enable the init container for updating CA trust
+    # Security context settings for the init container.
+    securityContext:
+      runAsUser: 0
+      runAsGroup: 0
+      runAsNonRoot: false
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      seccompProfile:
+        type: RuntimeDefault
+    caCertsSecret: ca-certs-secret  # The name of the Secret containing custom CA certificates to mount to the cost-model container.
+    # caCertsConfig: ca-certs-config  # The name of the ConfigMap containing the CA trust configuration.
+    resources: {}  # Resource requests and limits for the init container.
+    caCertsMountPath: /etc/pki/ca-trust/source/anchors  # The path where the custom CA certificates will be mounted in the init container
+
   # Platforms is a higher-level abstraction for platform-specific values and settings.
   platforms:
     # Deploying to OpenShift (OCP) requires enabling this option.
@@ -235,10 +252,18 @@ global:
         enabled: false  # Create an OpenShift Route.
         annotations: {}  # Add annotations to the Route.
         # host: kubecost.apps.okd4.example.com  # Add a custom host for your Route.
+
+      # OPTIONAL. The following configs only to be enabled when using a Prometheus instance already installed in the cluster.
+      createMonitoringClusterRoleBinding: false  # Create a ClusterRoleBinding to grant the Kubecost serviceaccount access to query Prometheus.
+      createMonitoringResourceReaderRoleBinding: false  # Create a Role and Role Binding to allow Prometheus to list and watch Kubecost resources.
+      monitoringServiceAccountName: prometheus-k8s  # Name of the Prometheus serviceaccount to bind to the Resource Reader Role Binding.
+      monitoringServiceAccountNamespace: openshift-monitoring  # Namespace of the Prometheus serviceaccount to bind to the Resource Reader Role Binding.
+
       # Create Security Context Constraint resources for the DaemonSets requiring additional privileges.
       scc:
         nodeExporter: false  # Creates an SCC for Prometheus Node Exporter. This requires Node Exporter be enabled.
         networkCosts: false  # Creates an SCC for Kubecost network-costs. This requires network-costs be enabled.
+        clusterController: false  # Creates an SCC for Kubecost Cluster Controller. This requires clusterController be enabled.
       # When OpenShift is enabled, the following securityContext will be applied to all resources unless they define their own.
       securityContext:
         runAsNonRoot: true
@@ -461,8 +486,6 @@ kubecostFrontend:
 
   # set to true to set all upstreams to use <service>.<namespace>.svc.cluster.local instead of just <service>.<namespace>
   useDefaultFqdn: false
-#  api:
-#    fqdn: kubecost-api.kubecost.svc.cluster.local:9001
 #  model:
 #    fqdn: kubecost-model.kubecost.svc.cluster.local:9003
 #  forecasting:
@@ -829,8 +852,8 @@ prometheus:
       type: Recreate
       rollingUpdate: null
     image:
-      repository: cgr.dev/chainguard/prometheus
-      tag: latest
+      repository: quay.io/prometheus/prometheus
+      tag: v3.0.1
       pullPolicy: IfNotPresent
     priorityClassName: ""
     prefixURL: ""
@@ -976,8 +999,8 @@ prometheus:
       rollingUpdate: null
     name: alertmanager
     image:
-      repository: cgr.dev/chainguard/prometheus-alertmanager
-      tag: latest
+      repository: quay.io/prometheus/alertmanager
+      tag: v0.27.0
       pullPolicy: IfNotPresent
     priorityClassName: ""
     extraArgs: {}
@@ -1064,8 +1087,8 @@ prometheus:
       enabled: false
       name: configmap-reload
       image:
-        repository: cgr.dev/chainguard/prometheus-config-reloader
-        tag: latest
+        repository: quay.io/prometheus-operator/prometheus-config-reloader
+        tag: v0.79.2
         pullPolicy: IfNotPresent
       extraArgs: {}
       extraVolumeDirs: []
@@ -1077,8 +1100,8 @@ prometheus:
       enabled: false
       name: configmap-reload
       image:
-        repository: cgr.dev/chainguard/prometheus-config-reloader
-        tag: latest
+        repository: quay.io/prometheus-operator/prometheus-config-reloader
+        tag: v0.79.2
         pullPolicy: IfNotPresent
       extraArgs: {}
       extraVolumeDirs: []
@@ -1380,7 +1403,7 @@ networkCosts:
   # Port will set both the containerPort and hostPort to this value.
   # These must be identical due to network-costs being run on hostNetwork
   port: 3001
-  # this daemonset can use significant resources on large clusters: https://guide.kubecost.com/hc/en-us/articles/4407595973527-Network-Traffic-Cost-Allocation
+  # this daemonset can use significant resources on large clusters: https://docs.kubecost.com/using-kubecost/navigating-the-kubecost-ui/cost-allocation/network-allocation
   resources:
     limits:  # remove the limits by setting cpu: null
       cpu: 500m  # can be less, will depend on cluster size
@@ -1485,7 +1508,7 @@ forecasting:
   # fullImageName overrides the default image construction logic. The exact
   # image provided (registry, image, tag) will be used for the forecasting
   # container.
-  fullImageName: gcr.io/kubecost1/kubecost-modeling:v0.1.18
+  fullImageName: gcr.io/kubecost1/kubecost-modeling:v0.1.19
   imagePullPolicy: IfNotPresent
 
   # Resource specification block for the forecasting container.
@@ -1799,7 +1822,7 @@ clusterController:
   enabled: false
   image:
     repository: gcr.io/kubecost1/cluster-controller
-    tag: v0.16.9
+    tag: v0.16.11
   imagePullPolicy: IfNotPresent
   priorityClassName: ""
   tolerations: []
@@ -2007,8 +2030,8 @@ grafana:
     timeoutSeconds: 30
     failureThreshold: 10
   image:
-    repository: cgr.dev/chainguard/grafana
-    tag: latest
+    repository: grafana/grafana
+    tag: 11.4.0
     pullPolicy: IfNotPresent
     # pullSecrets:
   securityContext: {}
@@ -2053,8 +2076,8 @@ grafana:
   ## Requires at least Grafana 5 to work and can't be used together with parameters dashboardProviders, datasources and dashboards
   sidecar:
     image:
-      repository: cgr.dev/chainguard/k8s-sidecar
-      tag: latest
+      repository: ghcr.io/kiwigrid/k8s-sidecar
+      tag: 1.28.4
       pullPolicy: IfNotPresent
     resources: {}
     dashboards:
