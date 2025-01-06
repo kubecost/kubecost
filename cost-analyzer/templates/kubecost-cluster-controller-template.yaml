@@ -1,5 +1,4 @@
-{{- if .Values.clusterController }}
-{{- if .Values.clusterController.enabled }}
+{{- if (.Values.clusterController).enabled }}
 {{- $serviceName := include "cost-analyzer.serviceName" . -}}
 apiVersion: v1
 kind: ServiceAccount
@@ -266,14 +265,10 @@ spec:
           {{- end }}
         {{- if .Values.clusterController.kubecostAPIKey }}
         - name: KUBECOST_API_KEY
-          value: {{ .Values.clusterController.kubecostAPIKey }}
-        {{- else }}
-        - name: KUBECOST_API_KEY
           valueFrom:
             secretKeyRef:
-              name: kubecostAPIKey
+              name: {{ .Values.clusterController.secretName }}
               key: kubecostAPIKey
-              optional: true
         {{- end }}
         {{- if .Values.clusterController.kubescaler }}
         - name: CC_KUBESCALER_DEFAULT_RESIZE_ALL
@@ -325,5 +320,4 @@ spec:
     targetPort: 9731
   selector:
     app: {{ template "kubecost.clusterControllerName" . }}
-{{- end }}
 {{- end }}
