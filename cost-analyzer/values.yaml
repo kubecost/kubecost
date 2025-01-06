@@ -1509,7 +1509,7 @@ forecasting:
   # fullImageName overrides the default image construction logic. The exact
   # image provided (registry, image, tag) will be used for the forecasting
   # container.
-  fullImageName: gcr.io/kubecost1/kubecost-modeling:v0.1.18
+  fullImageName: gcr.io/kubecost1/kubecost-modeling:v0.1.19
   imagePullPolicy: IfNotPresent
 
   # Resource specification block for the forecasting container.
