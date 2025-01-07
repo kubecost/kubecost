@@ -290,6 +290,11 @@ spec:
         {{- end }}
         {{- end }}
         {{- end }}
+        {{- if eq (include "rbacTeamsConfig" .) "true" }}
+        - name: kubecost-rbac-teams-config
+          configMap:
+            name: kubecost-rbac-teams-config
+        {{- end }}
         {{- if .Values.extraVolumes }}
         # Extra volume(s)
         {{- toYaml .Values.extraVolumes | nindent 8 }}

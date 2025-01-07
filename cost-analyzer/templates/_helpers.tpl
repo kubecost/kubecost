@@ -1018,6 +1018,10 @@ Begin Kubecost 2.0 templates
     - name: kubecost-rbac-secret
       mountPath: /var/configs/kubecost-rbac-secret
     {{- end }}
+    {{- if eq (include "rbacTeamsConfig" .) "true" }}
+    - name: kubecost-rbac-teams-config
+      mountPath: /var/configs/rbac-teams-configs
+    {{- end }}
     {{- if .Values.global.integrations.postgres.enabled }}
     - name: postgres-creds
       mountPath: /var/configs/integrations/postgres-creds
@@ -1178,6 +1182,10 @@ Begin Kubecost 2.0 templates
       value: "true"
     {{- end }}
     {{- end}}
+    {{- if eq (include "rbacTeamsConfig" .) "true" }}
+    - name: RBAC_TEAMS_HELM_CONFIG_PATH
+      value: "/var/configs/rbac-teams-configs/rbac-teams-configs.json"
+    {{- end }}
     {{- if .Values.kubecostAggregator }}
     {{- if .Values.kubecostAggregator.collections }}
     {{- if (((.Values.kubecostAggregator).collections).cache) }}
@@ -1396,6 +1404,14 @@ Groups is only used when using external RBAC.
     {{- printf "false" -}}
   {{- end -}}
 {{- end -}}
+
+{{- define "rbacTeamsConfig" -}}
+  {{- if (.Values.rbac).teamsConfig -}}
+    {{- printf "true" -}}
+  {{- else -}}
+    {{- printf "false" -}}
+  {{- end }}
+{{- end }}
 
 {{/*
 Backups configured flag for nginx configmap
