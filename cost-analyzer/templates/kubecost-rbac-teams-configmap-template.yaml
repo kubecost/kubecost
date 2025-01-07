@@ -1,0 +1,11 @@
+{{- if eq (include "rbacTeamsConfig" .) "true" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "kubecost-rbac-teams-config"
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+data:
+  rbac-teams-configs.json: '{{ toJson .Values.rbac.teamsConfig }}'
+{{- end }}
