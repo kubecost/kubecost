@@ -1,4 +1,4 @@
-{{- if eq (include "rbacTeamsConfig" .) "true" }}
+{{- if eq (include "rbacTeamsConfigEnabled" .) "true" }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -7,5 +7,5 @@ metadata:
   labels:
     {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
 data:
-  rbac-teams-configs.json: '{{ toJson .Values.rbac.teamsConfig }}'
+  rbac-teams-configs.json: '{{ toJson .Values.rbacTeams.teamsConfig }}'
 {{- end }}

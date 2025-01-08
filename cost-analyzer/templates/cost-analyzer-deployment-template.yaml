@@ -248,11 +248,6 @@ spec:
           configMap:
             name: {{ template "cost-analyzer.fullname" . }}-saml
         {{- end }}
-        {{- if .Values.saml.rbac.teamsEnabled }}
-        - name: kubecost-rbac-secret
-          secret:
-            secretName: kubecost-rbac-secret
-        {{- end }}
         {{- end }}
         {{- end }}
         {{- if .Values.oidc }}
@@ -270,14 +265,14 @@ spec:
           secret:
             secretName: {{ .Values.oidc.existingCustomSecret.name }}
         {{- end }}
-        {{- if .Values.oidc.rbac.teamsEnabled }}
+        {{- end }}
+        {{- end }}
+        {{- if eq (include "rbacTeamsEnabled" .) "true" }}
         - name: kubecost-rbac-secret
           secret:
             secretName: kubecost-rbac-secret
         {{- end }}
-        {{- end }}
-        {{- end }}
-        {{- if eq (include "rbacTeamsConfig" .) "true" }}
+        {{- if eq (include "rbacTeamsConfigEnabled" .) "true" }}
         - name: kubecost-rbac-teams-config
           configMap:
             name: kubecost-rbac-teams-config
@@ -704,7 +699,7 @@ spec:
             {{- end }}
             {{- end }}
             {{- end }}
-            {{- if or .Values.oidc.rbac.teamsEnabled .Values.saml.rbac.teamsEnabled }}
+            {{- if eq (include "rbacTeamsEnabled" .) "true" }}
             - name: kubecost-rbac-secret
               mountPath: /var/configs/kubecost-rbac-secret
             {{- end }}
@@ -751,8 +746,8 @@ spec:
               value: {{ .Values.assetReportConfigmapName }}
             {{- end }}
             {{- if .Values.cloudCostReportConfigmapName }}
-              - name: CLOUD_COST_REPORT_CONFIGMAP_NAME
-                value: {{ .Values.cloudCostReportConfigmapName }}
+            - name: CLOUD_COST_REPORT_CONFIGMAP_NAME
+              value: {{ .Values.cloudCostReportConfigmapName }}
             {{- end }}
             {{- if .Values.savedReportConfigmapName }}
             - name: SAVED_REPORT_CONFIGMAP_NAME
@@ -982,10 +977,6 @@ spec:
               value: "true"
             - name: OIDC_SKIP_ONLINE_VALIDATION
               value: {{ (quote .Values.oidc.skipOnlineTokenValidation) | default (quote false) }}
-            {{- if .Values.oidc.rbac.teamsEnabled }}
-            - name: OIDC_RBAC_TEAMS_ENABLED
-              value: "true"
-            {{- end }}
             {{- end }}
             {{- if .Values.saml }}
             {{- if .Values.saml.enabled }}
@@ -1023,10 +1014,16 @@ spec:
             - name: SAML_RESPONSE_ENCRYPTED
               value: "true"
             {{- end}}
-            {{- if .Values.saml.rbac.teamsEnabled }}
-            - name: SAML_RBAC_TEAMS_ENABLED
+            {{- end }}
+            {{- end }}
+            {{- if eq (include "rbacTeamsEnabled" .) "true" }}
+            {{- if .Values.oidc.enabled }}
+            - name: OIDC_RBAC_TEAMS_ENABLED
               value: "true"
             {{- end }}
+            {{- if .Values.saml.enabled }}
+            - name: SAML_RBAC_TEAMS_ENABLED
+              value: "true"
             {{- end }}
             {{- end }}
             {{- if and (.Values.prometheus.server.global.external_labels.cluster_id) (not .Values.prometheus.server.clusterIDConfigmap) }}

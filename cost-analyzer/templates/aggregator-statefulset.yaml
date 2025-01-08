@@ -145,11 +145,6 @@ spec:
           configMap:
             name: {{ template "cost-analyzer.fullname" . }}-saml
         {{- end }}
-        {{- if .Values.saml.rbac.teamsEnabled }}
-        - name: kubecost-rbac-secret
-          secret:
-            secretName: kubecost-rbac-secret
-        {{- end }}
         {{- end }}
         {{- end }}
         {{- if .Values.oidc }}
@@ -167,14 +162,14 @@ spec:
           secret:
             secretName: {{ .Values.oidc.existingCustomSecret.name }}
         {{- end }}
-        {{- if .Values.oidc.rbac.teamsEnabled }}
+        {{- end }}
+        {{- end }}
+        {{- if eq (include "rbacTeamsEnabled" .) "true" }}
         - name: kubecost-rbac-secret
           secret:
             secretName: kubecost-rbac-secret
         {{- end }}
-        {{- end }}
-        {{- end }}
-        {{- if eq (include "rbacTeamsConfig" .) "true" }}
+        {{- if eq (include "rbacTeamsConfigEnabled" .) "true" }}
         - name: kubecost-rbac-teams-config
           configMap:
             name: kubecost-rbac-teams-config

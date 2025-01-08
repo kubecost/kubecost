@@ -161,7 +161,7 @@ will result in failure. Users are asked to select one of the two presently-avail
 RBAC exclusivity check: make sure either RBAC or RBAC Teams is enabled, not both
 */}}
 {{- define "rbacCheck" -}}
-  {{- if or (and ((.Values.saml).rbac).teamsEnabled ((.Values.saml).rbac).enabled) (and ((.Values.oidc).rbac).teamsEnabled ((.Values.oidc).rbac).enabled) -}}
+  {{- if and (or ((.Values.saml).rbac).enabled ((.Values.oidc).rbac).enabled) (.Values.rbacTeams).enabled  -}}
     {{- fail "\nSimple RBAC and RBAC Teams are mutually exclusive. Please specify only one." -}}
   {{- end -}}
 {{- end -}}
@@ -1014,11 +1014,11 @@ Begin Kubecost 2.0 templates
     {{- end }}
     {{- end }}
     {{- end }}
-    {{- if or .Values.oidc.rbac.teamsEnabled .Values.saml.rbac.teamsEnabled }}
+    {{- if eq (include "rbacTeamsEnabled" .) "true" }}
     - name: kubecost-rbac-secret
       mountPath: /var/configs/kubecost-rbac-secret
     {{- end }}
-    {{- if eq (include "rbacTeamsConfig" .) "true" }}
+    {{- if eq (include "rbacTeamsConfigEnabled" .) "true" }}
     - name: kubecost-rbac-teams-config
       mountPath: /var/configs/rbac-teams-configs
     {{- end }}
@@ -1170,12 +1170,18 @@ Begin Kubecost 2.0 templates
       value: "true"
     - name: OIDC_SKIP_ONLINE_VALIDATION
       value: {{ (quote .Values.oidc.skipOnlineTokenValidation) | default (quote false) }}
-    {{- if .Values.oidc.rbac.teamsEnabled }}
+    {{- end}}
+    {{- if eq (include "rbacTeamsEnabled" .) "true" }}
+    {{- if .Values.oidc.enabled }}
     - name: OIDC_RBAC_TEAMS_ENABLED
       value: "true"
     {{- end }}
-    {{- end}}
-    {{- if eq (include "rbacTeamsConfig" .) "true" }}
+    {{- if .Values.saml.enabled }}
+    - name: SAML_RBAC_TEAMS_ENABLED
+      value: "true"
+    {{- end }}
+    {{- end }}
+    {{- if eq (include "rbacTeamsConfigEnabled" .) "true" }}
     - name: RBAC_TEAMS_HELM_CONFIG_PATH
       value: "/var/configs/rbac-teams-configs/rbac-teams-configs.json"
     {{- end }}
@@ -1221,10 +1227,6 @@ Begin Kubecost 2.0 templates
     {{- end}}
     {{- if .Values.saml.rbac.enabled }}
     - name: SAML_RBAC_ENABLED
-      value: "true"
-    {{- end }}
-    {{- if .Values.saml.rbac.teamsEnabled }}
-    - name: SAML_RBAC_TEAMS_ENABLED
       value: "true"
     {{- end }}
     {{- if and .Values.saml.encryptionCertSecret .Values.saml.decryptionKeySecret }}
@@ -1375,7 +1377,7 @@ SSO enabled flag for nginx configmap
 To use the Kubecost built-in Teams UI RBAC< you must enable SSO and RBAC and not specify any groups.
 Groups is only used when using external RBAC.
 */}}
-{{- define "rbacTeamsEnabled" -}}
+{{- define "rbacTeamsLegacyEnabled" -}}
   {{- if or (.Values.saml).enabled (.Values.oidc).enabled -}}
     {{- if or ((.Values.saml).rbac).enabled ((.Values.oidc).rbac).enabled -}}
       {{- if not (or (.Values.saml).groups (.Values.oidc).groups) -}}
@@ -1391,12 +1393,36 @@ Groups is only used when using external RBAC.
   {{- end -}}
 {{- end -}}
 
-{{- define "rbacTeamsConfig" -}}
-  {{- if (.Values.rbac).teamsConfig -}}
-    {{- printf "true" -}}
-  {{- else -}}
-    {{- printf "false" -}}
-  {{- end }}
+{{/*
+RBAC teams enabled requires that it be explicitly enabled in addition to SAML or OIDC being enabled
+and legacy RBAC being disabled.
+*/}}
+{{- define "rbacTeamsEnabled" -}}
+    {{- if or (.Values.saml).enabled (.Values.oidc).enabled -}}
+        {{- if and (not ((.Values.saml).rbac).enabled) (not ((.Values.oidc).rbac).enabled) -}}
+            {{- if (.Values.rbacTeams).enabled -}}
+                {{- printf "true" -}}
+            {{- else -}}
+                {{- printf "false" -}}
+            {{- end -}}
+        {{- else -}}
+            {{- printf "false" -}}
+        {{- end -}}
+    {{- else -}}
+        {{- printf "false" -}}
+    {{- end -}}
+{{- end }}
+
+{{- define "rbacTeamsConfigEnabled" -}}
+    {{- if  eq (include "rbacTeamsEnabled" .) "true" -}}
+        {{- if (.Values.rbacTeams).teamsConfig -}}
+            {{- printf "true" -}}
+        {{- else -}}
+            {{- printf "false" -}}
+        {{- end }}
+    {{- else -}}
+        {{- printf "false" -}}
+    {{- end }}
 {{- end }}
 
 {{/*
