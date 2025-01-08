@@ -1511,7 +1511,7 @@ data:
             return 200 '\n
                 {
                 "ssoConfigured": "{{ template "ssoEnabled" . }}",
-                "rbacTeamsEnabled": "{{ template "rbacTeamsEnabled" . }}",
+                "rbacTeamsEnabled": "{{ template "rbacTeamsLegacyEnabled" . }}",
                 "dataBackupConfigured": "{{ template "dataBackupConfigured" . }}",
                 "costEventsAuditEnabled": "{{ template "costEventsAuditEnabled" . }}",
                 "frontendDeployMethod": "{{ template "frontend.deployMethod" . }}",
