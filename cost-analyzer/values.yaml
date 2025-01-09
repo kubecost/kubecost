@@ -424,41 +424,41 @@ oidc:
     #       - "editor"
 
 rbacTeams:
-    enabled: false
-    # teamsConfig:
-    #   - id: ''
-    #     name: helm-team
-    #     roles:
-    #     - id: ''
-    #       name: helm-role
-    #       description: helm configrured role
-    #       pages:
-    #         showOverview: true
-    #         showAllocation: true
-    #         showAsset: true
-    #         showCloudCost: true
-    #         showClusters: true
-    #         showExternalCosts: true
-    #         showNetwork: true
-    #         showCollections: true
-    #         showReports: true
-    #         showInsights: true
-    #         showActions: true
-    #         showAlerts: true
-    #         showBudgets: true
-    #         showAnomalies: true
-    #         showEfficiency: true
-    #         showSettings: true
-    #       permissions: admin
-    #       routes: []
-    #       allocationFilters:
-    #       - key: cluster
-    #         operator: ":"
-    #         value: cluster-one
-    #       assetFilters: []
-    #       cloudCostFilters: [] 
-    #     claims:
-    #       NameID: email@domain.com
+  enabled: false
+  # teamsConfig:
+  #   - id: ''
+  #     name: helm-team
+  #     roles:
+  #     - id: ''
+  #       name: helm-role
+  #       description: helm configrured role
+  #       pages:
+  #         showOverview: true
+  #         showAllocation: true
+  #         showAsset: true
+  #         showCloudCost: true
+  #         showClusters: true
+  #         showExternalCosts: true
+  #         showNetwork: true
+  #         showCollections: true
+  #         showReports: true
+  #         showInsights: true
+  #         showActions: true
+  #         showAlerts: true
+  #         showBudgets: true
+  #         showAnomalies: true
+  #         showEfficiency: true
+  #         showSettings: true
+  #       permissions: admin
+  #       routes: []
+  #       allocationFilters:
+  #       - key: cluster
+  #         operator: ":"
+  #         value: cluster-one
+  #       assetFilters: []
+  #       cloudCostFilters: [] 
+  #     claims:
+  #       NameID: email@domain.com
 
 
 ## Adds the HTTP_PROXY, HTTPS_PROXY, and NO_PROXY environment variables to all
