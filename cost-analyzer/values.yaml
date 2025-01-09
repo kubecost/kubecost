@@ -1948,6 +1948,7 @@ reporting:
 serviceMonitor:  # the kubecost included prometheus uses scrapeConfigs and does not support service monitors. The following options assume an existing prometheus that supports serviceMonitors.
   enabled: false
   interval: 1m
+  sampleLimit: {}
   scrapeTimeout: 10s
   additionalLabels: {}
   metricRelabelings: []

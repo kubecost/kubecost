@@ -27,6 +27,7 @@ spec:
   namespaceSelector:
     matchNames:
       - {{ .Release.Namespace }}
+  sampleLimit: {{ .Values.serviceMonitor.sampleLimit }}
   selector:
     matchLabels:
       {{- include "cost-analyzer.selectorLabels" . | nindent 6 }}
