@@ -456,7 +456,7 @@ rbacTeams:
   #         operator: ":"
   #         value: cluster-one
   #       assetFilters: []
-  #       cloudCostFilters: [] 
+  #       cloudCostFilters: []
   #     claims:
   #       NameID: email@domain.com
 
