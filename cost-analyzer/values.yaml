@@ -423,8 +423,8 @@ oidc:
     #     claimValues:
     #       - "editor"
 
-rbacTeams:
-  enabled: false
+teams:
+  # teamsConfigMapName: kubecost-rbac-teams-config
   # teamsConfig:
   #   - id: ''
   #     name: helm-team

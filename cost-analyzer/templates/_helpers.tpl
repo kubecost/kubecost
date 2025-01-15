@@ -158,10 +158,10 @@ will result in failure. Users are asked to select one of the two presently-avail
 {{- end -}}
 
 {{/*
-RBAC exclusivity check: make sure either RBAC or RBAC Teams is enabled, not both
+RBAC exclusivity check: make sure either simple RBAC or RBAC Teams is configured, not both
 */}}
 {{- define "rbacCheck" -}}
-  {{- if and (or ((.Values.saml).rbac).enabled ((.Values.oidc).rbac).enabled) (.Values.rbacTeams).enabled  -}}
+  {{- if and (or (.Values.saml).groups (.Values.oidc).groups) (.Values.teams).teamsConfig  -}}
     {{- fail "\nSimple RBAC and RBAC Teams are mutually exclusive. Please specify only one." -}}
   {{- end -}}
 {{- end -}}
@@ -1233,8 +1233,10 @@ Begin Kubecost 2.0 templates
       value: {{ .Values.saml.redirectURL }}
     {{- end}}
     {{- if .Values.saml.rbac.enabled }}
+    {{- if eq (include "rbacTeamsEnabled" .) "false" }}
     - name: SAML_RBAC_ENABLED
       value: "true"
+    {{- end }}
     {{- end }}
     {{- if and .Values.saml.encryptionCertSecret .Values.saml.decryptionKeySecret }}
     - name: SAML_RESPONSE_ENCRYPTED
@@ -1388,10 +1390,10 @@ SSO enabled flag for nginx configmap
 {{- end -}}
 
 {{/*
-To use the Kubecost built-in Teams UI RBAC< you must enable SSO and RBAC and not specify any groups.
-Groups is only used when using external RBAC.
+To use the Kubecost built-in RBAC Teams UI, you must enable SSO and RBAC and not specify any groups.
+Groups is only used when using simple RBAC.
 */}}
-{{- define "rbacTeamsLegacyEnabled" -}}
+{{- define "rbacTeamsEnabled" -}}
   {{- if or (.Values.saml).enabled (.Values.oidc).enabled -}}
     {{- if or ((.Values.saml).rbac).enabled ((.Values.oidc).rbac).enabled -}}
       {{- if not (or (.Values.saml).groups (.Values.oidc).groups) -}}
@@ -1407,29 +1409,9 @@ Groups is only used when using external RBAC.
   {{- end -}}
 {{- end -}}
 
-{{/*
-RBAC teams enabled requires that it be explicitly enabled in addition to SAML or OIDC being enabled
-and legacy RBAC being disabled.
-*/}}
-{{- define "rbacTeamsEnabled" -}}
-    {{- if or (.Values.saml).enabled (.Values.oidc).enabled -}}
-        {{- if and (not ((.Values.saml).rbac).enabled) (not ((.Values.oidc).rbac).enabled) -}}
-            {{- if (.Values.rbacTeams).enabled -}}
-                {{- printf "true" -}}
-            {{- else -}}
-                {{- printf "false" -}}
-            {{- end -}}
-        {{- else -}}
-            {{- printf "false" -}}
-        {{- end -}}
-    {{- else -}}
-        {{- printf "false" -}}
-    {{- end -}}
-{{- end }}
-
 {{- define "rbacTeamsConfigEnabled" -}}
     {{- if  eq (include "rbacTeamsEnabled" .) "true" -}}
-        {{- if (.Values.rbacTeams).teamsConfig -}}
+        {{- if or (.Values.teams).teamsConfig  (.Values.teams).teamsConfigMapName -}}
             {{- printf "true" -}}
         {{- else -}}
             {{- printf "false" -}}

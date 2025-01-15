@@ -288,7 +288,11 @@ spec:
         {{- if eq (include "rbacTeamsConfigEnabled" .) "true" }}
         - name: kubecost-rbac-teams-config
           configMap:
+        {{- if .Values.teams.teamsConfigMapName }}
+            name: {{ .Values.teams.teamsConfigMapName }}
+        {{- else }}
             name: kubecost-rbac-teams-config
+        {{- end }}
         {{- end }}
         {{- if .Values.extraVolumes }}
         # Extra volume(s)
@@ -1053,8 +1057,10 @@ spec:
               value: {{ .Values.saml.redirectURL }}
             {{- end}}
             {{- if .Values.saml.rbac.enabled }}
+            {{- if eq (include "rbacTeamsEnabled" .) "false" }}
             - name: SAML_RBAC_ENABLED
               value: "true"
+            {{- end }}
             {{- end }}
             {{- if and .Values.saml.encryptionCertSecret .Values.saml.decryptionKeySecret }}
             - name: SAML_RESPONSE_ENCRYPTED
