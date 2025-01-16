@@ -985,8 +985,6 @@ spec:
               value: {{ (quote .Values.persistentVolume.enabled) | default (quote true) }}
             - name: MAX_QUERY_CONCURRENCY
               value: {{ (quote .Values.kubecostModel.maxQueryConcurrency) | default (quote 5) }}
-            - name: UTC_OFFSET
-              value: {{ (quote .Values.kubecostModel.utcOffset) | default (quote ) }}
             {{- if .Values.networkCosts }}
             {{- if .Values.networkCosts.enabled }}
             - name: NETWORK_COSTS_PORT

@@ -685,7 +685,6 @@ kubecostModel:
   #   - name: ASSET_INCLUDE_LOCAL_DISK_COST
   #     value: "true"
 
-  utcOffset: "+00:00"
   extraPorts: []
 
 ## etlUtils is a utility typically used by Enterprise customers transitioning
