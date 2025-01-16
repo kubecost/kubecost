@@ -423,9 +423,9 @@ oidc:
     #     claimValues:
     #       - "editor"
 
-teams:
-  # teamsConfigMapName: kubecost-rbac-teams-config
-  # teamsConfig:
+# teams:
+  # teamsConfigMapName: kubecost-rbac-teams-config # Name of the ConfigMap containing the teams configuration, if manually created, which overrides any other configured teams
+  # teamsConfig: # Values-defined teams configuration, if teamsConfigMapName is not set, which will override UI-configured teams
   #   - id: ''
   #     name: helm-team
   #     roles:
