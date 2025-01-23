@@ -543,7 +543,7 @@ kubecostFrontend:
   nginxHeaders:
     # applied to all route locations
     server:
-      - Content-Security-Policy "default-src 'self' cdn.userway.org; frame-ancestors 'none';";
+      - Content-Security-Policy "default-src 'self' 'unsafe-inline' api.userway.org cdn.userway.org api-js.mixpanel.com keyper.kubecost.com; frame-ancestors 'none'; font-src 'self' data:;";
       - Cache-Control "must-revalidate";
     # per-location headers
     location:
