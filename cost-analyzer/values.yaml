@@ -539,11 +539,12 @@ kubecostFrontend:
 #    fqdn: cluster-controller.kubecost.svc.cluster.local:9731
 #
 
-  # Configurable, optional headers for nginx responses.
+  # Configurable headers for nginx responses.
   nginxHeaders:
     # applied to all route locations
     server:
       - Content-Security-Policy "default-src 'self' cdn.userway.org; frame-ancestors 'none';";
+      - Cache-Control "must-revalidate";
     # per-location headers
     location:
       root: []
@@ -2491,4 +2492,3 @@ extraObjects: []
 # -- Optional override for the image used for the basic health test container
 # basicHealth:
 #   fullImageName: alpine/k8s:1.26.9
-

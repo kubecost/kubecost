@@ -153,7 +153,6 @@ data:
         root /var/www;
         index index.html;
 
-        add_header Cache-Control "must-revalidate";
         {{- range .Values.kubecostFrontend.nginxHeaders.server }}
         add_header {{ . }}
         {{- end }}
