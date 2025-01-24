@@ -423,43 +423,44 @@ oidc:
     #     claimValues:
     #       - "editor"
 
-# teams:
-  # teamsConfigMapName: kubecost-rbac-teams-config # Name of the ConfigMap containing the teams configuration, if manually created, which overrides any other configured teams
-  # teamsConfig: # Values-defined teams configuration, if teamsConfigMapName is not set, which will override UI-configured teams
-  #   - id: ''
-  #     name: helm-team
-  #     roles:
-  #     - id: ''
-  #       name: helm-role
-  #       description: helm configrured role
-  #       pages:
-  #         showOverview: true
-  #         showAllocation: true
-  #         showAsset: true
-  #         showCloudCost: true
-  #         showClusters: true
-  #         showExternalCosts: true
-  #         showNetwork: true
-  #         showCollections: true
-  #         showReports: true
-  #         showInsights: true
-  #         showActions: true
-  #         showAlerts: true
-  #         showBudgets: true
-  #         showAnomalies: true
-  #         showEfficiency: true
-  #         showSettings: true
-  #       permissions: admin
-  #       routes: []
-  #       allocationFilters:
-  #       - key: cluster
-  #         operator: ":"
-  #         value: cluster-one
-  #       assetFilters: []
-  #       cloudCostFilters: []
-  #     claims:
-  #       NameID: email@domain.com
-
+## Kubecost Teams (enterprise key required)
+## Ref: https://docs.kubecost.com/using-kubecost/navigating-the-kubecost-ui/teams
+teams:
+  teamsConfigMapName: ""  # Name of the ConfigMap containing the teams configuration, if manually created, which overrides any other configured teams
+  teamsConfig: []  # List of teams configurations, if teamsConfigMapName is not set, which will override UI-configured teams
+    # - id: ''
+    #   name: helm-team
+    #   roles:
+    #   - id: ''
+    #     name: helm-role
+    #     description: helm configrured role
+    #     pages:
+    #       showOverview: true
+    #       showAllocation: true
+    #       showAsset: true
+    #       showCloudCost: true
+    #       showClusters: true
+    #       showExternalCosts: true
+    #       showNetwork: true
+    #       showCollections: true
+    #       showReports: true
+    #       showInsights: true
+    #       showActions: true
+    #       showAlerts: true
+    #       showBudgets: true
+    #       showAnomalies: true
+    #       showEfficiency: true
+    #       showSettings: true
+    #     permissions: admin
+    #     routes: []
+    #     allocationFilters:
+    #     - key: cluster
+    #       operator: ":"
+    #       value: cluster-one
+    #     assetFilters: []
+    #     cloudCostFilters: []
+    #   claims:
+    #     NameID: email@domain.com
 
 ## Adds the HTTP_PROXY, HTTPS_PROXY, and NO_PROXY environment variables to all
 ## containers. Typically used in environments that have firewall rules which
