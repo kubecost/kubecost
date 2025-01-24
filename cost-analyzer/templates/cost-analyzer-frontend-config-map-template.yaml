@@ -277,6 +277,7 @@ data:
             proxy_set_header  X-Real-IP  $remote_addr;
             proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
         }
+        # This location is used to remain compatible with older configurations of Kubecost SSO. All SSO logic should now be handled by the Aggregator container.
         location /model/oidc/ {
             proxy_connect_timeout       180;
             proxy_send_timeout          180;
@@ -301,6 +302,7 @@ data:
             proxy_set_header  X-Real-IP  $remote_addr;
             proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
         }
+        # This location is used to remain compatible with older configurations of Kubecost SSO. All SSO logic should now be handled by the Aggregator container.
         location /model/saml/ {
             proxy_connect_timeout       180;
             proxy_send_timeout          180;
@@ -337,6 +339,7 @@ data:
             proxy_set_header  X-Real-IP  $remote_addr;
             proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
         }
+        # This location is used to remain compatible with older configurations of Kubecost SSO. All SSO logic should now be handled by the Aggregator container.
         location /model/login {
             proxy_connect_timeout       180;
             proxy_send_timeout          180;
@@ -349,7 +352,7 @@ data:
             proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header  X-Original-URI $request_uri;
         }
-
+        # This location is used to remain compatible with older configurations of Kubecost SSO. All SSO logic should now be handled by the Aggregator container.
         location /model/logout {
             proxy_connect_timeout       180;
             proxy_send_timeout          180;
@@ -381,6 +384,7 @@ data:
         location /auth {
             proxy_pass http://aggregator/isAuthenticated;
         }
+        # This location is used to remain compatible with older configurations of Kubecost SSO. All SSO logic should now be handled by the Aggregator container.
         location /model/auth {
             proxy_pass http://aggregator/isAuthenticated;
         }
@@ -389,6 +393,7 @@ data:
         location /auth {
             proxy_pass http://aggregator/isAuthenticated;
         }
+        # This location is used to remain compatible with older configurations of Kubecost SSO. All SSO logic should now be handled by the Aggregator container.
         location /model/auth {
             proxy_pass http://aggregator/isAuthenticated;
         }
@@ -396,6 +401,7 @@ data:
         location /authrbac {
             proxy_pass http://aggregator/isAdminAuthenticated;
         }
+        # This location is used to remain compatible with older configurations of Kubecost SSO. All SSO logic should now be handled by the Aggregator container.
         location /model/authrbac {
             proxy_pass http://aggregator/isAdminAuthenticated;
         }
