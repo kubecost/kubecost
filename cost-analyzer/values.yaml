@@ -423,6 +423,45 @@ oidc:
     #     claimValues:
     #       - "editor"
 
+## Kubecost Teams (enterprise key required)
+## Ref: https://docs.kubecost.com/using-kubecost/navigating-the-kubecost-ui/teams
+teams:
+  teamsConfigMapName: ""  # Name of the ConfigMap containing the teams configuration, if manually created, which overrides any other configured teams
+  teamsConfig: []  # List of teams configurations, if teamsConfigMapName is not set, which will override UI-configured teams
+    # - id: ''
+    #   name: helm-team
+    #   roles:
+    #   - id: ''
+    #     name: helm-role
+    #     description: helm configrured role
+    #     pages:
+    #       showOverview: true
+    #       showAllocation: true
+    #       showAsset: true
+    #       showCloudCost: true
+    #       showClusters: true
+    #       showExternalCosts: true
+    #       showNetwork: true
+    #       showCollections: true
+    #       showReports: true
+    #       showInsights: true
+    #       showActions: true
+    #       showAlerts: true
+    #       showBudgets: true
+    #       showAnomalies: true
+    #       showEfficiency: true
+    #       showSettings: true
+    #     permissions: admin
+    #     routes: []
+    #     allocationFilters:
+    #     - key: cluster
+    #       operator: ":"
+    #       value: cluster-one
+    #     assetFilters: []
+    #     cloudCostFilters: []
+    #   claims:
+    #     NameID: email@domain.com
+
 ## Adds the HTTP_PROXY, HTTPS_PROXY, and NO_PROXY environment variables to all
 ## containers. Typically used in environments that have firewall rules which
 ## prevent kubecost from accessing cloud provider resources.
@@ -685,7 +724,6 @@ kubecostModel:
   #   - name: ASSET_INCLUDE_LOCAL_DISK_COST
   #     value: "true"
 
-  utcOffset: "+00:00"
   extraPorts: []
 
 ## etlUtils is a utility typically used by Enterprise customers transitioning
@@ -853,7 +891,7 @@ prometheus:
       rollingUpdate: null
     image:
       repository: quay.io/prometheus/prometheus
-      tag: v3.0.1
+      tag: v3.1.0
       pullPolicy: IfNotPresent
     priorityClassName: ""
     prefixURL: ""
@@ -1000,7 +1038,7 @@ prometheus:
     name: alertmanager
     image:
       repository: quay.io/prometheus/alertmanager
-      tag: v0.27.0
+      tag: v0.28.0
       pullPolicy: IfNotPresent
     priorityClassName: ""
     extraArgs: {}
@@ -1211,7 +1249,7 @@ prometheus:
           # As the scrape endpoints for cAdvisor have changed
           # if you are using older version you need to change the replacement to
           # replacement: /api/v1/nodes/$1:4194/proxy/metrics
-          # more info here https://github.com/coreos/prometheus-operator/issues/633
+          # more info here https://github.com/prometheus-operator/prometheus-operator/issues/633
           relabel_configs:
             - action: labelmap
               regex: __meta_kubernetes_node_label_(.+)
@@ -2077,7 +2115,7 @@ grafana:
   sidecar:
     image:
       repository: ghcr.io/kiwigrid/k8s-sidecar
-      tag: 1.28.4
+      tag: 1.29.0
       pullPolicy: IfNotPresent
     resources: {}
     dashboards:
