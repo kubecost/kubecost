@@ -72,7 +72,7 @@ Parameter | Description | Default
 `ingress.hosts` | Ingress hostnames | `[cost-analyzer.local]`
 `ingress.tls` | Ingress TLS configuration (YAML) | `[]`
 `networkCosts.enabled` | If true, collect network allocation metrics [More info](https://docs.kubecost.com/using-kubecost/navigating-the-kubecost-ui/cost-allocation/network-allocation) | `false`
-`networkCosts.podMonitor.enabled` | If true, a [PodMonitor](https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#podmonitor) for the network-cost daemonset is created | `false`
+`networkCosts.podMonitor.enabled` | If true, a PodMonitor for the network-cost daemonset is created | `false`
 `serviceMonitor.enabled` | Set this to `true` to create ServiceMonitor for Prometheus operator | `false`
 `serviceMonitor.additionalLabels` | Additional labels that can be used so ServiceMonitor will be discovered by Prometheus | `{}`
 `prometheusRule.enabled` | Set this to `true` to create PrometheusRule for Prometheus operator | `false`
@@ -88,14 +88,23 @@ Parameter | Description | Default
 
 ## Adjusting Log Output
 
-The log output can be customized during deployment by using the `LOG_LEVEL` and/or `LOG_FORMAT` environment variables.
+You can adjust the log output by using the `logLevel` Helm value and/or the `LOG_FORMAT` environment variable.
 
 ### Adjusting Log Level
 
-Adjusting the log level increases or decreases the level of verbosity written to the logs. To set the log level to `trace`, the following flag can be added to the `helm` command.
+Adjusting the log level increases or decreases the level of verbosity written to the logs. The `logLevel` property accepts the following values:
+
+* `trace`
+* `debug`
+* `info`
+* `warn`
+* `error`
+* `fatal`
+
+For example, to set the log level to `debug`, add the following flag to the Helm command:
 
 ```sh
---set 'kubecostModel.extraEnv[0].name=LOG_LEVEL,kubecostModel.extraEnv[0].value=trace'
+--set 'kubecostModel.logLevel=debug'
 ```
 
 ### Adjusting Log Format
