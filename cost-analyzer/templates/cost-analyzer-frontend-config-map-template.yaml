@@ -167,6 +167,7 @@ data:
         }
 
 {{- if or .Values.saml.enabled .Values.oidc.enabled }}
+
         add_header Cache-Control "max-age=0";
         location / {
             auth_request /auth;
@@ -178,10 +179,14 @@ data:
             error_page 401 = /login;
             try_files $uri $uri/ /index.html;
         }
+        
+        # need to be served outside of the auth middleware
         location /healthz {
             add_header 'Content-Type' 'text/plain';
             return 200 "healthy\n";
         }
+        location = /teamsError.html { }
+
 {{- else }}
         add_header Cache-Control "max-age=300";
         location / {
