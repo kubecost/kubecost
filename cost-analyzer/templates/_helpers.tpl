@@ -158,6 +158,15 @@ will result in failure. Users are asked to select one of the two presently-avail
 {{- end -}}
 
 {{/*
+RBAC exclusivity check: make sure either simple RBAC or RBAC Teams is configured, not both
+*/}}
+{{- define "rbacCheck" -}}
+  {{- if and (or (.Values.saml).groups (.Values.oidc).groups) (.Values.teams).teamsConfig  -}}
+    {{- fail "\nSimple RBAC and RBAC Teams are mutually exclusive. Please specify only one." -}}
+  {{- end -}}
+{{- end -}}
+
+{{/*
 Federated Storage source contents check. Either the Secret must be specified or the JSON, not both.
 */}}
 {{- define "federatedStorageSourceCheck" -}}
@@ -1005,6 +1014,14 @@ Begin Kubecost 2.0 templates
     {{- end }}
     {{- end }}
     {{- end }}
+    {{- if eq (include "rbacTeamsEnabled" .) "true" }}
+    - name: kubecost-rbac-secret
+      mountPath: /var/configs/kubecost-rbac-secret
+    {{- end }}
+    {{- if eq (include "rbacTeamsConfigEnabled" .) "true" }}
+    - name: kubecost-rbac-teams-config
+      mountPath: /var/configs/rbac-teams-configs
+    {{- end }}
     {{- if .Values.global.integrations.postgres.enabled }}
     - name: postgres-creds
       mountPath: /var/configs/integrations/postgres-creds
@@ -1161,6 +1178,20 @@ Begin Kubecost 2.0 templates
     - name: OIDC_SKIP_ONLINE_VALIDATION
       value: {{ (quote .Values.oidc.skipOnlineTokenValidation) | default (quote false) }}
     {{- end}}
+    {{- if eq (include "rbacTeamsEnabled" .) "true" }}
+    {{- if .Values.oidc.enabled }}
+    - name: OIDC_RBAC_TEAMS_ENABLED
+      value: "true"
+    {{- end }}
+    {{- if .Values.saml.enabled }}
+    - name: SAML_RBAC_TEAMS_ENABLED
+      value: "true"
+    {{- end }}
+    {{- end }}
+    {{- if eq (include "rbacTeamsConfigEnabled" .) "true" }}
+    - name: RBAC_TEAMS_HELM_CONFIG_PATH
+      value: "/var/configs/rbac-teams-configs/rbac-teams-configs.json"
+    {{- end }}
     {{- if .Values.kubecostAggregator }}
     {{- if .Values.kubecostAggregator.collections }}
     {{- if (((.Values.kubecostAggregator).collections).cache) }}
@@ -1202,8 +1233,10 @@ Begin Kubecost 2.0 templates
       value: {{ .Values.saml.redirectURL }}
     {{- end}}
     {{- if .Values.saml.rbac.enabled }}
+    {{- if eq (include "rbacTeamsEnabled" .) "false" }}
     - name: SAML_RBAC_ENABLED
       value: "true"
+    {{- end }}
     {{- end }}
     {{- if and .Values.saml.encryptionCertSecret .Values.saml.decryptionKeySecret }}
     - name: SAML_RESPONSE_ENCRYPTED
@@ -1357,8 +1390,8 @@ SSO enabled flag for nginx configmap
 {{- end -}}
 
 {{/*
-To use the Kubecost built-in Teams UI RBAC< you must enable SSO and RBAC and not specify any groups.
-Groups is only used when using external RBAC.
+To use the Kubecost built-in RBAC Teams UI, you must enable SSO and RBAC and not specify any groups.
+Groups is only used when using simple RBAC.
 */}}
 {{- define "rbacTeamsEnabled" -}}
   {{- if or (.Values.saml).enabled (.Values.oidc).enabled -}}
@@ -1375,6 +1408,18 @@ Groups is only used when using external RBAC.
     {{- printf "false" -}}
   {{- end -}}
 {{- end -}}
+
+{{- define "rbacTeamsConfigEnabled" -}}
+    {{- if  eq (include "rbacTeamsEnabled" .) "true" -}}
+        {{- if or (.Values.teams).teamsConfig  (.Values.teams).teamsConfigMapName -}}
+            {{- printf "true" -}}
+        {{- else -}}
+            {{- printf "false" -}}
+        {{- end }}
+    {{- else -}}
+        {{- printf "false" -}}
+    {{- end }}
+{{- end }}
 
 {{/*
 Backups configured flag for nginx configmap

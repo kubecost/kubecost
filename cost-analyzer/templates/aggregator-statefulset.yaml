@@ -164,6 +164,20 @@ spec:
         {{- end }}
         {{- end }}
         {{- end }}
+        {{- if eq (include "rbacTeamsEnabled" .) "true" }}
+        - name: kubecost-rbac-secret
+          secret:
+            secretName: kubecost-rbac-secret
+        {{- end }}
+        {{- if eq (include "rbacTeamsConfigEnabled" .) "true" }}
+        - name: kubecost-rbac-teams-config
+          configMap:
+        {{- if .Values.teams.teamsConfigMapName }}
+            name: {{ .Values.teams.teamsConfigMapName }}
+        {{- else }}
+            name: kubecost-rbac-teams-config
+        {{- end }}
+        {{- end }}
         {{- if .Values.global.integrations.postgres.enabled }}
         - name: postgres-creds
           secret:
