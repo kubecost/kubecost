@@ -190,6 +190,12 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- if .Values.global.additionalLabels }}
+    {{- toYaml .Values.global.additionalLabels | nindent 4 }}
+    {{- end }}
+    {{- if .Values.clusterController.labels }}
+    {{- toYaml .Values.clusterController.labels | nindent 4 }}
+    {{- end }}
   annotations:
   {{- with .Values.global.annotations }}
     {{- toYaml . | nindent 4 }}
@@ -210,11 +216,29 @@ spec:
     metadata:
       labels:
         app: {{ template "kubecost.clusterControllerName" . }}
+        {{- if .Values.global.additionalLabels }}
+        {{- toYaml .Values.global.additionalLabels | nindent 8 }}
+        {{- end }}
+        {{- if .Values.clusterController.labels }}
+        {{- toYaml .Values.clusterController.labels | nindent 8 }}
+        {{- end }}
       {{- with .Values.global.podAnnotations}}
       annotations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
+      {{- if .Values.global.platforms.openshift.enabled }}
+      securityContext:
+      {{- toYaml .Values.global.platforms.openshift.securityContext | nindent 8 }}
+      {{- else if .Values.global.securityContext }}
+      securityContext:
+      {{- toYaml .Values.global.securityContext | nindent 8 }}
+      {{- else }}
+      securityContext:
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+      {{- end }}
       {{- if .Values.clusterController.priorityClassName }}
       priorityClassName: "{{ .Values.clusterController.priorityClassName }}"
       {{- end }}
@@ -226,6 +250,12 @@ spec:
         image: {{ .Values.clusterController.image.repository }}:{{ .Values.clusterController.image.tag }}
         {{- end}}
         imagePullPolicy: {{ .Values.clusterController.imagePullPolicy }}
+        securityContext:
+        {{- if .Values.clusterController.securityContext }}
+          {{- toYaml .Values.clusterController.securityContext | nindent 10 -}}
+        {{- else if .Values.global.containerSecurityContext }}
+          {{- toYaml .Values.global.containerSecurityContext | nindent 10 -}}
+        {{- end }}
         volumeMounts:
         - name: cluster-controller-keys
           mountPath: /var/keys
@@ -266,6 +296,12 @@ spec:
           hostPort: 9731
         resources:
           {{- toYaml .Values.clusterController.resources | nindent 12 }}
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range $.Values.imagePullSecrets }}
+        - name: {{ .name }}
+        {{- end }}
+      {{- end }}
       serviceAccount: {{ template "kubecost.clusterControllerName" . }}
       serviceAccountName: {{ template "kubecost.clusterControllerName" . }}
       {{- with .Values.clusterController.tolerations }}

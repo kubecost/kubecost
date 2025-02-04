@@ -1867,6 +1867,8 @@ clusterController:
 
   ## Annotations to be added for cluster controller template
   annotations: {}
+  labels: {}
+  securityContext: {}
   resources: {}
   affinity: {}
   nodeSelector: {}
