@@ -186,6 +186,7 @@ data:
             return 200 "healthy\n";
         }
         location = /teamsError.html { }
+        location = /images/kubecost-logo.svg { }
 
 {{- else }}
         add_header Cache-Control "max-age=300";
