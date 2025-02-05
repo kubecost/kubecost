@@ -1864,7 +1864,6 @@ clusterController:
   imagePullPolicy: IfNotPresent
   priorityClassName: ""
   tolerations: []
-  ## Annotations to be added for cluster controller template
   annotations: {}
   labels: {}
   securityContext: {}
@@ -1872,7 +1871,7 @@ clusterController:
   affinity: {}
   nodeSelector: {}
   primaryKubecostURL: ""  # URL for secondary clusters to connect to primary Kubecost
-  kubecostAPIKey: ""  # API Key for secondary clusters to authenticate with primary
+  kubecostAPIKey: ""  # API Key for secondary clusters to authenticate with primary (ex: https://kubecost.myorganization.com)
   createClusterControllerSecret: true  # disable if you want to use your own secret manager
   secretName: controller-secrets
   actionConfigs:
