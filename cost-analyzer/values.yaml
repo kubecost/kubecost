@@ -1870,8 +1870,8 @@ clusterController:
   resources: {}
   affinity: {}
   nodeSelector: {}
-  primaryKubecostURL: ""  # URL for secondary clusters to connect to primary Kubecost
-  kubecostAPIKey: ""  # API Key for secondary clusters to authenticate with primary (ex: https://kubecost.myorganization.com)
+  primaryKubecostURL: ""  # URL for secondary clusters to connect to primary Kubecost (ex: https://kubecost.myorganization.com)
+  kubecostAPIKey: ""  # API Key for secondary clusters to authenticate with primary
   createClusterControllerSecret: true  # disable if you want to use your own secret manager
   secretName: controller-secrets
   actionConfigs:
