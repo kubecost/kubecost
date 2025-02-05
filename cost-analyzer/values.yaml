@@ -1864,14 +1864,16 @@ clusterController:
   imagePullPolicy: IfNotPresent
   priorityClassName: ""
   tolerations: []
-
-  ## Annotations to be added for cluster controller template
   annotations: {}
   labels: {}
   securityContext: {}
   resources: {}
   affinity: {}
   nodeSelector: {}
+  primaryKubecostURL: ""  # URL for secondary clusters to connect to primary Kubecost (ex: https://kubecost.myorganization.com)
+  kubecostAPIKey: ""  # API Key for secondary clusters to authenticate with primary
+  createClusterControllerSecret: true  # disable if you want to use your own secret manager
+  secretName: controller-secrets
   actionConfigs:
     # this configures the Kubecost Cluster Turndown action
     # for more details, see documentation at https://github.com/kubecost/cluster-turndown/tree/develop?tab=readme-ov-file#setting-a-turndown-schedule

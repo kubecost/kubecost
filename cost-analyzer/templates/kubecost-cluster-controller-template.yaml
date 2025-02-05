@@ -1,5 +1,4 @@
-{{- if .Values.clusterController }}
-{{- if .Values.clusterController.enabled }}
+{{- if (.Values.clusterController).enabled }}
 {{- $serviceName := include "cost-analyzer.serviceName" . -}}
 apiVersion: v1
 kind: ServiceAccount
@@ -283,9 +282,24 @@ spec:
         - name: CC_LOG_LEVEL
           value: {{ .Values.clusterController.logLevel | default "info" }}
         - name: CC_KUBESCALER_COST_MODEL_PATH
+          {{- if .Values.clusterController.primaryKubecostURL }}
+          value: {{ .Values.clusterController.primaryKubecostURL }}/model
+          {{- else }}
           value: http://{{ $serviceName }}.{{ .Release.Namespace }}:{{ .Values.service.targetPort | default 9090 }}/model
+          {{- end }}
         - name: CC_CCL_COST_MODEL_PATH
+          {{- if .Values.clusterController.primaryKubecostURL }}
+          value: {{ .Values.clusterController.primaryKubecostURL }}/model
+          {{- else }}
           value: http://{{ $serviceName }}.{{ .Release.Namespace }}:{{ .Values.service.targetPort | default 9090 }}/model
+          {{- end }}
+        {{- if .Values.clusterController.kubecostAPIKey }}
+        - name: KUBECOST_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.clusterController.secretName }}
+              key: kubecostAPIKey
+        {{- end }}
         {{- if .Values.clusterController.kubescaler }}
         - name: CC_KUBESCALER_DEFAULT_RESIZE_ALL
           value: {{ .Values.clusterController.kubescaler.defaultResizeAll | default "false" | quote }}
@@ -342,5 +356,17 @@ spec:
     targetPort: 9731
   selector:
     app: {{ template "kubecost.clusterControllerName" . }}
+---
+{{- if and .Values.clusterController.createClusterControllerSecret .Values.clusterController.kubecostAPIKey }}
+apiVersion: v1
+kind: Secret
+type: Opaque
+metadata:
+  name: {{ .Values.clusterController.secretName }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+data:
+  kubecostAPIKey: {{ .Values.clusterController.kubecostAPIKey | b64enc }}
 {{- end }}
 {{- end }}
