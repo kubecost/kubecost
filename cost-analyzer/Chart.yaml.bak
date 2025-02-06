@@ -1,5 +1,5 @@
 apiVersion: v2
-appVersion: "2.6.0-rc.4"
+appVersion: "2.6.0-rc.5"
 description: Kubecost Helm chart - monitor your cloud costs!
 name: cost-analyzer
 version: "2.6.0-rc.4"
