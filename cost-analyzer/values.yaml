@@ -537,6 +537,16 @@ kubecostFrontend:
 #    fqdn: kubecost-multi-diag.kubecost.svc.cluster.local:9007
 #  clusterController:
 #    fqdn: cluster-controller.kubecost.svc.cluster.local:9731
+#
+
+  # Configurable headers for nginx responses.
+  nginxHeaders:
+    # applied to all route locations
+    server:
+      - "'Access-Control-Allow-Origin' '*' always;"
+      - "'Access-Control-Allow-Methods' 'GET, PUT, POST, DELETE, OPTIONS' always;"
+      - Content-Security-Policy "default-src 'self' 'unsafe-inline' api.userway.org cdn.userway.org api-js.mixpanel.com keyper.kubecost.com; frame-ancestors 'none'; font-src 'self' data:;";
+      - Cache-Control "must-revalidate";
 
 # Kubecost Metrics deploys a separate pod which will emit kubernetes specific metrics required
 # by the cost-model. This pod is designed to remain active and decoupled from the cost-model itself.
