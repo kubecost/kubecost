@@ -24,6 +24,3 @@ serviceMonitor:
 
 prometheusRule:
   enabled: true
-
-kubecostMetrics:
-  emitKsmV1Metrics: false
