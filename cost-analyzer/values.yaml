@@ -1552,6 +1552,7 @@ kubecostDeployment:
 ## patterns observed by Kubecost.
 forecasting:
   enabled: true
+  fullImageName: ""
   image:
     repository: public.ecr.aws/kubecost/kubecost-modeling
     tag: v0.1.19
