@@ -1396,7 +1396,7 @@ Groups is only used when using simple RBAC.
 {{- define "rbacTeamsEnabled" -}}
   {{- if or (.Values.saml).enabled (.Values.oidc).enabled -}}
     {{- if or ((.Values.saml).rbac).enabled ((.Values.oidc).rbac).enabled -}}
-      {{- if not (or (.Values.saml).groups (.Values.oidc).groups) -}}
+      {{- if not (or ((.Values.saml).rbac).groups ((.Values.oidc).rbac).groups) -}}
         {{- printf "true" -}}
         {{- else -}}
         {{- printf "false" -}}
