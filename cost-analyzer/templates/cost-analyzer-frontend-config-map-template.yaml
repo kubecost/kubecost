@@ -153,7 +153,9 @@ data:
         root /var/www;
         index index.html;
 
-        add_header Cache-Control "must-revalidate";
+        {{- range .Values.kubecostFrontend.nginxHeaders.server }}
+        add_header {{ . }}
+        {{- end }}
 
         {{- if .Values.kubecostFrontend.extraServerConfig }}
         {{- .Values.kubecostFrontend.extraServerConfig | toString | nindent 8 -}}
@@ -240,8 +242,6 @@ data:
 
         location ~ ^/(turndown|cluster)/ {
 
-            add_header 'Access-Control-Allow-Origin' '*' always;
-            add_header 'Access-Control-Allow-Methods' 'GET, PUT, POST, DELETE, OPTIONS' always;
 {{- if .Values.clusterController }}
 {{- if .Values.clusterController.enabled }}
             {{- if or .Values.saml .Values.oidc }}
@@ -1473,8 +1473,6 @@ data:
 {{- end }}
         location = /model/hideOrphanedResources {
             default_type 'application/json';
-            add_header 'Access-Control-Allow-Origin' '*' always;
-            add_header 'Access-Control-Allow-Methods' 'GET, PUT, POST, DELETE, OPTIONS' always;
             {{- if .Values.kubecostFrontend.hideOrphanedResources }}
             return 200 '{"hideOrphanedResources": "true"}';
             {{- else }}
@@ -1483,8 +1481,6 @@ data:
         }
         location = /model/hideDiagnostics {
             default_type 'application/json';
-            add_header 'Access-Control-Allow-Origin' '*' always;
-            add_header 'Access-Control-Allow-Methods' 'GET, PUT, POST, DELETE, OPTIONS' always;
             {{- if .Values.kubecostFrontend.hideDiagnostics }}
             return 200 '{"hideDiagnostics": "true"}';
             {{- else }}
@@ -1500,8 +1496,6 @@ data:
 
         location /model/multi-cluster-diagnostics-enabled {
             default_type 'application/json';
-            add_header 'Access-Control-Allow-Origin' '*' always;
-            add_header 'Access-Control-Allow-Methods' 'GET, PUT, POST, DELETE, OPTIONS' always;
             {{- if and .Values.diagnostics.enabled .Values.diagnostics.primary.enabled }}
             {{- if or (not (empty .Values.kubecostModel.federatedStorageConfigSecret )) .Values.kubecostModel.federatedStorageConfig }}
             return 200 '{"multiClusterDiagnosticsEnabled": true}';
@@ -1521,8 +1515,6 @@ data:
         # Deployment, we should forward that path to the K8s Service.
         location /model/diagnostics/multicluster {
             default_type 'application/json';
-            add_header 'Access-Control-Allow-Origin' '*' always;
-            add_header 'Access-Control-Allow-Methods' 'GET, PUT, POST, DELETE, OPTIONS' always;
             proxy_read_timeout          300;
             proxy_pass http://multi-cluster-diagnostics/status;
             proxy_redirect off;
@@ -1533,8 +1525,6 @@ data:
         # simple alias for support
         location /mcd {
             default_type 'application/json';
-            add_header 'Access-Control-Allow-Origin' '*' always;
-            add_header 'Access-Control-Allow-Methods' 'GET, PUT, POST, DELETE, OPTIONS' always;
             proxy_read_timeout          300;
             proxy_pass http://multi-cluster-diagnostics/status?window=7d;
             proxy_redirect off;
@@ -1554,8 +1544,6 @@ data:
         {{- if .Values.forecasting.enabled }}
         location /forecasting {
             default_type 'application/json';
-            add_header 'Access-Control-Allow-Origin' '*' always;
-            add_header 'Access-Control-Allow-Methods' 'GET, PUT, POST, DELETE, OPTIONS' always;
             proxy_read_timeout          300;
             proxy_pass http://forecasting/;
             proxy_redirect off;
@@ -1572,8 +1560,6 @@ data:
 
         location /model/productConfigs {
             default_type 'application/json';
-            add_header 'Access-Control-Allow-Origin' '*' always;
-            add_header 'Access-Control-Allow-Methods' 'GET, PUT, POST, DELETE, OPTIONS' always;
             return 200 '\n
                 {
                 "ssoConfigured": "{{ template "ssoEnabled" . }}",
