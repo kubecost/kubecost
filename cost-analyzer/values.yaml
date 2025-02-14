@@ -2477,7 +2477,7 @@ extraObjects: []
 # for large scale environments, set to true to install an external
 # clickhouse instance. Most users won't need this, this should only 
 # be enabled in consultation with Kubecost support
-externalClickhouse:
+externalclickhouse:
   # set to true to disable embedded clickhouse
   enabled: false
   # set to true to install packaged helm chart with external clickhouse
@@ -2515,6 +2515,7 @@ externalClickhouse:
         <union_default_mode>DISTINCT</union_default_mode>
         <join_use_nulls>1</join_use_nulls>
         <optimize_move_to_prewhere_if_final>1</optimize_move_to_prewhere_if_final>
+        <allow_suspicious_low_cardinality_types>1</allow_suspicious_low_cardinality_types>
       </default>
     </profiles>
     </clickhouse>

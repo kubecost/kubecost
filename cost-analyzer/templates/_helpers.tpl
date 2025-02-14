@@ -1067,15 +1067,22 @@ Begin Kubecost 2.0 templates
     - name: SMTP_CONFIGMAP_NAME
       value: {{ .Values.smtpConfigmapName }}
     {{- end }}
-    {{- if .Values.externalClickhouse.enabled }}
+    {{- if .Values.externalclickhouse.enabled }}
     - name: CLICKHOUSE_ENABLED
       value: "true"
-     {{- if and .Values.externalClickhouse.auth .Values.externalClickhouse.auth.password }}
+     {{- if and .Values.externalclickhouse.auth .Values.externalclickhouse.auth.password }}
     - name: CLICKHOUSE_PASSWORD
-      value: {{ .Values.externalClickhouse.auth.password | quote }}
+      value: {{ .Values.externalclickhouse.auth.password | quote }}
+    {{- end }}
+    {{- if and .Values.externalclickhouse.existingSecretAuth .Values.externalclickhouse.existingSecretAuth.existingSecret }}
+    - name: CLICKHOUSE_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: {{ .Values.externalclickhouse.existingSecretAuth.existingSecret.name | default (printf "%s-externalclickhouse" .Release.Name ) }}
+          key: {{ .Values.externalclickhouse.existingSecretAuth.existingSecret.key }}
     {{- end }}
     - name: CLICKHOUSE_URL
-      value: {{ .Values.externalClickhouse.url | default (printf "%s-clickhouse:9000" .Release.Name ) }}
+      value: {{ .Values.externalclickhouse.url | default (printf "%s-externalclickhouse:9000" .Release.Name ) }}
     {{- end }}
     {{- if not .Values.kubecostAggregator.fastboot.enabled }}
     - name: BOOT_CYCLES

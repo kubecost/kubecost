@@ -10,7 +10,7 @@ annotations:
       url: https://www.kubecost.com
 dependencies:
   - name: clickhouse
-    alias: externalClickhouse
+    alias: externalclickhouse
     version: 8.0.0
     repository: https://charts.bitnami.com/bitnami
-    condition: externalClickhouse.installPackaged
+    condition: externalclickhouse.installPackaged
