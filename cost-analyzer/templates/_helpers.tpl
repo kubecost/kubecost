@@ -1067,6 +1067,20 @@ Begin Kubecost 2.0 templates
     - name: SMTP_CONFIGMAP_NAME
       value: {{ .Values.smtpConfigmapName }}
     {{- end }}
+    {{- if .Values.externalClickhouse.enabled }}
+    - name: CLICKHOUSE_ENABLED
+      value: "true"
+     {{- if and .Values.externalClickhouse.auth .Values.externalClickhouse.auth.password }}
+    - name: CLICKHOUSE_PASSWORD
+      value: {{ .Values.externalClickhouse.auth.password | quote }}
+    {{- end }}
+    - name: CLICKHOUSE_URL
+      value: {{ .Values.externalClickhouse.url | default (printf "%s-clickhouse:9000" .Release.Name ) }}
+    {{- end }}
+    {{- if not .Values.kubecostAggregator.fastboot.enabled }}
+    - name: BOOT_CYCLES
+      value: "0"
+    {{- end }}
     {{- if (gt (int .Values.kubecostAggregator.numDBCopyPartitions) 0) }}
     - name: NUM_DB_COPY_CHUNKS
       value: {{ .Values.kubecostAggregator.numDBCopyPartitions | quote }}

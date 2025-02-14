@@ -1596,6 +1596,11 @@ forecasting:
 ## Ref: https://docs.kubecost.com/install-and-configure/install/multi-cluster/federated-etl/aggregator
 ##
 kubecostAggregator:
+
+  # set to false to wait until more data is ready before promoting anything
+  # to be viewable
+  fastboot: 
+    enabled: true
   # deployMethod determines how Aggregator is deployed. Current options are
   # "singlepod" (within cost-analyzer Pod) "statefulset" (separate
   # StatefulSet), and "disabled". Only use "disabled" if this is a secondary
@@ -2468,3 +2473,61 @@ extraObjects: []
 # -- Optional override for the image used for the basic health test container
 # basicHealth:
 #   fullImageName: alpine/k8s:1.26.9
+
+# for large scale environments, set to true to install an external
+# clickhouse instance. Most users won't need this, this should only 
+# be enabled in consultation with Kubecost support
+externalClickhouse:
+  # set to true to disable embedded clickhouse
+  enabled: false
+  # set to true to install packaged helm chart with external clickhouse
+  installPackaged: false
+  shards: 1
+  replicaCount: 1
+  # persistence:
+  #   size: 2000Gi
+  # high performance storage is required, aws gp3 or GCP Hyperdisk
+  #   storageClass: balanced-storage
+  zookeeper:
+    enabled: false
+    # resources:
+    #   requests: 
+    #     cpu: 3000m
+    #     memory: 8Gi
+  resources:
+    # requests:
+    #   cpu: 60000m
+    #   memory: 120Gi
+    # limits:
+    #   memory: 120Gi
+  keeper:
+    enabled: false
+  #auth:
+    #password: <SET PASSWORD IF DESIRED>
+
+    # check threads in clickhouse. if needed, add <max_threads></max_threads>
+  extraOverrides: |
+    <clickhouse>
+    <profiles>
+      <default>
+        <max_threads from_env="MAX_DB_THREADS"/>
+        <join_algorithm>hash</join_algorithm>
+        <union_default_mode>DISTINCT</union_default_mode>
+        <join_use_nulls>1</join_use_nulls>
+        <optimize_move_to_prewhere_if_final>1</optimize_move_to_prewhere_if_final>
+      </default>
+    </profiles>
+    </clickhouse>
+  usersExtraOverrides: |-
+    <clickhouse>
+      <users>
+        <default>
+          <max_threads from_env="MAX_DB_THREADS"/>
+          <join_algorithm>hash</join_algorithm>
+          <union_default_mode>DISTINCT</union_default_mode>
+          <join_use_nulls>1</join_use_nulls>
+          <allow_suspicious_low_cardinality_types>1</allow_suspicious_low_cardinality_types>
+        </default>
+      </users>
+
+    </clickhouse>

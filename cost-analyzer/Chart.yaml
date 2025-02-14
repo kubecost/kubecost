@@ -8,3 +8,9 @@ annotations:
   "artifacthub.io/links": |
     - name: Homepage
       url: https://www.kubecost.com
+dependencies:
+  - name: clickhouse
+    alias: externalClickhouse
+    version: 8.0.0
+    repository: https://charts.bitnami.com/bitnami
+    condition: externalClickhouse.installPackaged
