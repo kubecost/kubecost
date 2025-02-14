@@ -1554,7 +1554,7 @@ forecasting:
   enabled: true
   fullImageName: ""
   image:
-    repository: public.ecr.aws/kubecost/kubecost-modeling
+    repository: gcr.io/kubecost1/kubecost-modeling
     tag: v0.1.19
   imagePullPolicy: IfNotPresent
 
