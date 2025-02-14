@@ -1555,7 +1555,7 @@ forecasting:
   fullImageName: ""
   image:
     repository: gcr.io/kubecost1/kubecost-modeling
-    tag: v0.1.19
+    tag: v0.1.22
   imagePullPolicy: IfNotPresent
 
   # Resource specification block for the forecasting container.
