@@ -23569,7 +23569,7 @@ spec:
       restartPolicy: Always
       containers:
         - name: forecasting
-          image: gcr.io/kubecost1/kubecost-modeling:v0.1.19
+          image: gcr.io/kubecost1/kubecost-modeling:v0.1.22
           volumeMounts:
             - name: tmp
               mountPath: /tmp
