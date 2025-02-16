@@ -1,6 +1,6 @@
 # Kubecost Helm chart
 
-This is the official Helm chart for [Kubecost](https://www.kubecost.com/), an enterprise-grade application to monitor and manage Kubernetes spend. Please see the [website](https://www.kubecost.com/) for more details on what Kubecost can do for you and the official documentation [here](https://docs.kubecost.com/), or contact [team@kubecost.com](mailto:team@kubecost.com) for assistance.
+This is the official Helm chart for [Kubecost](https://www.kubecost.com/), an enterprise-grade application to monitor and manage Kubernetes spend. Please see the [website](https://www.kubecost.com/) for more details on what Kubecost can do for you and the official documentation [here](https://docs.kubecost.com/), or contact [team-kubecost@wwpdl.vnet.ibm.com](mailto:team-kubecost@wwpdl.vnet.ibm.com) for assistance.
 
 ## Version Support
 
