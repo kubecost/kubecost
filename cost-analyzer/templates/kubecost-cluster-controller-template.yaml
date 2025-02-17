@@ -300,6 +300,9 @@ spec:
               name: {{ .Values.clusterController.secretName }}
               key: kubecostAPIKey
         {{- end }}
+        {{- if .Values.clusterController.extraEnv -}}
+        {{ toYaml .Values.clusterController.extraEnv | nindent 8 }}
+        {{- end }}
         {{- if .Values.clusterController.kubescaler }}
         - name: CC_KUBESCALER_DEFAULT_RESIZE_ALL
           value: {{ .Values.clusterController.kubescaler.defaultResizeAll | default "false" | quote }}
