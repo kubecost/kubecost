@@ -1872,7 +1872,7 @@ clusterController:
     tag: v0.16.13
   imagePullPolicy: IfNotPresent
 
-  # extraEnv:
+  extraEnv: []
   # - name: EXTRA_ENV_VAR
   #   value: "extra_env_var_value"
 
