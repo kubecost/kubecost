@@ -304,6 +304,9 @@ spec:
         - name: CC_KUBESCALER_DEFAULT_RESIZE_ALL
           value: {{ .Values.clusterController.kubescaler.defaultResizeAll | default "false" | quote }}
         {{- end }}
+        {{- if .Values.clusterController.extraEnv -}}
+        {{ toYaml .Values.clusterController.extraEnv | nindent 8 }}
+        {{- end }}
         ports:
         - name: http-server
           containerPort: 9731

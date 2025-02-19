@@ -1870,6 +1870,10 @@ clusterController:
     repository: gcr.io/kubecost1/cluster-controller
     tag: v0.16.13
   imagePullPolicy: IfNotPresent
+  extraEnv: []
+  # - name: EXTRA_ENV_VAR
+  #   value: "extra_env_var_value"
+  logLevel: info
   priorityClassName: ""
   tolerations: []
   annotations: {}
