@@ -673,11 +673,10 @@ kubecostModel:
 
   allocation:
     # Enables or disables adding node labels to allocation data (i.e. workloads).
-    # Defaults to "true" and starts with a sensible includeList for basics like
-    # topology (e.g. zone, region) and instance type labels.
+    # Defaults to "true". If nodeLabels is set to true, all workloads will inherit
+    # the node labels of the nodes they are running on.
     # nodeLabels:
     #   enabled: true
-    #   includeList: "node.kubernetes.io/instance-type,topology.kubernetes.io/region,topology.kubernetes.io/zone"
 
   # Enables or disables the ContainerStats pipeline, used for quantile-based
   # queries like for request sizing recommendations.
