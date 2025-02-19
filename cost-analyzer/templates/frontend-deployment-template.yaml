@@ -68,6 +68,8 @@ spec:
       volumes:
         - name: tmp
           emptyDir: {}
+        - name: log
+          emptyDir: {}
         - name: nginx-conf
           configMap:
             name: nginx-conf
@@ -145,6 +147,8 @@ spec:
               mountPath: /var/lib/nginx/tmp
             - name: tmp
               mountPath: /var/run
+            - name: log
+              mountPath: /var/log/nginx
             - name: nginx-conf
               mountPath: /etc/nginx/conf.d/
             {{- if .Values.global.containerSecuritycontext }}

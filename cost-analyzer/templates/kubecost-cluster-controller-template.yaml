@@ -1,5 +1,4 @@
-{{- if .Values.clusterController }}
-{{- if .Values.clusterController.enabled }}
+{{- if (.Values.clusterController).enabled }}
 {{- $serviceName := include "cost-analyzer.serviceName" . -}}
 apiVersion: v1
 kind: ServiceAccount
@@ -190,6 +189,12 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- if .Values.global.additionalLabels }}
+    {{- toYaml .Values.global.additionalLabels | nindent 4 }}
+    {{- end }}
+    {{- if .Values.clusterController.labels }}
+    {{- toYaml .Values.clusterController.labels | nindent 4 }}
+    {{- end }}
   annotations:
   {{- with .Values.global.annotations }}
     {{- toYaml . | nindent 4 }}
@@ -210,11 +215,29 @@ spec:
     metadata:
       labels:
         app: {{ template "kubecost.clusterControllerName" . }}
+        {{- if .Values.global.additionalLabels }}
+        {{- toYaml .Values.global.additionalLabels | nindent 8 }}
+        {{- end }}
+        {{- if .Values.clusterController.labels }}
+        {{- toYaml .Values.clusterController.labels | nindent 8 }}
+        {{- end }}
       {{- with .Values.global.podAnnotations}}
       annotations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
+      {{- if .Values.global.platforms.openshift.enabled }}
+      securityContext:
+      {{- toYaml .Values.global.platforms.openshift.securityContext | nindent 8 }}
+      {{- else if .Values.global.securityContext }}
+      securityContext:
+      {{- toYaml .Values.global.securityContext | nindent 8 }}
+      {{- else }}
+      securityContext:
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+      {{- end }}
       {{- if .Values.clusterController.priorityClassName }}
       priorityClassName: "{{ .Values.clusterController.priorityClassName }}"
       {{- end }}
@@ -226,6 +249,12 @@ spec:
         image: {{ .Values.clusterController.image.repository }}:{{ .Values.clusterController.image.tag }}
         {{- end}}
         imagePullPolicy: {{ .Values.clusterController.imagePullPolicy }}
+        securityContext:
+        {{- if .Values.clusterController.securityContext }}
+          {{- toYaml .Values.clusterController.securityContext | nindent 10 -}}
+        {{- else if .Values.global.containerSecurityContext }}
+          {{- toYaml .Values.global.containerSecurityContext | nindent 10 -}}
+        {{- end }}
         volumeMounts:
         - name: cluster-controller-keys
           mountPath: /var/keys
@@ -253,9 +282,24 @@ spec:
         - name: CC_LOG_LEVEL
           value: {{ .Values.clusterController.logLevel | default "info" }}
         - name: CC_KUBESCALER_COST_MODEL_PATH
+          {{- if .Values.clusterController.primaryKubecostURL }}
+          value: {{ .Values.clusterController.primaryKubecostURL }}/model
+          {{- else }}
           value: http://{{ $serviceName }}.{{ .Release.Namespace }}:{{ .Values.service.targetPort | default 9090 }}/model
+          {{- end }}
         - name: CC_CCL_COST_MODEL_PATH
+          {{- if .Values.clusterController.primaryKubecostURL }}
+          value: {{ .Values.clusterController.primaryKubecostURL }}/model
+          {{- else }}
           value: http://{{ $serviceName }}.{{ .Release.Namespace }}:{{ .Values.service.targetPort | default 9090 }}/model
+          {{- end }}
+        {{- if .Values.clusterController.kubecostAPIKey }}
+        - name: KUBECOST_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.clusterController.secretName }}
+              key: kubecostAPIKey
+        {{- end }}
         {{- if .Values.clusterController.kubescaler }}
         - name: CC_KUBESCALER_DEFAULT_RESIZE_ALL
           value: {{ .Values.clusterController.kubescaler.defaultResizeAll | default "false" | quote }}
@@ -266,6 +310,12 @@ spec:
           hostPort: 9731
         resources:
           {{- toYaml .Values.clusterController.resources | nindent 12 }}
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range $.Values.imagePullSecrets }}
+        - name: {{ .name }}
+        {{- end }}
+      {{- end }}
       serviceAccount: {{ template "kubecost.clusterControllerName" . }}
       serviceAccountName: {{ template "kubecost.clusterControllerName" . }}
       {{- with .Values.clusterController.tolerations }}
@@ -306,5 +356,17 @@ spec:
     targetPort: 9731
   selector:
     app: {{ template "kubecost.clusterControllerName" . }}
+---
+{{- if and .Values.clusterController.createClusterControllerSecret .Values.clusterController.kubecostAPIKey }}
+apiVersion: v1
+kind: Secret
+type: Opaque
+metadata:
+  name: {{ .Values.clusterController.secretName }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+data:
+  kubecostAPIKey: {{ .Values.clusterController.kubecostAPIKey | b64enc }}
 {{- end }}
 {{- end }}

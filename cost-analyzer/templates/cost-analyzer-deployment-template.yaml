@@ -106,6 +106,8 @@ spec:
         {{- end }}
         - name: tmp
           emptyDir: {}
+        - name: log
+          emptyDir: {}
         {{- if and .Values.kubecostFrontend.enabled (not .Values.federatedETL.agentOnly) (not (eq (include "frontend.deployMethod" .) "haMode")) }}
         - name: nginx-conf
           configMap:
@@ -1182,6 +1184,8 @@ spec:
               mountPath: /var/lib/nginx/tmp
             - name: tmp
               mountPath: /var/run
+            - name: log
+              mountPath: /var/log/nginx
             - name: nginx-conf
               mountPath: /etc/nginx/conf.d/
             {{- if .Values.global.containerSecuritycontext }}

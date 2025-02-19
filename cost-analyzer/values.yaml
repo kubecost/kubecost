@@ -537,6 +537,16 @@ kubecostFrontend:
 #    fqdn: kubecost-multi-diag.kubecost.svc.cluster.local:9007
 #  clusterController:
 #    fqdn: cluster-controller.kubecost.svc.cluster.local:9731
+#
+
+  # Configurable headers for nginx responses.
+  nginxHeaders:
+    # applied to all route locations
+    server:
+      - "'Access-Control-Allow-Origin' '*' always;"
+      - "'Access-Control-Allow-Methods' 'GET, PUT, POST, DELETE, OPTIONS' always;"
+      - Content-Security-Policy "default-src 'self' 'unsafe-inline' api.userway.org cdn.userway.org api-js.mixpanel.com keyper.kubecost.com; frame-ancestors 'none'; font-src 'self' data:;";
+      - Cache-Control "must-revalidate";
 
 # Kubecost Metrics deploys a separate pod which will emit kubernetes specific metrics required
 # by the cost-model. This pod is designed to remain active and decoupled from the cost-model itself.
@@ -1542,11 +1552,10 @@ kubecostDeployment:
 ## patterns observed by Kubecost.
 forecasting:
   enabled: true
-
-  # fullImageName overrides the default image construction logic. The exact
-  # image provided (registry, image, tag) will be used for the forecasting
-  # container.
-  fullImageName: gcr.io/kubecost1/kubecost-modeling:v0.1.19
+  fullImageName: ""
+  image:
+    repository: gcr.io/kubecost1/kubecost-modeling
+    tag: v0.1.22
   imagePullPolicy: IfNotPresent
 
   # Resource specification block for the forecasting container.
@@ -1627,10 +1636,10 @@ kubecostAggregator:
   numDBCopyPartitions: 25
 
   # How many threads the read database is configured with (i.e. Kubecost API /
-  # UI queries). If increasing this value, it is recommended to increase the
-  # aggregator's memory requests & limits.
-  # default: 1
-  dbReadThreads: 1
+  # UI queries). If value is 0, the number of threads is bounded by the
+  # number of cores
+  # default: 0 is no limit
+  dbReadThreads: 0
 
   # How many threads the write database is configured with (i.e. ingestion of
   # new data from S3). If increasing this value, it is recommended to increase
@@ -1860,16 +1869,20 @@ clusterController:
   enabled: false
   image:
     repository: gcr.io/kubecost1/cluster-controller
-    tag: v0.16.11
+    tag: v0.16.13
   imagePullPolicy: IfNotPresent
   priorityClassName: ""
   tolerations: []
-
-  ## Annotations to be added for cluster controller template
   annotations: {}
+  labels: {}
+  securityContext: {}
   resources: {}
   affinity: {}
   nodeSelector: {}
+  primaryKubecostURL: ""  # URL for secondary clusters to connect to primary Kubecost (ex: https://kubecost.myorganization.com)
+  kubecostAPIKey: ""  # API Key for secondary clusters to authenticate with primary
+  createClusterControllerSecret: true  # disable if you want to use your own secret manager
+  secretName: controller-secrets
   actionConfigs:
     # this configures the Kubecost Cluster Turndown action
     # for more details, see documentation at https://github.com/kubecost/cluster-turndown/tree/develop?tab=readme-ov-file#setting-a-turndown-schedule
@@ -2069,7 +2082,7 @@ grafana:
     failureThreshold: 10
   image:
     repository: grafana/grafana
-    tag: 11.4.0
+    tag: 11.5.1
     pullPolicy: IfNotPresent
     # pullSecrets:
   securityContext: {}
@@ -2115,7 +2128,7 @@ grafana:
   sidecar:
     image:
       repository: ghcr.io/kiwigrid/k8s-sidecar
-      tag: 1.29.0
+      tag: 1.30.0
       pullPolicy: IfNotPresent
     resources: {}
     dashboards:
