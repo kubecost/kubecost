@@ -55,6 +55,8 @@ spec:
         - name: forecasting
           {{- if .Values.forecasting.fullImageName }}
           image: {{ .Values.forecasting.fullImageName }}
+          {{- else if .Values.forecasting.image }}
+          image: {{ .Values.forecasting.image.repository }}:{{ .Values.forecasting.image.tag }}
           {{- else }}
           image: gcr.io/kubecost1/kubecost-modeling:prod-{{ $.Chart.AppVersion }}
           {{ end }}

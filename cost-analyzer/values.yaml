@@ -537,6 +537,16 @@ kubecostFrontend:
 #    fqdn: kubecost-multi-diag.kubecost.svc.cluster.local:9007
 #  clusterController:
 #    fqdn: cluster-controller.kubecost.svc.cluster.local:9731
+#
+
+  # Configurable headers for nginx responses.
+  nginxHeaders:
+    # applied to all route locations
+    server:
+      - "'Access-Control-Allow-Origin' '*' always;"
+      - "'Access-Control-Allow-Methods' 'GET, PUT, POST, DELETE, OPTIONS' always;"
+      - Content-Security-Policy "default-src 'self' 'unsafe-inline' api.userway.org cdn.userway.org api-js.mixpanel.com keyper.kubecost.com; frame-ancestors 'none'; font-src 'self' data:;";
+      - Cache-Control "must-revalidate";
 
 # Kubecost Metrics deploys a separate pod which will emit kubernetes specific metrics required
 # by the cost-model. This pod is designed to remain active and decoupled from the cost-model itself.
@@ -1197,10 +1207,6 @@ prometheus:
     ## Ref: https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/
     alerting_rules.yml: {}
 
-    ## Records configuration
-    ## Ref: https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/
-    recording_rules.yml: {}
-
     prometheus.yml:
       rule_files:
         - /etc/config/recording_rules.yml
@@ -1370,7 +1376,10 @@ prometheus:
             - source_labels: [__name__]
               regex: (container_cpu_allocation|container_cpu_usage_seconds_total|container_fs_limit_bytes|container_fs_writes_bytes_total|container_gpu_allocation|container_memory_allocation_bytes|container_memory_usage_bytes|container_memory_working_set_bytes|container_network_receive_bytes_total|container_network_transmit_bytes_total|DCGM_FI_DEV_GPU_UTIL|deployment_match_labels|kube_daemonset_status_desired_number_scheduled|kube_daemonset_status_number_ready|kube_deployment_spec_replicas|kube_deployment_status_replicas|kube_deployment_status_replicas_available|kube_job_status_failed|kube_namespace_annotations|kube_namespace_labels|kube_node_info|kube_node_labels|kube_node_status_allocatable|kube_node_status_allocatable_cpu_cores|kube_node_status_allocatable_memory_bytes|kube_node_status_capacity|kube_node_status_capacity_cpu_cores|kube_node_status_capacity_memory_bytes|kube_node_status_condition|kube_persistentvolume_capacity_bytes|kube_persistentvolume_status_phase|kube_persistentvolumeclaim_info|kube_persistentvolumeclaim_resource_requests_storage_bytes|kube_pod_container_info|kube_pod_container_resource_limits|kube_pod_container_resource_limits_cpu_cores|kube_pod_container_resource_limits_memory_bytes|kube_pod_container_resource_requests|kube_pod_container_resource_requests_cpu_cores|kube_pod_container_resource_requests_memory_bytes|kube_pod_container_status_restarts_total|kube_pod_container_status_running|kube_pod_container_status_terminated_reason|kube_pod_labels|kube_pod_owner|kube_pod_status_phase|kube_replicaset_owner|kube_statefulset_replicas|kube_statefulset_status_replicas|kubecost_cluster_info|kubecost_cluster_management_cost|kubecost_cluster_memory_working_set_bytes|kubecost_load_balancer_cost|kubecost_network_internet_egress_cost|kubecost_network_region_egress_cost|kubecost_network_zone_egress_cost|kubecost_node_is_spot|kubecost_pod_network_egress_bytes_total|node_cpu_hourly_cost|node_cpu_seconds_total|node_disk_reads_completed|node_disk_reads_completed_total|node_disk_writes_completed|node_disk_writes_completed_total|node_filesystem_device_error|node_gpu_count|node_gpu_hourly_cost|node_memory_Buffers_bytes|node_memory_Cached_bytes|node_memory_MemAvailable_bytes|node_memory_MemFree_bytes|node_memory_MemTotal_bytes|node_network_transmit_bytes_total|node_ram_hourly_cost|node_total_hourly_cost|pod_pvc_allocation|pv_hourly_cost|service_selector_labels|statefulSet_match_labels|kubecost_pv_info|up)
               action: keep
-    rules:
+
+    ## Recording rules
+    ## Ref: https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/
+    recording_rules.yml:
       groups:
         - name: CPU
           rules:
@@ -1541,11 +1550,10 @@ kubecostDeployment:
 ## patterns observed by Kubecost.
 forecasting:
   enabled: true
-
-  # fullImageName overrides the default image construction logic. The exact
-  # image provided (registry, image, tag) will be used for the forecasting
-  # container.
-  fullImageName: gcr.io/kubecost1/kubecost-modeling:v0.1.19
+  fullImageName: ""
+  image:
+    repository: gcr.io/kubecost1/kubecost-modeling
+    tag: v0.1.22
   imagePullPolicy: IfNotPresent
 
   # Resource specification block for the forecasting container.
@@ -1626,10 +1634,10 @@ kubecostAggregator:
   numDBCopyPartitions: 25
 
   # How many threads the read database is configured with (i.e. Kubecost API /
-  # UI queries). If increasing this value, it is recommended to increase the
-  # aggregator's memory requests & limits.
-  # default: 1
-  dbReadThreads: 1
+  # UI queries). If value is 0, the number of threads is bounded by the
+  # number of cores
+  # default: 0 is no limit
+  dbReadThreads: 0
 
   # How many threads the write database is configured with (i.e. ingestion of
   # new data from S3). If increasing this value, it is recommended to increase
@@ -1859,8 +1867,12 @@ clusterController:
   enabled: false
   image:
     repository: gcr.io/kubecost1/cluster-controller
-    tag: v0.16.12
+    tag: v0.16.13
   imagePullPolicy: IfNotPresent
+  extraEnv: []
+  # - name: EXTRA_ENV_VAR
+  #   value: "extra_env_var_value"
+  logLevel: info
   priorityClassName: ""
   tolerations: []
   annotations: {}
