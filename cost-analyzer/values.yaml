@@ -2379,6 +2379,10 @@ costEventsAudit:
 #     AWS: []
 #     GCP: []
 #     Azure: []
+#   savingsRecommendationsNodegroupCustomLabels: # Define select list of label that are used to identify nodegroups.
+#     AWS: []
+#     GCP: []
+#     Azure: []
 
   ## Specify an existing Kubernetes Secret holding the cloud integration information. This Secret must contain
   ## a key with name `cloud-integration.json` and the contents must be in a specific format. It is expected
