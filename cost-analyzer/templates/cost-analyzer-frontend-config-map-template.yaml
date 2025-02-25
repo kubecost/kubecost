@@ -153,6 +153,8 @@ data:
         root /var/www;
         index index.html;
 
+        proxy_hide_header Access-Control-Allow-Origin;
+        proxy_hide_header Access-Control-Allow-Methods;
         {{- range .Values.kubecostFrontend.nginxHeaders.server }}
         add_header {{ . }}
         {{- end }}
