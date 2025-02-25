@@ -2379,7 +2379,7 @@ costEventsAudit:
 #     AWS: []
 #     GCP: []
 #     Azure: []
-#   savingsRecommendationsNodegroupCustomLabels: # Define select list of label that are used to identify nodegroups.
+#   savingsRecommendationsNodegroupCustomLabels: # Define select list of labels to be used to identify node groups
 #     AWS: []
 #     GCP: []
 #     Azure: []
