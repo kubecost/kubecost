@@ -1170,7 +1170,7 @@ prometheus:
     name: node-exporter
     image:
       repository: prom/node-exporter
-      tag: v1.8.2
+      tag: v1.9.0
       pullPolicy: IfNotPresent
     priorityClassName: ""
     updateStrategy:
