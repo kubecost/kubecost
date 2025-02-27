@@ -8,6 +8,6 @@ metadata:
   labels:
     {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
 data:
-  rbac-teams-configs.json: '{{ toJson .Values.rbacTeams.teamsConfig }}'
+  rbac-teams-configs.json: '{{ toJson .Values.teams.teamsConfig }}'
 {{- end }}
 {{- end }}
