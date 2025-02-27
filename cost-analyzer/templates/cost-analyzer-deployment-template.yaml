@@ -862,12 +862,12 @@ spec:
             - name: KUBE_RBAC_PROXY_ENABLED
               value: {{ (quote .Values.global.prometheus.kubeRBACProxy) }}
             {{- end }}
-            {{- if .Values.csvCustomPricing }}
-            {{- if .Values.csvCustomPricing.enabled }}
+            {{- if .Values.enterpriseCustomPricing }}
+            {{- if .Values.enterpriseCustomPricing.enabled }}
             - name: CSV_CUSTOM_PRICING_ENABLED
               value: "true"
             - name: CSV_CUSTOM_PRICING_LOCATION_URI
-              value: {{ .Values.csvCustomPricing.location.URI }}
+              value: {{ .Values.enterpriseCustomPricing.location.URI }}
             {{- end }}
             {{- end }}
             {{- if .Values.pricingCsv }}
