@@ -30,7 +30,7 @@ global:
     prometheusServerEndpoint: http://localhost:8085/  # The prometheus service endpoint used by kubecost. The calls are forwarded through the GMP Prom proxy side car to the GMP database.
     gmpProxy:
       enabled: false
-      image: gke.gcr.io/prometheus-engine/frontend:v0.4.1-gke.0  # GMP Prometheus proxy image that serve as an endpoint to query metrics from GMP
+      image: gke.gcr.io/prometheus-engine/frontend:v0.15.1-gke.0  # GMP Prometheus proxy image that serve as an endpoint to query metrics from GMP
       imagePullPolicy: IfNotPresent
       name: gmp-proxy
       port: 8085
@@ -900,7 +900,7 @@ prometheus:
       rollingUpdate: null
     image:
       repository: quay.io/prometheus/prometheus
-      tag: v3.1.0
+      tag: v3.2.0
       pullPolicy: IfNotPresent
     priorityClassName: ""
     prefixURL: ""
@@ -1135,7 +1135,7 @@ prometheus:
       name: configmap-reload
       image:
         repository: quay.io/prometheus-operator/prometheus-config-reloader
-        tag: v0.79.2
+        tag: v0.80.1
         pullPolicy: IfNotPresent
       extraArgs: {}
       extraVolumeDirs: []
@@ -1148,7 +1148,7 @@ prometheus:
       name: configmap-reload
       image:
         repository: quay.io/prometheus-operator/prometheus-config-reloader
-        tag: v0.79.2
+        tag: v0.80.1
         pullPolicy: IfNotPresent
       extraArgs: {}
       extraVolumeDirs: []
@@ -1170,7 +1170,7 @@ prometheus:
     name: node-exporter
     image:
       repository: prom/node-exporter
-      tag: v1.8.2
+      tag: v1.9.0
       pullPolicy: IfNotPresent
     priorityClassName: ""
     updateStrategy:
@@ -2130,7 +2130,7 @@ grafana:
   sidecar:
     image:
       repository: ghcr.io/kiwigrid/k8s-sidecar
-      tag: 1.30.0
+      tag: 1.30.1
       pullPolicy: IfNotPresent
     resources: {}
     dashboards:
