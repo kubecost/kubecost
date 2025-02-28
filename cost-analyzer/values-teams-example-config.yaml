@@ -1,4 +1,7 @@
 # This is a example config for teams. 
+# The groups below are not passed to Kubecost by default, they need to be configured in the identity provider (IdP)
+# See https://docs.kubecost.com/using-kubecost/navigating-the-kubecost-ui/teams#enable-teams-and-define-in-helm for more information
+
 # SAML or OIDC must be enabled
 saml:
   appRootURL: https://YOUR_KUBECOST_FQDN

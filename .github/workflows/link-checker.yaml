@@ -23,4 +23,4 @@ jobs:
         with:
           fail: true
           debug: false
-          args: --verbose --include-fragments --no-progress --base . -E './**/*.md' './**/*.yaml' './**/*.yml' './cost-analyzer/values-teams-example-config.yaml'
+          args: --verbose --include-fragments --no-progress --base . -E './**/*.md' './**/*.yaml' './**/*.yml'
