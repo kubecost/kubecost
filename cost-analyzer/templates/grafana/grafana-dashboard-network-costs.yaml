@@ -1,3 +1,4 @@
+{{- if (eq (include "cost-analyzer.grafanaEnabled" .) "true") }}
 {{- if (((.Values.grafana).sidecar).dashboards).enabled -}}
 apiVersion: v1
 kind: ConfigMap
@@ -18,4 +19,5 @@ metadata:
 data:
   networkCosts-metrics.json: |-
 {{- .Files.Get "grafana-dashboards/networkCosts-metrics.json" | nindent 4 }}
+{{- end -}}
 {{- end -}}
