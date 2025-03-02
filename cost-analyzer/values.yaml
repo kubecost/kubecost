@@ -1383,7 +1383,7 @@ networkCosts:
   enabled: false
   image:
     repository: gcr.io/kubecost1/kubecost-network-costs
-    tag: v0.17.6
+    tag: v0.17.8
   imagePullPolicy: IfNotPresent
   updateStrategy:
     type: RollingUpdate
@@ -1508,7 +1508,7 @@ forecasting:
   # fullImageName overrides the default image construction logic. The exact
   # image provided (registry, image, tag) will be used for the forecasting
   # container.
-  fullImageName: gcr.io/kubecost1/kubecost-modeling:v0.1.19
+  fullImageName: gcr.io/kubecost1/kubecost-modeling:v0.1.23
   imagePullPolicy: IfNotPresent
 
   # Resource specification block for the forecasting container.
