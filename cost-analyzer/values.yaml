@@ -30,7 +30,7 @@ global:
     prometheusServerEndpoint: http://localhost:8085/  # The prometheus service endpoint used by kubecost. The calls are forwarded through the GMP Prom proxy side car to the GMP database.
     gmpProxy:
       enabled: false
-      image: gke.gcr.io/prometheus-engine/frontend:v0.15.1-gke.0  # GMP Prometheus proxy image that serve as an endpoint to query metrics from GMP
+      image: gke.gcr.io/prometheus-engine/frontend:v0.4.1-gke.0  # GMP Prometheus proxy image that serve as an endpoint to query metrics from GMP
       imagePullPolicy: IfNotPresent
       name: gmp-proxy
       port: 8085
@@ -537,16 +537,6 @@ kubecostFrontend:
 #    fqdn: kubecost-multi-diag.kubecost.svc.cluster.local:9007
 #  clusterController:
 #    fqdn: cluster-controller.kubecost.svc.cluster.local:9731
-#
-
-  # Configurable headers for nginx responses.
-  nginxHeaders:
-    # applied to all route locations
-    server:
-      - "'Access-Control-Allow-Origin' '*' always;"
-      - "'Access-Control-Allow-Methods' 'GET, PUT, POST, DELETE, OPTIONS' always;"
-      - Content-Security-Policy "default-src 'self' 'unsafe-inline' api.userway.org cdn.userway.org api-js.mixpanel.com keyper.kubecost.com; frame-ancestors 'none'; font-src 'self' data:;";
-      - Cache-Control "must-revalidate";
 
 # Kubecost Metrics deploys a separate pod which will emit kubernetes specific metrics required
 # by the cost-model. This pod is designed to remain active and decoupled from the cost-model itself.
@@ -683,10 +673,11 @@ kubecostModel:
 
   allocation:
     # Enables or disables adding node labels to allocation data (i.e. workloads).
-    # Defaults to "true". If nodeLabels is set to true, all workloads will inherit
-    # the node labels of the nodes they are running on.
+    # Defaults to "true" and starts with a sensible includeList for basics like
+    # topology (e.g. zone, region) and instance type labels.
     # nodeLabels:
     #   enabled: true
+    #   includeList: "node.kubernetes.io/instance-type,topology.kubernetes.io/region,topology.kubernetes.io/zone"
 
   # Enables or disables the ContainerStats pipeline, used for quantile-based
   # queries like for request sizing recommendations.
@@ -1135,7 +1126,7 @@ prometheus:
       name: configmap-reload
       image:
         repository: quay.io/prometheus-operator/prometheus-config-reloader
-        tag: v0.80.1
+        tag: v0.79.2
         pullPolicy: IfNotPresent
       extraArgs: {}
       extraVolumeDirs: []
@@ -1148,7 +1139,7 @@ prometheus:
       name: configmap-reload
       image:
         repository: quay.io/prometheus-operator/prometheus-config-reloader
-        tag: v0.80.1
+        tag: v0.79.2
         pullPolicy: IfNotPresent
       extraArgs: {}
       extraVolumeDirs: []
@@ -1170,7 +1161,7 @@ prometheus:
     name: node-exporter
     image:
       repository: prom/node-exporter
-      tag: v1.9.0
+      tag: v1.8.2
       pullPolicy: IfNotPresent
     priorityClassName: ""
     updateStrategy:
@@ -1550,10 +1541,11 @@ kubecostDeployment:
 ## patterns observed by Kubecost.
 forecasting:
   enabled: true
-  fullImageName: ""
-  image:
-    repository: gcr.io/kubecost1/kubecost-modeling
-    tag: v0.1.22
+
+  # fullImageName overrides the default image construction logic. The exact
+  # image provided (registry, image, tag) will be used for the forecasting
+  # container.
+  fullImageName: gcr.io/kubecost1/kubecost-modeling:v0.1.22
   imagePullPolicy: IfNotPresent
 
   # Resource specification block for the forecasting container.
@@ -1634,10 +1626,10 @@ kubecostAggregator:
   numDBCopyPartitions: 25
 
   # How many threads the read database is configured with (i.e. Kubecost API /
-  # UI queries). If value is 0, the number of threads is bounded by the
-  # number of cores
-  # default: 0 is no limit
-  dbReadThreads: 0
+  # UI queries). If increasing this value, it is recommended to increase the
+  # aggregator's memory requests & limits.
+  # default: 1
+  dbReadThreads: 1
 
   # How many threads the write database is configured with (i.e. ingestion of
   # new data from S3). If increasing this value, it is recommended to increase
@@ -2084,7 +2076,7 @@ grafana:
     failureThreshold: 10
   image:
     repository: grafana/grafana
-    tag: 11.5.1
+    tag: 11.4.0
     pullPolicy: IfNotPresent
     # pullSecrets:
   securityContext: {}
@@ -2130,7 +2122,7 @@ grafana:
   sidecar:
     image:
       repository: ghcr.io/kiwigrid/k8s-sidecar
-      tag: 1.30.1
+      tag: 1.29.1
       pullPolicy: IfNotPresent
     resources: {}
     dashboards:
@@ -2376,10 +2368,6 @@ costEventsAudit:
 #   hideBellIcon: false
 #   hideTeams: false
 #   savingsRecommendationsAllowLists: # Define select list of instance types to be evaluated in computing Savings Recommendations
-#     AWS: []
-#     GCP: []
-#     Azure: []
-#   savingsRecommendationsNodegroupCustomLabels: # Define select list of labels to be used to identify node groups
 #     AWS: []
 #     GCP: []
 #     Azure: []

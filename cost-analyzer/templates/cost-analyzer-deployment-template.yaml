@@ -979,6 +979,8 @@ spec:
             {{- with .Values.kubecostModel.allocation.nodeLabels }}
             - name: ALLOCATION_NODE_LABELS_ENABLED
               value: {{ (quote .enabled) | default (quote true) }}
+            - name: ALLOCATION_NODE_LABELS_INCLUDE_LIST
+              value: {{ (quote .includeList) }}
             {{- end }}
             {{- end }}
             {{- end }}
