@@ -106,8 +106,6 @@ spec:
         {{- end }}
         - name: tmp
           emptyDir: {}
-        - name: log
-          emptyDir: {}
         {{- if and .Values.kubecostFrontend.enabled (not .Values.federatedETL.agentOnly) (not (eq (include "frontend.deployMethod" .) "haMode")) }}
         - name: nginx-conf
           configMap:
@@ -280,20 +278,6 @@ spec:
           secret:
             secretName: {{ .Values.oidc.existingCustomSecret.name }}
         {{- end }}
-        {{- end }}
-        {{- end }}
-        {{- if eq (include "rbacTeamsEnabled" .) "true" }}
-        - name: kubecost-rbac-secret
-          secret:
-            secretName: kubecost-rbac-secret
-        {{- end }}
-        {{- if eq (include "rbacTeamsConfigEnabled" .) "true" }}
-        - name: kubecost-rbac-teams-config
-          configMap:
-        {{- if .Values.teams.teamsConfigMapName }}
-            name: {{ .Values.teams.teamsConfigMapName }}
-        {{- else }}
-            name: kubecost-rbac-teams-config
         {{- end }}
         {{- end }}
         {{- if .Values.extraVolumes }}
@@ -753,10 +737,6 @@ spec:
             {{- end }}
             {{- end }}
             {{- end }}
-            {{- if eq (include "rbacTeamsEnabled" .) "true" }}
-            - name: kubecost-rbac-secret
-              mountPath: /var/configs/kubecost-rbac-secret
-            {{- end }}
           env:
             - name: CONTAINER_IMAGE_TAG
               value: {{ include "cost-model.imagetag" . }}
@@ -800,8 +780,8 @@ spec:
               value: {{ .Values.assetReportConfigmapName }}
             {{- end }}
             {{- if .Values.cloudCostReportConfigmapName }}
-            - name: CLOUD_COST_REPORT_CONFIGMAP_NAME
-              value: {{ .Values.cloudCostReportConfigmapName }}
+              - name: CLOUD_COST_REPORT_CONFIGMAP_NAME
+                value: {{ .Values.cloudCostReportConfigmapName }}
             {{- end }}
             {{- if .Values.savedReportConfigmapName }}
             - name: SAVED_REPORT_CONFIGMAP_NAME
@@ -979,6 +959,8 @@ spec:
             {{- with .Values.kubecostModel.allocation.nodeLabels }}
             - name: ALLOCATION_NODE_LABELS_ENABLED
               value: {{ (quote .enabled) | default (quote true) }}
+            - name: ALLOCATION_NODE_LABELS_INCLUDE_LIST
+              value: {{ (quote .includeList) }}
             {{- end }}
             {{- end }}
             {{- end }}
@@ -1003,6 +985,8 @@ spec:
               value: {{ (quote .Values.persistentVolume.enabled) | default (quote true) }}
             - name: MAX_QUERY_CONCURRENCY
               value: {{ (quote .Values.kubecostModel.maxQueryConcurrency) | default (quote 5) }}
+            - name: UTC_OFFSET
+              value: {{ (quote .Values.kubecostModel.utcOffset) | default (quote ) }}
             {{- if .Values.networkCosts }}
             {{- if .Values.networkCosts.enabled }}
             - name: NETWORK_COSTS_PORT
@@ -1018,7 +1002,7 @@ spec:
             {{- else}}
             - name: ADVANCED_NETWORK_STATS
               value: "false"
-            {{- end }}
+            {{- end}}
             {{- end }}
             {{- end }}
             {{- end }}
@@ -1027,7 +1011,7 @@ spec:
               value: "true"
             - name: OIDC_SKIP_ONLINE_VALIDATION
               value: {{ (quote .Values.oidc.skipOnlineTokenValidation) | default (quote false) }}
-            {{- end }}
+            {{- end}}
             {{- if .Values.saml }}
             {{- if .Values.saml.enabled }}
             - name: SAML_ENABLED
@@ -1057,25 +1041,13 @@ spec:
               value: {{ .Values.saml.redirectURL }}
             {{- end}}
             {{- if .Values.saml.rbac.enabled }}
-            {{- if eq (include "rbacTeamsEnabled" .) "false" }}
             - name: SAML_RBAC_ENABLED
               value: "true"
-            {{- end }}
             {{- end }}
             {{- if and .Values.saml.encryptionCertSecret .Values.saml.decryptionKeySecret }}
             - name: SAML_RESPONSE_ENCRYPTED
               value: "true"
             {{- end}}
-            {{- end }}
-            {{- end }}
-            {{- if eq (include "rbacTeamsEnabled" .) "true" }}
-            {{- if .Values.oidc.enabled }}
-            - name: OIDC_RBAC_TEAMS_ENABLED
-              value: "true"
-            {{- end }}
-            {{- if .Values.saml.enabled }}
-            - name: SAML_RBAC_TEAMS_ENABLED
-              value: "true"
             {{- end }}
             {{- end }}
             {{- if and (.Values.prometheus.server.global.external_labels.cluster_id) (not .Values.prometheus.server.clusterIDConfigmap) }}
@@ -1182,8 +1154,6 @@ spec:
               mountPath: /var/lib/nginx/tmp
             - name: tmp
               mountPath: /var/run
-            - name: log
-              mountPath: /var/log/nginx
             - name: nginx-conf
               mountPath: /etc/nginx/conf.d/
             {{- if .Values.global.containerSecuritycontext }}
