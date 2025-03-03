@@ -891,7 +891,7 @@ prometheus:
       rollingUpdate: null
     image:
       repository: quay.io/prometheus/prometheus
-      tag: v3.2.0
+      tag: v3.2.1
       pullPolicy: IfNotPresent
     priorityClassName: ""
     prefixURL: ""
@@ -2072,7 +2072,7 @@ grafana:
     failureThreshold: 10
   image:
     repository: grafana/grafana
-    tag: 11.4.0
+    tag: 11.5.2
     pullPolicy: IfNotPresent
     # pullSecrets:
   securityContext: {}
