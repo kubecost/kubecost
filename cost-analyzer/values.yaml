@@ -1541,10 +1541,7 @@ kubecostDeployment:
 ## patterns observed by Kubecost.
 forecasting:
   enabled: true
-  fullImageName: ""
-  image:
-    repository: gcr.io/kubecost1/kubecost-modeling
-    tag: v0.1.23
+  fullImageName: gcr.io/kubecost1/kubecost-modeling:v0.1.23
   imagePullPolicy: IfNotPresent
 
   # Resource specification block for the forecasting container.

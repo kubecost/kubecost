@@ -18,14 +18,11 @@ kubecostModel:
   image: public.ecr.aws/kubecost/cost-model
 
 forecasting:
-  image:
-    repository: public.ecr.aws/kubecost/kubecost-modeling
-    tag: v0.1.23
+  fullImageName: public.ecr.aws/kubecost/kubecost-modeling:v0.1.23
+
 
 networkCosts:
-  image:
-    repository: public.ecr.aws/kubecost/kubecost-network-costs
-    tag: v0.17.8
+  fullImageName: public.ecr.aws/kubecost/kubecost-network-costs:v0.17.8
 
 clusterController:
   image:
