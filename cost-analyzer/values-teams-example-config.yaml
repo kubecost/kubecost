@@ -1,4 +1,5 @@
 # This is a example config for teams. 
+# This can also be done in the UI, the example here is for IaC purposes
 # The groups below are not passed to Kubecost by default, they need to be configured in the identity provider (IdP)
 # See https://docs.kubecost.com/using-kubecost/navigating-the-kubecost-ui/teams#enable-teams-and-define-in-helm for more information
 
