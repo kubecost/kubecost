@@ -1,4 +1,3 @@
-{{- if (eq (include "cost-analyzer.grafanaEnabled" .) "true") }}
 {{- if (((.Values.grafana).sidecar).dashboards).enabled -}}
 apiVersion: v1
 kind: ConfigMap
@@ -19,5 +18,4 @@ metadata:
 data:
   prom-benchmark.json: |-
 {{- .Files.Get "grafana-dashboards/prom-benchmark.json" | nindent 4 }}
-{{- end -}}
 {{- end -}}
