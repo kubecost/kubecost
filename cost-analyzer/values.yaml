@@ -2375,6 +2375,20 @@ costEventsAudit:
 #   hideCloudIntegrationsUI: false
 #   hideBellIcon: false
 #   hideTeams: false
+#   savingsProfiles: # Define select list of profiles used for requestSizing savings card.
+#     requestSizing:
+#       custom1:
+#         algorithmCPU: max
+#         algorithmRAM: max
+#         targetUtilizationCPU: 0.80
+#         targetUtilizationRAM: 0.80
+#         minRecCPUMillicores: 10
+#         minRecRAMBytes: 20971520
+#       custom2:
+#         algorithmCPU: quantileOfAverages
+#         algorithmRAM: quantileOfAverages
+#         quantileCPU: 0.95
+#         quantileRAM: 0.95
 #   savingsRecommendationsAllowLists: # Define select list of instance types to be evaluated in computing Savings Recommendations
 #     AWS: []
 #     GCP: []

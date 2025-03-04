@@ -1,0 +1,13 @@
+{{- if .Values.kubecostProductConfigs }}
+{{- if .Values.kubecostProductConfigs.savingsProfiles }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "savings-profiles"
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+data:
+  savings-profiles.json: '{{ toJson .Values.kubecostProductConfigs.savingsProfiles }}'
+{{- end -}}
+{{- end -}}
