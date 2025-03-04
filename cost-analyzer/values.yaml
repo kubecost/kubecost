@@ -2375,7 +2375,7 @@ costEventsAudit:
 #   hideCloudIntegrationsUI: false
 #   hideBellIcon: false
 #   hideTeams: false
-#   savingsProfiles: # Define select list of profiles used for requestSizing savings card.
+#   savingsProfiles: # Define select list of profiles used for requestSizing savings card. Supported parameters are explained in https://docs.kubecost.com/apis/savings-apis/api-request-right-sizing-v2#applying-your-request-sizing-recommendations.
 #     requestSizing:
 #       custom1:
 #         algorithmCPU: max
@@ -2389,6 +2389,8 @@ costEventsAudit:
 #         algorithmRAM: quantileOfAverages
 #         quantileCPU: 0.95
 #         quantileRAM: 0.95
+#         targetUtilizationCPU: 0.50
+#         targetUtilizationRAM: 0.50
 #   savingsRecommendationsAllowLists: # Define select list of instance types to be evaluated in computing Savings Recommendations
 #     AWS: []
 #     GCP: []
