@@ -1,5 +1,4 @@
-{{- if .Values.kubecostProductConfigs }}
-{{- if .Values.kubecostProductConfigs.savingsProfiles }}
+{{- if (.Values.kubecostProductConfigs).savingsProfiles }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
