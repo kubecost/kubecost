@@ -2375,7 +2375,7 @@ costEventsAudit:
 #   hideCloudIntegrationsUI: false
 #   hideBellIcon: false
 #   hideTeams: false
-#   savingsProfiles: # Define select list of profiles used for requestSizing savings card. Supported parameters are explained in https://docs.kubecost.com/apis/savings-apis/api-request-right-sizing-v2#applying-your-request-sizing-recommendations.
+#   savingsProfiles: # Define custom profiles used in the Right-Size Container Request savings card. Supported parameters are explained in https://docs.kubecost.com/apis/savings-apis/api-request-right-sizing-v2.
 #     requestSizing:
 #     - name: "custom1"  
 #       algorithmCPU: "max"
