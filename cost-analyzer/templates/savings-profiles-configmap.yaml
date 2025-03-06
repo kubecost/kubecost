@@ -9,4 +9,3 @@ metadata:
 data:
   savings-profiles.json: '{{ toJson .Values.kubecostProductConfigs.savingsProfiles }}'
 {{- end -}}
-{{- end -}}
