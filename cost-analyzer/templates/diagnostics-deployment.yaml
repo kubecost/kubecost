@@ -60,7 +60,6 @@ spec:
             secretName: {{ .Values.kubecostModel.federatedStorageConfigSecret | default "federated-store" }}
         {{- end }}
         - name: config-db
-          {{- /* #TODO: make pv? */}}
           emptyDir: {}
       containers:
         - name: diagnostics
@@ -159,7 +158,6 @@ spec:
             - name: {{ $key | quote }}
               value: {{ $value | quote }}
             {{- end }}
-          {{- /* TODO: heatlhcheck that validates the diagnotics pod is healthy */}}
           {{- if .Values.diagnostics.primary.enabled}}
           readinessProbe:
             httpGet:
