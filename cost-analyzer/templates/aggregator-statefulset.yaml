@@ -169,6 +169,11 @@ spec:
           secret:
             secretName: kubecost-rbac-secret
         {{- end }}
+        {{- if eq (include "authMasterKeyEnabled" .) "true" }}
+        - name: kubecost-master-api-key
+          secret:
+            secretName: kubecost-master-api-key
+        {{- end }}
         {{- if eq (include "rbacTeamsConfigEnabled" .) "true" }}
         - name: kubecost-rbac-teams-config
           configMap:
