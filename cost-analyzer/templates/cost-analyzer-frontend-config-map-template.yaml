@@ -1512,6 +1512,30 @@ data:
             proxy_set_header  X-Real-IP  $remote_addr;
             proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
         }
+        location = /model/savings/requestSizingV2/profiles {
+            proxy_read_timeout          {{ .Values.kubecostFrontend.timeoutSeconds | default 300 }};
+            proxy_pass http://aggregator/savings/requestSizingV2/profiles;
+            proxy_redirect off;
+            proxy_set_header Connection "";
+            proxy_set_header  X-Real-IP  $remote_addr;
+            proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
+        }
+        location = /model/savings/requestSizingV2/profile {
+            proxy_read_timeout          {{ .Values.kubecostFrontend.timeoutSeconds | default 300 }};
+            proxy_pass http://aggregator/savings/requestSizingV2/profile;
+            proxy_redirect off;
+            proxy_set_header Connection "";
+            proxy_set_header  X-Real-IP  $remote_addr;
+            proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
+        }
+        location ~ ^/model/savings/requestSizingV2/profile/(.*) {
+            proxy_read_timeout          {{ .Values.kubecostFrontend.timeoutSeconds | default 300 }};
+            proxy_pass http://aggregator/savings/requestSizingV2/profile/$1;
+            proxy_redirect off;
+            proxy_set_header Connection "";
+            proxy_set_header  X-Real-IP  $remote_addr;
+            proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
+        }
 {{- end }}
         location = /model/hideOrphanedResources {
             default_type 'application/json';

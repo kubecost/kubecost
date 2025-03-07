@@ -2372,6 +2372,22 @@ costEventsAudit:
 #   hideCloudIntegrationsUI: false
 #   hideBellIcon: false
 #   hideTeams: false
+#   savingsProfiles: # Define custom profiles used in the Right-Size Container Request savings card. Supported parameters are explained in https://docs.kubecost.com/apis/savings-apis/api-request-right-sizing-v2.
+#     requestSizing:
+#     - name: "custom1"
+#       algorithmCPU: "max"
+#       algorithmRAM: "max"
+#       targetUtilizationCPU: 0.80
+#       targetUtilizationRAM: 0.80
+#       minRecCPUMillicores: 10
+#       minRecRAMBytes: 20971520
+#     - name: "custom2"
+#       algorithmCPU: "quantileOfAverages"
+#       algorithmRAM: "quantileOfAverages"
+#       quantileCPU: 0.95
+#       quantileRAM: 0.95
+#       targetUtilizationCPU: 0.50
+#       targetUtilizationRAM: 0.50
 #   savingsRecommendationsAllowLists: # Define select list of instance types to be evaluated in computing Savings Recommendations
 #     AWS: []
 #     GCP: []
