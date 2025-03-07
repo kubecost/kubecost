@@ -1812,21 +1812,19 @@ kubecostAggregator:
   service:
     labels: {}
 
-## Kubecost Multi-cluster Diagnostics (beta)
+## Kubecost Multi-cluster Diagnostics
 ## A single view into the health of all agent clusters. Each agent cluster sends
-## its diagnostic data to a storage bucket. Future versions may include
-## repairing & alerting from the primary.
+## its diagnostic data to a storage bucket.
 ## Ref: https://docs.kubecost.com/install-and-configure/install/multi-cluster/multi-cluster-diagnostics
 ##
 diagnostics:
   enabled: true
 
-  ## The primary aggregates all diagnostic data and handles API requests. It's
-  ## also responsible for deleting diagnostic data (on disk & bucket) beyond
-  ## retention. When in readonly mode it does not push its own diagnostic data
-  ## to the bucket.
+  ## The primary must be enabled to query diagnostic data. It aggregates all
+  ## diagnostic data, handles API requests, and deletes data beyond retention.
+  ## In readonly mode, it does not push its own diagnostic data to the bucket.
   primary:
-    enabled: false
+    enabled: true
     retention: "7d"
     readonly: false
 
@@ -1855,12 +1853,11 @@ diagnostics:
     containerSecurityContext: {}
     nodeSelector: {}
     tolerations: []
-    ## Annotations to be added for diagnostics Deployment.
     annotations: {}
     affinity: {}
 
 ## Provide a full name override for the diagnostics Deployment.
-# diagnosticsFullnameOverride: ""
+diagnosticsFullnameOverride: ""
 
 # Kubecost Cluster Controller for Right Sizing and Cluster Turndown
 clusterController:
