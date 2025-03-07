@@ -79,15 +79,6 @@ Kubecost 2.0 preconditions
     {{- end -}}
   {{- end -}}
 
-  {{- if not .Values.kubecostModel.etlFileStoreEnabled -}}
-    {{- fail "\n\nKubecost 2.0 does not support running fully in-memory. Some file system must be available to store cost data." -}}
-  {{- end -}}
-
-
-  {{- if .Values.kubecostModel.openSourceOnly -}}
-    {{- fail "In Kubecost 2.0, kubecostModel.openSourceOnly is not supported" -}}
-  {{- end -}}
-
   {{/* Aggregator config reconciliation and common config */}}
   {{- if eq (include "aggregator.deployMethod" .) "statefulset" -}}
     {{- if .Values.kubecostAggregator -}}
@@ -112,6 +103,14 @@ Kubecost 2.0 preconditions
     {{- fail "\nKubecost does not support running federatedETL.agentOnly with the aggregator statefulset" }}
   {{- end }}
 {{- end -}}
+
+{{- define "federatedStorageCheck" -}}
+  {{- if or (.Values.federatedETL).federatedStore (.Values.kubecostModel).federatedStorageConfig }}
+    {{- if and (not (eq (include "aggregator.deployMethod" .) "statefulset")) (not (.Values.federatedETL).agentOnly) }}
+      {{- printf "\n\n***Configuration issue detected:***\nWhen a federated store is provided, Kubecost should either be running as agentOnly or as a statefulset.\n.Values.federatedETL.agentOnly=true\nOr\n.Values.kubecostAggregator.deployMethod=statefulset\n***" }}
+    {{- end }}
+  {{- end }}
+{{- end }}
 
 {{- define "cloudIntegrationFromProductConfigs" }}
   {
@@ -158,6 +157,23 @@ will result in failure. Users are asked to select one of the two presently-avail
   {{- end -}}
 {{- end -}}
 
+{{/*
+RBAC exclusivity check: make sure either simple RBAC or RBAC Teams is configured, not both
+*/}}
+{{- define "rbacCheck" -}}
+  {{- if and (or (.Values.saml).groups (.Values.oidc).groups) (.Values.teams).teamsConfig  -}}
+    {{- fail "\nSimple RBAC and RBAC Teams are mutually exclusive. Please specify only one." -}}
+  {{- end -}}
+{{- end -}}
+
+{{/*
+Federated Storage source contents check. Either the Secret must be specified or the JSON, not both.
+*/}}
+{{- define "federatedStorageSourceCheck" -}}
+  {{- if and (.Values.kubecostModel).federatedStorageConfigSecret (.Values.kubecostModel).federatedStorageConfig -}}
+    {{- fail "\nkubecostkubecostModel.federatedStorageConfigSecret and kubecostModel.federatedStorageConfig are mutually exclusive. Please specify only one." -}}
+  {{- end -}}
+{{- end -}}
 
 {{/*
 Print a warning if PV is enabled AND EKS is detected AND the EBS-CSI driver is not installed
@@ -178,13 +194,22 @@ ERROR: MISSING EBS-CSI DRIVER WHICH IS REQUIRED ON EKS v1.23+ TO MANAGE PERSISTE
 Verify a cluster_id is set in the Prometheus global config
 */}}
 {{- define "clusterIDCheck" -}}
-  {{- if (.Values.kubecostModel).federatedStorageConfigSecret }}
+  {{- if or (.Values.kubecostModel).federatedStorageConfigSecret (.Values.kubecostModel).federatedStorageConfig }}
     {{- if not .Values.prometheus.server.clusterIDConfigmap }}
       {{- if eq .Values.prometheus.server.global.external_labels.cluster_id "cluster-one" }}
         {{- fail "\n\nWhen using multi-cluster Kubecost, you must specify a unique `.Values.prometheus.server.global.external_labels.cluster_id` for each cluster.\nNote this must be set even if you are using your own Prometheus or another identifier.\n" -}}
       {{- end -}}
     {{- end -}}
   {{- end -}}
+{{- end -}}
+
+{{/*
+  Verify if both kube-rbac-proxy and bearer token are set
+*/}}
+{{- define "kubeRBACProxyBearerTokenCheck" -}}
+{{- if and (.Values.global.prometheus.kubeRBACProxy) (.Values.global.prometheus.queryServiceBearerTokenSecretName) }}
+  {{- fail "\n\nBoth kubeRBACProxy and queryServiceBearerTokenSecretName are set. Please specify only one." -}}
+{{- end -}}
 {{- end -}}
 
 
@@ -207,9 +232,9 @@ support templating a chart which uses the lookup function.
 {{- end -}}
 
 {{/*
-Verify the federated storage config secret exists with the expected key when cloud integration is enabled.
-Skip the check if CI/CD is enabled and skipSanityChecks is set. Argo CD, for example, does not
-support templating a chart which uses the lookup function.
+Verify the federated storage config secret exists with the expected key.
+Skip the check if CI/CD is enabled and skipSanityChecks is set. Argo CD, for
+example, does not support templating a chart which uses the lookup function.
 */}}
 {{- define "federatedStorageConfigSecretCheck" -}}
 {{- if (.Values.kubecostModel).federatedStorageConfigSecret }}
@@ -451,18 +476,9 @@ Create the chart labels.
 {{- define "cost-analyzer.chartLabels" -}}
 helm.sh/chart: {{ include "cost-analyzer.chart" . }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
-{{- end -}}
-{{- define "kubecost.chartLabels" -}}
-app.kubernetes.io/name: {{ include "cost-analyzer.name" . }}
-helm.sh/chart: {{ include "cost-analyzer.chart" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
-{{- end -}}
-{{- define "kubecost.aggregator.chartLabels" -}}
-app.kubernetes.io/name: {{ include "aggregator.name" . }}
-helm.sh/chart: {{ include "cost-analyzer.chart" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- if .Values.chartLabels }}
+{{ toYaml .Values.chartLabels }}
+{{- end }}
 {{- end -}}
 
 
@@ -929,12 +945,10 @@ Begin Kubecost 2.0 templates
   volumeMounts:
     - name: persistent-configs
       mountPath: /var/configs
-    {{- if .Values.kubecostModel.federatedStorageConfigSecret }}
+    {{- if or (.Values.kubecostModel).federatedStorageConfigSecret (.Values.kubecostModel).federatedStorageConfig }}
     - name: federated-storage-config
       mountPath: /var/configs/etl
       readOnly: true
-    {{- else if eq (include "aggregator.deployMethod" .) "statefulset" }}
-    {{- fail "When in StatefulSet mode, Aggregator requires that kubecostModel.federatedStorageConfigSecret be set." }}
     {{- end }}
     {{- if and .Values.persistentVolume.dbPVEnabled (eq (include "aggregator.deployMethod" .) "singlepod") }}
     - name: persistent-db
@@ -1000,15 +1014,34 @@ Begin Kubecost 2.0 templates
     {{- end }}
     {{- end }}
     {{- end }}
+    {{- if eq (include "rbacTeamsEnabled" .) "true" }}
+    - name: kubecost-rbac-secret
+      mountPath: /var/configs/kubecost-rbac-secret
+    {{- end }}
+    {{- if eq (include "rbacTeamsConfigEnabled" .) "true" }}
+    - name: kubecost-rbac-teams-config
+      mountPath: /var/configs/rbac-teams-configs
+    {{- end }}
     {{- if .Values.global.integrations.postgres.enabled }}
     - name: postgres-creds
       mountPath: /var/configs/integrations/postgres-creds
     - name: postgres-queries
       mountPath: /var/configs/integrations/postgres-queries
     {{- end }}
+    {{- if .Values.global.updateCaTrust.enabled }}
+    - name: ca-certs-secret
+      mountPath: {{ .Values.global.updateCaTrust.caCertsMountPath | quote }}
+    - name: ssl-path
+      mountPath: "/etc/pki/ca-trust/extracted"
+      readOnly: false
+    {{- end }}
     {{- /* Only adds extraVolumeMounts if aggregator is running as its own pod */}}
     {{- if and .Values.kubecostAggregator.extraVolumeMounts (eq (include "aggregator.deployMethod" .) "statefulset") }}
     {{- toYaml .Values.kubecostAggregator.extraVolumeMounts | nindent 4 }}
+    {{- end }}
+    {{- if .Values.global.integrations.turbonomic.enabled }}
+    - name: turbonomic-credentials
+      mountPath: /var/configs/turbonomic
     {{- end }}
   env:
     {{- if and (.Values.prometheus.server.global.external_labels.cluster_id) (not .Values.prometheus.server.clusterIDConfigmap) }}
@@ -1091,7 +1124,7 @@ Begin Kubecost 2.0 templates
     # If this isn't set, we pretty much have to be in a read only state,
     # initialization will probably fail otherwise.
     - name: ETL_BUCKET_CONFIG
-      {{- if not .Values.kubecostModel.federatedStorageConfigSecret }}
+      {{- if and (not .Values.kubecostModel.federatedStorageConfigSecret) (not .Values.kubecostModel.federatedStorageConfig) }}
       value: /var/configs/etl/object-store.yaml
       {{- else }}
       value: /var/configs/etl/federated-store.yaml
@@ -1101,12 +1134,16 @@ Begin Kubecost 2.0 templates
       value: "true"
     - name: FEDERATED_CLUSTER # this ensures the ingester runs assuming federated primary paths in the bucket
       value: "true"
+    {{- if (.Values.kubecostProductConfigs).standardDiscount }}
+    {{- if .Values.ingestionConfigmapName }}
+    - name: INGESTION_CONFIGMAP_NAME
+      value: {{ .Values.ingestionConfigmapName }}
+    {{- end }}
+    {{- end }}
       {{- end }}
     {{- end }}
     - name: LOG_LEVEL
       value: {{ .Values.kubecostAggregator.logLevel }}
-    - name: DB_COPY_FULL
-      value: {{ (quote .Values.kubecostAggregator.dbCopyFull) | default (quote true) }}
     - name: DB_READ_THREADS
       value: {{ .Values.kubecostAggregator.dbReadThreads | quote }}
     - name: DB_WRITE_THREADS
@@ -1125,6 +1162,8 @@ Begin Kubecost 2.0 templates
       value: {{ .Values.kubecostAggregator.etlDailyStoreDurationDays | quote }}
     - name: ETL_HOURLY_STORE_DURATION_HOURS
       value: {{ .Values.kubecostAggregator.etlHourlyStoreDurationHours | quote }}
+    - name: CONTAINER_RESOURCE_USAGE_RETENTION_DAYS
+      value: {{ .Values.kubecostAggregator.containerResourceUsageRetentionDays | quote }}
     - name: DB_TRIM_MEMORY_ON_CLOSE
       value: {{ .Values.kubecostAggregator.dbTrimMemoryOnClose | quote }}
     - name: KUBECOST_NAMESPACE
@@ -1139,6 +1178,20 @@ Begin Kubecost 2.0 templates
     - name: OIDC_SKIP_ONLINE_VALIDATION
       value: {{ (quote .Values.oidc.skipOnlineTokenValidation) | default (quote false) }}
     {{- end}}
+    {{- if eq (include "rbacTeamsEnabled" .) "true" }}
+    {{- if .Values.oidc.enabled }}
+    - name: OIDC_RBAC_TEAMS_ENABLED
+      value: "true"
+    {{- end }}
+    {{- if .Values.saml.enabled }}
+    - name: SAML_RBAC_TEAMS_ENABLED
+      value: "true"
+    {{- end }}
+    {{- end }}
+    {{- if eq (include "rbacTeamsConfigEnabled" .) "true" }}
+    - name: RBAC_TEAMS_HELM_CONFIG_PATH
+      value: "/var/configs/rbac-teams-configs/rbac-teams-configs.json"
+    {{- end }}
     {{- if .Values.kubecostAggregator }}
     {{- if .Values.kubecostAggregator.collections }}
     {{- if (((.Values.kubecostAggregator).collections).cache) }}
@@ -1146,6 +1199,10 @@ Begin Kubecost 2.0 templates
       value: {{ (quote .Values.kubecostAggregator.collections.cache.enabled) | default (quote true) }}
     {{- end }}
     {{- end }}
+    {{- end }}
+    {{- if .Values.global.integrations.turbonomic.enabled }}
+    - name: TURBONOMIC_ENABLED
+      value: "true"
     {{- end }}
     {{- if .Values.saml }}
     {{- if .Values.saml.enabled }}
@@ -1176,8 +1233,10 @@ Begin Kubecost 2.0 templates
       value: {{ .Values.saml.redirectURL }}
     {{- end}}
     {{- if .Values.saml.rbac.enabled }}
+    {{- if eq (include "rbacTeamsEnabled" .) "false" }}
     - name: SAML_RBAC_ENABLED
       value: "true"
+    {{- end }}
     {{- end }}
     {{- if and .Values.saml.encryptionCertSecret .Values.saml.decryptionKeySecret }}
     - name: SAML_RESPONSE_ENCRYPTED
@@ -1250,13 +1309,9 @@ Begin Kubecost 2.0 templates
   volumeMounts:
     - name: persistent-configs
       mountPath: /var/configs
-  {{- if .Values.kubecostModel.federatedStorageConfigSecret }}
+  {{- if or (.Values.kubecostModel).federatedStorageConfigSecret (.Values.kubecostModel).federatedStorageConfig }}
     - name: federated-storage-config
       mountPath: /var/configs/etl/federated
-      readOnly: true
-  {{- else if .Values.kubecostModel.etlBucketConfigSecret }}
-    - name: etl-bucket-config
-      mountPath: /var/configs/etl
       readOnly: true
   {{- end }}
   {{- if or (.Values.kubecostProductConfigs).cloudIntegrationSecret (.Values.kubecostProductConfigs).cloudIntegrationJSON ((.Values.kubecostProductConfigs).athenaBucketName) }}
@@ -1273,6 +1328,13 @@ Begin Kubecost 2.0 templates
       name: plugins-config
       readOnly: true
     {{- end }}
+    {{- if .Values.global.updateCaTrust.enabled }}
+    - name: ca-certs-secret
+      mountPath: {{ .Values.global.updateCaTrust.caCertsMountPath | quote }}
+    - name: ssl-path
+      mountPath: "/etc/pki/ca-trust/extracted"
+      readOnly: false
+    {{- end }}
   {{- /* Only adds extraVolumeMounts when cloudcosts is running as its own pod */}}
   {{- if and .Values.kubecostAggregator.cloudCost.extraVolumeMounts (eq (include "aggregator.deployMethod" .) "statefulset") }}
     {{- toYaml .Values.kubecostAggregator.cloudCost.extraVolumeMounts | nindent 4 }}
@@ -1280,11 +1342,7 @@ Begin Kubecost 2.0 templates
   env:
     - name: CONFIG_PATH
       value: /var/configs/
-    {{- if .Values.kubecostModel.etlBucketConfigSecret }}
-    - name: ETL_BUCKET_CONFIG
-      value: /var/configs/etl/object-store.yaml
-    {{- end}}
-    {{- if .Values.kubecostModel.federatedStorageConfigSecret }}
+    {{- if or .Values.kubecostModel.federatedStorageConfigSecret .Values.kubecostModel.federatedStorageConfig }}
     - name: FEDERATED_STORE_CONFIG
       value: /var/configs/etl/federated/federated-store.yaml
     - name: FEDERATED_CLUSTER
@@ -1332,13 +1390,13 @@ SSO enabled flag for nginx configmap
 {{- end -}}
 
 {{/*
-To use the Kubecost built-in Teams UI RBAC< you must enable SSO and RBAC and not specify any groups.
-Groups is only used when using external RBAC.
+To use the Kubecost built-in RBAC Teams UI, you must enable SSO and RBAC and not specify any groups.
+Groups is only used when using simple RBAC.
 */}}
 {{- define "rbacTeamsEnabled" -}}
   {{- if or (.Values.saml).enabled (.Values.oidc).enabled -}}
     {{- if or ((.Values.saml).rbac).enabled ((.Values.oidc).rbac).enabled -}}
-      {{- if not (or (.Values.saml).groups (.Values.oidc).groups) -}}
+      {{- if not (or ((.Values.saml).rbac).groups ((.Values.oidc).rbac).groups) -}}
         {{- printf "true" -}}
         {{- else -}}
         {{- printf "false" -}}
@@ -1351,11 +1409,23 @@ Groups is only used when using external RBAC.
   {{- end -}}
 {{- end -}}
 
+{{- define "rbacTeamsConfigEnabled" -}}
+    {{- if  eq (include "rbacTeamsEnabled" .) "true" -}}
+        {{- if or (.Values.teams).teamsConfig  (.Values.teams).teamsConfigMapName -}}
+            {{- printf "true" -}}
+        {{- else -}}
+            {{- printf "false" -}}
+        {{- end }}
+    {{- else -}}
+        {{- printf "false" -}}
+    {{- end }}
+{{- end }}
+
 {{/*
 Backups configured flag for nginx configmap
 */}}
 {{- define "dataBackupConfigured" -}}
-  {{- if or (.Values.kubecostModel).etlBucketConfigSecret (.Values.kubecostModel).federatedStorageConfigSecret -}}
+  {{- if or (.Values.kubecostModel).federatedStorageConfigSecret (.Values.kubecostModel).federatedStorageConfig -}}
     {{- printf "true" -}}
   {{- else -}}
     {{- printf "false" -}}
@@ -1436,6 +1506,16 @@ for more information
 {{- end }}
 {{- end }}
 
+{{- define "caCertsSecretConfigCheck" }}
+  {{- if .Values.global.updateCaTrust.enabled }}
+    {{- if and .Values.global.updateCaTrust.caCertsSecret .Values.global.updateCaTrust.caCertsConfig }}
+      {{- fail "Both caCertsSecret and caCertsConfig are defined. Please specify only one." }}
+    {{- else if and (not .Values.global.updateCaTrust.caCertsSecret) (not .Values.global.updateCaTrust.caCertsConfig) }}
+      {{- fail "Neither caCertsSecret nor caCertsConfig is defined, but updateCaTrust is enabled. Please specify one." }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+
 {{- define "clusterControllerEnabled" }}
 {{- if (.Values.clusterController).enabled }}
 {{- printf "true" -}}
@@ -1473,6 +1553,10 @@ for more information
 */ -}}
 {{- define "configsChecksum" -}}
 {{- $files := list
+  "alibaba-service-key-secret.yaml"
+  "aws-service-key-secret.yaml"
+  "azure-service-key-secret.yaml"
+  "cloud-integration-secret.yaml"
   "cost-analyzer-account-mapping-configmap.yaml"
   "cost-analyzer-alerts-configmap.yaml"
   "cost-analyzer-asset-reports-configmap.yaml"
@@ -1488,12 +1572,18 @@ for more information
   "cost-analyzer-saved-reports-configmap.yaml"
   "cost-analyzer-server-configmap.yaml"
   "cost-analyzer-smtp-configmap.yaml"
+  "external-grafana-config-map-template.yaml"
   "gcpstore-config-map-template.yaml"
+  "grafana/grafana-secret.yaml"
   "install-plugins.yaml"
   "integrations-postgres-queries-configmap.yaml"
+  "integrations-postgres-secret.yaml"
+  "kubecost-cluster-context-switcher.yaml"
   "kubecost-cluster-controller-actions-config.yaml"
-  "kubecost-cluster-manager-configmap-template.yaml"
+  "kubecost-oidc-secret-template.yaml"
+  "kubecost-saml-secret-template.yaml"
   "mimir-proxy-configmap-template.yaml"
+  "savings-recommendations-allowlists-config-map-template.yaml"
 -}}
 {{- $checksum := "" -}}
 {{- range $files -}}
@@ -1502,3 +1592,26 @@ for more information
 {{- end -}}
 {{- $checksum | sha256sum -}}
 {{- end -}}
+
+{{- define "cost-model.image" }}
+{{- if .Values.kubecostModel }}
+  {{- if .Values.kubecostModel.fullImageName }}
+    {{ .Values.kubecostModel.fullImageName }}
+  {{- else if .Values.imageVersion }}
+    {{ .Values.kubecostModel.image }}:{{ .Values.imageVersion }}
+  {{- else if eq "development" .Chart.AppVersion }}
+    gcr.io/kubecost1/cost-model-nightly:latest
+  {{- else }}
+    {{ .Values.kubecostModel.image }}:prod-{{ $.Chart.AppVersion }}
+  {{- end }}
+{{- else }}
+  gcr.io/kubecost1/cost-model:prod-{{ $.Chart.AppVersion }}
+{{- end }}
+{{- end }}
+
+{{- define "cost-model.imagetag" }}
+{{- $image := include "cost-model.image" . }}
+{{- $parts := splitList ":" $image }}
+{{- $tag := last $parts }}
+{{- $tag }}
+{{- end }}

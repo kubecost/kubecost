@@ -5,7 +5,8 @@ kind: ConfigMap
 metadata:
   name: "account-mapping"
   namespace: {{ .Release.Namespace }}
-  labels: {{ include "cost-analyzer.commonLabels" . | nindent 4 }}
+  labels:
+    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
 data:
   account-map.json: '{{ toJson .Values.kubecostProductConfigs.cloudAccountMapping }}'
 {{- end }}

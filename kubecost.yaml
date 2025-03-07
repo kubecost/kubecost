@@ -23237,8 +23237,6 @@ spec:
         app.kubernetes.io/name: cost-analyzer
         app.kubernetes.io/instance: kubecost
         app: cost-analyzer
-
-        helm-rollout-restarter: "e5zu5"
     spec:
       securityContext:
         fsGroup: 1001
@@ -23571,7 +23569,7 @@ spec:
       restartPolicy: Always
       containers:
         - name: forecasting
-          image: gcr.io/kubecost1/kubecost-modeling:v0.1.12
+          image: gcr.io/kubecost1/kubecost-modeling:v0.1.22
           volumeMounts:
             - name: tmp
               mountPath: /tmp
@@ -23659,7 +23657,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: grafana-sc-dashboard
-          image: "kiwigrid/k8s-sidecar:1.27.2"
+          image: "ghcr.io/kiwigrid/k8s-sidecar:1.28.1"
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
@@ -23778,8 +23776,6 @@ spec:
   template:
     metadata:
       labels:
-
-        helm-rollout-restarter: "AoKZ9"
         component: "server"
         app: prometheus
         release: kubecost
@@ -23789,7 +23785,7 @@ spec:
       containers:
 
         - name: prometheus-server
-          image: "quay.io/prometheus/prometheus:v2.52.0"
+          image: "quay.io/prometheus/prometheus:v2.55.1"
           imagePullPolicy: "IfNotPresent"
           args:
             - --storage.tsdb.retention.time=97h

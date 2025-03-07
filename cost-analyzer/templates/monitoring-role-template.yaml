@@ -1,0 +1,19 @@
+{{- if (.Values.global.platforms.openshift.enabled) }}
+{{- if (.Values.global.platforms.openshift.createMonitoringResourceReaderRoleBinding) }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: {{ .Release.Namespace }}
+  name: {{ template "cost-analyzer.fullname" . }}-reader
+rules:
+  - apiGroups: 
+      - ''
+    resources:
+      - "pods"
+      - "services"
+      - "endpoints"
+    verbs:
+      - list
+      - watch
+{{- end -}}
+{{- end -}}

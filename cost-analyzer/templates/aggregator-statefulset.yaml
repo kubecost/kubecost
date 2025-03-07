@@ -11,6 +11,13 @@ metadata:
     {{- with .Values.global.additionalLabels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
+  annotations:
+  {{- with .Values.global.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.kubecostAggregator.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   replicas: {{ .Values.kubecostAggregator.replicas }}
   serviceName: {{ template "aggregator.serviceName" . }}
@@ -44,10 +51,6 @@ spec:
       labels:
         app.kubernetes.io/name: aggregator
         app.kubernetes.io/instance: {{ .Release.Name }}
-        {{/* Force pod restarts on upgrades to ensure the nginx config is current */}}
-        {{- if not .Values.global.platforms.cicd.enabled }}
-        helm-rollout-restarter: {{ randAlphaNum 5 | quote }}
-        {{- end }}
         app: aggregator
         {{- with .Values.global.additionalLabels }}
         {{- toYaml . | nindent 8 }}
@@ -78,19 +81,23 @@ spec:
         {{- if .Values.kubecostModel.federatedStorageConfigSecret }}
             {{- $etlBackupBucketSecret = .Values.kubecostModel.federatedStorageConfigSecret }}
         {{- end }}
-        {{- if $etlBackupBucketSecret }}
-        {{- if .Values.kubecostModel.federatedStorageConfigSecret }}
+        {{- if or $etlBackupBucketSecret .Values.kubecostModel.federatedStorageConfig }}
+        {{- if or .Values.kubecostModel.federatedStorageConfigSecret .Values.kubecostModel.federatedStorageConfig }}
         - name: federated-storage-config
           secret:
             defaultMode: 420
+            {{- if .Values.kubecostModel.federatedStorageConfigSecret }}
             secretName: {{ .Values.kubecostModel.federatedStorageConfigSecret }}
+            {{- else }}
+            secretName: federated-store
+            {{- end }}
         {{- end }}
         - name: etl-bucket-config
           secret:
             defaultMode: 420
-            secretName: {{ $etlBackupBucketSecret }}
+            secretName: {{ $etlBackupBucketSecret | default "federated-store" }}
         {{- else }}
-        {{- fail "\n\nKubecost Aggregator Enterprise Config requires .Values.kubecostModel.federatedStorageConfigSecret" }}
+        {{- fail "\n\nKubecost Aggregator Enterprise Config requires either .Values.kubecostModel.federatedStorageConfigSecret or .Values.kubecostModel.federatedStorageConfig" }}
         {{- end }}
         {{- if and ((.Values.kubecostProductConfigs).productKey).enabled ((.Values.kubecostProductConfigs).productKey).secretname }}
         - name: productkey-secret
@@ -99,6 +106,14 @@ spec:
             items:
             - key: productkey.json
               path: productkey.json
+        {{- end }}
+        {{- if ((.Values.kubecostProductConfigs).smtp).secretname }}
+        - name: smtp-secret
+          secret:
+            secretName: {{ .Values.kubecostProductConfigs.smtp.secretname }}
+            items:
+            - key: smtp.json
+              path: smtp.json
         {{- end }}
         {{- if .Values.saml }}
         {{- if .Values.saml.enabled }}
@@ -149,6 +164,20 @@ spec:
         {{- end }}
         {{- end }}
         {{- end }}
+        {{- if eq (include "rbacTeamsEnabled" .) "true" }}
+        - name: kubecost-rbac-secret
+          secret:
+            secretName: kubecost-rbac-secret
+        {{- end }}
+        {{- if eq (include "rbacTeamsConfigEnabled" .) "true" }}
+        - name: kubecost-rbac-teams-config
+          configMap:
+        {{- if .Values.teams.teamsConfigMapName }}
+            name: {{ .Values.teams.teamsConfigMapName }}
+        {{- else }}
+            name: kubecost-rbac-teams-config
+        {{- end }}
+        {{- end }}
         {{- if .Values.global.integrations.postgres.enabled }}
         - name: postgres-creds
           secret:
@@ -161,9 +190,56 @@ spec:
           configMap:
             name: kubecost-integrations-postgres-queries
         {{- end }}
+        {{- if .Values.global.integrations.turbonomic.enabled }}
+        - name: turbonomic-credentials
+          secret:
+            secretName: kubecost-integrations-turbonomic
+        {{- end }}
+        {{- if .Values.global.updateCaTrust.enabled }}
+        - name: ca-certs-secret
+          {{- if .Values.global.updateCaTrust.caCertsSecret }}
+          secret:
+            defaultMode: 420
+            secretName: {{ .Values.global.updateCaTrust.caCertsSecret }}
+          {{- else }}
+          configMap:
+            name: {{ .Values.global.updateCaTrust.caCertsConfig }}
+          {{- end }}
+        - name: ssl-path
+          emptyDir: {}
+        {{- end }}
         {{- if .Values.kubecostAggregator.extraVolumes }}
         {{- toYaml .Values.kubecostAggregator.extraVolumes | nindent 8 }}
         {{- end }}
+      initContainers:
+      {{- if .Values.global.updateCaTrust.enabled }}
+        - name: update-ca-trust
+          image: {{ include "cost-model.image" . | trim | quote}}
+          {{- if .Values.kubecostModel.imagePullPolicy }}
+          imagePullPolicy: {{ .Values.kubecostModel.imagePullPolicy }}
+          {{- else }}
+          imagePullPolicy: Always
+          {{- end }}
+          {{- with .Values.global.updateCaTrust.securityContext }}
+          securityContext: {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.global.updateCaTrust.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          command:
+            - 'sh'
+            - '-c'
+            - >
+              mkdir -p /etc/pki/ca-trust/extracted/{edk2,java,openssl,pem};
+              /usr/bin/update-ca-trust extract;
+          volumeMounts:
+            - name: ca-certs-secret
+              mountPath: {{ .Values.global.updateCaTrust.caCertsMountPath | quote }}
+            - name: ssl-path
+              mountPath: "/etc/pki/ca-trust/extracted"
+              readOnly: false
+        {{- end}}
       containers:
         {{- include "aggregator.containerTemplate" . | nindent 8 }}
 
@@ -173,7 +249,9 @@ spec:
 
     {{- if .Values.imagePullSecrets }}
       imagePullSecrets:
-      {{ toYaml .Values.imagePullSecrets | indent 2 }}
+      {{- range $.Values.imagePullSecrets }}
+        - name: {{ .name }}
+      {{- end }}
     {{- end }}
       {{- if .Values.kubecostAggregator.priority }}
       {{- if .Values.kubecostAggregator.priority.enabled }}

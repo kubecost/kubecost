@@ -6,8 +6,11 @@
 {{- include "gcpCloudIntegrationCheck" . -}}
 {{- include "azureCloudIntegrationCheck" . -}}
 {{- include "federatedStorageConfigSecretCheck" . -}}
+{{- include "federatedStorageSourceCheck" . -}}
 {{- include "prometheusRetentionCheck" . -}}
 {{- include "clusterIDCheck" . -}}
+{{- include "kubeRBACProxyBearerTokenCheck" . -}}
+{{- include "caCertsSecretConfigCheck" . -}}
 
 {{- $servicePort := .Values.service.port | default 9090 }}
 Kubecost {{ .Chart.Version }} has been successfully installed.
@@ -25,3 +28,4 @@ Please allow 25 minutes for Kubecost to gather metrics. A progress indicator wil
 Having installation issues? View our Troubleshooting Guide at http://docs.kubecost.com/troubleshoot-install
 
 {{- include "kubecostV2-3-notices" . -}}
+{{- include "federatedStorageCheck" . -}}

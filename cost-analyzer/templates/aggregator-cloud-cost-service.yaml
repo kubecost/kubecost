@@ -5,10 +5,10 @@ metadata:
   name: {{ template "cloudCost.serviceName" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-{{ include "cloudCost.commonLabels" . | nindent 4 }}
+    {{- include "cloudCost.commonLabels" . | nindent 4 }}
 spec:
   selector:
-{{ include "cloudCost.selectorLabels" . | nindent 4 }}
+    {{- include "cloudCost.selectorLabels" . | nindent 4 }}
   type: "ClusterIP"
   ports:
     - name: tcp-api

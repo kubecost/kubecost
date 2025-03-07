@@ -4,7 +4,7 @@ metadata:
   name: {{ template "cost-analyzer.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{ include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
 data:
   {{- if .Values.global.prometheus.enabled }}
   {{- if .Values.global.zone }}

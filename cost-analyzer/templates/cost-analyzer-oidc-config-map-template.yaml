@@ -6,7 +6,7 @@ metadata:
   name: {{ template "cost-analyzer.fullname" . }}-oidc
   namespace: {{ .Release.Namespace }}
   labels:
-    {{ include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
 data:
 {{- $root := . }}
     oidc.json: |-
@@ -24,6 +24,7 @@ data:
         "discoveryURL" : "{{ .Values.oidc.discoveryURL }}",
         "hostedDomain" : "{{ .Values.oidc.hostedDomain }}",
         "skipOnlineTokenValidation" : "{{ .Values.oidc.skipOnlineTokenValidation | default "false" }}",
+        "useClientSecretPost": {{ .Values.oidc.useClientSecretPost }},
         "rbac" : {
           "enabled" : {{ .Values.oidc.rbac.enabled }},
           "groups" : [

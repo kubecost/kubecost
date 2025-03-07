@@ -5,7 +5,7 @@ metadata:
   name: {{ default "pricing-configs" .Values.pricingConfigmapName }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{ include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
 data:
   {{- if .Values.kubecostProductConfigs.defaultModelPricing }}
   {{- if .Values.kubecostProductConfigs.defaultModelPricing.enabled }}

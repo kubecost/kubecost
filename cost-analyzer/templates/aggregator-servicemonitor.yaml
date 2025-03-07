@@ -5,7 +5,7 @@ metadata:
   name: {{ include "aggregator.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{ include "aggregator.commonLabels" . | nindent 4 }}
+    {{- include "aggregator.commonLabels" . | nindent 4 }}
     {{- if .Values.serviceMonitor.aggregatorMetrics.additionalLabels }}
     {{ toYaml .Values.serviceMonitor.aggregatorMetrics.additionalLabels | nindent 4 }}
     {{- end }}

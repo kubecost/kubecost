@@ -1,5 +1,4 @@
 {{- if .Values.etlUtils.enabled }}
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -10,8 +9,11 @@ metadata:
     {{- with .Values.global.additionalLabels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-  {{- with .Values.global.podAnnotations}}
   annotations:
+  {{- with .Values.global.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.etlUtils.annotations }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
@@ -30,6 +32,10 @@ spec:
         {{- with .Values.global.additionalLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
+      annotations:
+        {{- with .Values.global.podAnnotations}}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       restartPolicy: Always
       volumes:
@@ -39,19 +45,17 @@ spec:
             defaultMode: 420
             secretName: {{ .Values.etlUtils.thanosSourceBucketSecret }}
         {{- end }}
-        {{- if .Values.kubecostModel.federatedStorageConfigSecret }}
+        {{- if or .Values.kubecostModel.federatedStorageConfigSecret .Values.kubecostModel.federatedStorageConfig}}
         - name: federated-storage-config
           secret:
             defaultMode: 420
-            secretName: {{ .Values.kubecostModel.federatedStorageConfigSecret }}
+            secretName: {{ .Values.kubecostModel.federatedStorageConfigSecret | default "federated-store" }}
         {{- end }}
       serviceAccountName: {{ template "cost-analyzer.serviceAccountName" . }}
       containers:
         - name: {{ template "etlUtils.name" . }}
           {{- if .Values.kubecostModel }}
-          {{- if .Values.kubecostModel.openSourceOnly }}
-          {{- fail "ETL Utils cannot be used with open source only" }}
-          {{- else if .Values.etlUtils.fullImageName }}
+          {{- if .Values.etlUtils.fullImageName }}
           image: {{ .Values.etlUtils.fullImageName }}
           {{- else if .Values.kubecostModel.fullImageName }}
           image: {{ .Values.kubecostModel.fullImageName }}
@@ -106,7 +110,9 @@ spec:
 
     {{- if .Values.imagePullSecrets }}
       imagePullSecrets:
-      {{ toYaml .Values.imagePullSecrets | indent 2 }}
+      {{- range $.Values.imagePullSecrets }}
+        - name: {{ .name }}
+      {{- end }}
     {{- end }}
       {{- with .Values.etlUtils.nodeSelector }}
       nodeSelector:

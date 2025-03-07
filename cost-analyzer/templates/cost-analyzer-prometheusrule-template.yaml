@@ -9,7 +9,7 @@ metadata:
   name: {{ include "cost-analyzer.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{ include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
     {{- if .Values.prometheusRule.additionalLabels }}
     {{ toYaml .Values.prometheusRule.additionalLabels | nindent 4 }}
     {{- end }}

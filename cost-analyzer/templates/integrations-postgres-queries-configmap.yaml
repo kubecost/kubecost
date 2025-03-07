@@ -5,7 +5,7 @@ metadata:
   name: kubecost-integrations-postgres-queries
   namespace: {{ .Release.Namespace }}
   labels:
-    {{ include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
 data:
     kubecost-queries.json: |-
       {{- with .Values.global.integrations.postgres.queryConfigs }}

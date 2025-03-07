@@ -6,7 +6,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
   name: {{ template "cost-analyzer.serviceAccountName" . }}
   labels:
-    {{ include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
 rules:
 - apiGroups: 
     - ''
@@ -32,7 +32,7 @@ kind: ClusterRole
 metadata:
   name: {{ template "cost-analyzer.serviceAccountName" . }}
   labels:
-    {{ include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
 rules:
   - apiGroups:
       - ''

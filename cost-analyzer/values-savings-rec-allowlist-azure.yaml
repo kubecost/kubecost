@@ -1,0 +1,283 @@
+kubecostProductConfigs:
+  savingsRecommendationsAllowLists:
+    Azure:
+      - A1 v2
+      - A2 v2
+      - A2m v2
+      - A4 v2
+      - A4m v2
+      - A8 v2
+      - A8m v2
+      - B12ms
+      - B16ms
+      - B1ls
+      - B1ms
+      - B1s
+      - B20ms
+      - B2ms
+      - B2s
+      - B4ms
+      - B8ms
+      - D1 v2
+      - D11 v2
+      - D12 v2
+      - D13 v2
+      - D14 v2
+      - D15 v2
+      - D15i v2
+      - D16 v3
+      - D16 v4
+      - D16a v4
+      - D16as v4
+      - D16d v4
+      - D16ds v4
+      - D16ds v5
+      - D16s v3
+      - D16s v4
+      - D16s v5
+      - D2 v2
+      - D2 v3
+      - D2 v4
+      - D2a v4
+      - D2as v4
+      - D2d v4
+      - D2ds v4
+      - D2ds v5
+      - D2s v3
+      - D2s v4
+      - D2s v5
+      - D3 v2
+      - D32 v3
+      - D32 v4
+      - D32a v4
+      - D32as v4
+      - D32d v4
+      - D32ds v4
+      - D32ds v5
+      - D32s v3
+      - D32s v4
+      - D32s v5
+      - D4 v2
+      - D4 v3
+      - D4 v4
+      - D48 v3
+      - D48 v4
+      - D48a v4
+      - D48as v4
+      - D48d v4
+      - D48ds v4
+      - D48ds v5
+      - D48s v3
+      - D48s v4
+      - D48s v5
+      - D4a v4
+      - D4as v4
+      - D4d v4
+      - D4ds v4
+      - D4ds v5
+      - D4s v3
+      - D4s v4
+      - D4s v5
+      - D5 v2
+      - D64 v3
+      - D64 v4
+      - D64a v4
+      - D64as v4
+      - D64d v4
+      - D64ds v4
+      - D64ds v5
+      - D64s v3
+      - D64s v4
+      - D64s v5
+      - D8 v3
+      - D8 v4
+      - D8a v4
+      - D8as v4
+      - D8d v4
+      - D8ds v4
+      - D8ds v5
+      - D8s v3
+      - D8s v4
+      - D8s v5
+      - D96a v4
+      - D96as v4
+      - D96ds v5
+      - D96s v5
+      - DC1s v2
+      - DC2s v2
+      - DC4s v2
+      - DC8 v2
+      - DS1 v2
+      - DS11 v2
+      - DS12 v2
+      - DS13 v2
+      - DS14 v2
+      - DS15 v2
+      - DS15i v2
+      - DS2 v2
+      - DS3 v2
+      - DS4 v2
+      - DS5 v2
+      - E16 v3
+      - E16 v4
+      - E16a v4
+      - E16as v4
+      - E16d v4
+      - E16ds v4
+      - E16s v3
+      - E16s v4
+      - E2 v3
+      - E2 v4
+      - E20 v3
+      - E20a v4
+      - E20as v4
+      - E20d v4
+      - E20ds v4
+      - E20s v3
+      - E20s v4
+      - E2a v4
+      - E2as v4
+      - E2d v4
+      - E2ds v4
+      - E2s v3
+      - E2s v4
+      - E32 v3
+      - E32 v4
+      - E32a v4
+      - E32as v4
+      - E32d v4
+      - E32ds v4
+      - E32s v3
+      - E32s v4
+      - E4 v3
+      - E4 v4
+      - E48 v3
+      - E48 v4
+      - E48a v4
+      - E48as v4
+      - E48d v4
+      - E48ds v4
+      - E48s v3
+      - E48s v4
+      - E4a v4
+      - E4as v4
+      - E4d v4
+      - E4ds v4
+      - E4s v3
+      - E4s v4
+      - E64 v3
+      - E64 v4
+      - E64a v4
+      - E64as v4
+      - E64d v4
+      - E64ds v4
+      - E64i v3
+      - E64is v3
+      - E64s v3
+      - E64s v4
+      - E8 v3
+      - E8 v4
+      - E80ids v4
+      - E80is v4
+      - E8a v4
+      - E8as v4
+      - E8d v4
+      - E8ds v4
+      - E8s v3
+      - E8s v4
+      - E96a v4
+      - E96as v4
+      - F1
+      - F16
+      - F16s
+      - F16s v2
+      - F1s
+      - F2
+      - F2s
+      - F2s v2
+      - F32s v2
+      - F4
+      - F48s v2
+      - F4s
+      - F4s v2
+      - F64s v2
+      - F72s v2
+      - F8
+      - F8s
+      - F8s v2
+      - G1
+      - G2
+      - G3
+      - G4
+      - G5
+      - GS1
+      - GS2
+      - GS3
+      - GS4
+      - GS5
+      - H16
+      - H16m
+      - H16mr
+      - H16r
+      - H8
+      - H8m
+      - HB120rs v2
+      - HC44rs
+      - L16s
+      - L16s v2
+      - L32s
+      - L32s v2
+      - L48s v2
+      - L4s
+      - L64s v2
+      - L80s v2
+      - L8s
+      - L8s v2
+      - M128
+      - M128m
+      - M128ms
+      - M128s
+      - M16ms
+      - M208ms v2
+      - M208s v2
+      - M32ls
+      - M32ms
+      - M32ts
+      - M416ms v2
+      - M416s v2
+      - M64
+      - M64ls
+      - M64m
+      - M64ms
+      - M64s
+      - M8ms
+      - NC12
+      - NC12s v2
+      - NC12s v3
+      - NC16as T4 v3
+      - NC24
+      - NC24r
+      - NC24rs v2
+      - NC24rs v3
+      - NC24s v2
+      - NC24s v3
+      - NC4as T4 v3
+      - NC6
+      - NC64as T4 v3
+      - NC6s v2
+      - NC6s v3
+      - NC8as T4 v3
+      - ND12s
+      - ND24rs
+      - ND24s
+      - ND40rs v2
+      - ND6s
+      - NP10s
+      - NP20s
+      - NP40s
+      - NV12
+      - NV12s v3
+      - NV24
+      - NV24s v3
+      - NV48s v3
+      - NV6

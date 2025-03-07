@@ -6,7 +6,7 @@ metadata:
   name: {{ default "metrics-config" .Values.metricsConfigmapName }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{ include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
 data:
   metrics.json: '{{ toJson .Values.kubecostProductConfigs.metricsConfigs }}'
 {{- end -}}

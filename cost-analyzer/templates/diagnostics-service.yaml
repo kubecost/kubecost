@@ -1,5 +1,5 @@
 {{- if and .Values.diagnostics.enabled .Values.diagnostics.deployment.enabled .Values.diagnostics.primary.enabled }}
-{{- if (not (empty .Values.kubecostModel.federatedStorageConfigSecret )) -}}
+{{- if or (not (empty .Values.kubecostModel.federatedStorageConfigSecret )) .Values.kubecostModel.federatedStorageConfig -}}
 apiVersion: v1
 kind: Service
 metadata:

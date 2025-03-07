@@ -5,7 +5,8 @@ kind: ConfigMap
 metadata:
   name: {{ default "app-configs" .Values.appConfigmapName }}
   namespace: {{ .Release.Namespace }}
-  labels: {{ include "cost-analyzer.commonLabels" . | nindent 4 }}
+  labels:
+    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
 data:
 {{- if .Values.kubecostProductConfigs.labelMappingConfigs }}
 {{- if .Values.kubecostProductConfigs.labelMappingConfigs.enabled }}

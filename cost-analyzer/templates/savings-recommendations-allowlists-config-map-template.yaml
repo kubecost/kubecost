@@ -1,0 +1,13 @@
+{{- if .Values.kubecostProductConfigs }}
+{{- if .Values.kubecostProductConfigs.savingsRecommendationsAllowLists }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "savings-recommendations-instance-allow-lists"
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+data:
+  allow-lists.json: '{{ toJson .Values.kubecostProductConfigs.savingsRecommendationsAllowLists }}'
+{{- end -}}
+{{- end -}}

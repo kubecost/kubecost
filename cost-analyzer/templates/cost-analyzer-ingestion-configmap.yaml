@@ -1,0 +1,14 @@
+{{- if eq (include "aggregator.deployMethod" .) "statefulset" }}
+{{- if (.Values.kubecostProductConfigs).standardDiscount }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ default "ingestion-configs" .Values.ingestionConfigmapName }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+data:
+  standardDiscount: "{{ .Values.kubecostProductConfigs.standardDiscount }}"
+  helmConfig: "true"
+{{- end -}}
+{{- end -}}

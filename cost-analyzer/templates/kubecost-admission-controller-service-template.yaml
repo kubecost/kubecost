@@ -7,7 +7,7 @@ metadata:
   namespace: {{.Release.Namespace}}
 spec:
   selector:
-    {{ include "cost-analyzer.selectorLabels" . | nindent 4 }}
+    {{- include "cost-analyzer.selectorLabels" . | nindent 4 }}
   ports:
     - port: 443
       targetPort: 8443
