@@ -1134,8 +1134,14 @@ spec:
               value: "localhost"
             - name: DIAGNOSTICS_KUBECOST_NAMESPACE
               value: {{ .Release.Namespace }}
+            {{- /* When Kubecost is run on a secondary cluster as an agent the Diagnostics service should never be the primary */}}
+            {{- if .Values.federatedETL.agentOnly }}
+            - name: DIAGNOSTICS_PRIMARY
+              value: "false"
+            {{- else }}
             - name: DIAGNOSTICS_PRIMARY
               value: {{ quote .Values.diagnostics.primary.enabled }}
+            {{- end }}
             - name: DIAGNOSTICS_RETENTION
               value: {{ .Values.diagnostics.primary.retention }}
             - name: DIAGNOSTICS_PRIMARY_READONLY
