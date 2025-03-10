@@ -1,83 +1,96 @@
-global:
-  # zone: cluster.local (use only if your DNS server doesn't live in the same zone as kubecost)
-  prometheus:
-    enabled: true  # Kubecost depends on Prometheus data, it is not optional. When enabled: false, Prometheus will not be installed and you must configure your own Prometheus to scrape kubecost as well as provide the fqdn below. -- Warning: Before changing this setting, please read to understand the risks https://docs.kubecost.com/install-and-configure/install/custom-prom
-    fqdn: http://cost-analyzer-prometheus-server.default.svc  # example address of a prometheus to connect to. Include protocol (http:// or https://) Ignored if enabled: true
-    insecureSkipVerify: false  # If true, kubecost will not check the TLS cert of prometheus
-    # queryServiceBasicAuthSecretName: dbsecret # kubectl create secret generic dbsecret -n kubecost --from-file=USERNAME --from-file=PASSWORD
-    # queryServiceBearerTokenSecretName: mcdbsecret  # kubectl create secret generic mcdbsecret -n kubecost --from-file=TOKEN
-    kubeRBACProxy: false  # If true, kubecost will use kube-rbac-proxy to authenticate with in cluster Prometheus for openshift
+## Kubecost configuration
+## 
 
+global:
+  ## If your DNS server doesn't live in the same zone as Kubecost
+  ##
+  zone: ""  # cluster.local
+
+  ## Kubecost-bundled Prometheus
+  ## It is recommended to leave these configurations as-is. If using your own
+  ## Prometheus, read the following documentation to understand the risks.
+  ## Ref: https://docs.kubecost.com/install-and-configure/install/custom-prom
+  ##
+  prometheus:
+    enabled: true
+    fqdn: http://cost-analyzer-prometheus-server.default.svc  # Address of a Prometheus to connect to if enabled=false
+    insecureSkipVerify: false  # If true, Kubecost will not check the TLS cert of prometheus
+    # queryServiceBasicAuthSecretName: dbsecret  # kubectl create secret generic dbsecret -n kubecost --from-file=USERNAME --from-file=PASSWORD
+    # queryServiceBearerTokenSecretName: mcdbsecret  # kubectl create secret generic mcdbsecret -n kubecost --from-file=TOKEN
+    kubeRBACProxy: false  # If true, Kubecost will use kube-rbac-proxy to authenticate with in cluster Prometheus for openshift
+
+  ## Kubecost-bundled Grafana
+  ##
   grafana:
-    enabled: true  # If false, Grafana will not be installed
-    domainName: cost-analyzer-grafana.default.svc  # example grafana domain Ignored if enabled: true
-    scheme: "http"  # http or https, for the domain name above.
-    proxy: true  # If true, the kubecost frontend will route to your grafana through its service endpoint
+    enabled: true
+    domainName: cost-analyzer-grafana.default.svc  # Address to Grafana. Ignored if enabled=true.
+    scheme: "http"
+    proxy: true  # If true, the Kubecost frontend will route to your grafana through its service endpoint
     # fqdn: cost-analyzer-grafana.default.svc
 
-  # Enable only when you are using GCP Marketplace ENT listing. Learn more at https://console.cloud.google.com/marketplace/product/kubecost-public/kubecost-ent
+  ## GCP Marketplace Enterprise Listing
+  ## Ref: https://console.cloud.google.com/marketplace/product/kubecost-public/kubecost-ent
+  ##
   gcpstore:
     enabled: false
 
-  # Google Cloud Managed Service for Prometheus
+  ## Google Cloud Managed Service for Prometheus (GMP)
+  ## Ref: https://docs.kubecost.com/install-and-configure/advanced-configuration/custom-prom/gcp-gmp-integration
+  ## Ref: https://cloud.google.com/stackdriver/docs/managed-prometheus/setup-unmanaged
+  ##
   gmp:
-  # Remember to set up these parameters when install the Kubecost Helm chart with `global.gmp.enabled=true` if you want to use GMP self-deployed collection (Recommended) to utilize Kubecost scrape configs.
-  # If enabling GMP, it is highly recommended to utilize Google's distribution of Prometheus.
-  # Learn more at https://cloud.google.com/stackdriver/docs/managed-prometheus/setup-unmanaged
-  # --set prometheus.server.image.repository="gke.gcr.io/prometheus-engine/prometheus" \
-  # --set prometheus.server.image.tag="v2.35.0-gmp.2-gke.0"
-    enabled: false  # If true, kubecost will be configured to use GMP Prometheus image and query from Google Cloud Managed Service for Prometheus.
-    prometheusServerEndpoint: http://localhost:8085/  # The prometheus service endpoint used by kubecost. The calls are forwarded through the GMP Prom proxy side car to the GMP database.
+    enabled: false
+    prometheusServerEndpoint: http://localhost:8085/
     gmpProxy:
       enabled: false
-      image: gke.gcr.io/prometheus-engine/frontend:v0.15.1-gke.0  # GMP Prometheus proxy image that serve as an endpoint to query metrics from GMP
+      image: gke.gcr.io/prometheus-engine/frontend:v0.15.1-gke.0
       imagePullPolicy: IfNotPresent
       name: gmp-proxy
       port: 8085
-      projectId: YOUR_PROJECT_ID  # example GCP project ID
+      projectId: ""
 
-  # Amazon Managed Service for Prometheus
+  ## Amazon Managed Service for Prometheus (AMP)
+  ## Ref: https://docs.kubecost.com/install-and-configure/advanced-configuration/custom-prom/aws-amp-integration
+  ##
   amp:
-    enabled: false  # If true, kubecost will be configured to remote_write and query from Amazon Managed Service for Prometheus.
-    prometheusServerEndpoint: http://localhost:8005/workspaces/<workspaceId>/  # The prometheus service endpoint used by kubecost. The calls are forwarded through the SigV4Proxy side car to the AMP workspace.
-    remoteWriteService: https://aps-workspaces.us-west-2.amazonaws.com/workspaces/<workspaceId>/api/v1/remote_write  # The remote_write endpoint for the AMP workspace.
+    enabled: false
+    prometheusServerEndpoint: http://localhost:8005/workspaces/<WORKSPACE_ID>/
+    remoteWriteService: https://aps-workspaces.us-west-2.amazonaws.com/workspaces/<WORKSPACE_ID>/api/v1/remote_write
     sigv4:
       region: us-west-2
-      # access_key: ACCESS_KEY # AWS Access key
-      # secret_key: SECRET_KEY # AWS Secret key
-      # role_arn: ROLE_ARN # AWS role arn
-      # profile: PROFILE # AWS profile
+      # access_key: AWS_ACCESS_KEY
+      # secret_key: AWS_SECRET_KEY
+      # role_arn: AWS_ROLE_ARN
+      # profile: AWS_PROFILE
 
-  # Mimir Proxy to help Kubecost to query metrics from multi-tenant Grafana Mimir.
-  # Set `global.mimirProxy.enabled=true` and `global.prometheus.enabled=false` to enable Mimir Proxy.
-  # You also need to set `global.prometheus.fqdn=http://kubecost-cost-analyzer-mimir-proxy.kubecost.svc:8085/prometheus`
-  # or `global.prometheus.fqdn=http://{{ template "cost-analyzer.fullname" . }}-mimir-proxy.{{ .Release.Namespace }}.svc:8085/prometheus'
-  # Learn more at https://grafana.com/docs/mimir/latest/operators-guide/secure/authentication-and-authorization/#without-an-authenticating-reverse-proxy
+  ## GrafanaMimir Proxy
+  ## Ref: https://docs.kubecost.com/install-and-configure/advanced-configuration/custom-prom/grafana-mimir-integration
+  ##
   mimirProxy:
     enabled: false
-    ## Annotations to be added to the Mimir Proxy deployment template
     annotations: {}
     name: mimir-proxy
     image: nginxinc/nginx-unprivileged
     port: 8085
-    mimirEndpoint: $mimir_endpoint  # Your Mimir query endpoint. If your Mimir query endpoint is http://example.com/prometheus, replace $mimir_endpoint with http://example.com/
-    orgIdentifier: $your_tenant_ID  # Your Grafana Mimir tenant ID
-    # basicAuth:
+    mimirEndpoint: ""  # If your Mimir query endpoint is http://example.com/prometheus, use http://example.com/
+    orgIdentifier: ""  # Your Grafana Mimir tenant ID
+    basicAuth:
       # username: user
       # password: pwd
 
   ## Azure Monitor Managed Service for Prometheus
   ## Ref: https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/prometheus-remote-write-virtual-machines
+  ##
   ammsp:
     enabled: false
     prometheusServerEndpoint: http://localhost:8081/
     remoteWriteService: $<AMMSP_METRICS_INGESTION_ENDPOINT>
     queryEndpoint: $<AMMSP_QUERY_ENDPOINT>
-
     aadAuthProxy:
       enabled: false
-      # per https://github.com/Azure/aad-auth-proxy/releases/tag/0.1.0-main-04-10-2024-7067ac84
-      image: $<IMAGE>  # Example: mcr.microsoft.com/azuremonitor/auth-proxy/prod/aad-auth-proxy/images/aad-auth-proxy:0.1.0-main-04-10-2024-7067ac84
+      ## Ref: https://github.com/Azure/aad-auth-proxy/releases/tag/0.1.0-main-04-10-2024-7067ac84
+      ## Example: mcr.microsoft.com/azuremonitor/auth-proxy/prod/aad-auth-proxy/images/aad-auth-proxy:0.1.0-main-04-10-2024-7067ac84
+      image: $<IMAGE>
       imagePullPolicy: IfNotPresent
       name: aad-auth-proxy
       port: 8081
@@ -88,6 +101,7 @@ global:
 
   ## Kubecost Alerting
   ## Ref: http://docs.kubecost.com/alerts
+  ##
   notifications:
     # alertConfigs:
     #   frontendUrl: http://localhost:9090  # Optional
@@ -146,6 +160,7 @@ global:
 
   ## Kubecost Saved Reports
   ## Ref: http://docs.kubecost.com/saved-reports
+  ##
   savedReports:
     enabled: false  # If true, overwrites report parameters set through UI
     reports:
@@ -200,16 +215,14 @@ global:
         #   - property: "service"
         #     value: "service1" # corresponds to a value to filter cloud cost aggregate by service data on.
 
+  ## Globally set annotations and labels
+  ##
   podAnnotations: {}
-    # iam.amazonaws.com/role: role-arn
+  annotations: {}  # Applies to all controllers (Deployments, StatefulSets, DaemonSets).
+  additionalLabels: {}  # Applies to Deployments, StatefulSets, DaemonSets, and their pod templates
 
-  # Annotations to be added for all controllers (StatefulSets, Deployments, DaemonSets)
-  annotations: {}
-    # iam.amazonaws.com/role: role-arn
-
-  # Applies these labels to all Deployments, StatefulSets, DaemonSets, and their pod templates.
-  additionalLabels: {}
-
+  ## Globally set security context
+  ##
   securityContext:
     runAsNonRoot: true
     seccompProfile:
@@ -226,10 +239,11 @@ global:
       drop:
       - ALL
 
-  # Installs custom CA certificates onto Kubecost pods
+  ## Installs custom CA certificates onto Kubecost pods
+  ##
   updateCaTrust:
-    enabled: false  # Set to true to enable the init container for updating CA trust
-    # Security context settings for the init container.
+    enabled: false
+    ## Security context settings for the init container.
     securityContext:
       runAsUser: 0
       runAsGroup: 0
@@ -240,12 +254,13 @@ global:
         type: RuntimeDefault
     caCertsSecret: ca-certs-secret  # The name of the Secret containing custom CA certificates to mount to the cost-model container.
     # caCertsConfig: ca-certs-config  # The name of the ConfigMap containing the CA trust configuration.
-    resources: {}  # Resource requests and limits for the init container.
+    resources: {}
     caCertsMountPath: /etc/pki/ca-trust/source/anchors  # The path where the custom CA certificates will be mounted in the init container
 
-  # Platforms is a higher-level abstraction for platform-specific values and settings.
+  ## Platform-specific configurations
+  ##
   platforms:
-    # Deploying to OpenShift (OCP) requires enabling this option.
+    ## Deploying to OpenShift (OCP) requires enabling this option.
     openshift:
       enabled: false  # Deploy Kubecost to OpenShift.
       route:
@@ -253,29 +268,30 @@ global:
         annotations: {}  # Add annotations to the Route.
         # host: kubecost.apps.okd4.example.com  # Add a custom host for your Route.
 
-      # OPTIONAL. The following configs only to be enabled when using a Prometheus instance already installed in the cluster.
+      ## OPTIONAL. The following configs only to be enabled when using a Prometheus instance already installed in the cluster.
       createMonitoringClusterRoleBinding: false  # Create a ClusterRoleBinding to grant the Kubecost serviceaccount access to query Prometheus.
       createMonitoringResourceReaderRoleBinding: false  # Create a Role and Role Binding to allow Prometheus to list and watch Kubecost resources.
       monitoringServiceAccountName: prometheus-k8s  # Name of the Prometheus serviceaccount to bind to the Resource Reader Role Binding.
       monitoringServiceAccountNamespace: openshift-monitoring  # Namespace of the Prometheus serviceaccount to bind to the Resource Reader Role Binding.
 
-      # Create Security Context Constraint resources for the DaemonSets requiring additional privileges.
+      ## Create Security Context Constraint resources for the DaemonSets requiring additional privileges.
       scc:
         nodeExporter: false  # Creates an SCC for Prometheus Node Exporter. This requires Node Exporter be enabled.
         networkCosts: false  # Creates an SCC for Kubecost network-costs. This requires network-costs be enabled.
         clusterController: false  # Creates an SCC for Kubecost Cluster Controller. This requires clusterController be enabled.
-      # When OpenShift is enabled, the following securityContext will be applied to all resources unless they define their own.
+      ## When OpenShift is enabled, the following securityContext will be applied to all resources unless they define their own.
       securityContext:
         runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
-    # Set options for deploying with CI/CD tools like Argo CD.
+    ## Set options for deploying with CI/CD tools like Argo CD.
     cicd:
       enabled: false  # Set to true when using affected CI/CD tools for access to the below configuration options.
       skipSanityChecks: false  # If true, skip all sanity/existence checks for resources like Secrets.
 
   ## Kubecost Integrations
   ## Ref: https://docs.kubecost.com/integrations
+  ##
   integrations:
     turbonomic:
       enabled: false         # Set to true to enable the Turbonomic integration
