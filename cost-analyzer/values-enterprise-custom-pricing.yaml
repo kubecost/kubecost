@@ -1,0 +1,13 @@
+enterpriseCustomPricing:
+  enabled: true
+  location:
+    URI: /var/kubecost-enterprise-pricing-csv/pricing-spec.csv  # local ConfigMap
+
+# kubectl create configmap -n kubecost enterprise-pricing-csv --from-file pricing-spec.csv
+extraVolumes:
+- name: kubecost-enterprise-pricing-csv
+  configMap:
+    name: enterprise-pricing-csv
+extraVolumeMounts:
+- name: kubecost-enterprise-pricing-csv
+  mountPath: /var/kubecost-enterprise-pricing-csv
