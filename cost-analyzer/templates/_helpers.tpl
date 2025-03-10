@@ -1615,3 +1615,19 @@ for more information
 {{- $tag := last $parts }}
 {{- $tag }}
 {{- end }}
+
+{{- define "cost-model.port" }}
+{{- if .Values.kubecostFrontend.adminMode }}
+  9007
+{{- else }}
+  9003
+{{- end }}
+{{- end }}
+
+{{- define "aggregator.port"}}
+{{- if .Values.kubecostFrontend.adminMode }}
+  9004
+{{- else }}
+  9008
+{{- end }}
+{{- end }}

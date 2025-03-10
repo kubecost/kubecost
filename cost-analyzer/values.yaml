@@ -539,6 +539,9 @@ kubecostFrontend:
 #    fqdn: cluster-controller.kubecost.svc.cluster.local:9731
 #
 
+  # Enable admin mode to have a seperate admin UI that bypasses RBAC
+  adminMode: false
+
   # Configurable headers for nginx responses.
   nginxHeaders:
     # applied to all route locations

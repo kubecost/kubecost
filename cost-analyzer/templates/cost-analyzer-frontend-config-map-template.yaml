@@ -53,11 +53,11 @@ data:
 
     upstream model {
 {{- if .Values.kubecostFrontend.useDefaultFqdn }}
-        server {{ $serviceName }}.{{ .Release.Namespace }}.svc.cluster.local:9003;
+        server {{ $serviceName }}.{{ .Release.Namespace }}.svc.cluster.local:{{ include "cost-model.port" . }};
 {{- else if (.Values.kubecostFrontend.model).fqdn }}
         server {{ .Values.kubecostFrontend.model.fqdn }};
 {{- else }}
-        server {{ $serviceName }}.{{ .Release.Namespace }}:9003;
+        server {{ $serviceName }}.{{ .Release.Namespace }}:{{ include "cost-model.port" . }};
 {{- end }}
     }
 
@@ -110,12 +110,12 @@ data:
   {{- if and (not .Values.agent) (not .Values.cloudAgent) (not (eq (include "aggregator.deployMethod" .) "disabled")) }}
     upstream aggregator {
         {{- if .Values.kubecostFrontend.useDefaultFqdn }}
-        server {{ .Release.Name }}-aggregator.{{ .Release.Namespace }}.svc.cluster.local:9004;
+        server {{ .Release.Name }}-aggregator.{{ .Release.Namespace }}.svc.cluster.local:{{ include "aggregator.port" . }};
         {{- else }}
         {{- if (.Values.kubecostFrontend.aggregator).fqdn }}
         server {{ .Values.kubecostFrontend.aggregator.fqdn }};
         {{- else }}
-        server {{ .Release.Name }}-aggregator.{{ .Release.Namespace }}:9004;
+        server {{ .Release.Name }}-aggregator.{{ .Release.Namespace }}:{{ include "aggregator.port" . }};
         {{- end }}
         {{- end }}
     }
