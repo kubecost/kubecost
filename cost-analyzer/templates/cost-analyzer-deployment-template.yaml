@@ -263,6 +263,11 @@ spec:
           configMap:
             name: {{ template "cost-analyzer.fullname" . }}-saml
         {{- end }}
+        {{- if eq (include "authMasterKeyEnabled" .) "true" }}
+        - name: kubecost-master-api-key
+          secret:
+            secretName: {{ .Values.saml.apiMasterKeySecret | default "kubecost-master-api-key" }}
+        {{- end }}
         {{- end }}
         {{- end }}
         {{- if .Values.oidc }}
@@ -280,17 +285,17 @@ spec:
           secret:
             secretName: {{ .Values.oidc.existingCustomSecret.name }}
         {{- end }}
+        {{- if eq (include "authMasterKeyEnabled" .) "true" }}
+        - name: kubecost-master-api-key
+          secret:
+            secretName: {{ .Values.oidc.apiMasterKeySecret | default "kubecost-master-api-key" }}
+        {{- end }}
         {{- end }}
         {{- end }}
         {{- if eq (include "rbacTeamsEnabled" .) "true" }}
         - name: kubecost-rbac-secret
           secret:
             secretName: kubecost-rbac-secret
-        {{- end }}
-        {{- if eq (include "authMasterKeyEnabled" .) "true" }}
-        - name: kubecost-master-api-key
-          secret:
-            secretName: kubecost-master-api-key
         {{- end }}
         {{- if eq (include "rbacTeamsConfigEnabled" .) "true" }}
         - name: kubecost-rbac-teams-config

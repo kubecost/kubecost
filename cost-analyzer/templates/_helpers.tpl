@@ -1434,7 +1434,11 @@ Groups is only used when using simple RBAC.
     {{- if or (.Values.saml).apiMasterKey (.Values.oidc).apiMasterKey -}}
         {{- printf "true" -}}
       {{- else -}}
-        {{- printf "false" -}}
+        {{- if or (.Values.saml).apiMasterKeySecret (.Values.oidc).apiMasterKeySecret -}}
+          {{- printf "true" -}}
+        {{- else -}}
+          {{- printf "false" -}}
+        {{- end -}}
     {{- end -}}
   {{- else -}}
     {{- printf "false" -}}
