@@ -62,6 +62,12 @@ For the `values.yaml` file, these are the design decisions we make:
 - Explicitly define all configurations. Preferably, don't add the configuration as a commented out value.
 - All configurations should have a default value, or an empty value defined.
 - Comments
-    - Use `##` for comments that describe a region of configuration.
+    - Only provide comments that provide context beyond the configuration name
+    - Use the following headers for regions of configuration:
+        ```yaml
+        ## Title.
+        ## Optional description. Leave line below blank.
+        ##
+        ```
     - Use `##` for comments that describe a single line of configuration.
     - Use `#` for commented out example values.

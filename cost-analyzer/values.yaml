@@ -1,5 +1,5 @@
 ## Kubecost configuration
-## 
+##
 
 global:
   ## If your DNS server doesn't live in the same zone as Kubecost
