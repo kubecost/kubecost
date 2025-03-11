@@ -132,7 +132,7 @@ data:
     }
   {{- end }}
 
-    {{- if and (template "multiClusterDiagnosticsPrimaryEnabled" .) .Values.diagnostics.deployment.enabled }}
+    {{- if and (include "multiClusterDiagnosticsPrimaryEnabled" .) .Values.diagnostics.deployment.enabled }}
     upstream multi-cluster-diagnostics {
         {{- if .Values.kubecostFrontend.useDefaultFqdn }}
         server {{ template "diagnostics.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:9007;
@@ -1563,7 +1563,7 @@ data:
             return 200 '{"multiClusterDiagnosticsEnabled": {{ template "multiClusterDiagnosticsPrimaryEnabled" . }}}';
         }
 
-        {{- if and (template "multiClusterDiagnosticsPrimaryEnabled" .) .Values.diagnostics.deployment.enabled }}
+        {{- if and (include "multiClusterDiagnosticsPrimaryEnabled" .) .Values.diagnostics.deployment.enabled }}
         # When the Multi-cluster Diagnostics Service is run within the
         # cost-model container, its endpoint is available at the path
         # `/model/diagnostics/multicluster`. No additional Nginx path forwarding

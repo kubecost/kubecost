@@ -1,4 +1,4 @@
-{{- if and (template "multiClusterDiagnosticsPrimaryEnabled" .) .Values.diagnostics.deployment.enabled }}
+{{- if and (include "multiClusterDiagnosticsPrimaryEnabled" .) (eq .Values.diagnostics.deployment.enabled true) }}
 apiVersion: v1
 kind: Service
 metadata:
