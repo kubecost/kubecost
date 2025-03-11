@@ -1,4 +1,5 @@
-{{- if and (template "multi-cluster-diagnostics-enabled" .) .Values.diagnostics.deployment.enabled }}
+{{- if and .Values.diagnostics.enabled .Values.diagnostics.deployment.enabled }}
+{{- if or .Values.kubecostModel.federatedStorageConfigSecret .Values.kubecostModel.federatedStorageConfig -}}
 
 {{- if eq .Values.prometheus.server.global.external_labels.cluster_id "cluster-one" }}
 {{- fail "Error: The 'cluster_id' is set to default 'cluster-one'. Please update so that the diagnostics service can uniquely identify data coming from this cluster." }}
@@ -182,4 +183,5 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
 
+{{- end }}
 {{- end }}

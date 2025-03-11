@@ -1452,10 +1452,10 @@ costEventsAuditEnabled flag for nginx configmap
 {{- end -}}
 
 {{/*
-Mutli-Cluster Diagnostics is only functional when all its components are
-enabled, and when the federated storage config is present.
+Multi-Cluster Diagnostics is only fully functional when its agent and primary
+are both running, and when the federated storage config is present.
 */}}
-{{- define "multi-cluster-diagnostics-enabled" -}}
+{{- define "multiClusterDiagnosticsPrimaryEnabled" -}}
 {{- if and .Values.diagnostics.enabled .Values.diagnostics.primary.enabled -}}
   {{- if or .Values.kubecostModel.federatedStorageConfigSecret .Values.kubecostModel.federatedStorageConfig -}}
     {{- printf "true" -}}
