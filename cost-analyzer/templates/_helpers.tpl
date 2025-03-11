@@ -1451,6 +1451,20 @@ costEventsAuditEnabled flag for nginx configmap
   {{- end -}}
 {{- end -}}
 
+{{/*
+Mutli-Cluster Diagnostics is only functional when all its components are
+enabled, and when the federated storage config is present.
+*/}}
+{{- define "multi-cluster-diagnostics-enabled" -}}
+{{- if and .Values.diagnostics.enabled .Values.diagnostics.primary.enabled -}}
+  {{- if or .Values.kubecostModel.federatedStorageConfigSecret .Values.kubecostModel.federatedStorageConfig -}}
+    {{- printf "true" -}}
+  {{- else -}}
+    {{- printf "false" -}}
+  {{- end -}}
+{{- end -}}
+{{- end -}}
+
 {{- define "gcpCloudIntegrationJSON" }}
 Kubecost 2.x requires a change to the method that cloud-provider billing integrations are configured.
 Please use this output to create a cloud-integration.json config. See:
@@ -1477,7 +1491,6 @@ for more information
 {{- fail (include "gcpCloudIntegrationJSON" .) }}
 {{- end }}
 {{- end }}
-
 
 {{- define "azureCloudIntegrationJSON" }}
 
