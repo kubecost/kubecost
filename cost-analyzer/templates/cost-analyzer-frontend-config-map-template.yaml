@@ -16,7 +16,7 @@ metadata:
 data:
   nginx.conf: |
     gzip_static  on;
-
+    access_log /dev/stdout main;
     # Enable gzip encoding for content of the provided types of 50kb and higher.
     gzip on;
     gzip_min_length 50000;
