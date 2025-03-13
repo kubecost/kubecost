@@ -99,11 +99,6 @@ spec:
             name: {{ template "cost-analyzer.fullname" . }}-install-plugins
         {{- end }}
         {{- end }}
-        {{- if .Values.global.gcpstore.enabled }}
-        - name: ubbagent-config
-          configMap:
-            name: ubbagent-config
-        {{- end }}
         - name: tmp
           emptyDir: {}
         - name: log
@@ -493,42 +488,6 @@ spec:
           {{- if .Values.sigV4Proxy.extraEnv }}
           {{- toYaml .Values.sigV4Proxy.extraEnv | nindent 10 }}
           {{- end }}
-        {{- end }}
-        {{- if .Values.global.gcpstore.enabled }}
-        - name: ubbagent
-          image: gcr.io/kubecost1/gcp-mp/ent/cost-model/ubbagent:1.0
-          env:
-          {{- if .Values.systemProxy.enabled }}
-          - name: HTTP_PROXY
-            value: {{ .Values.systemProxy.httpProxyUrl }}
-          - name: http_proxy
-            value: {{ .Values.systemProxy.httpProxyUrl }}
-          - name: HTTPS_PROXY
-            value:  {{ .Values.systemProxy.httpsProxyUrl }}
-          - name: https_proxy
-            value:  {{ .Values.systemProxy.httpsProxyUrl }}
-          - name: NO_PROXY
-            value:  {{ .Values.systemProxy.noProxy }}
-          - name: no_proxy
-            value:  {{ .Values.systemProxy.noProxy }}
-          {{- end }}
-          - name: AGENT_CONFIG_FILE
-            value: "/etc/ubbagent/config.yaml"
-          - name: AGENT_LOCAL_PORT
-            value: "6080"
-          - name: AGENT_ENCODED_KEY
-            valueFrom:
-              secretKeyRef:
-                name: {{ default "kubecost-reporting-secret" .Values.reportingSecret }}
-                key: reporting-key
-          - name: AGENT_CONSUMER_ID
-            valueFrom:
-              secretKeyRef:
-                name: {{ default "kubecost-reporting-secret" .Values.reportingSecret }}
-                key: consumer-id
-          volumeMounts:
-          - name: ubbagent-config
-            mountPath: /etc/ubbagent
         {{- end }}
         {{- if .Values.global.ammsp.enabled }}
         # This section of the chart borrows liberally from
