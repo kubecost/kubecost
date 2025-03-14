@@ -1018,6 +1018,10 @@ Begin Kubecost 2.0 templates
     - name: kubecost-rbac-secret
       mountPath: /var/configs/kubecost-rbac-secret
     {{- end }}
+    {{- if eq (include "authMasterKeyEnabled" .) "true" }}
+    - name: kubecost-master-api-key
+      mountPath: /var/configs/auth
+    {{- end }}
     {{- if eq (include "rbacTeamsConfigEnabled" .) "true" }}
     - name: kubecost-rbac-teams-config
       mountPath: /var/configs/rbac-teams-configs
@@ -1187,6 +1191,10 @@ Begin Kubecost 2.0 templates
     - name: SAML_RBAC_TEAMS_ENABLED
       value: "true"
     {{- end }}
+    {{- end }}
+    {{- if eq (include "authMasterKeyEnabled" .) "true" }}
+    - name: AUTH_MASTER_API_KEY_ENABLED
+      value: "true"
     {{- end }}
     {{- if eq (include "rbacTeamsConfigEnabled" .) "true" }}
     - name: RBAC_TEAMS_HELM_CONFIG_PATH
@@ -1420,6 +1428,22 @@ Groups is only used when using simple RBAC.
         {{- printf "false" -}}
     {{- end }}
 {{- end }}
+
+{{- define "authMasterKeyEnabled" -}}
+  {{- if or (.Values.saml).enabled (.Values.oidc).enabled -}}
+    {{- if or (.Values.saml).apiMasterKey (.Values.oidc).apiMasterKey -}}
+      {{- printf "true" -}}
+    {{- else -}}
+      {{- if or (.Values.saml).apiMasterKeySecret (.Values.oidc).apiMasterKeySecret -}}
+        {{- printf "true" -}}
+      {{- else -}}
+        {{- printf "false" -}}
+      {{- end -}}
+    {{- end -}}
+  {{- else -}}
+    {{- printf "false" -}}
+  {{- end -}}
+{{- end -}}
 
 {{/*
 Backups configured flag for nginx configmap
