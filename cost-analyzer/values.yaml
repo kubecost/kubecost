@@ -28,12 +28,6 @@ global:
     proxy: true  # If true, the Kubecost frontend will route to your grafana through its service endpoint
     # fqdn: cost-analyzer-grafana.default.svc
 
-  ## GCP Marketplace Enterprise Listing
-  ## Ref: https://console.cloud.google.com/marketplace/product/kubecost-public/kubecost-ent
-  ##
-  gcpstore:
-    enabled: false
-
   ## Google Cloud Managed Service for Prometheus (GMP)
   ## Ref: https://docs.kubecost.com/install-and-configure/advanced-configuration/custom-prom/gcp-gmp-integration
   ## Ref: https://cloud.google.com/stackdriver/docs/managed-prometheus/setup-unmanaged

@@ -1610,7 +1610,6 @@ for more information
   "cost-analyzer-server-configmap.yaml"
   "cost-analyzer-smtp-configmap.yaml"
   "external-grafana-config-map-template.yaml"
-  "gcpstore-config-map-template.yaml"
   "grafana/grafana-secret.yaml"
   "install-plugins.yaml"
   "integrations-postgres-queries-configmap.yaml"
