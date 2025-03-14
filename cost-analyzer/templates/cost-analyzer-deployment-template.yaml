@@ -263,6 +263,11 @@ spec:
           configMap:
             name: {{ template "cost-analyzer.fullname" . }}-saml
         {{- end }}
+        {{- if eq (include "authMasterKeyEnabled" .) "true" }}
+        - name: kubecost-master-api-key
+          secret:
+            secretName: {{ .Values.saml.apiMasterKeySecret | default "kubecost-master-api-key" }}
+        {{- end }}
         {{- end }}
         {{- end }}
         {{- if .Values.oidc }}
@@ -279,6 +284,11 @@ spec:
         - name: oidc-client-secret
           secret:
             secretName: {{ .Values.oidc.existingCustomSecret.name }}
+        {{- end }}
+        {{- if eq (include "authMasterKeyEnabled" .) "true" }}
+        - name: kubecost-master-api-key
+          secret:
+            secretName: {{ .Values.oidc.apiMasterKeySecret | default "kubecost-master-api-key" }}
         {{- end }}
         {{- end }}
         {{- end }}
@@ -757,6 +767,10 @@ spec:
             - name: kubecost-rbac-secret
               mountPath: /var/configs/kubecost-rbac-secret
             {{- end }}
+            {{- if eq (include "authMasterKeyEnabled" .) "true" }}
+            - name: kubecost-master-api-key
+              mountPath: /var/configs/auth
+            {{- end }}
           env:
             - name: CONTAINER_IMAGE_TAG
               value: {{ include "cost-model.imagetag" . }}
@@ -1021,6 +1035,10 @@ spec:
             {{- end }}
             {{- end }}
             {{- end }}
+            {{- end }}
+            {{- if eq (include "authMasterKeyEnabled" .) "true" }}
+            - name: AUTH_MASTER_API_KEY_ENABLED
+              value: "true"
             {{- end }}
             {{- if .Values.oidc.enabled }}
             - name: OIDC_ENABLED
