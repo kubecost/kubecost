@@ -1432,13 +1432,13 @@ Groups is only used when using simple RBAC.
 {{- define "authMasterKeyEnabled" -}}
   {{- if or (.Values.saml).enabled (.Values.oidc).enabled -}}
     {{- if or (.Values.saml).apiMasterKey (.Values.oidc).apiMasterKey -}}
+      {{- printf "true" -}}
+    {{- else -}}
+      {{- if or (.Values.saml).apiMasterKeySecret (.Values.oidc).apiMasterKeySecret -}}
         {{- printf "true" -}}
       {{- else -}}
-        {{- if or (.Values.saml).apiMasterKeySecret (.Values.oidc).apiMasterKeySecret -}}
-          {{- printf "true" -}}
-        {{- else -}}
-          {{- printf "false" -}}
-        {{- end -}}
+        {{- printf "false" -}}
+      {{- end -}}
     {{- end -}}
   {{- else -}}
     {{- printf "false" -}}
