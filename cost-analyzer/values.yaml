@@ -1145,7 +1145,7 @@ prometheus:
       name: configmap-reload
       image:
         repository: quay.io/prometheus-operator/prometheus-config-reloader
-        tag: v0.80.1
+        tag: v0.81.0
         pullPolicy: IfNotPresent
       extraArgs: {}
       extraVolumeDirs: []
@@ -1158,7 +1158,7 @@ prometheus:
       name: configmap-reload
       image:
         repository: quay.io/prometheus-operator/prometheus-config-reloader
-        tag: v0.80.1
+        tag: v0.81.0
         pullPolicy: IfNotPresent
       extraArgs: {}
       extraVolumeDirs: []
@@ -1439,7 +1439,7 @@ networkCosts:
   enabled: false
   image:
     repository: gcr.io/kubecost1/kubecost-network-costs
-    tag: v0.17.8
+    tag: v0.17.9
   imagePullPolicy: IfNotPresent
   updateStrategy:
     type: RollingUpdate
@@ -1563,7 +1563,7 @@ forecasting:
   fullImageName: ""
   image:
     repository: gcr.io/kubecost1/kubecost-modeling
-    tag: v0.1.23
+    tag: v0.1.24
   imagePullPolicy: IfNotPresent
 
   # Resource specification block for the forecasting container.
@@ -1874,7 +1874,7 @@ clusterController:
   enabled: false
   image:
     repository: gcr.io/kubecost1/cluster-controller
-    tag: v0.16.14
+    tag: v0.16.15
   imagePullPolicy: IfNotPresent
   extraEnv: []
   # - name: EXTRA_ENV_VAR
