@@ -22,7 +22,7 @@ forecasting:
 
 
 networkCosts:
-  fullImageName: public.ecr.aws/kubecost/kubecost-network-costs:v0.17.8
+  fullImageName: public.ecr.aws/kubecost/kubecost-network-costs:v0.17.9
 
 clusterController:
   image:
