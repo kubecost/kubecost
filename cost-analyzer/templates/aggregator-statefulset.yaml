@@ -145,11 +145,6 @@ spec:
           configMap:
             name: {{ template "cost-analyzer.fullname" . }}-saml
         {{- end }}
-        {{- if eq (include "authMasterKeyEnabled" .) "true" }}
-        - name: kubecost-master-api-key
-          secret:
-            secretName: {{ .Values.saml.apiMasterKeySecret | default "kubecost-master-api-key" }}
-        {{- end }}
         {{- end }}
         {{- end }}
         {{- if .Values.oidc }}
@@ -166,11 +161,6 @@ spec:
         - name: oidc-client-secret
           secret:
             secretName: {{ .Values.oidc.existingCustomSecret.name }}
-        {{- end }}
-        {{- if eq (include "authMasterKeyEnabled" .) "true" }}
-        - name: kubecost-master-api-key
-          secret:
-            secretName: {{ .Values.oidc.apiMasterKeySecret | default "kubecost-master-api-key" }}
         {{- end }}
         {{- end }}
         {{- end }}

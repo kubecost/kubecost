@@ -99,6 +99,11 @@ spec:
             name: {{ template "cost-analyzer.fullname" . }}-install-plugins
         {{- end }}
         {{- end }}
+        {{- if .Values.global.gcpstore.enabled }}
+        - name: ubbagent-config
+          configMap:
+            name: ubbagent-config
+        {{- end }}
         - name: tmp
           emptyDir: {}
         - name: log
@@ -258,11 +263,6 @@ spec:
           configMap:
             name: {{ template "cost-analyzer.fullname" . }}-saml
         {{- end }}
-        {{- if eq (include "authMasterKeyEnabled" .) "true" }}
-        - name: kubecost-master-api-key
-          secret:
-            secretName: {{ .Values.saml.apiMasterKeySecret | default "kubecost-master-api-key" }}
-        {{- end }}
         {{- end }}
         {{- end }}
         {{- if .Values.oidc }}
@@ -279,11 +279,6 @@ spec:
         - name: oidc-client-secret
           secret:
             secretName: {{ .Values.oidc.existingCustomSecret.name }}
-        {{- end }}
-        {{- if eq (include "authMasterKeyEnabled" .) "true" }}
-        - name: kubecost-master-api-key
-          secret:
-            secretName: {{ .Values.oidc.apiMasterKeySecret | default "kubecost-master-api-key" }}
         {{- end }}
         {{- end }}
         {{- end }}
@@ -498,6 +493,42 @@ spec:
           {{- if .Values.sigV4Proxy.extraEnv }}
           {{- toYaml .Values.sigV4Proxy.extraEnv | nindent 10 }}
           {{- end }}
+        {{- end }}
+        {{- if .Values.global.gcpstore.enabled }}
+        - name: ubbagent
+          image: gcr.io/kubecost1/gcp-mp/ent/cost-model/ubbagent:1.0
+          env:
+          {{- if .Values.systemProxy.enabled }}
+          - name: HTTP_PROXY
+            value: {{ .Values.systemProxy.httpProxyUrl }}
+          - name: http_proxy
+            value: {{ .Values.systemProxy.httpProxyUrl }}
+          - name: HTTPS_PROXY
+            value:  {{ .Values.systemProxy.httpsProxyUrl }}
+          - name: https_proxy
+            value:  {{ .Values.systemProxy.httpsProxyUrl }}
+          - name: NO_PROXY
+            value:  {{ .Values.systemProxy.noProxy }}
+          - name: no_proxy
+            value:  {{ .Values.systemProxy.noProxy }}
+          {{- end }}
+          - name: AGENT_CONFIG_FILE
+            value: "/etc/ubbagent/config.yaml"
+          - name: AGENT_LOCAL_PORT
+            value: "6080"
+          - name: AGENT_ENCODED_KEY
+            valueFrom:
+              secretKeyRef:
+                name: {{ default "kubecost-reporting-secret" .Values.reportingSecret }}
+                key: reporting-key
+          - name: AGENT_CONSUMER_ID
+            valueFrom:
+              secretKeyRef:
+                name: {{ default "kubecost-reporting-secret" .Values.reportingSecret }}
+                key: consumer-id
+          volumeMounts:
+          - name: ubbagent-config
+            mountPath: /etc/ubbagent
         {{- end }}
         {{- if .Values.global.ammsp.enabled }}
         # This section of the chart borrows liberally from
@@ -726,10 +757,6 @@ spec:
             - name: kubecost-rbac-secret
               mountPath: /var/configs/kubecost-rbac-secret
             {{- end }}
-            {{- if eq (include "authMasterKeyEnabled" .) "true" }}
-            - name: kubecost-master-api-key
-              mountPath: /var/configs/auth
-            {{- end }}
           env:
             - name: CONTAINER_IMAGE_TAG
               value: {{ include "cost-model.imagetag" . }}
@@ -952,6 +979,8 @@ spec:
             {{- with .Values.kubecostModel.allocation.nodeLabels }}
             - name: ALLOCATION_NODE_LABELS_ENABLED
               value: {{ (quote .enabled) | default (quote true) }}
+            - name: ALLOCATION_NODE_LABELS_INCLUDE_LIST
+              value: {{ (quote .includeList) }}
             {{- end }}
             {{- end }}
             {{- end }}
@@ -994,10 +1023,6 @@ spec:
             {{- end }}
             {{- end }}
             {{- end }}
-            {{- end }}
-            {{- if eq (include "authMasterKeyEnabled" .) "true" }}
-            - name: AUTH_MASTER_API_KEY_ENABLED
-              value: "true"
             {{- end }}
             {{- if .Values.oidc.enabled }}
             - name: OIDC_ENABLED
@@ -1111,14 +1136,8 @@ spec:
               value: "localhost"
             - name: DIAGNOSTICS_KUBECOST_NAMESPACE
               value: {{ .Release.Namespace }}
-            {{- /* When Kubecost is run on a secondary cluster as an agent the Diagnostics service should never be the primary */}}
-            {{- if .Values.federatedETL.agentOnly }}
-            - name: DIAGNOSTICS_PRIMARY
-              value: "false"
-            {{- else }}
             - name: DIAGNOSTICS_PRIMARY
               value: {{ quote .Values.diagnostics.primary.enabled }}
-            {{- end }}
             - name: DIAGNOSTICS_RETENTION
               value: {{ .Values.diagnostics.primary.retention }}
             - name: DIAGNOSTICS_PRIMARY_READONLY
