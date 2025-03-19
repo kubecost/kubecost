@@ -1,90 +1,83 @@
-## Kubecost configuration
-##
-
 global:
-  ## If your DNS server doesn't live in the same zone as Kubecost
-  ##
-  zone: ""  # cluster.local
-
-  ## Kubecost-bundled Prometheus
-  ## It is recommended to leave these configurations as-is. If using your own
-  ## Prometheus, read the following documentation to understand the risks.
-  ## Ref: https://docs.kubecost.com/install-and-configure/install/custom-prom
-  ##
+  # zone: cluster.local (use only if your DNS server doesn't live in the same zone as kubecost)
   prometheus:
-    enabled: true
-    fqdn: http://cost-analyzer-prometheus-server.default.svc  # Address of a Prometheus to connect to if enabled=false
-    insecureSkipVerify: false  # If true, Kubecost will not check the TLS cert of prometheus
-    # queryServiceBasicAuthSecretName: dbsecret  # kubectl create secret generic dbsecret -n kubecost --from-file=USERNAME --from-file=PASSWORD
+    enabled: true  # Kubecost depends on Prometheus data, it is not optional. When enabled: false, Prometheus will not be installed and you must configure your own Prometheus to scrape kubecost as well as provide the fqdn below. -- Warning: Before changing this setting, please read to understand the risks https://docs.kubecost.com/install-and-configure/install/custom-prom
+    fqdn: http://cost-analyzer-prometheus-server.default.svc  # example address of a prometheus to connect to. Include protocol (http:// or https://) Ignored if enabled: true
+    insecureSkipVerify: false  # If true, kubecost will not check the TLS cert of prometheus
+    # queryServiceBasicAuthSecretName: dbsecret # kubectl create secret generic dbsecret -n kubecost --from-file=USERNAME --from-file=PASSWORD
     # queryServiceBearerTokenSecretName: mcdbsecret  # kubectl create secret generic mcdbsecret -n kubecost --from-file=TOKEN
-    kubeRBACProxy: false  # If true, Kubecost will use kube-rbac-proxy to authenticate with in cluster Prometheus for openshift
+    kubeRBACProxy: false  # If true, kubecost will use kube-rbac-proxy to authenticate with in cluster Prometheus for openshift
 
-  ## Kubecost-bundled Grafana
-  ##
   grafana:
-    enabled: true
-    domainName: cost-analyzer-grafana.default.svc  # Address to Grafana. Ignored if enabled=true.
-    scheme: "http"
-    proxy: true  # If true, the Kubecost frontend will route to your grafana through its service endpoint
+    enabled: true  # If false, Grafana will not be installed
+    domainName: cost-analyzer-grafana.default.svc  # example grafana domain Ignored if enabled: true
+    scheme: "http"  # http or https, for the domain name above.
+    proxy: true  # If true, the kubecost frontend will route to your grafana through its service endpoint
     # fqdn: cost-analyzer-grafana.default.svc
 
-  ## Google Cloud Managed Service for Prometheus (GMP)
-  ## Ref: https://docs.kubecost.com/install-and-configure/advanced-configuration/custom-prom/gcp-gmp-integration
-  ## Ref: https://cloud.google.com/stackdriver/docs/managed-prometheus/setup-unmanaged
-  ##
-  gmp:
+  # Enable only when you are using GCP Marketplace ENT listing. Learn more at https://console.cloud.google.com/marketplace/product/kubecost-public/kubecost-ent
+  gcpstore:
     enabled: false
-    prometheusServerEndpoint: http://localhost:8085/
+
+  # Google Cloud Managed Service for Prometheus
+  gmp:
+  # Remember to set up these parameters when install the Kubecost Helm chart with `global.gmp.enabled=true` if you want to use GMP self-deployed collection (Recommended) to utilize Kubecost scrape configs.
+  # If enabling GMP, it is highly recommended to utilize Google's distribution of Prometheus.
+  # Learn more at https://cloud.google.com/stackdriver/docs/managed-prometheus/setup-unmanaged
+  # --set prometheus.server.image.repository="gke.gcr.io/prometheus-engine/prometheus" \
+  # --set prometheus.server.image.tag="v2.35.0-gmp.2-gke.0"
+    enabled: false  # If true, kubecost will be configured to use GMP Prometheus image and query from Google Cloud Managed Service for Prometheus.
+    prometheusServerEndpoint: http://localhost:8085/  # The prometheus service endpoint used by kubecost. The calls are forwarded through the GMP Prom proxy side car to the GMP database.
     gmpProxy:
       enabled: false
-      image: gke.gcr.io/prometheus-engine/frontend:v0.15.1-gke.0
+      image: gke.gcr.io/prometheus-engine/frontend:v0.4.1-gke.0  # GMP Prometheus proxy image that serve as an endpoint to query metrics from GMP
       imagePullPolicy: IfNotPresent
       name: gmp-proxy
       port: 8085
-      projectId: ""
+      projectId: YOUR_PROJECT_ID  # example GCP project ID
 
-  ## Amazon Managed Service for Prometheus (AMP)
-  ## Ref: https://docs.kubecost.com/install-and-configure/advanced-configuration/custom-prom/aws-amp-integration
-  ##
+  # Amazon Managed Service for Prometheus
   amp:
-    enabled: false
-    prometheusServerEndpoint: http://localhost:8005/workspaces/<WORKSPACE_ID>/
-    remoteWriteService: https://aps-workspaces.us-west-2.amazonaws.com/workspaces/<WORKSPACE_ID>/api/v1/remote_write
+    enabled: false  # If true, kubecost will be configured to remote_write and query from Amazon Managed Service for Prometheus.
+    prometheusServerEndpoint: http://localhost:8005/workspaces/<workspaceId>/  # The prometheus service endpoint used by kubecost. The calls are forwarded through the SigV4Proxy side car to the AMP workspace.
+    remoteWriteService: https://aps-workspaces.us-west-2.amazonaws.com/workspaces/<workspaceId>/api/v1/remote_write  # The remote_write endpoint for the AMP workspace.
     sigv4:
       region: us-west-2
-      # access_key: AWS_ACCESS_KEY
-      # secret_key: AWS_SECRET_KEY
-      # role_arn: AWS_ROLE_ARN
-      # profile: AWS_PROFILE
+      # access_key: ACCESS_KEY # AWS Access key
+      # secret_key: SECRET_KEY # AWS Secret key
+      # role_arn: ROLE_ARN # AWS role arn
+      # profile: PROFILE # AWS profile
 
-  ## GrafanaMimir Proxy
-  ## Ref: https://docs.kubecost.com/install-and-configure/advanced-configuration/custom-prom/grafana-mimir-integration
-  ##
+  # Mimir Proxy to help Kubecost to query metrics from multi-tenant Grafana Mimir.
+  # Set `global.mimirProxy.enabled=true` and `global.prometheus.enabled=false` to enable Mimir Proxy.
+  # You also need to set `global.prometheus.fqdn=http://kubecost-cost-analyzer-mimir-proxy.kubecost.svc:8085/prometheus`
+  # or `global.prometheus.fqdn=http://{{ template "cost-analyzer.fullname" . }}-mimir-proxy.{{ .Release.Namespace }}.svc:8085/prometheus'
+  # Learn more at https://grafana.com/docs/mimir/latest/operators-guide/secure/authentication-and-authorization/#without-an-authenticating-reverse-proxy
   mimirProxy:
     enabled: false
+    ## Annotations to be added to the Mimir Proxy deployment template
     annotations: {}
     name: mimir-proxy
     image: nginxinc/nginx-unprivileged
     port: 8085
-    mimirEndpoint: ""  # If your Mimir query endpoint is http://example.com/prometheus, use http://example.com/
-    orgIdentifier: ""  # Your Grafana Mimir tenant ID
-    basicAuth:
+    mimirEndpoint: $mimir_endpoint  # Your Mimir query endpoint. If your Mimir query endpoint is http://example.com/prometheus, replace $mimir_endpoint with http://example.com/
+    orgIdentifier: $your_tenant_ID  # Your Grafana Mimir tenant ID
+    # basicAuth:
       # username: user
       # password: pwd
 
   ## Azure Monitor Managed Service for Prometheus
   ## Ref: https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/prometheus-remote-write-virtual-machines
-  ##
   ammsp:
     enabled: false
     prometheusServerEndpoint: http://localhost:8081/
     remoteWriteService: $<AMMSP_METRICS_INGESTION_ENDPOINT>
     queryEndpoint: $<AMMSP_QUERY_ENDPOINT>
+
     aadAuthProxy:
       enabled: false
-      ## Ref: https://github.com/Azure/aad-auth-proxy/releases/tag/0.1.0-main-04-10-2024-7067ac84
-      ## Example: mcr.microsoft.com/azuremonitor/auth-proxy/prod/aad-auth-proxy/images/aad-auth-proxy:0.1.0-main-04-10-2024-7067ac84
-      image: $<IMAGE>
+      # per https://github.com/Azure/aad-auth-proxy/releases/tag/0.1.0-main-04-10-2024-7067ac84
+      image: $<IMAGE>  # Example: mcr.microsoft.com/azuremonitor/auth-proxy/prod/aad-auth-proxy/images/aad-auth-proxy:0.1.0-main-04-10-2024-7067ac84
       imagePullPolicy: IfNotPresent
       name: aad-auth-proxy
       port: 8081
@@ -95,7 +88,6 @@ global:
 
   ## Kubecost Alerting
   ## Ref: http://docs.kubecost.com/alerts
-  ##
   notifications:
     # alertConfigs:
     #   frontendUrl: http://localhost:9090  # Optional
@@ -154,7 +146,6 @@ global:
 
   ## Kubecost Saved Reports
   ## Ref: http://docs.kubecost.com/saved-reports
-  ##
   savedReports:
     enabled: false  # If true, overwrites report parameters set through UI
     reports:
@@ -209,14 +200,16 @@ global:
         #   - property: "service"
         #     value: "service1" # corresponds to a value to filter cloud cost aggregate by service data on.
 
-  ## Globally set annotations and labels
-  ##
   podAnnotations: {}
-  annotations: {}  # Applies to all controllers (Deployments, StatefulSets, DaemonSets).
-  additionalLabels: {}  # Applies to Deployments, StatefulSets, DaemonSets, and their pod templates
+    # iam.amazonaws.com/role: role-arn
 
-  ## Globally set security context
-  ##
+  # Annotations to be added for all controllers (StatefulSets, Deployments, DaemonSets)
+  annotations: {}
+    # iam.amazonaws.com/role: role-arn
+
+  # Applies these labels to all Deployments, StatefulSets, DaemonSets, and their pod templates.
+  additionalLabels: {}
+
   securityContext:
     runAsNonRoot: true
     seccompProfile:
@@ -233,11 +226,10 @@ global:
       drop:
       - ALL
 
-  ## Installs custom CA certificates onto Kubecost pods
-  ##
+  # Installs custom CA certificates onto Kubecost pods
   updateCaTrust:
-    enabled: false
-    ## Security context settings for the init container.
+    enabled: false  # Set to true to enable the init container for updating CA trust
+    # Security context settings for the init container.
     securityContext:
       runAsUser: 0
       runAsGroup: 0
@@ -248,13 +240,12 @@ global:
         type: RuntimeDefault
     caCertsSecret: ca-certs-secret  # The name of the Secret containing custom CA certificates to mount to the cost-model container.
     # caCertsConfig: ca-certs-config  # The name of the ConfigMap containing the CA trust configuration.
-    resources: {}
+    resources: {}  # Resource requests and limits for the init container.
     caCertsMountPath: /etc/pki/ca-trust/source/anchors  # The path where the custom CA certificates will be mounted in the init container
 
-  ## Platform-specific configurations
-  ##
+  # Platforms is a higher-level abstraction for platform-specific values and settings.
   platforms:
-    ## Deploying to OpenShift (OCP) requires enabling this option.
+    # Deploying to OpenShift (OCP) requires enabling this option.
     openshift:
       enabled: false  # Deploy Kubecost to OpenShift.
       route:
@@ -262,30 +253,28 @@ global:
         annotations: {}  # Add annotations to the Route.
         # host: kubecost.apps.okd4.example.com  # Add a custom host for your Route.
 
-      ## OPTIONAL. The following configs only to be enabled when using a Prometheus instance already installed in the cluster.
-      createMonitoringClusterRoleBinding: false  # Create a ClusterRoleBinding to grant the Kubecost serviceaccount access to query Prometheus.
-      createMonitoringResourceReaderRoleBinding: false  # Create a Role and Role Binding to allow Prometheus to list and watch Kubecost resources.
-      monitoringServiceAccountName: prometheus-k8s  # Name of the Prometheus serviceaccount to bind to the Resource Reader Role Binding.
-      monitoringServiceAccountNamespace: openshift-monitoring  # Namespace of the Prometheus serviceaccount to bind to the Resource Reader Role Binding.
+        # OPTIONAL. The following configs only to be enabled when using a Prometheus instance already installed in the cluster.
+        createMonitoringClusterRoleBinding: false  # Create a ClusterRoleBinding to grant the Kubecost serviceaccount access to query Prometheus.
+        createMonitoringResourceReaderRoleBinding: false  # Create a Role and Role Binding to allow Prometheus to list and watch Kubecost resources.
+        monitoringServiceAccountName: prometheus-k8s  # Name of the Prometheus serviceaccount to bind to the Resource Reader Role Binding.
+        monitoringServiceAccountNamespace: openshift-monitoring  # Namespace of the Prometheus serviceaccount to bind to the Resource Reader Role Binding.
 
-      ## Create Security Context Constraint resources for the DaemonSets requiring additional privileges.
+      # Create Security Context Constraint resources for the DaemonSets requiring additional privileges.
       scc:
         nodeExporter: false  # Creates an SCC for Prometheus Node Exporter. This requires Node Exporter be enabled.
         networkCosts: false  # Creates an SCC for Kubecost network-costs. This requires network-costs be enabled.
-        clusterController: false  # Creates an SCC for Kubecost Cluster Controller. This requires clusterController be enabled.
-      ## When OpenShift is enabled, the following securityContext will be applied to all resources unless they define their own.
+      # When OpenShift is enabled, the following securityContext will be applied to all resources unless they define their own.
       securityContext:
         runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
-    ## Set options for deploying with CI/CD tools like Argo CD.
+    # Set options for deploying with CI/CD tools like Argo CD.
     cicd:
       enabled: false  # Set to true when using affected CI/CD tools for access to the below configuration options.
       skipSanityChecks: false  # If true, skip all sanity/existence checks for resources like Secrets.
 
   ## Kubecost Integrations
   ## Ref: https://docs.kubecost.com/integrations
-  ##
   integrations:
     turbonomic:
       enabled: false         # Set to true to enable the Turbonomic integration
@@ -433,45 +422,6 @@ oidc:
     #     claimValues:
     #       - "editor"
 
-## Kubecost Teams (enterprise key required)
-## Ref: https://docs.kubecost.com/using-kubecost/navigating-the-kubecost-ui/teams
-teams:
-  teamsConfigMapName: ""  # Name of the ConfigMap containing the teams configuration, if manually created, which overrides any other configured teams
-  teamsConfig: []  # List of teams configurations, if teamsConfigMapName is not set, which will override UI-configured teams
-    # - id: ''
-    #   name: helm-team
-    #   roles:
-    #   - id: ''
-    #     name: helm-role
-    #     description: helm configrured role
-    #     pages:
-    #       showOverview: true
-    #       showAllocation: true
-    #       showAsset: true
-    #       showCloudCost: true
-    #       showClusters: true
-    #       showExternalCosts: true
-    #       showNetwork: true
-    #       showCollections: true
-    #       showReports: true
-    #       showInsights: true
-    #       showActions: true
-    #       showAlerts: true
-    #       showBudgets: true
-    #       showAnomalies: true
-    #       showEfficiency: true
-    #       showSettings: true
-    #     permissions: admin
-    #     routes: []
-    #     allocationFilters:
-    #     - key: cluster
-    #       operator: ":"
-    #       value: cluster-one
-    #     assetFilters: []
-    #     cloudCostFilters: []
-    #   claims:
-    #     NameID: email@domain.com
-
 ## Adds the HTTP_PROXY, HTTPS_PROXY, and NO_PROXY environment variables to all
 ## containers. Typically used in environments that have firewall rules which
 ## prevent kubecost from accessing cloud provider resources.
@@ -535,6 +485,8 @@ kubecostFrontend:
 
   # set to true to set all upstreams to use <service>.<namespace>.svc.cluster.local instead of just <service>.<namespace>
   useDefaultFqdn: false
+#  api:
+#    fqdn: kubecost-api.kubecost.svc.cluster.local:9001
 #  model:
 #    fqdn: kubecost-model.kubecost.svc.cluster.local:9003
 #  forecasting:
@@ -547,16 +499,6 @@ kubecostFrontend:
 #    fqdn: kubecost-multi-diag.kubecost.svc.cluster.local:9007
 #  clusterController:
 #    fqdn: cluster-controller.kubecost.svc.cluster.local:9731
-#
-
-  # Configurable headers for nginx responses.
-  nginxHeaders:
-    # applied to all route locations
-    server:
-      - "'Access-Control-Allow-Origin' '*' always;"
-      - "'Access-Control-Allow-Methods' 'GET, PUT, POST, DELETE, OPTIONS' always;"
-      - Content-Security-Policy "default-src 'self' 'unsafe-inline' api.userway.org cdn.userway.org api-js.mixpanel.com keyper.kubecost.com; frame-ancestors 'none'; font-src 'self' data:;";
-      - Cache-Control "must-revalidate";
 
 # Kubecost Metrics deploys a separate pod which will emit kubernetes specific metrics required
 # by the cost-model. This pod is designed to remain active and decoupled from the cost-model itself.
@@ -693,10 +635,11 @@ kubecostModel:
 
   allocation:
     # Enables or disables adding node labels to allocation data (i.e. workloads).
-    # Defaults to "true". If nodeLabels is set to true, all workloads will inherit
-    # the node labels of the nodes they are running on.
+    # Defaults to "true" and starts with a sensible includeList for basics like
+    # topology (e.g. zone, region) and instance type labels.
     # nodeLabels:
     #   enabled: true
+    #   includeList: "node.kubernetes.io/instance-type,topology.kubernetes.io/region,topology.kubernetes.io/zone"
 
   # Enables or disables the ContainerStats pipeline, used for quantile-based
   # queries like for request sizing recommendations.
@@ -743,6 +686,7 @@ kubecostModel:
   #   - name: ASSET_INCLUDE_LOCAL_DISK_COST
   #     value: "true"
 
+  utcOffset: "+00:00"
   extraPorts: []
 
 ## etlUtils is a utility typically used by Enterprise customers transitioning
@@ -1057,7 +1001,7 @@ prometheus:
     name: alertmanager
     image:
       repository: quay.io/prometheus/alertmanager
-      tag: v0.28.1
+      tag: v0.27.0
       pullPolicy: IfNotPresent
     priorityClassName: ""
     extraArgs: {}
@@ -1145,7 +1089,7 @@ prometheus:
       name: configmap-reload
       image:
         repository: quay.io/prometheus-operator/prometheus-config-reloader
-        tag: v0.80.1
+        tag: v0.78.2
         pullPolicy: IfNotPresent
       extraArgs: {}
       extraVolumeDirs: []
@@ -1158,7 +1102,7 @@ prometheus:
       name: configmap-reload
       image:
         repository: quay.io/prometheus-operator/prometheus-config-reloader
-        tag: v0.80.1
+        tag: v0.78.2
         pullPolicy: IfNotPresent
       extraArgs: {}
       extraVolumeDirs: []
@@ -1180,7 +1124,7 @@ prometheus:
     name: node-exporter
     image:
       repository: prom/node-exporter
-      tag: v1.9.0
+      tag: v1.8.2
       pullPolicy: IfNotPresent
     priorityClassName: ""
     updateStrategy:
@@ -1264,7 +1208,7 @@ prometheus:
           # As the scrape endpoints for cAdvisor have changed
           # if you are using older version you need to change the replacement to
           # replacement: /api/v1/nodes/$1:4194/proxy/metrics
-          # more info here https://github.com/prometheus-operator/prometheus-operator/issues/633
+          # more info here https://github.com/coreos/prometheus-operator/issues/633
           relabel_configs:
             - action: labelmap
               regex: __meta_kubernetes_node_label_(.+)
@@ -1560,10 +1504,11 @@ kubecostDeployment:
 ## patterns observed by Kubecost.
 forecasting:
   enabled: true
-  fullImageName: ""
-  image:
-    repository: gcr.io/kubecost1/kubecost-modeling
-    tag: v0.1.23
+
+  # fullImageName overrides the default image construction logic. The exact
+  # image provided (registry, image, tag) will be used for the forecasting
+  # container.
+  fullImageName: gcr.io/kubecost1/kubecost-modeling:v0.1.23
   imagePullPolicy: IfNotPresent
 
   # Resource specification block for the forecasting container.
@@ -1644,10 +1589,10 @@ kubecostAggregator:
   numDBCopyPartitions: 25
 
   # How many threads the read database is configured with (i.e. Kubecost API /
-  # UI queries). If value is 0, the number of threads is bounded by the
-  # number of cores
-  # default: 0 is no limit
-  dbReadThreads: 0
+  # UI queries). If increasing this value, it is recommended to increase the
+  # aggregator's memory requests & limits.
+  # default: 1
+  dbReadThreads: 1
 
   # How many threads the write database is configured with (i.e. ingestion of
   # new data from S3). If increasing this value, it is recommended to increase
@@ -1822,19 +1767,21 @@ kubecostAggregator:
   service:
     labels: {}
 
-## Kubecost Multi-cluster Diagnostics
+## Kubecost Multi-cluster Diagnostics (beta)
 ## A single view into the health of all agent clusters. Each agent cluster sends
-## its diagnostic data to a storage bucket.
+## its diagnostic data to a storage bucket. Future versions may include
+## repairing & alerting from the primary.
 ## Ref: https://docs.kubecost.com/install-and-configure/install/multi-cluster/multi-cluster-diagnostics
 ##
 diagnostics:
   enabled: true
 
-  ## The primary must be enabled to query diagnostic data. It aggregates all
-  ## diagnostic data, handles API requests, and deletes data beyond retention.
-  ## In readonly mode, it does not push its own diagnostic data to the bucket.
+  ## The primary aggregates all diagnostic data and handles API requests. It's
+  ## also responsible for deleting diagnostic data (on disk & bucket) beyond
+  ## retention. When in readonly mode it does not push its own diagnostic data
+  ## to the bucket.
   primary:
-    enabled: true
+    enabled: false
     retention: "7d"
     readonly: false
 
@@ -1863,35 +1810,28 @@ diagnostics:
     containerSecurityContext: {}
     nodeSelector: {}
     tolerations: []
+    ## Annotations to be added for diagnostics Deployment.
     annotations: {}
     affinity: {}
 
 ## Provide a full name override for the diagnostics Deployment.
-diagnosticsFullnameOverride: ""
+# diagnosticsFullnameOverride: ""
 
 # Kubecost Cluster Controller for Right Sizing and Cluster Turndown
 clusterController:
   enabled: false
   image:
     repository: gcr.io/kubecost1/cluster-controller
-    tag: v0.16.14
+    tag: v0.16.13
   imagePullPolicy: IfNotPresent
-  extraEnv: []
-  # - name: EXTRA_ENV_VAR
-  #   value: "extra_env_var_value"
-  logLevel: info
   priorityClassName: ""
   tolerations: []
+
+  ## Annotations to be added for cluster controller template
   annotations: {}
-  labels: {}
-  securityContext: {}
   resources: {}
   affinity: {}
   nodeSelector: {}
-  primaryKubecostURL: ""  # URL for secondary clusters to connect to primary Kubecost (ex: https://kubecost.myorganization.com)
-  kubecostAPIKey: ""  # API Key for secondary clusters to authenticate with primary
-  createClusterControllerSecret: true  # disable if you want to use your own secret manager
-  secretName: controller-secrets
   actionConfigs:
     # this configures the Kubecost Cluster Turndown action
     # for more details, see documentation at https://github.com/kubecost/cluster-turndown/tree/develop?tab=readme-ov-file#setting-a-turndown-schedule
@@ -2137,7 +2077,7 @@ grafana:
   sidecar:
     image:
       repository: ghcr.io/kiwigrid/k8s-sidecar
-      tag: 1.30.2
+      tag: 1.29.1
       pullPolicy: IfNotPresent
     resources: {}
     dashboards:
@@ -2382,27 +2322,7 @@ costEventsAudit:
 #   hideCloudIntegrationsUI: false
 #   hideBellIcon: false
 #   hideTeams: false
-#   savingsProfiles: # Define custom profiles used in the Right-Size Container Request savings card. Supported parameters are explained in https://docs.kubecost.com/apis/savings-apis/api-request-right-sizing-v2.
-#     requestSizing:
-#     - name: "custom1"
-#       algorithmCPU: "max"
-#       algorithmRAM: "max"
-#       targetUtilizationCPU: 0.80
-#       targetUtilizationRAM: 0.80
-#       minRecCPUMillicores: 10
-#       minRecRAMBytes: 20971520
-#     - name: "custom2"
-#       algorithmCPU: "quantileOfAverages"
-#       algorithmRAM: "quantileOfAverages"
-#       quantileCPU: 0.95
-#       quantileRAM: 0.95
-#       targetUtilizationCPU: 0.50
-#       targetUtilizationRAM: 0.50
 #   savingsRecommendationsAllowLists: # Define select list of instance types to be evaluated in computing Savings Recommendations
-#     AWS: []
-#     GCP: []
-#     Azure: []
-#   savingsRecommendationsNodegroupCustomLabels: # Define select list of labels to be used to identify node groups
 #     AWS: []
 #     GCP: []
 #     Azure: []
