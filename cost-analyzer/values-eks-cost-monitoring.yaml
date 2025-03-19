@@ -25,7 +25,7 @@ forecasting:
 networkCosts:
   image:
     repository: public.ecr.aws/kubecost/kubecost-network-costs
-    tag: v0.17.8
+    tag: v0.17.9
 
 clusterController:
   image:
