@@ -890,10 +890,12 @@ spec:
               value: {{ (quote .Values.global.prometheus.kubeRBACProxy) }}
             {{- end }}
             {{- if (.Values.enterpriseCustomPricing).enabled }}
-            - name: CSV_CUSTOM_PRICING_ENABLED
+            - name: ENTERPRISE_CUSTOM_PRICING_ENABLED
               value: "true"
-            - name: CSV_CUSTOM_PRICING_LOCATION_URI
+            - name: ENTERPRISE_CUSTOM_PRICING_CSV_LOCATION_URI
               value: {{ .Values.enterpriseCustomPricing.location.URI }}
+            - name: ENTERPRISE_CUSTOM_PRICING_APPLY_RETROACTIVELY
+              value: {{ (quote .Values.enterpriseCustomPricing.applyRetroactively) | default (quote false) }}
             {{- end }}
             {{- if .Values.pricingCsv }}
             {{- if .Values.pricingCsv.enabled }}
