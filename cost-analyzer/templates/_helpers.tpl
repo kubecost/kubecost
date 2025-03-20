@@ -1075,7 +1075,7 @@ Begin Kubecost 2.0 templates
     - name: NUM_DB_COPY_CHUNKS
       value: {{ .Values.kubecostAggregator.numDBCopyPartitions | quote }}
     {{- end }}
-    {{- if .Values.kubecostAggregator.useUpgradedDB }}
+    {{- if .Values.kubecostAggregator.useDBv3 }}
     - name: CLICKHOUSE_ENABLED
       value: "true"
     {{- end }}
