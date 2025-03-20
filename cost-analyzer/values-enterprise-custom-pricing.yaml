@@ -2,6 +2,10 @@ enterpriseCustomPricing:
   enabled: true
   location:
     URI: /var/kubecost-enterprise-pricing-csv/pricing-spec.csv  # local ConfigMap
+  # By default, enterprise custom pricing takes effect moving forward from when
+  # it is enabled. To price all historic data according to the given pricing
+  # spec, set "applyRetroactively" to true, below.
+  # applyRetroactively: true
 
 # kubectl create configmap -n kubecost enterprise-pricing-csv --from-file pricing-spec.csv
 extraVolumes:
