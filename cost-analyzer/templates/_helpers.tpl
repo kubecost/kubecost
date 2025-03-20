@@ -1075,6 +1075,10 @@ Begin Kubecost 2.0 templates
     - name: NUM_DB_COPY_CHUNKS
       value: {{ .Values.kubecostAggregator.numDBCopyPartitions | quote }}
     {{- end }}
+    {{- if .Values.kubecostAggregator.useUpgradedDB }}
+    - name: CLICKHOUSE_ENABLED
+      value: "true"
+    {{- end }}
     {{- if .Values.kubecostAggregator.jaeger.enabled }}
     - name: TRACING_URL
       value: "http://localhost:14268/api/traces"
