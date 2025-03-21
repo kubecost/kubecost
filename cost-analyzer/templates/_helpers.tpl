@@ -36,7 +36,7 @@ Kubecost 2.3 notices
 */}}
 {{- define "kubecostV2-3-notices" -}}
   {{- if (.Values.kubecostAggregator).env -}}
-    {{- printf "\n\n\nNotice: Issue in values detected.\nKubecost 2.3 has updated the aggregator's environment variables. Please update your Helm values to use the new key pairs.\nFor more information, see: https://docs.kubecost.com/install-and-configure/install/multi-cluster/federated-etl/aggregator#aggregator-optimizations\nIn Kubecost 2.3, kubecostAggregator.env is no longer used in favor of the new key pairs. This was done to prevent unexpected behavior and to simplify the aggregator's configuration." -}}
+    {{- printf "\n\n\nNotice: Issue in values detected.\nKubecost 2.3 has updated the aggregator's environment variables. Please update your Helm values to use the new key pairs.\nFor more information, see: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=federation-kubecost-aggregator\nIn Kubecost 2.3, kubecostAggregator.env is no longer used in favor of the new key pairs. This was done to prevent unexpected behavior and to simplify the aggregator's configuration." -}}
   {{- end -}}
 {{- end -}}
 
@@ -59,7 +59,7 @@ Kubecost 2.0 preconditions
             {{- if gt (len $chartNameAndVersion) 2 -}}
               {{- $chartVersion := $chartNameAndVersion._2 -}}        {{/* 1.108.1 */}}
               {{- if semverCompare ">=1.0.0-0 <2.0.0-0" $chartVersion -}}
-                {{- fail "\n\nAn existing Aggregator StatefulSet was found in your namespace.\nBefore upgrading to Kubecost 2.x, please `kubectl delete` this Statefulset.\nRefer to the following documentation for more information: https://docs.kubecost.com/install-and-configure/install/kubecostv2" -}}
+                {{- fail "\n\nAn existing Aggregator StatefulSet was found in your namespace.\nBefore upgrading to Kubecost 2.x, please `kubectl delete` this Statefulset.\nRefer to the following documentation for more information: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=installation-kubecost-v2-installupgrade" -}}
               {{- end -}}
             {{- end -}}
           {{- end -}}
@@ -70,12 +70,12 @@ Kubecost 2.0 preconditions
 
   {{/*https://github.com/helm/helm/issues/8026#issuecomment-881216078*/}}
   {{- if ((.Values.thanos).store).enabled -}}
-    {{- fail "\n\nYou are attempting to upgrade to Kubecost 2.x.\nKubecost no longer includes Thanos by default. \nPlease see https://docs.kubecost.com/install-and-configure/install/kubecostv2 for more information.\nIf you have any questions or concerns, please reach out to us at product@kubecost.com" -}}
+    {{- fail "\n\nYou are attempting to upgrade to Kubecost 2.x.\nKubecost no longer includes Thanos by default. \nPlease see https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=installation-kubecost-v2-installupgrade for more information.\nIf you have any questions or concerns, please reach out to us at product@kubecost.com" -}}
   {{- end -}}
 
   {{- if or ((.Values.saml).rbac).enabled ((.Values.oidc).rbac).enabled -}}
     {{- if (not (.Values.upgrade).toV2) -}}
-      {{- fail "\n\nSSO with RBAC is enabled.\nNote that Kubecost 2.x has significant architectural changes that may impact RBAC.\nThis should be tested before giving end-users access to the UI.\nKubecost has tested various configurations and believe that 2.x will be 100% compatible with existing configurations.\nRefer to the following documentation for more information: https://docs.kubecost.com/install-and-configure/install/kubecostv2\n\nWhen ready to upgrade, add `--set upgrade.toV2=true`." -}}
+      {{- fail "\n\nSSO with RBAC is enabled.\nNote that Kubecost 2.x has significant architectural changes that may impact RBAC.\nThis should be tested before giving end-users access to the UI.\nKubecost has tested various configurations and believe that 2.x will be 100% compatible with existing configurations.\nRefer to the following documentation for more information: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=installation-kubecost-v2-installupgrade\n\nWhen ready to upgrade, add `--set upgrade.toV2=true`." -}}
     {{- end -}}
   {{- end -}}
 
@@ -185,7 +185,7 @@ Print a warning if PV is enabled AND EKS is detected AND the EBS-CSI driver is n
 {{- $EBSCSINotExists := (empty (lookup "apps/v1" "Deployment" "kube-system" "ebs-csi-controller")) }}
 {{- if (and $isEKS $isGT22 .Values.persistentVolume.enabled $EBSCSINotExists) -}}
 
-ERROR: MISSING EBS-CSI DRIVER WHICH IS REQUIRED ON EKS v1.23+ TO MANAGE PERSISTENT VOLUMES. LEARN MORE HERE: https://docs.kubecost.com/install-and-configure/install/provider-installations/aws-eks-cost-monitoring#prerequisites
+ERROR: MISSING EBS-CSI DRIVER WHICH IS REQUIRED ON EKS v1.23+ TO MANAGE PERSISTENT VOLUMES. LEARN MORE HERE: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=installations-amazon-eks-integration
 
 {{- end -}}
 {{- end -}}
@@ -1492,7 +1492,7 @@ are both running, and when the federated storage config is present.
 {{- define "gcpCloudIntegrationJSON" }}
 Kubecost 2.x requires a change to the method that cloud-provider billing integrations are configured.
 Please use this output to create a cloud-integration.json config. See:
-<https://docs.kubecost.com/install-and-configure/install/cloud-integration#adding-a-cloud-integration>
+<https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=installation-cloud-billing-integrations>
 for more information
 
   {
@@ -1520,7 +1520,7 @@ for more information
 
 Kubecost 2.x requires a change to the method that cloud-provider billing integrations are configured.
 Please use this output to create a cloud-integration.json config. See:
-<https://docs.kubecost.com/install-and-configure/install/cloud-integration#adding-a-cloud-integration>
+<https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=installation-cloud-billing-integrations>
 for more information
   {
     "azure":
