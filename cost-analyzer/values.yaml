@@ -1672,7 +1672,7 @@ kubecostAggregator:
 
   # Enable the use of the v3 database (ClickHouse) as the database for the aggregator.
   # the existing database will be migrated if it exists
-  # This is required to be 'true' to use the CSV pricing feature pre kubecost 3.0.0
+  # This is required to be 'true' to use the enterpriseCustomPricing feature prior to kubecost 3.0.0
   # this will not be optional starting in kubecost 3.0.0 and will be removed
   # default: false
   useDBv3: false
