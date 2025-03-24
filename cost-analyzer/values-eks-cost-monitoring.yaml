@@ -1,5 +1,5 @@
 # grafana is disabled by default, but can be enabled by setting the following values.
-# or proxy to an existing grafana: https://docs.kubecost.com/install-and-configure/advanced-configuration/custom-grafana
+# or proxy to an existing grafana: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-grafana-guide
 global:
   grafana:
     enabled: false
