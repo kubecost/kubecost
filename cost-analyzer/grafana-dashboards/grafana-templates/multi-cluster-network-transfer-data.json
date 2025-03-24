@@ -52,7 +52,7 @@
       }
     ]
   },
-  "description": "https://docs.kubecost.com/install-and-configure/advanced-configuration/network-costs-configuration",
+  "description": "https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-network-cost",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
@@ -297,7 +297,7 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
-      "description": "Cross region and cross zone subnets must be defined via the configMap. \nSee: \n<https://docs.kubecost.com/install-and-configure/advanced-configuration/network-costs-configuration#overriding-traffic-classifications>",
+      "description": "Cross region and cross zone subnets must be defined via the configMap. \nSee: \n<https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-network-cost>",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -408,7 +408,7 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
-      "description": "Cross region and cross zone subnets must be defined via the configMap. \nSee: \n<https://docs.kubecost.com/install-and-configure/advanced-configuration/network-costs-configuration#overriding-traffic-classifications>",
+      "description": "Cross region and cross zone subnets must be defined via the configMap. \nSee: \n<https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-network-cost>",
       "fieldConfig": {
         "defaults": {
           "color": {
