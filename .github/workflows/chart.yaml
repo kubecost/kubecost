@@ -69,7 +69,7 @@ jobs:
           - name: v1.28
             version: v1.28.13
           - name: v1.29
-            version: v1.29.15
+            version: v1.29.14
           - name: v1.30
             version: v1.30.10
           - name: v1.31
