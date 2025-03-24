@@ -1,5 +1,5 @@
 {{- if .Values.kubecostFrontend.enabled }}
-{{- if and (not .Values.agent) (not .Values.cloudAgent) (not .Values.federatedETL.agentOnly) }}
+{{- if and (not .Values.agent) (not .Values.cloudAgent) (not .Values.federatedETL.agentOnly) (not .Values.kubecostFrontend.adminMode) }}
 {{- $serviceName := include "cost-analyzer.serviceName" . -}}
 {{- if .Values.saml.enabled }}
 {{- if .Values.oidc.enabled }}

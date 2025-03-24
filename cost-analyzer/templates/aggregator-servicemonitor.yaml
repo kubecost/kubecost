@@ -1,4 +1,4 @@
-{{- if .Values.serviceMonitor.aggregatorMetrics.enabled }}
+{{- if and .Values.serviceMonitor.aggregatorMetrics.enabled (not .Values.kubecostFrontend.adminMode) }}
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:

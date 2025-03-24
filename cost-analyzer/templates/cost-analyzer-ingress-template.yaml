@@ -1,4 +1,4 @@
-{{- if .Values.ingress -}}
+{{- if and (.Values.ingress) (not .Values.kubecostFrontend.adminMode) -}}
 {{- if .Values.ingress.enabled -}}
 {{- $fullName := include "cost-analyzer.fullname" . -}}
 {{- $serviceName := "" -}}

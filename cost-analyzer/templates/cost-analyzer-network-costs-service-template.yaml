@@ -1,4 +1,4 @@
-{{- if .Values.networkCosts }}
+{{- if and (.Values.networkCosts) (not .Values.kubecostFrontend.adminMode) }}
 {{- if .Values.networkCosts.enabled }}
 apiVersion: v1
 kind: Service

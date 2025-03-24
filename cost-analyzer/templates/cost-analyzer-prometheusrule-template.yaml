@@ -1,4 +1,4 @@
-{{- if .Values.prometheus }}
+{{- if and (.Values.prometheus) (not .Values.kubecostFrontend.adminMode) }}
 {{- if .Values.prometheus.serverFiles }}
 {{- if .Values.prometheus.serverFiles.rules }}
 {{- if .Values.prometheusRule }}

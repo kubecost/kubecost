@@ -1,4 +1,4 @@
-{{- if .Values.global.notifications.alertConfigs }}
+{{- if and (.Values.global.notifications.alertConfigs) (not .Values.kubecostFrontend.adminMode) }}
 apiVersion: v1
 kind: ConfigMap
 metadata:

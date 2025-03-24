@@ -64,7 +64,9 @@ spec:
         fsGroup: 1001
       {{- end }}
       restartPolicy: Always
+      {{- if not (.Values.kubecostFrontend.adminMode) }}
       serviceAccountName: {{ template "cost-analyzer.serviceAccountName" . }}
+      {{- end }}
       volumes:
         - name: tmp
           emptyDir: {}

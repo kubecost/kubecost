@@ -1,4 +1,4 @@
-{{- if .Values.saml }}
+{{- if and (.Values.saml) (not .Values.kubecostFrontend.adminMode) }}
 {{- if .Values.saml.enabled }}
 apiVersion: v1
 kind: ConfigMap

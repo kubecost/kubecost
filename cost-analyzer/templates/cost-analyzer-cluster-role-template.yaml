@@ -1,4 +1,4 @@
-{{- if not .Values.kubecostModel.etlReadOnlyMode -}}
+{{- if and (not .Values.kubecostModel.etlReadOnlyMode) (not .Values.kubecostFrontend.adminMode) -}}
 {{- if and .Values.reporting .Values.reporting.logCollection -}}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role

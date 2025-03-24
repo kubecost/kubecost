@@ -1,4 +1,4 @@
-{{- if eq (include "aggregator.deployMethod" .) "statefulset" }}
+{{- if and (eq (include "aggregator.deployMethod" .) "statefulset") (not .Values.kubecostFrontend.adminMode) }}
 {{- if (.Values.kubecostProductConfigs).standardDiscount }}
 apiVersion: v1
 kind: ConfigMap

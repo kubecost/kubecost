@@ -1,3 +1,4 @@
+{{- if (not .Values.kubecostFrontend.adminMode) }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -35,3 +36,4 @@ data:
   {{ else }}
     kubecost-token: not-applied
   {{- end -}}
+{{- end }}

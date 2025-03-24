@@ -1,4 +1,4 @@
-{{- if .Values.kubecostProductConfigs }}
+{{- if and (.Values.kubecostProductConfigs) (not .Values.kubecostFrontend.adminMode) }}
 {{- if .Values.kubecostProductConfigs.cloudAccountMapping }}
 apiVersion: v1
 kind: ConfigMap

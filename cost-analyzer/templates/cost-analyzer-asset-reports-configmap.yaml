@@ -1,4 +1,4 @@
-{{- if .Values.global.assetReports }}
+{{- if and (.Values.global.assetReports) (not .Values.kubecostFrontend.adminMode) }}
 {{- if .Values.global.assetReports.enabled }}
 apiVersion: v1
 kind: ConfigMap

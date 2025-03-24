@@ -1,4 +1,4 @@
-{{- if .Values.global.savedReports }}
+{{- if and (.Values.global.savedReports) (not .Values.kubecostFrontend.adminMode) }}
 {{- if .Values.global.savedReports.enabled }}
 apiVersion: v1
 kind: ConfigMap

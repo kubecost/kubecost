@@ -1,4 +1,4 @@
-{{- if eq (include "aggregator.deployMethod" .) "statefulset" }}
+{{- if and (eq (include "aggregator.deployMethod" .) "statefulset") (not .Values.kubecostFrontend.adminMode) }}
 
 {{/*
   A cloud integration secret is required for cloud cost to function as a dedicated pod.

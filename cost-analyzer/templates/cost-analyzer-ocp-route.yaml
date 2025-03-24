@@ -1,4 +1,4 @@
-{{- if and (.Capabilities.APIVersions.Has "route.openshift.io/v1/Route") (.Values.global.platforms.openshift.enabled) (.Values.global.platforms.openshift.route.enabled) }}
+{{- if and (.Capabilities.APIVersions.Has "route.openshift.io/v1/Route") (.Values.global.platforms.openshift.enabled) (.Values.global.platforms.openshift.route.enabled) (not .Values.kubecostFrontend.adminMode) }}
 apiVersion: route.openshift.io/v1
 kind: Route
 metadata:

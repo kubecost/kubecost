@@ -1,4 +1,4 @@
-{{- if and (.Capabilities.APIVersions.Has "security.openshift.io/v1/SecurityContextConstraints") (.Values.global.platforms.openshift.scc.clusterController) (.Values.clusterController.enabled) }}
+{{- if and (.Capabilities.APIVersions.Has "security.openshift.io/v1/SecurityContextConstraints") (.Values.global.platforms.openshift.scc.clusterController) (.Values.clusterController.enabled) (not .Values.kubecostFrontend.adminMode) }}
 apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
 metadata:

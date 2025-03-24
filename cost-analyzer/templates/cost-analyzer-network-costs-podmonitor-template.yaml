@@ -1,4 +1,4 @@
-{{- if .Values.networkCosts }}
+{{- if and (.Values.networkCosts) (not .Values.kubecostFrontend.adminMode) }}
 {{- if .Values.networkCosts.enabled }}
 {{- if .Values.networkCosts.podMonitor }}
 {{- if .Values.networkCosts.podMonitor.enabled }}

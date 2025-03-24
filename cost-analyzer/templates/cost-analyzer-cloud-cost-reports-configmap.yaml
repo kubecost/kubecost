@@ -1,4 +1,4 @@
-{{- if .Values.global.cloudCostReports }}
+{{- if and (.Values.global.cloudCostReports) (not .Values.kubecostFrontend.adminMode) }}
 {{- if .Values.global.cloudCostReports.enabled }}
 apiVersion: v1
 kind: ConfigMap

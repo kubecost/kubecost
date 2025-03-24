@@ -1,4 +1,4 @@
-{{- if .Values.reporting }}
+{{- if and (.Values.reporting) (not .Values.kubecostFrontend.adminMode) }}
 {{- if .Values.reporting.logCollection }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding

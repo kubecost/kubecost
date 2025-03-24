@@ -1,4 +1,4 @@
-{{- if and (not .Values.agent) (not .Values.cloudAgent) }}
+{{- if and (not .Values.agent) (not .Values.cloudAgent) (not .Values.kubecostFrontend.adminMode) }}
 kind: Service
 apiVersion: v1
 metadata:

@@ -1,4 +1,4 @@
-{{- if .Values.kubecostProductConfigs }}
+{{- if and (.Values.kubecostProductConfigs) (not .Values.kubecostFrontend.adminMode) }}
 {{- if .Values.kubecostProductConfigs.productKey }}
 {{- if .Values.kubecostProductConfigs.productKey.enabled }}
 # If the productKey.key is not specified, the configmap will not be created

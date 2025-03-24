@@ -1,4 +1,4 @@
-{{- if .Values.persistentVolume -}}
+{{- if and (.Values.persistentVolume) (not .Values.kubecostFrontend.adminMode) -}}
 {{- if not .Values.persistentVolume.existingClaim -}}
 {{- if .Values.persistentVolume.enabled -}}
 kind: PersistentVolumeClaim

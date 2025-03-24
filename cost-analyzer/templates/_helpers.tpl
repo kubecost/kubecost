@@ -1616,18 +1616,18 @@ for more information
 {{- $tag }}
 {{- end }}
 
-{{- define "cost-model.port" }}
-{{- if .Values.kubecostFrontend.adminMode }}
+{{- define "cost-model.port" -}}
+{{- if .Values.kubecostFrontend.adminMode -}}
   9007
-{{- else }}
+{{- else -}}
   9003
 {{- end }}
 {{- end }}
 
-{{- define "aggregator.port"}}
-{{- if .Values.kubecostFrontend.adminMode }}
-  9004
-{{- else }}
+{{- define "aggregator.port" -}}
+{{- if .Values.kubecostFrontend.adminMode -}}
   9008
+{{- else -}}
+  9004
 {{- end }}
 {{- end }}

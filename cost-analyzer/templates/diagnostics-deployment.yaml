@@ -1,4 +1,4 @@
-{{- if and .Values.diagnostics.enabled .Values.diagnostics.deployment.enabled }}
+{{- if and (.Values.diagnostics.enabled) (.Values.diagnostics.deployment.enabled) (not .Values.kubecostFrontend.adminMode) }}
 {{- if or (not (empty .Values.kubecostModel.federatedStorageConfigSecret )) .Values.kubecostModel.federatedStorageConfig -}}
 
 {{- if eq .Values.prometheus.server.global.external_labels.cluster_id "cluster-one" }}

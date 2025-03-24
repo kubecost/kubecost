@@ -1,4 +1,4 @@
-{{- if .Values.serviceMonitor }}
+{{- if and (.Values.serviceMonitor) (not .Values.kubecostFrontend.adminMode) }}
 {{- if .Values.serviceMonitor.enabled }}
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor

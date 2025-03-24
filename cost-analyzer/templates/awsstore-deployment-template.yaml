@@ -1,4 +1,4 @@
-{{- if .Values.awsstore }}
+{{- if and (.Values.awsstore) (not .Values.kubecostFrontend.adminMode) }}
 {{- if .Values.awsstore.useAwsStore }}
 apiVersion: apps/v1
 kind: Deployment

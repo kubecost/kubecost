@@ -1,4 +1,4 @@
-{{- if .Values.oidc }}
+{{- if and (.Values.oidc) (not .Values.kubecostFrontend.adminMode) }}
 {{- if .Values.oidc.enabled }}
 apiVersion: v1
 kind: ConfigMap
