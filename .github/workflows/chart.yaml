@@ -54,18 +54,6 @@ jobs:
       fail-fast: false
       matrix:
         k8s-version:
-          - name: v1.22
-            version: v1.22.17
-          - name: v1.23
-            version: v1.23.17
-          - name: v1.24
-            version: v1.24.17
-          - name: v1.25
-            version: v1.25.16
-          - name: v1.26
-            version: v1.26.15
-          - name: v1.27
-            version: v1.27.16
           - name: v1.28
             version: v1.28.13
           - name: v1.29
