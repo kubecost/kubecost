@@ -406,7 +406,7 @@ oidc:
   useClientSecretPost: false  # If true, only use client_secret_post method. Otherwise attempt to send the secret in both the header and the body.
   hostedDomain: ""  # Optional, blocks access to the auth domain specified in the hd claim of the provider ID token
   apiMasterKey: "" # Optional, adds a master API key that can be passed in the X-API-KEY header to bypass all auth middleware and handling.
-  apiMasterKeySecret: "" # Optional, name of the secret where the API master key is stored. This will override the apiMasterKey value.
+  apiMasterKeySecret: ""  # Optional, name of the secret where the API master key is stored. This will override the apiMasterKey value.
   rbac:
     enabled: false
     # groups:
