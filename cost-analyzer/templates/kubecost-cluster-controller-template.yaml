@@ -310,7 +310,6 @@ spec:
         ports:
         - name: http-server
           containerPort: 9731
-          hostPort: 9731
         resources:
           {{- toYaml .Values.clusterController.resources | nindent 12 }}
       {{- if .Values.imagePullSecrets }}

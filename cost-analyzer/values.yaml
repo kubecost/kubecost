@@ -9,7 +9,7 @@ global:
   ## Kubecost-bundled Prometheus
   ## It is recommended to leave these configurations as-is. If using your own
   ## Prometheus, read the following documentation to understand the risks.
-  ## Ref: https://docs.kubecost.com/install-and-configure/install/custom-prom
+  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-prometheus-guide
   ##
   prometheus:
     enabled: true
@@ -29,7 +29,7 @@ global:
     # fqdn: cost-analyzer-grafana.default.svc
 
   ## Google Cloud Managed Service for Prometheus (GMP)
-  ## Ref: https://docs.kubecost.com/install-and-configure/advanced-configuration/custom-prom/gcp-gmp-integration
+  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=guide-google-cloud-managed-service-prometheus
   ## Ref: https://cloud.google.com/stackdriver/docs/managed-prometheus/setup-unmanaged
   ##
   gmp:
@@ -44,7 +44,7 @@ global:
       projectId: ""
 
   ## Amazon Managed Service for Prometheus (AMP)
-  ## Ref: https://docs.kubecost.com/install-and-configure/advanced-configuration/custom-prom/aws-amp-integration
+  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=guide-amazon-managed-service-prometheus-amp-overview
   ##
   amp:
     enabled: false
@@ -58,7 +58,7 @@ global:
       # profile: AWS_PROFILE
 
   ## GrafanaMimir Proxy
-  ## Ref: https://docs.kubecost.com/install-and-configure/advanced-configuration/custom-prom/grafana-mimir-integration
+  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=guide-grafana-mimir-integration-kubecost
   ##
   mimirProxy:
     enabled: false
@@ -94,7 +94,7 @@ global:
       aadTenantId: $<AZURE_MANAGED_IDENTITY_TENANT_ID>
 
   ## Kubecost Alerting
-  ## Ref: http://docs.kubecost.com/alerts
+  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=ui-alerts
   ##
   notifications:
     # alertConfigs:
@@ -153,7 +153,7 @@ global:
       fqdn: http://cost-analyzer-prometheus-server.default.svc  # example fqdn. Ignored if prometheus.enabled: true
 
   ## Kubecost Saved Reports
-  ## Ref: http://docs.kubecost.com/saved-reports
+  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=ui-reports
   ##
   savedReports:
     enabled: false  # If true, overwrites report parameters set through UI
@@ -165,9 +165,9 @@ global:
         idle: "separate"
         rate: "cumulative"
         accumulate: false   # daily resolution
-        filters:            # Ref: https://docs.kubecost.com/apis/filters-api
-          - key: "cluster"  # Ref: https://docs.kubecost.com/apis/filters-api#allocation-apis-request-sizing-v2-api
-            operator: ":"   # Ref: https://docs.kubecost.com/apis/filters-api#filter-operators
+        filters:            # Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=filter-parameters-v2
+          - key: "cluster"
+            operator: ":"
             value: "dev"
       - title: "Example Saved Report 1"
         window: "month"
@@ -176,9 +176,9 @@ global:
         idle: "share"
         rate: "monthly"
         accumulate: false
-        filters:              # Ref: https://docs.kubecost.com/apis/filters-api
-          - key: "namespace"  # Ref: https://docs.kubecost.com/apis/filters-api#allocation-apis-request-sizing-v2-api
-            operator: "!:"    # Ref: https://docs.kubecost.com/apis/filters-api#filter-operators
+        filters:              # Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=filter-parameters-v2
+          - key: "namespace"
+            operator: "!:"
             value: "kubecost"
       - title: "Example Saved Report 2"
         window: "2020-11-11T00:00:00Z,2020-12-09T23:59:59Z"
@@ -284,7 +284,7 @@ global:
       skipSanityChecks: false  # If true, skip all sanity/existence checks for resources like Secrets.
 
   ## Kubecost Integrations
-  ## Ref: https://docs.kubecost.com/integrations
+  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=kubecost-postgres-integration
   ##
   integrations:
     turbonomic:
@@ -306,7 +306,7 @@ global:
 
       ## Configure what Postgres table to write to, and what parameters to pass
       ## when querying Kubecost's APIs. Ensure all parameters are enclosed in
-      ## quotes. Ref: https://docs.kubecost.com/apis/apis-overview
+      ## quotes. Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=kubecost-api-directory
       queryConfigs:
         allocations: []
           # - databaseTable: "kubecost_allocation_data"
@@ -361,7 +361,7 @@ pricingCsv:
     csvAccessCredentials: pricing-schema-access-secret
 
 ## Kubecost SAML (enterprise key required)
-## Ref: https://docs.kubecost.com/install-and-configure/advanced-configuration/user-management-saml
+## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-user-management-saml
 saml:
   enabled: false
   # secretName: ""
@@ -398,7 +398,7 @@ saml:
     #       - "editor"
 
 ## Kubecost OIDC (enterprise key required)
-## Ref: https://docs.kubecost.com/install-and-configure/advanced-configuration/user-management-oidc
+## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-user-management-ssooidc
 oidc:
   enabled: false
   clientID: ""  # Application client_id parameter obtained from provider. Used to make requests to server.
@@ -434,7 +434,7 @@ oidc:
     #       - "editor"
 
 ## Kubecost Teams (enterprise key required)
-## Ref: https://docs.kubecost.com/using-kubecost/navigating-the-kubecost-ui/teams
+## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=ui-teams
 teams:
   teamsConfigMapName: ""  # Name of the ConfigMap containing the teams configuration, if manually created, which overrides any other configured teams
   teamsConfig: []  # List of teams configurations, if teamsConfigMapName is not set, which will override UI-configured teams
@@ -608,13 +608,13 @@ kubecostModel:
 
   ## The name of the Secret containing a bucket config for Federated storage.
   ## The contents should be stored under a key named federated-store.yaml.
-  ## Ref: https://docs.kubecost.com/install-and-configure/install/multi-cluster/long-term-storage-configuration
+  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-long-term-storage-configuration
   # federatedStorageConfigSecret: federated-store
 
   ## Federated storage config can be supplied via a secret or the yaml block
   ## below when using the block below, only a single provider is supported,
   ## others are for example purposes.
-  ## Ref: https://docs.kubecost.com/install-and-configure/install/multi-cluster/long-term-storage-configuration
+  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-long-term-storage-configuration
   # federatedStorageConfig: |-
   #   # AWS EXAMPLE
   #   type: S3
@@ -748,7 +748,7 @@ kubecostModel:
 ## etlUtils is a utility typically used by Enterprise customers transitioning
 ## from v1 to v2 of Kubecost. It translates the data from the "/etl" dir of the
 ## bucket, to the "/federated" dir of the bucket.
-## Ref: https://docs.kubecost.com/install-and-configure/install/multi-cluster/federated-etl/thanos-migration-guide
+## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=federation-migration-guide-from-thanos-kubecost-v2-aggregator
 ##
 etlUtils:
   enabled: false
@@ -761,7 +761,7 @@ etlUtils:
   annotations: {}
   affinity: {}
 
-# Basic Kubecost ingress, more examples available at https://docs.kubecost.com/install-and-configure/install/ingress-examples
+# Basic Kubecost ingress, more examples available at https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=installation-ingress-examples
 ingress:
   enabled: false
   # className: nginx
@@ -790,7 +790,7 @@ priority:
 extraVolumes: []
 extraVolumeMounts: []
 
-# Define persistence volume for cost-analyzer, more information at https://docs.kubecost.com/install-and-configure/install/storage
+# Define persistent volume for cost-analyzer, more information at https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=installation-next-steps-kubecost
 persistentVolume:
   size: 32Gi
   enabled: true  # Note that setting this to false means configurations will be wiped out on pod restart.
@@ -1434,7 +1434,7 @@ prometheus:
     enabled: false
 
 ## Optional daemonset to more accurately attribute network costs to the correct workload
-## https://docs.kubecost.com/install-and-configure/advanced-configuration/network-costs-configuration
+## https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-network-cost
 networkCosts:
   enabled: false
   image:
@@ -1459,7 +1459,7 @@ networkCosts:
   # Port will set both the containerPort and hostPort to this value.
   # These must be identical due to network-costs being run on hostNetwork
   port: 3001
-  # this daemonset can use significant resources on large clusters: https://docs.kubecost.com/using-kubecost/navigating-the-kubecost-ui/cost-allocation/network-allocation
+  # this daemonset can use significant resources on large clusters: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=dashboard-network-traffic-cost-allocation
   resources:
     limits:  # remove the limits by setting cpu: null
       cpu: 500m  # can be less, will depend on cluster size
@@ -1600,7 +1600,7 @@ forecasting:
     failureThreshold: 200
 
 ## The Kubecost Aggregator is the primary query backend for Kubecost
-## Ref: https://docs.kubecost.com/install-and-configure/install/multi-cluster/federated-etl/aggregator
+## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=federation-kubecost-aggregator
 ##
 kubecostAggregator:
   # deployMethod determines how Aggregator is deployed. Current options are
@@ -1832,7 +1832,7 @@ kubecostAggregator:
 ## Kubecost Multi-cluster Diagnostics
 ## A single view into the health of all agent clusters. Each agent cluster sends
 ## its diagnostic data to a storage bucket.
-## Ref: https://docs.kubecost.com/install-and-configure/install/multi-cluster/multi-cluster-diagnostics
+## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-multi-diagnostics
 ##
 diagnostics:
   enabled: true
@@ -1901,7 +1901,7 @@ clusterController:
   secretName: controller-secrets
   actionConfigs:
     # this configures the Kubecost Cluster Turndown action
-    # for more details, see documentation at https://github.com/kubecost/cluster-turndown/tree/develop?tab=readme-ov-file#setting-a-turndown-schedule
+    # for more details, see documentation at https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=controller-cluster-turndown
     clusterTurndown: []
       # - name: my-schedule
       #   start: "2024-02-09T00:00:00Z"
@@ -1912,7 +1912,7 @@ clusterController:
       #   end: "2024-02-09T01:00:00Z"
       #   repeat: weekly
     # this configures the Kubecost Namespace Turndown action
-    # for more details, see documentation at https://docs.kubecost.com/using-kubecost/navigating-the-kubecost-ui/savings/savings-actions#namespace-turndown
+    # for more details, see documentation at https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=savings-actions
     namespaceTurndown:
       # - name: my-ns-turndown-action
       #   dryRun: false
@@ -1927,7 +1927,7 @@ clusterController:
       #   params:
       #     minNamespaceAge: 4h
     # this configures the Kubecost Cluster Sizing action
-    # for more details, see documentation at https://docs.kubecost.com/using-kubecost/navigating-the-kubecost-ui/savings/savings-actions#cluster-sizing
+    # for more details, see documentation at https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=savings-actions
     clusterRightsize:
         # startTime: '2024-01-02T15:04:05Z'
         # frequencyMinutes: 1440
@@ -1946,7 +1946,7 @@ clusterController:
     # Continuous Request Sizing. Annotation configuration will be ignored while
     # this configuration method is present in the cluster.
     #
-    # For more details, see documentation at https://docs.kubecost.com/using-kubecost/navigating-the-kubecost-ui/savings/savings-actions#automated-request-sizing
+    # For more details, see documentation at https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=savings-actions
     containerRightsize:
       # Workloads can be selected by an _exact_ key (namespace, controllerKind,
       # controllerName). This will only match a single controller. The cluster
@@ -1971,7 +1971,7 @@ clusterController:
       #
       # See the examples below.
       #
-      # [1] https://docs.kubecost.com/apis/filters-api
+      # [1] https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=filter-parameters-v2
       # filterConfig:
       #   - filter: |
       #       namespace:"abc"+controllerKind:"deployment"
@@ -2000,7 +2000,7 @@ clusterController:
 
 reporting:
   # Kubecost bug report feature: Logs access/collection limited to .Release.Namespace
-  # Ref: http://docs.kubecost.com/bug-report
+  # Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=capture-bug-report
   logCollection: true
   # Basic frontend analytics
   productAnalytics: true
@@ -2048,8 +2048,7 @@ initChownData:
   resources: {}
 
 ## Kubecost's Bundled Grafana
-## You can access it by visiting http://kubecost.me.com/grafana/
-## Ref: https://docs.kubecost.com/install-and-configure/advanced-configuration/custom-grafana
+## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-grafana-guide
 grafana:
   # namespace_datasources: kubecost # override the default namespace here
   # namespace_dashboards: kubecost # override the default namespace here
@@ -2201,7 +2200,7 @@ awsstore:
   annotations: {}
 
 ## Federated ETL Architecture
-## Ref: https://docs.kubecost.com/install-and-configure/install/multi-cluster/federated-etl
+## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-etl-federation
 ##
 federatedETL:
 
@@ -2244,7 +2243,7 @@ costEventsAudit:
 
 ## Disable updates to kubecost from the frontend UI and via POST request
 ## This feature is considered beta, entrprise users should use teams:
-## https://docs.kubecost.com/using-kubecost/navigating-the-kubecost-ui/teams
+## https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=ui-teams
 # readonly: false
 
 # # These configs can also be set from the Settings page in the Kubecost product
@@ -2275,7 +2274,7 @@ costEventsAudit:
 #   # Kubecost considers there to be 730 hours in a month. Also note, that these
 #   # configurations will have no effect on metrics emitted such as
 #   # `node_ram_hourly_cost` or `node_cpu_hourly_cost`.
-#   # Ref: https://docs.kubecost.com/install-and-configure/install/provider-installations/air-gapped
+#   # Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=installations-installing-in-air-gapped-environments
 #   customPricesEnabled: false
 #   defaultModelPricing:
 #     enabled: true
@@ -2387,9 +2386,9 @@ costEventsAudit:
 #   hideSpotCommander: false
 #   hideUnclaimedVolumes: false
 #   hideCloudIntegrationsUI: false
-#   hideBellIcon: false
+#   hideBellIcon: true # deprecated in v2.7. default is true, which hides the bell icon in the top right corner of the UI. The new diagnostics is top level in left nav. Change to false to restore the bell icon.
 #   hideTeams: false
-#   savingsProfiles: # Define custom profiles used in the Right-Size Container Request savings card. Supported parameters are explained in https://docs.kubecost.com/apis/savings-apis/api-request-right-sizing-v2.
+#   savingsProfiles: # Define custom profiles used in the Right-Size Container Request savings card. Supported parameters are explained in https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=apis-container-request-right-sizing-recommendation-api.
 #     requestSizing:
 #     - name: "custom1"
 #       algorithmCPU: "max"
