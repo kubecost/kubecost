@@ -22,7 +22,7 @@ global:
 serviceMonitor:
   enabled: true
   aggregatorMetrics:
-    enabled: true
+    enabled: false
 
 prometheusRule:
   enabled: true
