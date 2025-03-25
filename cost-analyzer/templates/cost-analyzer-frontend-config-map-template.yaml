@@ -1617,7 +1617,7 @@ data:
                 "hideSpotCommander": "{{ default false ((.Values.kubecostProductConfigs).hideSpotCommander) }}",
                 "hideUnclaimedVolumes": "{{ default false ((.Values.kubecostProductConfigs).hideUnclaimedVolumes) }}",
                 "hideCloudIntegrationsUI": "{{ default false ((.Values.kubecostProductConfigs).hideCloudIntegrationsUI) }}",
-                "hideBellIcon": "{{ default false ((.Values.kubecostProductConfigs).hideBellIcon) }}",
+                "hideBellIcon": "{{ default true ((.Values.kubecostProductConfigs).hideBellIcon) }}",
                 "hideTeams": "{{ default false ((.Values.kubecostProductConfigs).hideTeams) }}"
                 }
             ';
