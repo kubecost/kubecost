@@ -1822,7 +1822,7 @@ clusterController:
   enabled: false
   image:
     repository: gcr.io/kubecost1/cluster-controller
-    tag: v0.16.15
+    tag: v0.16.16
   imagePullPolicy: IfNotPresent
   priorityClassName: ""
   tolerations: []
