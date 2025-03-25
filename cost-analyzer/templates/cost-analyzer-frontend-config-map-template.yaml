@@ -132,8 +132,7 @@ data:
     }
   {{- end }}
 
-    {{- if and .Values.diagnostics.enabled .Values.diagnostics.primary.enabled .Values.diagnostics.deployment.enabled }}
-    {{- if or (not (empty .Values.kubecostModel.federatedStorageConfigSecret )) .Values.kubecostModel.federatedStorageConfig }}
+    {{- if and (include "multiClusterDiagnosticsPrimaryEnabled" .) .Values.diagnostics.deployment.enabled }}
     upstream multi-cluster-diagnostics {
         {{- if .Values.kubecostFrontend.useDefaultFqdn }}
         server {{ template "diagnostics.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:9007;
@@ -145,7 +144,6 @@ data:
         {{- end }}
         {{- end }}
     }
-    {{- end }}
     {{- end }}
 
     server {
@@ -1528,14 +1526,6 @@ data:
             proxy_set_header  X-Real-IP  $remote_addr;
             proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
         }
-        location ~ ^/model/savings/requestSizingV2/profile/(.*) {
-            proxy_read_timeout          {{ .Values.kubecostFrontend.timeoutSeconds | default 300 }};
-            proxy_pass http://aggregator/savings/requestSizingV2/profile/$1;
-            proxy_redirect off;
-            proxy_set_header Connection "";
-            proxy_set_header  X-Real-IP  $remote_addr;
-            proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
-        }
 {{- end }}
         location = /model/hideOrphanedResources {
             default_type 'application/json';
@@ -1562,18 +1552,10 @@ data:
 
         location /model/multi-cluster-diagnostics-enabled {
             default_type 'application/json';
-            {{- if and .Values.diagnostics.enabled .Values.diagnostics.primary.enabled }}
-            {{- if or (not (empty .Values.kubecostModel.federatedStorageConfigSecret )) .Values.kubecostModel.federatedStorageConfig }}
-            return 200 '{"multiClusterDiagnosticsEnabled": true}';
-            {{- end }}
-            {{- else }}
-            return 200 '{"multiClusterDiagnosticsEnabled": false}';
-            {{- end }}
+            return 200 '{"multiClusterDiagnosticsEnabled": {{ template "multiClusterDiagnosticsPrimaryEnabled" . }}}';
         }
 
-        {{- if and .Values.diagnostics.enabled .Values.diagnostics.primary.enabled .Values.diagnostics.deployment.enabled }}
-        {{- if or (not (empty .Values.kubecostModel.federatedStorageConfigSecret )) .Values.kubecostModel.federatedStorageConfig }}
-
+        {{- if and (include "multiClusterDiagnosticsPrimaryEnabled" .) .Values.diagnostics.deployment.enabled }}
         # When the Multi-cluster Diagnostics Service is run within the
         # cost-model container, its endpoint is available at the path
         # `/model/diagnostics/multicluster`. No additional Nginx path forwarding
@@ -1588,18 +1570,6 @@ data:
             proxy_set_header  X-Real-IP  $remote_addr;
             proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
         }
-        # simple alias for support
-        location /mcd {
-            default_type 'application/json';
-            proxy_read_timeout          300;
-            proxy_pass http://multi-cluster-diagnostics/status?window=7d;
-            proxy_redirect off;
-            proxy_set_header Connection "";
-            proxy_set_header  X-Real-IP  $remote_addr;
-            proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
-        }
-
-        {{- end }}
         {{- end }}
 
         location /model/aggregatorEnabled {
@@ -1647,7 +1617,7 @@ data:
                 "hideSpotCommander": "{{ default false ((.Values.kubecostProductConfigs).hideSpotCommander) }}",
                 "hideUnclaimedVolumes": "{{ default false ((.Values.kubecostProductConfigs).hideUnclaimedVolumes) }}",
                 "hideCloudIntegrationsUI": "{{ default false ((.Values.kubecostProductConfigs).hideCloudIntegrationsUI) }}",
-                "hideBellIcon": "{{ default false ((.Values.kubecostProductConfigs).hideBellIcon) }}",
+                "hideBellIcon": "{{ default true ((.Values.kubecostProductConfigs).hideBellIcon) }}",
                 "hideTeams": "{{ default false ((.Values.kubecostProductConfigs).hideTeams) }}"
                 }
             ';
