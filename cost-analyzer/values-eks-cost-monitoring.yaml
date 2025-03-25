@@ -1,5 +1,5 @@
 # grafana is disabled by default, but can be enabled by setting the following values.
-# or proxy to an existing grafana: https://docs.kubecost.com/install-and-configure/advanced-configuration/custom-grafana
+# or proxy to an existing grafana: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-grafana-guide
 global:
   grafana:
     enabled: false
@@ -20,12 +20,10 @@ kubecostModel:
 forecasting:
   image:
     repository: public.ecr.aws/kubecost/kubecost-modeling
-    tag: v0.1.23
 
 networkCosts:
   image:
     repository: public.ecr.aws/kubecost/kubecost-network-costs
-    tag: v0.17.8
 
 clusterController:
   image:
