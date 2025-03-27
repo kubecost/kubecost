@@ -54,3 +54,20 @@ Once templating is successful, the combined results of the chart templated acros
 ### Testing
 
 If all previous tests pass, the chart with each of the eligible values files will be deployed across a matrix of the last nine (9) versions of Kubernetes clusters to ensure all expected resources are available, and finally that a basic end-to-end test of the Kubecost deployment is successful. In order for some deployment configurations to succeed, there may be some dependent resources which are required. For example, in some configurations Kubecost requires Kubernetes Secrets to already exist so they may be consumed by Pods in the form of a volume mount. Any such prerequisite resources should be stored in `/.github/ci-files` as they will be automatically deployed as part of the test suite. Files in this directory must not clash and all will be deployed at the outset of testing.
+
+## YAML Style Guidelines
+
+For the `values.yaml` file, these are the design decisions we make:
+
+- Explicitly define all configurations. Preferably, don't add the configuration as a commented out value.
+- All configurations should have a default value, or an empty value defined.
+- Comments
+    - Only provide comments that provide context beyond the configuration name
+    - Use the following headers for regions of configuration:
+        ```yaml
+        ## Title.
+        ## Optional description. Leave line below blank.
+        ##
+        ```
+    - Use `##` for comments that describe a single line of configuration.
+    - Use `#` for commented out example values.
