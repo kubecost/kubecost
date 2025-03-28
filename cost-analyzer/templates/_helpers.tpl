@@ -976,7 +976,7 @@ Begin Kubecost 2.0 templates
       mountPath: /var/lib/clickhouse
       {{- end }}
     {{- end }}
-    {{- if eq (include "aggregator.deployMethod" .) "singlepod" }}
+    {{- if and .Values.kubecostAggregator.useDBv3 (eq (include "aggregator.deployMethod" .) "singlepod") }}
     - name: persistent-configs
       mountPath: /var/lib/clickhouse
     {{- end }}
