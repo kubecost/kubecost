@@ -2097,7 +2097,7 @@ grafana:
     failureThreshold: 10
   image:
     repository: grafana/grafana
-    tag: 11.5.2
+    tag: 11.6.0
     pullPolicy: IfNotPresent
     # pullSecrets:
   securityContext: {}
