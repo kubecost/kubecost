@@ -1049,10 +1049,11 @@ Begin Kubecost 2.0 templates
       mountPath: "/etc/pki/ca-trust/extracted"
       readOnly: false
     {{- end }}
-    {{- /* Only adds extraVolumeMounts if aggregator is running as its own pod */}}
-    {{- if and .Values.kubecostAggregator.extraVolumeMounts (eq (include "aggregator.deployMethod" .) "statefulset") }}
+    {{- /* TODO: CONFIRM THAT THIS IS OKAY!!! */}}
+    {{- if .Values.kubecostAggregator.extraVolumeMounts }}
     {{- toYaml .Values.kubecostAggregator.extraVolumeMounts | nindent 4 }}
     {{- end }}
+    {{- /* END TODO */}}
     {{- if .Values.global.integrations.turbonomic.enabled }}
     - name: turbonomic-credentials
       mountPath: /var/configs/turbonomic
@@ -1265,6 +1266,14 @@ Begin Kubecost 2.0 templates
       value: "true"
     {{- end}}
     {{- end }}
+    {{- end }}
+    {{- if (.Values.enterpriseCustomPricing).enabled }}
+    - name: ENTERPRISE_CUSTOM_PRICING_ENABLED
+      value: "true"
+    - name: ENTERPRISE_CUSTOM_PRICING_CSV_LOCATION_URI
+      value: {{ .Values.enterpriseCustomPricing.location.URI }}
+    - name: ENTERPRISE_CUSTOM_PRICING_APPLY_RETROACTIVELY
+      value: {{ (quote .Values.enterpriseCustomPricing.applyRetroactively) | default (quote false) }}
     {{- end }}
 {{- end }}
 
