@@ -25,5 +25,20 @@ serviceMonitor:
 prometheusRule:
   enabled: true
 
-kubecostMetrics:
-  emitKsmV1Metrics: false
+kubecostProductConfigs:
+  metricsConfigs:
+    disabledMetrics:
+      - cluster:hyperthread_enabled_nodes
+      - deployment_match_labels
+      - kube_job_status_failed
+      - kube_namespace_labels
+      - kube_node_labels
+      - kube_node_status_allocatable
+      - kube_node_status_capacity
+      - kube_persistentvolume_capacity_bytes
+      - kube_persistentvolumeclaim_info
+      - kube_persistentvolumeclaim_resource_requests_storage_bytes
+      - kube_pod_container_resource_requests
+      - kube_pod_container_status_terminated_reason
+      - kube_pod_labels
+      - kube_pod_owner
