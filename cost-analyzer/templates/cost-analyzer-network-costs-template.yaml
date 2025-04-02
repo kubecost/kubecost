@@ -116,7 +116,8 @@ spec:
           name: network-costs-config
         {{- end }}
         securityContext:
-          privileged: true
+          privileged: true  # Required
+          runAsUser: 0  # Required
         {{- if .Values.networkCosts.additionalSecurityContext }}
         {{- toYaml .Values.networkCosts.additionalSecurityContext | nindent 10 }}
         {{- end }}

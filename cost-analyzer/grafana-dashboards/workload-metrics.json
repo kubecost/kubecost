@@ -783,7 +783,7 @@
         "current": {
           "selected": false,
           "text": "Prometheus",
-          "value": "PBFA97CFB590B2093"
+          "value": "Prometheus"
         },
         "hide": 0,
         "includeAll": false,
@@ -859,7 +859,7 @@
         },
         "datasource": {
           "type": "prometheus",
-          "uid": "PBFA97CFB590B2093"
+          "uid": "${datasource}"
         },
         "definition": "label_values({namespace=~\"$namespace\", pod=~\"$pod\"},container)",
         "hide": 0,
