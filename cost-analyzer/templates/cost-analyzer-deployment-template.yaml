@@ -862,14 +862,6 @@ spec:
             - name: KUBE_RBAC_PROXY_ENABLED
               value: {{ (quote .Values.global.prometheus.kubeRBACProxy) }}
             {{- end }}
-            {{- if (.Values.enterpriseCustomPricing).enabled }}
-            - name: ENTERPRISE_CUSTOM_PRICING_ENABLED
-              value: "true"
-            - name: ENTERPRISE_CUSTOM_PRICING_CSV_LOCATION_URI
-              value: {{ .Values.enterpriseCustomPricing.location.URI }}
-            - name: ENTERPRISE_CUSTOM_PRICING_APPLY_RETROACTIVELY
-              value: {{ (quote .Values.enterpriseCustomPricing.applyRetroactively) | default (quote false) }}
-            {{- end }}
             {{- if .Values.pricingCsv }}
             {{- if .Values.pricingCsv.enabled }}
             - name: USE_CSV_PROVIDER
