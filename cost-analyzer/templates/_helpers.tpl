@@ -1057,7 +1057,6 @@ Begin Kubecost 2.0 templates
     {{- if and .Values.kubecostAggregator.extraVolumeMounts (eq (include "aggregator.deployMethod" .) "statefulset") }}
     {{- toYaml .Values.kubecostAggregator.extraVolumeMounts | nindent 4 }}
     {{- end }}
-    {{- /* END TODO */}}
     {{- if .Values.global.integrations.turbonomic.enabled }}
     - name: turbonomic-credentials
       mountPath: /var/configs/turbonomic
