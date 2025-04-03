@@ -360,6 +360,16 @@ pricingCsv:
     URI: s3://kc-csv-test/pricing_schema.csv  # a valid file URI
     csvAccessCredentials: pricing-schema-access-secret
 
+# Enterprise custom pricing, enterprise key required
+enterpriseCustomPricing:
+  enabled: false
+  location:
+    URI: /var/kubecost-enterprise-pricing-csv/pricing-spec.csv  # local ConfigMap
+  # By default, enterprise custom pricing takes effect moving forward from when
+  # it is enabled. To price all historic data according to the given pricing
+  # spec, set "applyRetroactively" to true, below.
+  # applyRetroactively: true
+
 ## Kubecost SAML (enterprise key required)
 ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-user-management-saml
 saml:
