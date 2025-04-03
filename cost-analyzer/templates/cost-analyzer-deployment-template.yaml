@@ -305,6 +305,11 @@ spec:
         # Extra volume(s)
         {{- toYaml .Values.extraVolumes | nindent 8 }}
         {{- end }}
+        {{- if (.Values.enterpriseCustomPricing).enabled }}
+        - name: kubecost-enterprise-pricing
+          configMap:
+            name: {{ .Values.enterpriseCustomPricing.configMapName | default "kubecost-enterprise-pricing" }}
+        {{- end }}
         - name: persistent-configs
 {{- if .Values.persistentVolume }}
 {{- if .Values.persistentVolume.enabled }}
