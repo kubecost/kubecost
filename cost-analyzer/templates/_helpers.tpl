@@ -1049,8 +1049,12 @@ Begin Kubecost 2.0 templates
       mountPath: "/etc/pki/ca-trust/extracted"
       readOnly: false
     {{- end }}
-    {{- /* TODO: CONFIRM THAT THIS IS OKAY!!! */}}
-    {{- if .Values.kubecostAggregator.extraVolumeMounts }}
+    {{- if (.Values.enterpriseCustomPricing).enabled }}
+    - name: kubecost-enterprise-pricing
+      mountPath: /var/enterprise-pricing
+    {{- end }}
+    {{- /* Only adds extraVolumeMounts if aggregator is running as its own pod */}}
+    {{- if and .Values.kubecostAggregator.extraVolumeMounts (eq (include "aggregator.deployMethod" .) "statefulset") }}
     {{- toYaml .Values.kubecostAggregator.extraVolumeMounts | nindent 4 }}
     {{- end }}
     {{- /* END TODO */}}

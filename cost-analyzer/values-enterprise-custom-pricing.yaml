@@ -1,7 +1,14 @@
 enterpriseCustomPricing:
   enabled: true
+
+  # kubectl create configmap -n kubecost kubecost-enterprise-pricing --from-file spec.csv
+  # defaults to "kubecost-enterprise-pricing" but can be changed
+  configMapName: kubecost-enterprise-pricing
+  
+  # The file name (e.g. spec.csv) needs to match the file name used to make the ConfigMap (above)
   location:
-    URI: /var/kubecost-enterprise-pricing-csv/pricing-spec.csv  # local ConfigMap
+    URI: /var/enterprise-pricing/spec.csv
+
   # By default, enterprise custom pricing takes effect moving forward from when
   # it is enabled. To price all historic data according to the given pricing
   # spec, set "applyRetroactively" to true, below.
@@ -10,12 +17,3 @@ enterpriseCustomPricing:
 # This value will only be required until the release of Kubecost 3.0.0, at which point it will be removed
 kubecostAggregator:
   useDBv3: true
-  # kubectl create configmap -n kubecost enterprise-pricing-csv --from-file pricing-spec.csv
-  extraVolumeMounts:
-    - name: kubecost-enterprise-pricing-csv
-      mountPath: /var/kubecost-enterprise-pricing-csv
-
-extraVolumes:
-  - name: kubecost-enterprise-pricing-csv
-    configMap:
-      name: enterprise-pricing-csv
