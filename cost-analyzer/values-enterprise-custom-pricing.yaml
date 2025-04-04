@@ -7,7 +7,7 @@ enterpriseCustomPricing:
   
   # The file name (e.g. spec.csv) needs to match the file name used to make the ConfigMap (above)
   location:
-    URI: /var/enterprise-pricing/spec.csv
+    URI: /var/configs/enterprise-pricing/spec.csv
 
   # By default, enterprise custom pricing takes effect moving forward from when
   # it is enabled. To price all historic data according to the given pricing
