@@ -366,22 +366,16 @@ enterpriseCustomPricing:
   # requires a CSV pricing spec to be provided at the location, below, using a
   # ConfigMap, for which we provide instructions, also below.
   enabled: false
-
   # location:
   #  URI: /var/configs/enterprise-pricing/spec.csv  # local ConfigMap
-  
   # Use the following command to create a ConfigMap from your pricing spec CSV.
   # You may change the ConfigMap name, or file name, as long as you set the
   # correct configMapName and location.URI, respectively.
-  #
   #   kubectl create configmap -n kubecost kubecost-enterprise-pricing --from-file spec.csv
-  # 
   # configMapName: kubecost-enterprise-pricing
-
   # By default, enterprise custom pricing takes effect moving forward from when
   # it is enabled. To price all historic data according to the given pricing
   # spec, set "applyRetroactively" to true, below.
-  #
   # applyRetroactively: true
 
 ## Kubecost SAML (enterprise key required)
