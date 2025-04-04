@@ -364,7 +364,7 @@ pricingCsv:
 enterpriseCustomPricing:
   enabled: false
   location:
-    URI: /var/enterprise-pricing/spec.csv  # local ConfigMap
+    URI: /var/configs/enterprise-pricing/spec.csv  # local ConfigMap
   
   # kubectl create configmap -n kubecost kubecost-enterprise-pricing --from-file spec.csv
   # defaults to "kubecost-enterprise-pricing" but can be changed

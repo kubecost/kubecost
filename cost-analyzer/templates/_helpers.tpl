@@ -1051,7 +1051,7 @@ Begin Kubecost 2.0 templates
     {{- end }}
     {{- if (.Values.enterpriseCustomPricing).enabled }}
     - name: kubecost-enterprise-pricing
-      mountPath: /var/enterprise-pricing
+      mountPath: /var/configs/enterprise-pricing
     {{- end }}
     {{- /* Only adds extraVolumeMounts if aggregator is running as its own pod */}}
     {{- if and .Values.kubecostAggregator.extraVolumeMounts (eq (include "aggregator.deployMethod" .) "statefulset") }}
