@@ -308,7 +308,7 @@ spec:
         {{- if (.Values.enterpriseCustomPricing).enabled }}
         - name: kubecost-enterprise-pricing
           configMap:
-            name: {{ .Values.enterpriseCustomPricing.configMapName | default "kubecost-enterprise-pricing" }}
+            name: {{ .Values.enterpriseCustomPricing.configMapName }}
         {{- end }}
         - name: persistent-configs
 {{- if .Values.persistentVolume }}
