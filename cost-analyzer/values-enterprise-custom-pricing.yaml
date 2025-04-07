@@ -11,7 +11,7 @@ enterpriseCustomPricing:
   #
   #   kubectl create configmap -n kubecost kubecost-enterprise-pricing --from-file spec.csv
   # 
-  # configMapName: kubecost-enterprise-pricing
+  configMapName: kubecost-enterprise-pricing
   
   # The file name (e.g. spec.csv) needs to match the file name used to make the ConfigMap (above)
   location:
