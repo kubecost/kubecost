@@ -740,6 +740,16 @@ data:
                 "code": 200,
                 "status": "success",
                     "data": []
+                }
+            ';
+        }
+
+        location /model/allNodes {
+            default_type 'application/json';
+            return 200 '\n
+                {
+                "items": []
+                }
             ';
         }
     }
