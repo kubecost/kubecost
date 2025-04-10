@@ -752,6 +752,14 @@ data:
                 }
             ';
         }
+
+        location /model/config/env {
+            default_type 'application/json';
+            return 200 '\n
+                {
+                }
+            ';
+        }
     }
 
 {{- end }}
