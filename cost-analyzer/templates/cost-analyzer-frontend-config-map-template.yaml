@@ -564,49 +564,6 @@ data:
             {{- end }}
         }
 
-        location = /model/getConfigs {
-            default_type 'application/json';
-            return 200 '{
-                "code": 200,
-                "status": "success",
-                "data": {
-                    "provider": "custom",
-                    "description": "Default prices used to compute allocation between RAM and CPU. AWS pricing API data still used for total node cost.",
-                    "CPU": "0.031611",
-                    "spotCPU": "0.0066549999999999995",
-                    "RAM": "0.004237",
-                    "spotRAM": "0.000892",
-                    "GPU": "",
-                    "spotGPU": "0.308",
-                    "storage": "0.00005479452",
-                    "zoneNetworkEgress": "0.01",
-                    "regionNetworkEgress": "0.01",
-                    "internetNetworkEgress": "0.12",
-                    "firstFiveForwardingRulesCost": "",
-                    "additionalForwardingRuleCost": "",
-                    "LBIngressDataCost": "",
-                    "projectID": "guestbook-227502",
-                    "customPricesEnabled": "",
-                    "defaultIdle": "",
-                    "currencyCode": "USD",
-                    "discount": "30%",
-                    "negotiatedDiscount": "0%",
-                    "sharedOverhead": "4997",
-                    "clusterName": "kc-integration-test",
-                    "sharedNamespaces": "",
-                    "sharedLabelNames": "",
-                    "sharedLabelValues": "",
-                    "shareTenancyCosts": "false",
-                    "readOnly": "false",
-                    "editorAccess": "false",
-                    "kubecostToken": "not-applied",
-                    "googleAnalyticsTag": "",
-                    "excludeProviderID": "false",
-                    "defaultLBPrice": ""
-                }
-            }';
-        }
-
         {{- if .Values.kubecostFrontend.trendsDisabled }}
         location /model/allocation/trends {
             return 204 'endpoint disabled';
@@ -684,6 +641,40 @@ data:
                 "hideTeams": "{{ default false ((.Values.kubecostProductConfigs).hideTeams) }}"
                 }
             ';
+        }
+
+         location = /model/getConfigs {
+            default_type 'application/json';
+            return 200 '{
+                "code": 200,
+                "status": "success",
+                "data": {
+                    "zoneNetworkEgress": "0.01",
+                    "regionNetworkEgress": "0.01",
+                    "internetNetworkEgress": "0.12",
+                    "firstFiveForwardingRulesCost": "",
+                    "additionalForwardingRuleCost": "",
+                    "LBIngressDataCost": "",
+                    "projectID": "guestbook-227502",
+                    "customPricesEnabled": "",
+                    "defaultIdle": "",
+                    "currencyCode": "USD",
+                    "discount": "30%",
+                    "negotiatedDiscount": "0%",
+                    "sharedOverhead": "4997",
+                    "clusterName": "kc-integration-test",
+                    "sharedNamespaces": "",
+                    "sharedLabelNames": "",
+                    "sharedLabelValues": "",
+                    "shareTenancyCosts": "false",
+                    "readOnly": "false",
+                    "editorAccess": "false",
+                    "kubecostToken": "not-applied",
+                    "googleAnalyticsTag": "",
+                    "excludeProviderID": "false",
+                    "defaultLBPrice": ""
+                }
+            }';
         }
 
         location /model/clusterInfo {
