@@ -760,10 +760,6 @@ data:
                         "startTime": "2025-04-10 08:23:49 +0000 UTC"
                         }
                     ],
-                    "clusterInfo": {
-                        "nodeCount": "5",
-                        "podCount": "296"
-                    },
                     "version": "nightly (1b94b31)"
                 }
             ';
