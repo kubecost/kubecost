@@ -753,7 +753,7 @@ data:
             default_type 'application/json';
             return 200 '\n
                 {
-                    "version": "nightly (1b94b31)"
+                    "version": "{{ .Chart.Version }}"
                 }
             ';
         }
