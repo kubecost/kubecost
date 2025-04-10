@@ -732,6 +732,16 @@ data:
                 }
             ';
         }
+
+        location /model/clusters {
+            default_type 'application/json';
+            return 200 '\n
+                {
+                "code": 200,
+                "status": "success",
+                    "data": []
+            ';
+        }
     }
 
 {{- end }}
