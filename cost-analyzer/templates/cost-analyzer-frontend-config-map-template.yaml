@@ -757,6 +757,27 @@ data:
             default_type 'application/json';
             return 200 '\n
                 {
+                    
+                }
+            ';
+        }
+
+        location /model/installInfo {
+            default_type 'application/json';
+            return 200 '\n
+                {
+                    "containers": [
+                        {
+                        "containerName": "cost-model",
+                        "image": "gcr.io/kubecost1/cost-model-nightly:2025-04-10",
+                        "startTime": "2025-04-10 08:23:49 +0000 UTC"
+                        }
+                    ],
+                    "clusterInfo": {
+                        "nodeCount": "5",
+                        "podCount": "296"
+                    },
+                    "version": "nightly (1b94b31)"
                 }
             ';
         }
