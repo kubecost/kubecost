@@ -8,15 +8,15 @@ enterpriseCustomPricing:
   # You may change the ConfigMap name, or file name, as long as you set the
   # correct configMapName and location.URI, respectively.
   #
-  #   kubectl create configmap -n kubecost kubecost-enterprise-pricing --from-file spec.csv
+  #   kubectl create configmap -n kubecost kubecost-enterprise-pricing --from-file pricing.csv
   # 
   configMapName: kubecost-enterprise-pricing
-  # The file name (e.g. spec.csv) needs to match the file name used to make the ConfigMap (above)
+  # The file name (e.g. pricing.csv) needs to match the file name used to make the ConfigMap (above)
   location:
-    URI: /var/configs/enterprise-pricing/spec.csv
+    URI: /var/configs/enterprise-pricing/pricing.csv
   # By default, enterprise custom pricing takes effect moving forward from when
   # it is enabled. To price all historic data according to the given pricing
-  # spec, set "applyRetroactively" to true, below.
+  # file, set "applyRetroactively" to true, below.
   applyRetroactively: false
 
 # This value will only be required until the release of Kubecost 3.0.0, at which point it will be removed

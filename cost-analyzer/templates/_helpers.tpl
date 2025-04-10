@@ -1274,9 +1274,9 @@ Begin Kubecost 2.0 templates
     - name: ENTERPRISE_CUSTOM_PRICING_ENABLED
       value: "true"
     - name: ENTERPRISE_CUSTOM_PRICING_CSV_LOCATION_URI
-      value: {{ .Values.enterpriseCustomPricing.location.URI }}
+      value: {{ (quote .Values.enterpriseCustomPricing.location.URI) }}
     - name: ENTERPRISE_CUSTOM_PRICING_APPLY_RETROACTIVELY
-      value: {{ .Values.enterpriseCustomPricing.applyRetroactively }}
+      value: {{ (quote .Values.enterpriseCustomPricing.applyRetroactively) }}
     {{- end }}
 {{- end }}
 
