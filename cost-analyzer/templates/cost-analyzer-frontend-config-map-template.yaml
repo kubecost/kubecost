@@ -706,7 +706,15 @@ data:
                         "id": "kc-integration-test",
                         "logCollection": "true",
                         "name": "kc-integration-test",
-                        "productAnalytics": "true"
+                        "productAnalytics": "true",
+                        "project": "guestbook-227502",
+                        "provider": "GCP",
+                        "provisioner": "GKE",
+                        "region": "us-central1",
+                        "remoteReadEnabled": "false",
+                        "thanosEnabled": "false",
+                        "valuesReporting": "true",
+                        "version": "1.31"
                     }
                 }
             ';
