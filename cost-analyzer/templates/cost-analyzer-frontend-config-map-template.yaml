@@ -691,16 +691,7 @@ data:
             return 200 '\n
                 {
                 "code": 200,
-                "status": "success",
-                    "data": {
-                        "account": "",
-                        "clusterProfile": "production",
-                        "errorReporting": "true",
-                        "id": "kc-integration-test",
-                        "logCollection": "true",
-                        "name": "kc-integration-test",
-                        "productAnalytics": "true"
-                    }
+                "status": "success"
                 }
             ';
         }
