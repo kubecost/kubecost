@@ -13,7 +13,7 @@ The same dashboards have template versions in [grafana-templates/](grafana-templ
 
 The primary purpose of the dashboards provided is to allow visibility into the metrics used by Kubecost to create the cost-model.
 
-The networkCosts-metrics dashboard requires the optional networkCosts daemonset to be [enabled](https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-network-cost).
+The networkCosts-metrics dashboard requires the optional networkCosts daemonset to be [enabled](https://docs.kubecost.com/install-and-configure/advanced-configuration/network-costs-configuration).
 
 ## Metrics Required
 
@@ -42,4 +42,4 @@ container_fs_usage_bytes
 
 ## Additional Information
 
-Kubecost Grafana [Configuration Guide](https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-grafana-guide)
+Kubecost Grafana [Configuration Guide](https://docs.kubecost.com/install-and-configure/advanced-configuration/custom-grafana)

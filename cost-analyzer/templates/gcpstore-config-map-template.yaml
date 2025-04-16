@@ -1,0 +1,61 @@
+{{- if .Values.global.gcpstore.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ubbagent-config
+data:
+  config.yaml: |
+    # The identity section contains authentication information used
+    # by the agent.
+    identities:
+    - name: gcp
+      gcp:
+        # This parameter accepts a base64-encoded JSON service
+        # account key. The value comes from the reporting secret.
+        encodedServiceAccountKey: $AGENT_ENCODED_KEY
+
+    # The metrics section defines the metric that will be reported.
+    # Metric names should match verbatim the identifiers created
+    # during pricing setup.
+    metrics:
+
+    - name: commercial_ent_node_hr
+      type: int
+      endpoints:
+      - name: servicecontrol
+
+      # The passthrough marker indicates that no aggregation should
+      # occur for this metric. Reports received are immediately sent
+      # to the reporting endpoint. We use passthrough for the
+      # instance_time metric since reports are generated
+      # automatically by a heartbeat source defined in a later
+      # section.
+      passthrough: {}
+
+    # The endpoints section defines where metering data is ultimately
+    # sent. Currently supported endpoints include:
+    # * disk - some directory on the local filesystem
+    # * servicecontrol - Google Service Control
+    endpoints:
+    - name: servicecontrol
+      servicecontrol:
+        identity: gcp
+        # The service name is unique to your application and will be
+        # provided during onboarding.
+        serviceName: kubecost-ent.endpoints.kubecost-public.cloud.goog
+        consumerId: $AGENT_CONSUMER_ID  # From the reporting secret.
+      
+
+    # The sources section lists metric data sources run by the agent
+    # itself. The currently-supported source is 'heartbeat', which
+    # sends a defined value to a metric at a defined interval. In
+    # this example, the heartbeat sends a 60-second value through the
+    # "instance_time" metric every minute.
+    sources:
+    - name: commercial_ent_node_hr_heartbeat
+      heartbeat:
+        metric: commercial_ent_node_hr
+        intervalSeconds: 3600
+        value:
+          int64Value: 1
+{{- end }}
