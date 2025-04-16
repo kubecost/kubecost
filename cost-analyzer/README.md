@@ -1,6 +1,6 @@
 # Kubecost Helm chart
 
-This is the official Helm chart for [Kubecost](https://www.kubecost.com/), an enterprise-grade application to monitor and manage Kubernetes spend. Please see the [website](https://www.kubecost.com/) for more details on what Kubecost can do for you and the official documentation [here](https://www.ibm.com/docs/en/kubecost), or contact [team@kubecost.com](mailto:team@kubecost.com) for assistance.
+This is the official Helm chart for [Kubecost](https://www.kubecost.com/), an enterprise-grade application to monitor and manage Kubernetes spend. Please see the [website](https://www.kubecost.com/) for more details on what Kubecost can do for you and the official documentation [here](https://docs.kubecost.com/), or contact [team@kubecost.com](mailto:team@kubecost.com) for assistance.
 
 To install via Helm, run the following command.
 
@@ -34,7 +34,7 @@ The following table lists commonly used configuration parameters for the Kubecos
 
 | Parameter                                                                          | Description                                                                                                                                                  | Default                                               |
 |------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------|
-| `global.prometheus.enabled`                                                        | If false, use an existing Prometheus install. [More info](https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-prometheus-guide.                                                             | `true`                                                |
+| `global.prometheus.enabled`                                                        | If false, use an existing Prometheus install. [More info](http://docs.kubecost.com/custom-prom).                                                             | `true`                                                |
 | `prometheus.server.persistentVolume.enabled`                                       | If true, Prometheus server will create a Persistent Volume Claim.                                                                                            | `true`                                                |
 | `prometheus.server.persistentVolume.size`                                          | Prometheus server data Persistent Volume size. Default set to retain ~6000 samples per second for 15 days.                                                   | `32Gi`                                                |
 | `prometheus.server.retention`                                                      | Determines when to remove old data.                                                                                                                          | `15d`                                                 |
@@ -52,8 +52,8 @@ The following table lists commonly used configuration parameters for the Kubecos
 | `ingress.paths`                                                                    | Ingress paths                                                                                                                                                | `["/"]`                                               |
 | `ingress.hosts`                                                                    | Ingress hostnames                                                                                                                                            | `[cost-analyzer.local]`                               |
 | `ingress.tls`                                                                      | Ingress TLS configuration (YAML)                                                                                                                             | `[]`                                                  |
-| `networkCosts.enabled`                                                             | If true, collect network allocation metrics [More info](https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=ui-network-monitoring)                                                         | `false`                                               |
-| `networkCosts.podMonitor.enabled`                                                  | If true, a PodMonitor for the network-cost daemonset is created | `false`                                               |
+| `networkCosts.enabled`                                                             | If true, collect network allocation metrics [More info](http://docs.kubecost.com/network-allocation)                                                         | `false`                                               |
+| `networkCosts.podMonitor.enabled`                                                  | If true, a [PodMonitor](https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#podmonitor) for the network-cost daemonset is created | `false`                                               |
 | `serviceMonitor.enabled`                                                           | Set this to `true` to create ServiceMonitor for Prometheus operator                                                                                          | `false`                                               |
 | `serviceMonitor.additionalLabels`                                                  | Additional labels that can be used so ServiceMonitor will be discovered by Prometheus                                                                        | `{}`                                                  |
 | `serviceMonitor.relabelings`                                                       | Sets Prometheus metric_relabel_configs on the scrape job                                                                                                     | `[]`                                                  |
@@ -75,23 +75,14 @@ The following table lists commonly used configuration parameters for the Kubecos
 
 ## Adjusting Log Output
 
-You can adjust the log output by using the `logLevel` Helm value and/or the `LOG_FORMAT` environment variable.
+The log output can be customized during deployment by using the `LOG_LEVEL` and/or `LOG_FORMAT` environment variables.
 
 ### Adjusting Log Level
 
-Adjusting the log level increases or decreases the level of verbosity written to the logs. The `logLevel` property accepts the following values:
-
-* `trace`
-* `debug`
-* `info`
-* `warn`
-* `error`
-* `fatal`
-
-For example, to set the log level to `debug`, add the following flag to the Helm command:
+Adjusting the log level increases or decreases the level of verbosity written to the logs. To set the log level to `trace`, the following flag can be added to the `helm` command.
 
 ```sh
---set 'kubecostModel.logLevel=debug'
+--set 'kubecostModel.extraEnv[0].name=LOG_LEVEL,kubecostModel.extraEnv[0].value=trace'
 ```
 
 ### Adjusting Log Format
