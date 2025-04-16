@@ -724,6 +724,14 @@ data:
                 }
             ';
         }
+        location /model/helmValues {
+            default_type 'application/json';
+            return 200 '\n
+                {
+                    
+                }
+            ';
+        }
 
         location /model/installInfo {
             default_type 'application/json';
