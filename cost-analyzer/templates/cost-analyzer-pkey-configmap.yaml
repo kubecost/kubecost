@@ -11,7 +11,7 @@ metadata:
   name: {{ default "product-configs" .Values.productConfigmapName }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{ include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
 data:
   {{- if .Values.kubecostProductConfigs.productKey.key }}
     key: {{  .Values.kubecostProductConfigs.productKey.key | quote }}

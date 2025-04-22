@@ -1,25 +1,24 @@
-## What does this PR change?
+## Release Notes Headline
 
+<!-- Provide a one-sentence summary of the change. "N/A" if no user-facing change. -->
 
-## Does this PR rely on any other PRs?
+## Commentary for Reviewers
 
+<!-- Highlight key changes. If this PR depends on other PRs to be merged first, mention them here. -->
 
-## How does this PR impact users? (This is the kind of thing that goes in release notes!)
+## Links to Issues or Tickets
 
+<!-- Use GitHub's closing keywords to link issues (e.g., "Closes #123"). Otherwise, "N/A". -->
+<!-- Ref: https://docs.github.com/en/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue -->
 
-## Links to Issues or tickets this PR addresses or fixes
+## User Impact and Risks
 
-<!--
-Please use GithHub's closing keywords to link to any issue(s) this PR addresses. See https://docs.github.com/en/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue how to use closing keywords.
--->
+<!-- Describe the impact of this PR on users. What are the risks associated with merging this PR? -->
 
+## Testing
 
+<!-- Describe the testing that was performed to verify the changes. -->
 
-## What risks are associated with merging this PR? What is required to fully test this PR?
+## Documentation Updates
 
-
-## How was this PR tested?
-
-
-## Have you made an update to documentation? If so, please provide the corresponding PR.
-
+<!-- If this PR requires updates to documentation, please provide the link to the PR here. -->

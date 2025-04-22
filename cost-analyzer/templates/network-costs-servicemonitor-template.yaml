@@ -5,7 +5,7 @@ metadata:
   name: {{ include "cost-analyzer.networkCostsName" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{ include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
     {{- if .Values.serviceMonitor.networkCosts.additionalLabels }}
     {{ toYaml .Values.serviceMonitor.networkCosts.additionalLabels | nindent 4 }}
     {{- end }}

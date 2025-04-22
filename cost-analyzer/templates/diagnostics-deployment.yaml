@@ -1,5 +1,5 @@
 {{- if and .Values.diagnostics.enabled .Values.diagnostics.deployment.enabled }}
-{{- if or (not (empty .Values.kubecostModel.federatedStorageConfigSecret )) .Values.kubecostModel.federatedStorageConfig -}}
+{{- if or .Values.kubecostModel.federatedStorageConfigSecret .Values.kubecostModel.federatedStorageConfig -}}
 
 {{- if eq .Values.prometheus.server.global.external_labels.cluster_id "cluster-one" }}
 {{- fail "Error: The 'cluster_id' is set to default 'cluster-one'. Please update so that the diagnostics service can uniquely identify data coming from this cluster." }}
@@ -18,6 +18,13 @@ metadata:
     {{- if .Values.diagnostics.deployment.labels }}
     {{- toYaml .Values.diagnostics.deployment.labels | nindent 4 }}
     {{- end }}
+  annotations:
+  {{- with .Values.global.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.diagnostics.deployment.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   replicas: 1
   selector:
@@ -53,7 +60,6 @@ spec:
             secretName: {{ .Values.kubecostModel.federatedStorageConfigSecret | default "federated-store" }}
         {{- end }}
         - name: config-db
-          {{- /* #TODO: make pv? */}}
           emptyDir: {}
       containers:
         - name: diagnostics
@@ -78,7 +84,9 @@ spec:
           {{- end }}
           {{- if .Values.imagePullSecrets }}
           imagePullSecrets:
-          {{ toYaml .Values.imagePullSecrets | indent 2 }}
+            {{- range $.Values.imagePullSecrets }}
+            - name: {{ .name }}
+            {{- end }}
           {{- end }}
           {{- if .Values.diagnostics.deployment.containerSecurityContext }}
           securityContext:
@@ -114,8 +122,14 @@ spec:
               value: {{ template "cost-analyzer.serviceName" . }}
             - name: DIAGNOSTICS_KUBECOST_NAMESPACE
               value: {{ .Release.Namespace }}
+            {{- /* When Kubecost is run on a secondary cluster as an agent the Diagnostics service should never be the primary */}}
+            {{- if .Values.federatedETL.agentOnly }}
+            - name: DIAGNOSTICS_PRIMARY
+              value: "false"
+            {{- else }}
             - name: DIAGNOSTICS_PRIMARY
               value: {{ quote .Values.diagnostics.primary.enabled }}
+            {{- end }}
             - name: DIAGNOSTICS_RETENTION
               value: {{ .Values.diagnostics.primary.retention }}
             - name: DIAGNOSTICS_PRIMARY_READONLY
@@ -144,7 +158,6 @@ spec:
             - name: {{ $key | quote }}
               value: {{ $value | quote }}
             {{- end }}
-          {{- /* TODO: heatlhcheck that validates the diagnotics pod is healthy */}}
           {{- if .Values.diagnostics.primary.enabled}}
           readinessProbe:
             httpGet:

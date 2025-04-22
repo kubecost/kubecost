@@ -6,7 +6,7 @@ metadata:
   name: {{ default "asset-report-configs" .Values.assetReportConfigmapName }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{ include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
 data:
   asset-reports.json: '{{ toJson .Values.global.assetReports.reports }}'
 {{- end -}}

@@ -24,7 +24,7 @@ prometheus:
         # cluster_id should be unique for all clusters and the same value as .kubecostProductConfigs.clusterName
         cluster_id: CLUSTER_NAME
 networkCosts:
-  # optional, see: https://docs.kubecost.com/install-and-configure/advanced-configuration/network-costs-configuration
+  # optional, see: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-network-cost
   enabled: true
   config:
     services:

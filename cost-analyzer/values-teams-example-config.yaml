@@ -1,0 +1,97 @@
+# This is a example config for teams. 
+# This can also be done in the UI, the example here is for IaC purposes
+# The groups below are not passed to Kubecost by default, they need to be configured in the identity provider (IdP)
+# See https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=ui-teams for more information
+
+# SAML or OIDC must be enabled
+saml:
+  appRootURL: https://YOUR_KUBECOST_FQDN
+  audienceURI: https://YOUR_KUBECOST_FQDN
+  authSecretName: kubecost-saml-secret
+  authTimeout: 1440
+  enabled: true
+  idpMetadataURL: https://example.okta.com/app/EXAMPLE/sso/saml/metadata
+  rbac:
+    enabled: true # RBAC must be enabled
+upgrade:
+  toV2: true
+teams:
+  teamsConfig:
+    - id: ''
+      name: Kubecost_Admin_Group
+      roles:
+      - id: ''
+        name: Kubecost_Admin_Group
+        description: Kubecost_Admin_Group
+        pages: # The page list must be complete, otherwise the user will not have access to the pages omitted
+           showOverview: true
+           showAllocation: true
+           showAsset: true
+           showCloudCost: true
+           showClusters: true
+           showExternalCosts: true
+           showNetwork: true
+           showCollections: true
+           showReports: true
+           showInsights: true
+           showActions: true
+           showAlerts: true
+           showBudgets: true
+           showAnomalies: true
+           showEfficiency: true
+           showSettings: true
+        permissions: admin
+      claims:
+        Groups: Kubecost_Admin_Group
+    - id: ''
+      name: Kubecost_Editor_Group
+      roles:
+      - id: ''
+        name: Kubecost_Editor_Group
+        description: Kubecost_Editor_Group
+        pages:
+           showOverview: true
+           showAllocation: true
+           showAsset: true
+           showCloudCost: true
+           showClusters: true
+           showExternalCosts: true
+           showNetwork: true
+           showCollections: true
+           showReports: true
+           showInsights: true
+           showActions: true
+           showAlerts: true
+           showBudgets: true
+           showAnomalies: true
+           showEfficiency: true
+           showSettings: true
+        permissions: editor
+      claims:
+        Groups: Kubecost_Editor_Group
+    - id: ''
+      name: Kubecost_ReadOnly_Group
+      roles:
+      - id: ''
+        name: Kubecost_ReadOnly_Group
+        description: Kubecost_ReadOnly_Group
+        pages:
+           showOverview: true
+           showAllocation: true
+           showAsset: true
+           showCloudCost: true
+           showClusters: true
+           showExternalCosts: true
+           showNetwork: true
+           showCollections: true
+           showReports: true
+           showInsights: true
+           showActions: true
+           showAlerts: true
+           showBudgets: true
+           showAnomalies: true
+           showEfficiency: true
+           showSettings: true
+        permissions: readonly
+      claims:
+        Groups: Kubecost_ReadOnly_Group

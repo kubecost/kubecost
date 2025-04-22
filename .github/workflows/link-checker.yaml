@@ -1,0 +1,26 @@
+name: Check Links
+
+on:
+  repository_dispatch:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - develop
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  linkChecker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      ## Recursively check all markdown and yaml files for broken links
+      ## Ref: https://github.com/lycheeverse/lychee#commandline-parameters
+      - name: Link Checker
+        id: lychee
+        uses: lycheeverse/lychee-action@v2
+        with:
+          fail: true
+          debug: false
+          args: --verbose --include-fragments --no-progress --base . -E './**/*.md' './**/*.yaml' './**/*.yml'

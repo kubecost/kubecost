@@ -1,81 +1,90 @@
-global:
-  # zone: cluster.local (use only if your DNS server doesn't live in the same zone as kubecost)
-  prometheus:
-    enabled: true  # Kubecost depends on Prometheus data, it is not optional. When enabled: false, Prometheus will not be installed and you must configure your own Prometheus to scrape kubecost as well as provide the fqdn below. -- Warning: Before changing this setting, please read to understand the risks https://docs.kubecost.com/install-and-configure/install/custom-prom
-    fqdn: http://cost-analyzer-prometheus-server.default.svc  # example address of a prometheus to connect to. Include protocol (http:// or https://) Ignored if enabled: true
-    # insecureSkipVerify: false  # If true, kubecost will not check the TLS cert of prometheus
-    # queryServiceBasicAuthSecretName: dbsecret # kubectl create secret generic dbsecret -n kubecost --from-file=USERNAME --from-file=PASSWORD
-    # queryServiceBearerTokenSecretName: mcdbsecret  # kubectl create secret generic mcdbsecret -n kubecost --from-file=TOKEN
+## Kubecost configuration
+##
 
+global:
+  ## If your DNS server doesn't live in the same zone as Kubecost
+  ##
+  zone: ""  # cluster.local
+
+  ## Kubecost-bundled Prometheus
+  ## It is recommended to leave these configurations as-is. If using your own
+  ## Prometheus, read the following documentation to understand the risks.
+  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-prometheus-guide
+  ##
+  prometheus:
+    enabled: true
+    fqdn: http://cost-analyzer-prometheus-server.default.svc  # Address of a Prometheus to connect to if enabled=false
+    insecureSkipVerify: false  # If true, Kubecost will not check the TLS cert of prometheus
+    # queryServiceBasicAuthSecretName: dbsecret  # kubectl create secret generic dbsecret -n kubecost --from-file=USERNAME --from-file=PASSWORD
+    # queryServiceBearerTokenSecretName: mcdbsecret  # kubectl create secret generic mcdbsecret -n kubecost --from-file=TOKEN
+    kubeRBACProxy: false  # If true, Kubecost will use kube-rbac-proxy to authenticate with in cluster Prometheus for openshift
+
+  ## Kubecost-bundled Grafana
+  ##
   grafana:
-    enabled: true  # If false, Grafana will not be installed
-    domainName: cost-analyzer-grafana.default.svc  # example grafana domain Ignored if enabled: true
-    scheme: "http"  # http or https, for the domain name above.
-    proxy: true  # If true, the kubecost frontend will route to your grafana through its service endpoint
+    enabled: true
+    domainName: cost-analyzer-grafana.default.svc  # Address to Grafana. Ignored if enabled=true.
+    scheme: "http"
+    proxy: true  # If true, the Kubecost frontend will route to your grafana through its service endpoint
     # fqdn: cost-analyzer-grafana.default.svc
 
-  # Enable only when you are using GCP Marketplace ENT listing. Learn more at https://console.cloud.google.com/marketplace/product/kubecost-public/kubecost-ent
-  gcpstore:
-    enabled: false
-
-  # Google Cloud Managed Service for Prometheus
+  ## Google Cloud Managed Service for Prometheus (GMP)
+  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=guide-google-cloud-managed-service-prometheus
+  ## Ref: https://cloud.google.com/stackdriver/docs/managed-prometheus/setup-unmanaged
+  ##
   gmp:
-  # Remember to set up these parameters when install the Kubecost Helm chart with `global.gmp.enabled=true` if you want to use GMP self-deployed collection (Recommended) to utilize Kubecost scrape configs.
-  # If enabling GMP, it is highly recommended to utilize Google's distribution of Prometheus.
-  # Learn more at https://cloud.google.com/stackdriver/docs/managed-prometheus/setup-unmanaged
-  # --set prometheus.server.image.repository="gke.gcr.io/prometheus-engine/prometheus" \
-  # --set prometheus.server.image.tag="v2.35.0-gmp.2-gke.0"
-    enabled: false  # If true, kubecost will be configured to use GMP Prometheus image and query from Google Cloud Managed Service for Prometheus.
-    prometheusServerEndpoint: http://localhost:8085/  # The prometheus service endpoint used by kubecost. The calls are forwarded through the GMP Prom proxy side car to the GMP database.
+    enabled: false
+    prometheusServerEndpoint: http://localhost:8085/
     gmpProxy:
       enabled: false
-      image: gke.gcr.io/prometheus-engine/frontend:v0.4.1-gke.0  # GMP Prometheus proxy image that serve as an endpoint to query metrics from GMP
+      image: gke.gcr.io/prometheus-engine/frontend:v0.15.3-gke.0
       imagePullPolicy: IfNotPresent
       name: gmp-proxy
       port: 8085
-      projectId: YOUR_PROJECT_ID  # example GCP project ID
+      projectId: ""
 
-  # Amazon Managed Service for Prometheus
+  ## Amazon Managed Service for Prometheus (AMP)
+  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=guide-amazon-managed-service-prometheus-amp-overview
+  ##
   amp:
-    enabled: false  # If true, kubecost will be configured to remote_write and query from Amazon Managed Service for Prometheus.
-    prometheusServerEndpoint: http://localhost:8005/workspaces/<workspaceId>/  # The prometheus service endpoint used by kubecost. The calls are forwarded through the SigV4Proxy side car to the AMP workspace.
-    remoteWriteService: https://aps-workspaces.us-west-2.amazonaws.com/workspaces/<workspaceId>/api/v1/remote_write  # The remote_write endpoint for the AMP workspace.
+    enabled: false
+    prometheusServerEndpoint: http://localhost:8005/workspaces/<WORKSPACE_ID>/
+    remoteWriteService: https://aps-workspaces.us-west-2.amazonaws.com/workspaces/<WORKSPACE_ID>/api/v1/remote_write
     sigv4:
       region: us-west-2
-      # access_key: ACCESS_KEY # AWS Access key
-      # secret_key: SECRET_KEY # AWS Secret key
-      # role_arn: ROLE_ARN # AWS role arn
-      # profile: PROFILE # AWS profile
+      # access_key: AWS_ACCESS_KEY
+      # secret_key: AWS_SECRET_KEY
+      # role_arn: AWS_ROLE_ARN
+      # profile: AWS_PROFILE
 
-  # Mimir Proxy to help Kubecost to query metrics from multi-tenant Grafana Mimir.
-  # Set `global.mimirProxy.enabled=true` and `global.prometheus.enabled=false` to enable Mimir Proxy.
-  # You also need to set `global.prometheus.fqdn=http://kubecost-cost-analyzer-mimir-proxy.kubecost.svc:8085/prometheus`
-  # or `global.prometheus.fqdn=http://{{ template "cost-analyzer.fullname" . }}-mimir-proxy.{{ .Release.Namespace }}.svc:8085/prometheus'
-  # Learn more at https://grafana.com/docs/mimir/latest/operators-guide/secure/authentication-and-authorization/#without-an-authenticating-reverse-proxy
+  ## GrafanaMimir Proxy
+  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=guide-grafana-mimir-integration-kubecost
+  ##
   mimirProxy:
     enabled: false
+    annotations: {}
     name: mimir-proxy
     image: nginxinc/nginx-unprivileged
     port: 8085
-    mimirEndpoint: $mimir_endpoint  # Your Mimir query endpoint. If your Mimir query endpoint is http://example.com/prometheus, replace $mimir_endpoint with http://example.com/
-    orgIdentifier: $your_tenant_ID  # Your Grafana Mimir tenant ID
-    # basicAuth:
+    mimirEndpoint: ""  # If your Mimir query endpoint is http://example.com/prometheus, use http://example.com/
+    orgIdentifier: ""  # Your Grafana Mimir tenant ID
+    basicAuth:
       # username: user
       # password: pwd
 
-  # Azure Monitor Managed Service for Prometheus
-  # See https://github.com/MicrosoftDocs/azure-docs/blob/main/articles/azure-monitor/essentials/prometheus-metrics-overview.md for information
-  # and https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/prometheus-remote-write-virtual-machines for more information on setting this up
+  ## Azure Monitor Managed Service for Prometheus
+  ## Ref: https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/prometheus-remote-write-virtual-machines
+  ##
   ammsp:
     enabled: false
     prometheusServerEndpoint: http://localhost:8081/
     remoteWriteService: $<AMMSP_METRICS_INGESTION_ENDPOINT>
     queryEndpoint: $<AMMSP_QUERY_ENDPOINT>
-
     aadAuthProxy:
       enabled: false
-      # per https://github.com/Azure/aad-auth-proxy/releases/tag/0.1.0-main-04-10-2024-7067ac84
-      image: $<IMAGE>  # Example: mcr.microsoft.com/azuremonitor/auth-proxy/prod/aad-auth-proxy/images/aad-auth-proxy:0.1.0-main-04-10-2024-7067ac84
+      ## Ref: https://github.com/Azure/aad-auth-proxy/releases/tag/0.1.0-main-04-10-2024-7067ac84
+      ## Example: mcr.microsoft.com/azuremonitor/auth-proxy/prod/aad-auth-proxy/images/aad-auth-proxy:0.1.0-main-04-10-2024-7067ac84
+      image: $<IMAGE>
       imagePullPolicy: IfNotPresent
       name: aad-auth-proxy
       port: 8081
@@ -84,74 +93,68 @@ global:
       aadClientId: $<AZURE_MANAGED_IDENTITY_CLIENT_ID>
       aadTenantId: $<AZURE_MANAGED_IDENTITY_TENANT_ID>
 
+  ## Kubecost Alerting
+  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=ui-alerts
+  ##
   notifications:
-    # Kubecost alerting configuration
-    # Ref: http://docs.kubecost.com/alerts
     # alertConfigs:
-      # frontendUrl: http://localhost:9090 # optional, used for linkbacks
-      # globalSlackWebhookUrl: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX # optional, used for Slack alerts
-      # globalMsTeamsWebhookUrl: https://xxxxx.webhook.office.com/webhookb2/XXXXXXXXXXXXXXXXXXXXXXXX/IncomingWebhook/XXXXXXXXXXXXXXXXXXXXXXXX # optional, used for Microsoft Teams alerts
-      # globalAlertEmails:
-      #   - recipient@example.com
-      #   - additionalRecipient@example.com
-      # globalEmailSubject: Custom Subject
-      # Alerts generated by kubecost, about cluster data
-      # alerts:
-        # Daily namespace budget alert on namespace `kubecost`
-        # - type: budget                # supported: budget, recurringUpdate
-        #   threshold: 50               # optional, required for budget alerts
-        #   window: daily               # or 1d
-        #   aggregation: namespace
-        #   filter: kubecost
-        #   ownerContact:               # optional, overrides globalAlertEmails default
-        #     - owner@example.com
-        #     - owner2@example.com
-        #   # optional, used for alert-specific Slack and Microsoft Teams alerts
-        #   slackWebhookUrl: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX
-        #   msTeamsWebhookUrl: https://xxxxx.webhook.office.com/webhookb2/XXXXXXXXXXXXXXXXXXXXXXXX/IncomingWebhook/XXXXXXXXXXXXXXXXXXXXXXXX
-
-        # Daily cluster budget alert on cluster `cluster-one`
-        # - type: budget
-        #   threshold: 200.8        # optional, required for budget alerts
-        #   window: daily           # or 1d
-        #   aggregation: cluster
-        #   filter: cluster-one     # does not accept csv
-
-        # Recurring weekly update (weeklyUpdate alert)
-        # - type: recurringUpdate
-        #   window: weekly          # or 7d
-        #   aggregation: namespace
-        #   filter: '*'
-
-        # Recurring weekly namespace update on kubecost namespace
-        # - type: recurringUpdate
-        #   window: weekly # or 7d
-        #   aggregation: namespace
-        #   filter: kubecost
-
-        # Spend Change Alert
-        # - type: spendChange         # change relative to moving avg
-        #   relativeThreshold: 0.20   # Proportional change relative to baseline. Must be greater than -1 (can be negative)
-        #   window: 1d                # accepts ‘d’, ‘h’
-        #   baselineWindow: 30d       # previous window, offset by window
-        #   aggregation: namespace
-        #   filter: kubecost, default # accepts csv
-
-        # Health Score Alert
-        # - type: health              # Alerts when health score changes by a threshold
-        #   window: 10m
-        #   threshold: 5              # Send Alert if health scores changes by 5 or more
-
-        # Kubecost Health Diagnostic
-        # - type: diagnostic          # Alerts when kubecost is unable to compute costs - ie: Prometheus unreachable
-        #   window: 10m
+    #   frontendUrl: http://localhost:9090  # Optional
+    #   globalSlackWebhookUrl: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX  # Optional
+    #   globalMsTeamsWebhookUrl: https://xxxxx.webhook.office.com/webhookb2/XXXXXXXXXXXXXXXXXXXXXXXX/IncomingWebhook/XXXXXXXXXXXXXXXXXXXXXXXX  # Optional
+    #   globalAlertEmails:
+    #     - recipient@example.com
+    #     - additionalRecipient@example.com
+    #   globalEmailSubject: Custom Subject
+    #   alerts:
+    #     # Daily namespace budget alert on namespace `kubecost`
+    #     - type: budget                # supported: budget, recurringUpdate
+    #       threshold: 50               # optional, required for budget alerts
+    #       window: daily               # or 1d
+    #       aggregation: namespace
+    #       filter: kubecost
+    #       ownerContact:               # optional, overrides globalAlertEmails default
+    #         - owner@example.com
+    #         - owner2@example.com
+    #       slackWebhookUrl: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX  # Optional
+    #       msTeamsWebhookUrl: https://xxxxx.webhook.office.com/webhookb2/XXXXXXXXXXXXXXXXXXXXXXXX/IncomingWebhook/XXXXXXXXXXXXXXXXXXXXXXXX  # Optional
+    #     # Daily cluster budget alert on cluster `cluster-one`
+    #     - type: budget
+    #       threshold: 200.8        # optional, required for budget alerts
+    #       window: daily           # or 1d
+    #       aggregation: cluster
+    #       filter: cluster-one     # does not accept csv
+    #     # Recurring weekly update (weeklyUpdate alert)
+    #     - type: recurringUpdate
+    #       window: weekly          # or 7d
+    #       aggregation: namespace
+    #       filter: '*'
+    #     # Recurring weekly namespace update on kubecost namespace
+    #     - type: recurringUpdate
+    #       window: weekly # or 7d
+    #       aggregation: namespace
+    #       filter: kubecost
+    #     # Spend Change Alert
+    #     - type: spendChange         # change relative to moving avg
+    #       relativeThreshold: 0.20   # Proportional change relative to baseline. Must be greater than -1 (can be negative)
+    #       window: 1d                # accepts ‘d’, ‘h’
+    #       baselineWindow: 30d       # previous window, offset by window
+    #       aggregation: namespace
+    #       filter: kubecost, default # accepts csv
+    #     # Health Score Alert
+    #     - type: health              # Alerts when health score changes by a threshold
+    #       window: 10m
+    #       threshold: 5              # Send Alert if health scores changes by 5 or more
+    #     # Kubecost Health Diagnostic
+    #     - type: diagnostic          # Alerts when kubecost is unable to compute costs - ie: Prometheus unreachable
+    #       window: 10m
 
     alertmanager:  # Supply an alertmanager FQDN to receive notifications from the app.
       enabled: false  # If true, allow kubecost to write to your alertmanager
       fqdn: http://cost-analyzer-prometheus-server.default.svc  # example fqdn. Ignored if prometheus.enabled: true
 
-    # Set saved Cost Allocation report(s) accessible from /reports
-    # Ref: http://docs.kubecost.com/saved-reports
+  ## Kubecost Saved Reports
+  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=ui-reports
+  ##
   savedReports:
     enabled: false  # If true, overwrites report parameters set through UI
     reports:
@@ -161,10 +164,10 @@ global:
         chartDisplay: "category"
         idle: "separate"
         rate: "cumulative"
-        accumulate: false  # daily resolution
-        filters:  # Ref: https://docs.kubecost.com/apis/filters-api
-          - key: "cluster"  # Ref: https://docs.kubecost.com/apis/filters-api#allocation-apis-request-sizing-v2-api
-            operator: ":"  # Ref: https://docs.kubecost.com/apis/filters-api#filter-operators
+        accumulate: false   # daily resolution
+        filters:            # Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=filter-parameters-v2
+          - key: "cluster"
+            operator: ":"
             value: "dev"
       - title: "Example Saved Report 1"
         window: "month"
@@ -173,9 +176,9 @@ global:
         idle: "share"
         rate: "monthly"
         accumulate: false
-        filters:  # Ref: https://docs.kubecost.com/apis/filters-api
-          - key: "namespace"  # Ref: https://docs.kubecost.com/apis/filters-api#allocation-apis-request-sizing-v2-api
-            operator: "!:"  # Ref: https://docs.kubecost.com/apis/filters-api#filter-operators
+        filters:              # Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=filter-parameters-v2
+          - key: "namespace"
+            operator: "!:"
             value: "kubecost"
       - title: "Example Saved Report 2"
         window: "2020-11-11T00:00:00Z,2020-12-09T23:59:59Z"
@@ -184,10 +187,7 @@ global:
         idle: "hide"
         rate: "daily"
         accumulate: true  # entire window resolution
-        filters: []  # if no filters, specify empty array
-
-  # Set saved Asset report(s) accessible from /reports
-  # Ref: http://docs.kubecost.com/saved-reports
+        filters: []       # if no filters, specify empty array
   assetReports:
     enabled: false  # If true, overwrites report parameters set through UI
     reports:
@@ -198,9 +198,6 @@ global:
       filters:
         - property: "cluster"
           value: "cluster-one"
-
-  # Set saved Cloud Cost report(s) accessible from /reports
-  # Ref: http://docs.kubecost.com/saved-reports
   cloudCostReports:
     enabled: false  # If true, overwrites report parameters set through UI
     reports:
@@ -212,12 +209,14 @@ global:
         #   - property: "service"
         #     value: "service1" # corresponds to a value to filter cloud cost aggregate by service data on.
 
+  ## Globally set annotations and labels
+  ##
   podAnnotations: {}
-    # iam.amazonaws.com/role: role-arn
+  annotations: {}  # Applies to all controllers (Deployments, StatefulSets, DaemonSets).
+  additionalLabels: {}  # Applies to Deployments, StatefulSets, DaemonSets, and their pod templates
 
-  # Applies these labels to all Deployments, StatefulSets, DaemonSets, and their pod templates.
-  additionalLabels: {}
-
+  ## Globally set security context
+  ##
   securityContext:
     runAsNonRoot: true
     seccompProfile:
@@ -234,46 +233,80 @@ global:
       drop:
       - ALL
 
-  # Platforms is a higher-level abstraction for platform-specific values and settings.
+  ## Installs custom CA certificates onto Kubecost pods
+  ##
+  updateCaTrust:
+    enabled: false
+    ## Security context settings for the init container.
+    securityContext:
+      runAsUser: 0
+      runAsGroup: 0
+      runAsNonRoot: false
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      seccompProfile:
+        type: RuntimeDefault
+    caCertsSecret: ca-certs-secret  # The name of the Secret containing custom CA certificates to mount to the cost-model container.
+    # caCertsConfig: ca-certs-config  # The name of the ConfigMap containing the CA trust configuration.
+    resources: {}
+    caCertsMountPath: /etc/pki/ca-trust/source/anchors  # The path where the custom CA certificates will be mounted in the init container
+
+  ## Platform-specific configurations
+  ##
   platforms:
-    # Deploying to OpenShift (OCP) requires enabling this option.
+    ## Deploying to OpenShift (OCP) requires enabling this option.
     openshift:
       enabled: false  # Deploy Kubecost to OpenShift.
       route:
         enabled: false  # Create an OpenShift Route.
         annotations: {}  # Add annotations to the Route.
         # host: kubecost.apps.okd4.example.com  # Add a custom host for your Route.
-      # Create Security Context Constraint resources for the DaemonSets requiring additional privileges.
+
+      ## OPTIONAL. The following configs only to be enabled when using a Prometheus instance already installed in the cluster.
+      createMonitoringClusterRoleBinding: false  # Create a ClusterRoleBinding to grant the Kubecost serviceaccount access to query Prometheus.
+      createMonitoringResourceReaderRoleBinding: false  # Create a Role and Role Binding to allow Prometheus to list and watch Kubecost resources.
+      monitoringServiceAccountName: prometheus-k8s  # Name of the Prometheus serviceaccount to bind to the Resource Reader Role Binding.
+      monitoringServiceAccountNamespace: openshift-monitoring  # Namespace of the Prometheus serviceaccount to bind to the Resource Reader Role Binding.
+
+      ## Create Security Context Constraint resources for the DaemonSets requiring additional privileges.
       scc:
         nodeExporter: false  # Creates an SCC for Prometheus Node Exporter. This requires Node Exporter be enabled.
         networkCosts: false  # Creates an SCC for Kubecost network-costs. This requires network-costs be enabled.
-      # When OpenShift is enabled, the following securityContext will be applied to all resources unless they define their own.
+        clusterController: false  # Creates an SCC for Kubecost Cluster Controller. This requires clusterController be enabled.
+      ## When OpenShift is enabled, the following securityContext will be applied to all resources unless they define their own.
       securityContext:
         runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
-    # Set options for deploying with CI/CD tools like Argo CD.
+    ## Set options for deploying with CI/CD tools like Argo CD.
     cicd:
       enabled: false  # Set to true when using affected CI/CD tools for access to the below configuration options.
       skipSanityChecks: false  # If true, skip all sanity/existence checks for resources like Secrets.
 
   ## Kubecost Integrations
-  ## Ref: https://docs.kubecost.com/integrations
+  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=kubecost-postgres-integration
   ##
   integrations:
+    turbonomic:
+      enabled: false         # Set to true to enable the Turbonomic integration
+      clientId: ""           # Client ID generated from the OAuth Client created
+      clientSecret: ""       # Client Secret generated from the OAuth Client created
+      role: ""               # Role that the OAuth Client was created with (e.g. ADMINISTRATOR, SITE_ADMIN, etc.)
+      host: ""               # URL to your turbonomic API. EG: https://turbonomic.example.com/
+      insecureClient: false  # Do not verify certificate
     postgres:
       enabled: false
-      runInterval: "12h"  # How frequently to run the integration.
-      databaseHost: ""  # REQUIRED. ex: my.postgres.database.azure.com
-      databasePort: ""  # REQUIRED. ex: 5432
-      databaseName: ""  # REQUIRED. ex: postgres
-      databaseUser: ""  # REQUIRED. ex: myusername
-      databasePassword: ""  # REQUIRED. ex: mypassword
+      runInterval: "12h"      # How frequently to run the integration.
+      databaseHost: ""        # REQUIRED. ex: my.postgres.database.azure.com
+      databasePort: ""        # REQUIRED. ex: 5432
+      databaseName: ""        # REQUIRED. ex: postgres
+      databaseUser: ""        # REQUIRED. ex: myusername
+      databasePassword: ""    # REQUIRED. ex: mypassword
       databaseSecretName: ""  # OPTIONAL. Specify your own k8s secret containing the above credentials. Must have key "creds.json".
 
       ## Configure what Postgres table to write to, and what parameters to pass
       ## when querying Kubecost's APIs. Ensure all parameters are enclosed in
-      ## quotes. Ref: https://docs.kubecost.com/apis/apis-overview
+      ## quotes. Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=kubecost-api-directory
       queryConfigs:
         allocations: []
           # - databaseTable: "kubecost_allocation_data"
@@ -304,6 +337,10 @@ global:
 ## Provide a full name override option for the chart.
 # fullnameOverride: ""
 
+## Provide additional labels for the chart.
+# chartLabels:
+#   app.kubernetes.io/name: kubecost-cost-analyzer
+
 ## This flag is only required for users upgrading to a new version of Kubecost.
 ## The flag is used to ensure users are aware of important
 ## (potentially breaking) changes included in the new version.
@@ -323,80 +360,117 @@ pricingCsv:
     URI: s3://kc-csv-test/pricing_schema.csv  # a valid file URI
     csvAccessCredentials: pricing-schema-access-secret
 
-# SAML integration for user management and RBAC, enterprise key required
-# Ref: https://github.com/kubecost/docs/blob/main/user-management.md
+## Kubecost SAML (enterprise key required)
+## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-user-management-saml
 saml:
   enabled: false
-  # secretName: "kubecost-authzero"
-  # metadataSecretName: "kubecost-authzero-metadata" # One of metadataSecretName or idpMetadataURL must be set. defaults to metadataURL if set
-  # idpMetadataURL: "https://dev-elu2z98r.auth0.com/samlp/metadata/c6nY4M37rBP0qSO1IYIqBPPyIPxLS8v2"
-  # appRootURL: "http://localhost:9090" # sample URL
-  # authTimeout: 1440 # number of minutes the JWT will be valid
-  # redirectURL: "https://dev-elu2z98r.auth0.com/v2/logout" # callback URL redirected to after logout
-  # audienceURI: "http://localhost:9090" # by convention, the same as the appRootURL, but any string uniquely identifying kubecost to your samp IDP. Optional if you follow the convention
-  # nameIDFormat: "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified" If your SAML provider requires a specific nameid format
-  # isGLUUProvider: false # An additional URL parameter must be appended for GLUU providers
-  # encryptionCertSecret: "kubecost-saml-cert" # k8s secret where the x509 certificate used to encrypt an Okta saml response is stored
-  # decryptionKeySecret: "kubecost-sank-decryption-key" # k8s secret where the private key associated with the encryptionCertSecret is stored
-  # authSecret: "random-string" # value of SAML secret used to issue tokens, will be autogenerated as random string if not provided
-  # authSecretName: "kubecost-saml-secret" # name of k8s secret where the authSecret will be stored, defaults to "kubecost-saml-secret" if not provided
+  # secretName: ""
+  # metadataSecretName: ""  # One of metadataSecretName or idpMetadataURL must be set. Defaults to idpMetadataURL if set.
+  # idpMetadataURL: ""
+  # appRootURL: ""
+  # authTimeout: 1440  # Number of minutes the JWT will be valid
+  # redirectURL: ""  # Callback URL redirected to after logout
+  # audienceURI: ""  # Usually the same as the appRootURL. Optionally any string uniquely identifying kubecost to your SAML IDP.
+  # nameIDFormat: ""  # If your SAML provider requires a specific nameid format
+  # isGLUUProvider: false  # An additional URL parameter must be appended for GLUU providers
+  # encryptionCertSecret: ""  # K8s secret storing the x509 certificate used to encrypt an Okta SAML response
+  # decryptionKeySecret: ""  # K8s secret storing the private key associated with the encryptionCertSecret
+  # authSecret: ""  # Value of SAML secret used to issue tokens, will be autogenerated as random string if not provided
+  # authSecretName: ""  # Name of K8s secret where the authSecret will be stored. Defaults to "kubecost-saml-secret" if not provided.
   rbac:
     enabled: false
     # groups:
     #   - name: admin
-    #     enabled: false # if admin is disabled, all SAML users will be able to make configuration changes to the kubecost frontend
-    #     assertionName: "http://schemas.auth0.com/userType" # a SAML Assertion, one of whose elements has a value that matches on of the values in assertionValues
+    #     enabled: false  # If admin is disabled, all SAML users will be able to make configuration changes to the Kubecost frontend
+    #     assertionName: ""
     #     assertionValues:
     #       - "admin"
     #       - "superusers"
     #   - name: readonly
-    #     enabled: false # if readonly is disabled, all users authorized on SAML will default to readonly
-    #     assertionName:  "http://schemas.auth0.com/userType"
+    #     enabled: false  # If readonly is disabled, all users authorized on SAML will default to readonly
+    #     assertionName: ""
     #     assertionValues:
     #       - "readonly"
     #   - name: editor
-    #     enabled: true # if editor is enabled, editors will be allowed to edit reports/alerts scoped to them, and act as readers otherwise. Users will never default to editor.
-    #     assertionName: "http://schemas.auth0.com/userType"
+    #     enabled: true  # If editor is enabled, editors will be allowed to edit reports/alerts scoped to them, and act as readers otherwise. Users will never default to editor.
+    #     assertionName: ""
     #     assertionValues:
     #       - "editor"
 
+## Kubecost OIDC (enterprise key required)
+## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-user-management-ssooidc
 oidc:
   enabled: false
-  clientID: ""  # application/client client_id parameter obtained from provider, used to make requests to server
-  clientSecret: ""  # application/client client_secret parameter obtained from provider, used to make requests to server
-  # secretName: "kubecost-oidc-secret" # k8s secret where clientsecret will be stored
-  # For use to provide a custom OIDC Secret. Overrides the usage of oidc.clientSecret and oidc.secretName.
-  # Should contain the field directly.
-  # Can be created using raw k8s secrets, external secrets, sealed secrets, or any other method.
+  clientID: ""  # Application client_id parameter obtained from provider. Used to make requests to server.
+  clientSecret: ""  # Application/client client_secret parameter obtained from provider. Used to make requests to server.
+  secretName: "kubecost-oidc-secret"  # K8s secret where clientsecret will be stored
   existingCustomSecret:
     enabled: false
-    name: ""  # name of the secret containing the client secret
-
-  # authURL: "https://my.auth.server/authorize" # endpoint for login to auth server
-  # loginRedirectURL: "http://my.kubecost.url/model/oidc/authorize" # Kubecost url configured in provider for redirect after authentication
-  # discoveryURL: "https://my.auth.server/.well-known/openid-configuration" # url for OIDC endpoint discovery
-  skipOnlineTokenValidation: false  # if true, will skip accessing OIDC introspection endpoint for online token verification, and instead try to locally validate JWT claims
-  useClientSecretPost: false  # if true, client secret will specifically only use client_secret_post method, otherwise it will attempt to send the secret in both the header and the body.
-  # hostedDomain: "example.com" # optional, blocks access to the auth domain specified in the hd claim of the provider ID token
+    name: ""  # Name of an existing clientSecret. Overrides the usage of oidc.clientSecret and oidc.secretName.
+  authURL: ""  # Authorization endpoint for your identity provider
+  loginRedirectURL: ""  # Kubecost URL endpoint which handles auth flow
+  discoveryURL: ""  # Your identity provider's endpoint sharing OIDC configuration
+  skipOnlineTokenValidation: false  # If true, validate JWT claims locally
+  useClientSecretPost: false  # If true, only use client_secret_post method. Otherwise attempt to send the secret in both the header and the body.
+  hostedDomain: ""  # Optional, blocks access to the auth domain specified in the hd claim of the provider ID token
   rbac:
     enabled: false
     # groups:
-    #   - name: admin
-    #     enabled: false # if admin is disabled, all authenticated users will be able to make configuration changes to the kubecost frontend
-    #     claimName: "roles" # Kubecost matches this string against the JWT's payload key containing RBAC info (this value is unique across identity providers)
-    #     claimValues: # Kubecost matches these strings with the roles created in your identity provider
+    #   - name: admin  # Admins have permissions to edit Kubecost settings and save reports
+    #     enabled: false
+    #     claimName: "roles"  # Kubecost matches this string against the JWT's payload key containing RBAC info (this value is unique across identity providers)
+    #     claimValues:  # Kubecost matches these strings with the roles created in your identity provider
     #       - "admin"
     #       - "superusers"
-    #   - name: readonly
-    #     enabled: false # if readonly is disabled, all authenticated users will default to readonly
-    #     claimName:  "roles"
+    #   - name: readonly  # Readonly users do not have permissions to edit Kubecost settings or save reports.
+    #     enabled: false
+    #     claimName: "roles"
     #     claimValues:
     #       - "readonly"
-    #   - name: editor
-    #     enabled: false # if editor is enabled, editors will be allowed to edit reports/alerts scoped to them, and act as readers otherwise. Users will never default to editor.
+    #   - name: editor  # Editors have permissions to edit reports/alerts and act as readers otherwise
+    #     enabled: false
     #     claimName: "roles"
     #     claimValues:
     #       - "editor"
+
+## Kubecost Teams (enterprise key required)
+## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=ui-teams
+teams:
+  teamsConfigMapName: ""  # Name of the ConfigMap containing the teams configuration, if manually created, which overrides any other configured teams
+  teamsConfig: []  # List of teams configurations, if teamsConfigMapName is not set, which will override UI-configured teams
+    # - id: ''
+    #   name: helm-team
+    #   roles:
+    #   - id: ''
+    #     name: helm-role
+    #     description: helm configrured role
+    #     pages:
+    #       showOverview: true
+    #       showAllocation: true
+    #       showAsset: true
+    #       showCloudCost: true
+    #       showClusters: true
+    #       showExternalCosts: true
+    #       showNetwork: true
+    #       showCollections: true
+    #       showReports: true
+    #       showInsights: true
+    #       showActions: true
+    #       showAlerts: true
+    #       showBudgets: true
+    #       showAnomalies: true
+    #       showEfficiency: true
+    #       showSettings: true
+    #     permissions: admin
+    #     routes: []
+    #     allocationFilters:
+    #     - key: cluster
+    #       operator: ":"
+    #       value: cluster-one
+    #     assetFilters: []
+    #     cloudCostFilters: []
+    #   claims:
+    #     NameID: email@domain.com
 
 ## Adds the HTTP_PROXY, HTTPS_PROXY, and NO_PROXY environment variables to all
 ## containers. Typically used in environments that have firewall rules which
@@ -436,23 +510,12 @@ kubecostFrontend:
     requests:
       cpu: "10m"
       memory: "55Mi"
-    # limits:
-    #   cpu: "100m"
-    #   memory: "256Mi"
   deploymentStrategy: {}
-  #   rollingUpdate:
-  #     maxSurge: 1
-  #     maxUnavailable: 1
-  #   type: RollingUpdate
-
-  # Define a readiness probe for the Kubecost frontend container.
   readinessProbe:
     enabled: true
     initialDelaySeconds: 1
     periodSeconds: 5
     failureThreshold: 6
-
-  # Define a liveness probe for the Kubecost frontend container.
   livenessProbe:
     enabled: true
     initialDelaySeconds: 1
@@ -472,8 +535,6 @@ kubecostFrontend:
 
   # set to true to set all upstreams to use <service>.<namespace>.svc.cluster.local instead of just <service>.<namespace>
   useDefaultFqdn: false
-#  api:
-#    fqdn: kubecost-api.kubecost.svc.cluster.local:9001
 #  model:
 #    fqdn: kubecost-model.kubecost.svc.cluster.local:9003
 #  forecasting:
@@ -486,6 +547,16 @@ kubecostFrontend:
 #    fqdn: kubecost-multi-diag.kubecost.svc.cluster.local:9007
 #  clusterController:
 #    fqdn: cluster-controller.kubecost.svc.cluster.local:9731
+#
+
+  # Configurable headers for nginx responses.
+  nginxHeaders:
+    # applied to all route locations
+    server:
+      - "'Access-Control-Allow-Origin' '*' always;"
+      - "'Access-Control-Allow-Methods' 'GET, PUT, POST, DELETE, OPTIONS' always;"
+      - Content-Security-Policy "default-src 'self' 'unsafe-inline' api.userway.org cdn.userway.org api-js.mixpanel.com keyper.kubecost.com; frame-ancestors 'none'; font-src 'self' data:;";
+      - Cache-Control "must-revalidate";
 
 # Kubecost Metrics deploys a separate pod which will emit kubernetes specific metrics required
 # by the cost-model. This pod is designed to remain active and decoupled from the cost-model itself.
@@ -495,47 +566,6 @@ kubecostMetrics:
   # emitNamespaceAnnotations: false
   # emitKsmV1Metrics: true # emit all KSM metrics in KSM v1.
   # emitKsmV1MetricsOnly: false # emit only the KSM metrics missing from KSM v2. Advanced users only.
-
-  # Optional
-  # The metrics exporter is a separate deployment and service (for prometheus scrape auto-discovery)
-  # which emits metrics cost-model relies on. Enabling this deployment also removes the KSM dependency
-  # from the cost-model. If the deployment is not enabled, the metrics will continue to be emitted from
-  # the cost-model.
-  exporter:
-    enabled: false
-    port: 9005
-    # Adds the default Prometheus scrape annotations to the metrics exporter service.
-    # Set to false and use service.annotations (below) to set custom scrape annotations.
-    prometheusScrape: true
-    resources: {}
-      # requests:
-      #  cpu: "200m"
-      #  memory: "55Mi"
-    ## Node tolerations for server scheduling to nodes with taints
-    ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
-    tolerations: []
-
-    #  - key: "key"
-    #    operator: "Equal|Exists"
-    #    value: "value"
-    #    effect: "NoSchedule|PreferNoSchedule|NoExecute(1.6 only)"
-    affinity: {}
-
-    service:
-      annotations: {}
-
-    # Service Monitor for Kubecost Metrics
-    serviceMonitor:  # the kubecost included prometheus uses scrapeConfigs and does not support service monitors. The following options assume an existing prometheus that supports serviceMonitors.
-      enabled: false
-      additionalLabels: {}
-      metricRelabelings: []
-      relabelings: []
-    ## PriorityClassName
-    ## Ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/#priorityclass
-    priorityClassName: ""
-    additionalLabels: {}
-    nodeSelector: {}
-    extraArgs: []
 
 sigV4Proxy:
   image: public.ecr.aws/aws-observability/aws-sigv4-proxy:latest
@@ -550,7 +580,6 @@ sigV4Proxy:
   #   value: <access_key>
   # - name: AWS_SECRET_ACCESS_KEY
   #   value: <secret_key>
-  # Optional resource requests and limits for the sigV4proxy container.
   resources: {}
 
 kubecostModel:
@@ -560,15 +589,12 @@ kubecostModel:
   # image provided (registry, image, tag) will be used for cost-model.
   # fullImageName:
 
+  # Log level for the cost model container. Options are "trace", "debug", "info", "warn", "error", "fatal", "panic"
+  logLevel: info
+
   # securityContext:
   #   readOnlyRootFilesystem: true
 
-  # Build local cost allocation cache
-  warmCache: false
-  # Run allocation ETL pipelines
-  etl: true
-  # Enable the ETL filestore backing storage
-  etlFileStoreEnabled: true
   # The total number of days the ETL pipelines will build
   # Set to 0 to disable daily ETL (not recommended)
   etlDailyStoreDurationDays: 91
@@ -582,13 +608,13 @@ kubecostModel:
 
   ## The name of the Secret containing a bucket config for Federated storage.
   ## The contents should be stored under a key named federated-store.yaml.
-  ## Ref: https://docs.kubecost.com/install-and-configure/install/multi-cluster/long-term-storage-configuration
+  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-long-term-storage-configuration
   # federatedStorageConfigSecret: federated-store
 
   ## Federated storage config can be supplied via a secret or the yaml block
   ## below when using the block below, only a single provider is supported,
   ## others are for example purposes.
-  ## Ref: https://docs.kubecost.com/install-and-configure/install/multi-cluster/long-term-storage-configuration
+  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-long-term-storage-configuration
   # federatedStorageConfig: |-
   #   # AWS EXAMPLE
   #   type: S3
@@ -667,11 +693,10 @@ kubecostModel:
 
   allocation:
     # Enables or disables adding node labels to allocation data (i.e. workloads).
-    # Defaults to "true" and starts with a sensible includeList for basics like
-    # topology (e.g. zone, region) and instance type labels.
+    # Defaults to "true". If nodeLabels is set to true, all workloads will inherit
+    # the node labels of the nodes they are running on.
     # nodeLabels:
     #   enabled: true
-    #   includeList: "node.kubernetes.io/instance-type,topology.kubernetes.io/region,topology.kubernetes.io/zone"
 
   # max number of concurrent Prometheus queries
   maxQueryConcurrency: 5
@@ -683,14 +708,11 @@ kubecostModel:
     #   cpu: "800m"
     #   memory: "256Mi"
 
-  # Define a readiness probe for the Kubecost cost-model container.
   readinessProbe:
     enabled: true
     initialDelaySeconds: 10
     periodSeconds: 10
     failureThreshold: 200
-
-  # Define a liveness probe for the Kubecost cost-model container.
   livenessProbe:
     enabled: true
     initialDelaySeconds: 10
@@ -700,8 +722,6 @@ kubecostModel:
 
   # Optional. A list of extra environment variables to be added to the cost-model container.
   # extraEnv:
-  #   - name: LOG_LEVEL
-  #     value: trace
   #   - name: LOG_FORMAT
   #     value: json
   #   # When false, Kubecost will not show Asset costs for local disks physically
@@ -710,36 +730,12 @@ kubecostModel:
   #   - name: ASSET_INCLUDE_LOCAL_DISK_COST
   #     value: "true"
 
-  # creates an ingress directly to the model container, for API access
-  ingress:
-    enabled: false
-    # className: nginx
-    labels:
-      # kubernetes.io/ingress.class: nginx
-      # kubernetes.io/tls-acme: "true"
-    annotations:
-      # kubernetes.io/ingress.class: nginx
-      # kubernetes.io/tls-acme: "true"
-    paths: ["/"]
-    pathType: ImplementationSpecific
-    hosts:
-      - cost-analyzer-model.local
-    tls: []
-    #  - secretName: cost-analyzer-model-tls
-    #    hosts:
-    #      - cost-analyzer-model.local
-  utcOffset: "+00:00"
-  # Optional - add extra ports to the cost-model container. For kubecost development purposes only - not recommended for users.
   extraPorts: []
-    # - name: debug
-    #   port: 40000
-    #   targetPort: 40000
-    #   containerPort: 40000
 
 ## etlUtils is a utility typically used by Enterprise customers transitioning
 ## from v1 to v2 of Kubecost. It translates the data from the "/etl" dir of the
 ## bucket, to the "/federated" dir of the bucket.
-## Ref: https://docs.kubecost.com/install-and-configure/install/multi-cluster/federated-etl/thanos-migration-guide
+## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=federation-migration-guide-from-thanos-kubecost-v2-aggregator
 ##
 etlUtils:
   enabled: false
@@ -748,9 +744,11 @@ etlUtils:
   env: {}
   nodeSelector: {}
   tolerations: []
+  ## Annotations to be added to etlutils deployment
+  annotations: {}
   affinity: {}
 
-# Basic Kubecost ingress, more examples available at https://docs.kubecost.com/install-and-configure/install/ingress-examples
+# Basic Kubecost ingress, more examples available at https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=installation-ingress-examples
 ingress:
   enabled: false
   # className: nginx
@@ -770,75 +768,23 @@ ingress:
   #      - cost-analyzer.local
 
 nodeSelector: {}
-
 tolerations: []
-#  - key: "key"
-#    operator: "Equal|Exists"
-#    value: "value"
-#    effect: "NoSchedule|PreferNoSchedule|NoExecute(1.6 only)"
-
 affinity: {}
-
 topologySpreadConstraints: []
-
-# If true, creates a PriorityClass to be used by the cost-analyzer pod
 priority:
   enabled: false
-  name: ""  # Provide name of existing priority class only. If left blank, upstream chart will create one from default template.
-
-# If true, enable creation of NetworkPolicy resources.
-networkPolicy:
-  enabled: false
-  denyEgress: true  # create a network policy that denies egress from kubecost
-  sameNamespace: true  # Set to true if cost analyzer and prometheus are on the same namespace
-#  namespace: kubecost # Namespace where prometheus is installed
-
-  # Cost-analyzer specific vars using the new template
-  costAnalyzer:
-    enabled: false  # If true, create a network policy for cost-analyzer
-    annotations: {}  # annotations to be added to the network policy
-    additionalLabels: {}  # additional labels to be added to the network policy
-    # Examples rules:
-    # ingressRules:
-    #   - selectors: # allow ingress from self on all ports
-    #     - podSelector:
-    #         matchLabels:
-    #           app.kubernetes.io/name: cost-analyzer
-    #   - selectors: # allow egress access to prometheus
-    #     - namespaceSelector:
-    #         matchLabels:
-    #           name: prometheus
-    #       podSelector:
-    #         matchLabels:
-    #           app: prometheus
-    #     ports:
-    #       - protocol: TCP
-    #         port: 9090
-    # egressRules:
-    #   - selectors: # restrict egress to inside cluster
-    #     - namespaceSelector: {}
-
-## @param extraVolumes A list of volumes to be added to the pod
-##
+  name: ""
 extraVolumes: []
-## @param extraVolumeMounts A list of volume mounts to be added to the pod
-##
 extraVolumeMounts: []
 
-# Define persistence volume for cost-analyzer, more information at https://docs.kubecost.com/install-and-configure/install/storage
+# Define persistent volume for cost-analyzer, more information at https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=installation-next-steps-kubecost
 persistentVolume:
   size: 32Gi
-  dbSize: 32.0Gi
   enabled: true  # Note that setting this to false means configurations will be wiped out on pod restart.
   # storageClass: "-" #
   # existingClaim: kubecost-cost-analyzer # a claim in the same namespace as kubecost
   labels: {}
   annotations: {}
-    # helm.sh/resource-policy: keep  # https://helm.sh/docs/howto/charts_tips_and_tricks/#tell-helm-not-to-uninstall-a-resource
-
-  # Enables a separate PV specifically for ETL data. This should be avoided, but
-  # is kept for legacy compatibility.
-  dbPVEnabled: false
 
 service:
   type: ClusterIP
@@ -861,16 +807,11 @@ prometheus:
   rbac:
     create: true  # Create the RBAC resources for Prometheus.
 
-  ## Define serviceAccount names for components. Defaults to component's fully qualified name.
-  ##
   serviceAccounts:
     alertmanager:
       create: true
       name:
     nodeExporter:
-      create: true
-      name:
-    pushgateway:
       create: true
       name:
     server:
@@ -885,7 +826,6 @@ prometheus:
   # selfsignedCertConfigMapName: ""
 
   imagePullSecrets:
-  # - name: "image-pull-secret"
 
   extraScrapeConfigs: |
     - job_name: kubecost
@@ -927,7 +867,7 @@ prometheus:
     ## Enables scraping of NVIDIA GPU metrics via dcgm-exporter. Scrapes all
     ## endpoints which contain "dcgm-exporter" in labels "app",
     ## "app.kubernetes.io/component", or "app.kubernetes.io/name" with a case
-    ## insensitive match.
+    ## insensitive match. The label must be present on the K8s service endpoints and not just pods.
     ## Refs:
     ## https://github.com/NVIDIA/gpu-operator/blob/d4316a415bbd684ce8416a88042305fc1a093aa4/assets/state-dcgm-exporter/0600_service.yaml#L7
     ## https://github.com/NVIDIA/dcgm-exporter/blob/54fd1ca137c66511a87a720390613680b9bdabdd/deployment/templates/service.yaml#L23
@@ -949,306 +889,86 @@ prometheus:
     ## Provide a full name override for the Prometheus server.
     # fullnameOverride: ""
 
-    ## Prometheus server container name
-    ##
     enabled: true
     name: server
     sidecarContainers:
     strategy:
       type: Recreate
       rollingUpdate: null
-
-    ## Prometheus server container image
-    ##
     image:
-      repository: cgr.dev/chainguard/prometheus
-      tag: latest
+      repository: quay.io/prometheus/prometheus
+      tag: v3.3.0
       pullPolicy: IfNotPresent
-
-    ## prometheus server priorityClassName
-    ##
     priorityClassName: ""
-
-    ## The URL prefix at which the container can be accessed. Useful in the case the '-web.external-url' includes a slug
-    ## so that the various internal URLs are still able to access as they are in the default case.
-    ## (Optional)
     prefixURL: ""
-
-    ## External URL which can access alertmanager
-    ## Maybe same with Ingress host name
     baseURL: ""
-
-    ## Additional server container environment variables
-    ##
-    ## You specify this manually like you would a raw deployment manifest.
-    ## This means you can bind in environment variables from secrets.
-    ##
-    ## e.g. static environment variable:
-    ##  - name: DEMO_GREETING
-    ##    value: "Hello from the environment"
-    ##
-    ## e.g. secret environment variable:
-    ## - name: USERNAME
-    ##   valueFrom:
-    ##     secretKeyRef:
-    ##       name: mysecret
-    ##       key: username
     env: []
-
     extraFlags:
       - web.enable-lifecycle
-      ## web.enable-admin-api flag controls access to the administrative HTTP API which includes functionality such as
-      ## deleting time series. This is disabled by default.
-      # - web.enable-admin-api
-      ##
-      ## storage.tsdb.no-lockfile flag controls BD locking
-      # - storage.tsdb.no-lockfile
-      ##
-      ## storage.tsdb.wal-compression flag enables compression of the write-ahead log (WAL)
-      # - storage.tsdb.wal-compression
-
-    ## Path to a configuration file on prometheus server container FS
     configPath: /etc/config/prometheus.yml
-
     global:
-      ## How frequently to scrape targets by default
-      ##
       scrape_interval: 1m
-      ## How long until a scrape request times out
-      ##
       scrape_timeout: 60s
-      ## How frequently to evaluate rules
-      ##
       evaluation_interval: 1m
       external_labels:
         cluster_id: cluster-one  # Each cluster should have a unique ID
-    ## https://prometheus.io/docs/prometheus/latest/configuration/configuration/#remote_write
-    ##
     remoteWrite: {}
-    ## https://prometheus.io/docs/prometheus/latest/configuration/configuration/#remote_read
-    ##
     remoteRead: {}
-
-    ## Additional Prometheus server container arguments
-    ##
     extraArgs:
       query.max-concurrency: 1
       query.max-samples: 100000000
-
-    ## Additional InitContainers to initialize the pod
-    ##
     extraInitContainers: []
-
-    ## Additional Prometheus server Volume mounts
-    ##
     extraVolumeMounts: []
-
-    ## Additional Prometheus server Volumes
-    ##
     extraVolumes: []
-
-    ## Additional Prometheus server hostPath mounts
-    ##
     extraHostPathMounts: []
-      # - name: certs-dir
-      #   mountPath: /etc/kubernetes/certs
-      #   subPath: ""
-      #   hostPath: /etc/kubernetes/certs
-      #   readOnly: true
-
     extraConfigmapMounts: []
-      # - name: certs-configmap
-      #   mountPath: /prometheus
-      #   subPath: ""
-      #   configMap: certs-configmap
-      #   readOnly: true
-
-    ## Additional Prometheus server Secret mounts
-    # Defines additional mounts with secrets. Secrets must be manually created in the namespace.
     extraSecretMounts: []
-      # - name: secret-files
-      #   mountPath: /etc/secrets
-      #   subPath: ""
-      #   secretName: prom-secret-files
-      #   readOnly: true
-
-    ## ConfigMap override where fullname is {{.Release.Name}}-{{.Values.server.configMapOverrideName}}
-    ## Defining configMapOverrideName will cause templates/server-configmap.yaml
-    ## to NOT generate a ConfigMap resource
-    ##
     configMapOverrideName: ""
-
     ingress:
-      ## If true, Prometheus server Ingress will be created
-      ##
       enabled: false
       # className: nginx
-
-      ## Prometheus server Ingress annotations
-      ##
       annotations: {}
-      #   kubernetes.io/ingress.class: nginx
-      #   kubernetes.io/tls-acme: 'true'
-
-      ## Prometheus server Ingress additional labels
-      ##
       extraLabels: {}
-
-      ## Prometheus server Ingress hostnames with optional path
-      ## Must be provided if Ingress is enabled
-      ##
       hosts: []
-      #   - prometheus.domain.com
-      #   - domain.com/prometheus
-
-      ## PathType determines the interpretation of the Path matching
       pathType: "Prefix"
-
-      ## Extra paths to prepend to every host configuration. This is useful when working with annotation based services.
       extraPaths: []
-      # - path: /*
-      #   backend:
-      #     serviceName: ssl-redirect
-      #     servicePort: use-annotation
-
-      ## Prometheus server Ingress TLS configuration
-      ## Secrets must be manually created in the namespace
-      ##
       tls: []
-      #   - secretName: prometheus-server-tls
-      #     hosts:
-      #       - prometheus.domain.com
-
-    ## Server Deployment Strategy type
     # strategy:
     #   type: Recreate
-
-    ## Node tolerations for server scheduling to nodes with taints
-    ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
-    ##
     tolerations: []
-      # - key: "key"
-      #   operator: "Equal|Exists"
-      #   value: "value"
-      #   effect: "NoSchedule|PreferNoSchedule|NoExecute(1.6 only)"
-
-    ## Node labels for Prometheus server pod assignment
-    ## Ref: https://kubernetes.io/docs/user-guide/node-selection/
-    ##
     nodeSelector: {}
-
-    ## Pod affinity
-    ##
     affinity: {}
-
-    ## PodDisruptionBudget settings
-    ## ref: https://kubernetes.io/docs/concepts/workloads/pods/disruptions/
-    ##
     podDisruptionBudget:
       enabled: false
       maxUnavailable: 1
-
-    ## Use an alternate scheduler, e.g. "stork".
-    ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
-    ##
     # schedulerName:
-
     persistentVolume:
-      ## If true, Prometheus server will create/use a Persistent Volume Claim
-      ## If false, use emptyDir
-      ##
       enabled: true
-
-      ## Prometheus server data Persistent Volume access modes
-      ## Must match those of existing PV or dynamic provisioner
-      ## Ref: http://kubernetes.io/docs/user-guide/persistent-volumes/
-      ##
       accessModes:
         - ReadWriteOnce
-
-      ## Prometheus server data Persistent Volume annotations
-      ##
       annotations: {}
-        # helm.sh/resource-policy: keep  # https://helm.sh/docs/howto/charts_tips_and_tricks/#tell-helm-not-to-uninstall-a-resource
-
-      ## Prometheus server data Persistent Volume existing claim name
-      ## Requires server.persistentVolume.enabled: true
-      ## If defined, PVC must be created manually before volume will be bound
       existingClaim: ""
-
-      ## Prometheus server data Persistent Volume mount root path
-      ##
       mountPath: /data
-
-      ## Prometheus server data Persistent Volume size
-      ##
       size: 32Gi
-
-      ## Prometheus server data Persistent Volume Storage Class
-      ## If defined, storageClassName: <storageClass>
-      ## If set to "-", storageClassName: "", which disables dynamic provisioning
-      ## If undefined (the default) or set to null, no storageClassName spec is
-      ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
-      ##   GKE, AWS & OpenStack)
-      ##
       # storageClass: "-"
-
-      ## Prometheus server data Persistent Volume Binding Mode
-      ## If defined, volumeBindingMode: <volumeBindingMode>
-      ## If undefined (the default) or set to null, no volumeBindingMode spec is
-      ##   set, choosing the default mode.
-      ##
       # volumeBindingMode: ""
-
-      ## Subdirectory of Prometheus server data Persistent Volume to mount
-      ## Useful if the volume's root directory is not empty
-      ##
       subPath: ""
-
     emptyDir:
       sizeLimit: ""
-
-    ## Annotations to be added to Prometheus server pods
-    ##
     podAnnotations: {}
-      # iam.amazonaws.com/role: prometheus
-
-    ## Annotations to be added to the Prometheus Server deployment
-    ##
-    deploymentAnnotations: {}
-
-    ## Labels to be added to Prometheus server pods
-    ##
+    annotations: {}
     podLabels: {}
-
-    ## Prometheus AlertManager configuration
-    ##
     alertmanagers: []
-
-    ## Use a StatefulSet if replicaCount needs to be greater than 1 (see below)
-    ##
     replicaCount: 1
-
     statefulSet:
-      ## If true, use a statefulset instead of a deployment for pod management.
-      ## This allows to scale replicas to more than 1 pod
-      ##
       enabled: false
-
       annotations: {}
       labels: {}
       podManagementPolicy: OrderedReady
-
-      ## Alertmanager headless service to use for the statefulset
-      ##
       headless:
         annotations: {}
         labels: {}
         servicePort: 80
-
-    ## Prometheus server readiness and liveness probe initial delay and timeout
-    ## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
-    ##
     readinessProbeInitialDelay: 5
     readinessProbeTimeout: 3
     readinessProbeFailureThreshold: 3
@@ -1257,71 +977,32 @@ prometheus:
     livenessProbeTimeout: 3
     livenessProbeFailureThreshold: 3
     livenessProbeSuccessThreshold: 1
-
-    ## Prometheus server resource requests and limits
-    ## Ref: http://kubernetes.io/docs/user-guide/compute-resources/
-    ##
     resources: {}
-      # limits:
-      #   cpu: 500m
-      #   memory: 512Mi
-      # requests:
-      #   cpu: 500m
-      #   memory: 512Mi
-
-    ## Vertical Pod Autoscaler config
-    ## Ref: https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler
     verticalAutoscaler:
-      ## If true a VPA object will be created for the controller (either StatefulSet or Deployment, based on above configs)
       enabled: false
       ## Optional. Defaults to "Auto" if not specified.
       # updateMode: "Auto"
       ## Mandatory. Without, VPA will not be created.
       # containerPolicies:
       # - containerName: 'prometheus-server'
-
-    ## Security context to be added to server pods
-    ##
     securityContext: {}
-      # runAsUser: 1001
-      # runAsNonRoot: true
-      # runAsGroup: 1001
-      # fsGroup: 1001
-
     containerSecurityContext: {}
-
     service:
       annotations: {}
       labels: {}
       clusterIP: ""
-      # nodePort: ""
-
-      ## List of IP addresses at which the Prometheus server service is available
-      ## Ref: https://kubernetes.io/docs/user-guide/services/#external-ips
-      ##
       externalIPs: []
-
       loadBalancerIP: ""
       loadBalancerSourceRanges: []
       servicePort: 80
       sessionAffinity: None
       type: ClusterIP
-
-      ## Enable gRPC port on service to allow auto discovery with thanos-querier
       gRPC:
         enabled: false
         servicePort: 10901
-        # nodePort: 10901
-
-      ## If using a statefulSet (statefulSet.enabled=true), configure the
-      ## service to connect to a specific replica to have a consistent view
-      ## of the data.
       statefulsetReplica:
         enabled: false
         replica: 0
-
-    ## Prometheus server pod termination grace period
-    ##
     terminationGracePeriodSeconds: 300
 
     ## Prometheus data retention period (default if not specified is 97 hours)
@@ -1354,267 +1035,78 @@ prometheus:
 
   # Install Prometheus Alert Manager
   alertmanager:
-    ## If false, alertmanager will not be installed
-    ##
     enabled: false
-
     ## Provide a full name override for Prometheus alertmanager.
     # fullnameOverride: ""
-
     strategy:
       type: Recreate
       rollingUpdate: null
-
-    ## alertmanager container name
-    ##
     name: alertmanager
-
-    ## alertmanager container image
-    ##
     image:
-      repository: cgr.dev/chainguard/prometheus-alertmanager
-      tag: latest
+      repository: quay.io/prometheus/alertmanager
+      tag: v0.28.1
       pullPolicy: IfNotPresent
-
-    ## alertmanager priorityClassName
-    ##
     priorityClassName: ""
-
-    ## Additional alertmanager container arguments
-    ##
     extraArgs: {}
-
-    ## The URL prefix at which the container can be accessed. Useful in the case the '-web.external-url' includes a slug
-    ## so that the various internal URLs are still able to access as they are in the default case.
-    ## (Optional)
     prefixURL: ""
-
-    ## External URL which can access alertmanager
     baseURL: "http://localhost:9093"
-
-    ## Additional alertmanager container environment variable
-    ## For instance to add a http_proxy
-    ##
     extraEnv: {}
-
-    ## Additional alertmanager Secret mounts
-    # Defines additional mounts with secrets. Secrets must be manually created in the namespace.
     extraSecretMounts: []
-      # - name: secret-files
-      #   mountPath: /etc/secrets
-      #   subPath: ""
-      #   secretName: alertmanager-secret-files
-      #   readOnly: true
-
-    ## ConfigMap override where fullname is {{.Release.Name}}-{{.Values.alertmanager.configMapOverrideName}}
-    ## Defining configMapOverrideName will cause templates/alertmanager-configmap.yaml
-    ## to NOT generate a ConfigMap resource
-    ##
     configMapOverrideName: ""
-
-    ## The name of a secret in the same kubernetes namespace which contains the Alertmanager config
-    ## Defining configFromSecret will cause templates/alertmanager-configmap.yaml
-    ## to NOT generate a ConfigMap resource
-    ##
     configFromSecret: ""
-
-    ## The configuration file name to be loaded to alertmanager
-    ## Must match the key within configuration loaded from ConfigMap/Secret
-    ##
     configFileName: alertmanager.yml
-
     ingress:
-      ## If true, alertmanager Ingress will be created
-      ##
       enabled: false
-
-      ## alertmanager Ingress annotations
-      ##
       annotations: {}
-      #   kubernetes.io/ingress.class: nginx
-      #   kubernetes.io/tls-acme: 'true'
-
-      ## alertmanager Ingress additional labels
-      ##
       extraLabels: {}
-
-      ## alertmanager Ingress hostnames with optional path
-      ## Must be provided if Ingress is enabled
-      ##
       hosts: []
-      #   - alertmanager.domain.com
-      #   - domain.com/alertmanager
-
-      ## Extra paths to prepend to every host configuration. This is useful when working with annotation based services.
       extraPaths: []
-      # - path: /*
-      #   backend:
-      #     serviceName: ssl-redirect
-      #     servicePort: use-annotation
-
-      ## alertmanager Ingress TLS configuration
-      ## Secrets must be manually created in the namespace
-      ##
       tls: []
-      #   - secretName: prometheus-alerts-tls
-      #     hosts:
-      #       - alertmanager.domain.com
-
-    ## Alertmanager Deployment Strategy type
     # strategy:
     #   type: Recreate
-
-    ## Node tolerations for alertmanager scheduling to nodes with taints
-    ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
-    ##
     tolerations: []
-      # - key: "key"
-      #   operator: "Equal|Exists"
-      #   value: "value"
-      #   effect: "NoSchedule|PreferNoSchedule|NoExecute(1.6 only)"
-
-    ## Node labels for alertmanager pod assignment
-    ## Ref: https://kubernetes.io/docs/user-guide/node-selection/
-    ##
     nodeSelector: {}
-
-    ## Pod affinity
-    ##
     affinity: {}
-
-    ## PodDisruptionBudget settings
-    ## ref: https://kubernetes.io/docs/concepts/workloads/pods/disruptions/
-    ##
     podDisruptionBudget:
       enabled: false
       maxUnavailable: 1
-
-    ## Use an alternate scheduler, e.g. "stork".
-    ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
-    ##
     # schedulerName:
-
     persistentVolume:
-      ## If true, alertmanager will create/use a Persistent Volume Claim
-      ## If false, use emptyDir
-      ##
       enabled: true
-
-      ## alertmanager data Persistent Volume access modes
-      ## Must match those of existing PV or dynamic provisioner
-      ## Ref: http://kubernetes.io/docs/user-guide/persistent-volumes/
-      ##
       accessModes:
         - ReadWriteOnce
-
-      ## alertmanager data Persistent Volume Claim annotations
-      ##
       annotations: {}
-
-      ## alertmanager data Persistent Volume existing claim name
-      ## Requires alertmanager.persistentVolume.enabled: true
-      ## If defined, PVC must be created manually before volume will be bound
       existingClaim: ""
-
-      ## alertmanager data Persistent Volume mount root path
-      ##
       mountPath: /data
-
-      ## alertmanager data Persistent Volume size
-      ##
       size: 2Gi
-
-      ## alertmanager data Persistent Volume Storage Class
-      ## If defined, storageClassName: <storageClass>
-      ## If set to "-", storageClassName: "", which disables dynamic provisioning
-      ## If undefined (the default) or set to null, no storageClassName spec is
-      ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
-      ##   GKE, AWS & OpenStack)
-      ##
       # storageClass: "-"
-
-      ## alertmanager data Persistent Volume Binding Mode
-      ## If defined, volumeBindingMode: <volumeBindingMode>
-      ## If undefined (the default) or set to null, no volumeBindingMode spec is
-      ##   set, choosing the default mode.
-      ##
       # volumeBindingMode: ""
-
-      ## Subdirectory of alertmanager data Persistent Volume to mount
-      ## Useful if the volume's root directory is not empty
-      ##
       subPath: ""
-
-    ## Annotations to be added to alertmanager pods
-    ##
     podAnnotations: {}
-      ## Tell prometheus to use a specific set of alertmanager pods
-      ## instead of all alertmanager pods found in the same namespace
-      ## Useful if you deploy multiple releases within the same namespace
-      ##
-      ## prometheus.io/probe: alertmanager-teamA
-
-    ## Labels to be added to Prometheus AlertManager pods
-    ##
+    annotations: {}
     podLabels: {}
-
-    ## Use a StatefulSet if replicaCount needs to be greater than 1 (see below)
-    ##
     replicaCount: 1
-
     statefulSet:
-      ## If true, use a statefulset instead of a deployment for pod management.
-      ## This allows to scale replicas to more than 1 pod
-      ##
       enabled: false
-
+      annotations: {}
       podManagementPolicy: OrderedReady
-
-      ## Alertmanager headless service to use for the statefulset
-      ##
       headless:
         annotations: {}
         labels: {}
-
-        ## Enabling peer mesh service end points for enabling the HA alert manager
-        ## Ref: https://github.com/prometheus/alertmanager/blob/master/README.md
         # enableMeshPeer : true
-
         servicePort: 80
-
-    ## alertmanager resource requests and limits
-    ## Ref: http://kubernetes.io/docs/user-guide/compute-resources/
-    ##
     resources: {}
-      # limits:
-      #   cpu: 10m
-      #   memory: 32Mi
-      # requests:
-      #   cpu: 10m
-      #   memory: 32Mi
-
-    ## Security context to be added to alertmanager pods
-    ##
     securityContext:
       runAsUser: 1001
       runAsNonRoot: true
       runAsGroup: 1001
       fsGroup: 1001
-
     service:
       annotations: {}
       labels: {}
       clusterIP: ""
-
-      ## Enabling peer mesh service end points for enabling the HA alert manager
-      ## Ref: https://github.com/prometheus/alertmanager/blob/master/README.md
       # enableMeshPeer : true
-
-      ## List of IP addresses at which the alertmanager service is available
-      ## Ref: https://kubernetes.io/docs/user-guide/services/#external-ips
-      ##
       externalIPs: []
-
       loadBalancerIP: ""
       loadBalancerSourceRanges: []
       servicePort: 80
@@ -1622,22 +1114,11 @@ prometheus:
       sessionAffinity: None
       type: ClusterIP
 
-    # Define a custom scheduler for Alertmanager pods
-    # schedulerName: default-scheduler
-
-  ## alertmanager ConfigMap entries
-  ##
   alertmanagerFiles:
     alertmanager.yml:
       global: {}
-        # slack_api_url: ''
-
       receivers:
         - name: default-receiver
-          # slack_configs:
-          #  - channel: '@you'
-          #    send_resolved: true
-
       route:
         group_wait: 10s
         group_interval: 5m
@@ -1647,85 +1128,30 @@ prometheus:
   ## Monitors ConfigMap changes and POSTs to a URL
   configmapReload:
     prometheus:
-      ## If false, the configmap-reload container will not be deployed
-      ##
       enabled: false
-
-      ## configmap-reload container name
-      ##
       name: configmap-reload
-
-      ## configmap-reload container image
-      ##
       image:
-        repository: cgr.dev/chainguard/prometheus-config-reloader
-        tag: latest
+        repository: quay.io/prometheus-operator/prometheus-config-reloader
+        tag: v0.82.0
         pullPolicy: IfNotPresent
-
-      ## Additional configmap-reload container arguments
-      ##
       extraArgs: {}
-      ## Additional configmap-reload volume directories
-      ##
       extraVolumeDirs: []
-
-      ## Additional configmap-reload mounts
-      ##
       extraConfigmapMounts: []
-        # - name: prometheus-alerts
-        #   mountPath: /etc/alerts.d
-        #   subPath: ""
-        #   configMap: prometheus-alerts
-        #   readOnly: true
-
-      ## configmap-reload resource requests and limits
-      ## Ref: http://kubernetes.io/docs/user-guide/compute-resources/
-      ##
       resources: {}
-
-      ## configmap-reload container securityContext
       containerSecurityContext: {}
 
     alertmanager:
-      ## If false, the configmap-reload container will not be deployed
-      ##
       enabled: false
-
-      ## configmap-reload container name
-      ##
       name: configmap-reload
-
-      ## configmap-reload container image
-      ##
       image:
-        repository: cgr.dev/chainguard/prometheus-config-reloader
-        tag: latest
+        repository: quay.io/prometheus-operator/prometheus-config-reloader
+        tag: v0.82.0
         pullPolicy: IfNotPresent
-
-      ## Additional configmap-reload container arguments
-      ##
       extraArgs: {}
-      ## Additional configmap-reload volume directories
-      ##
       extraVolumeDirs: []
-
-
-      ## Additional configmap-reload mounts
-      ##
       extraConfigmapMounts: []
-        # - name: prometheus-alerts
-        #   mountPath: /etc/alerts.d
-        #   subPath: ""
-        #   configMap: prometheus-alerts
-        #   readOnly: true
-
-
-      ## configmap-reload resource requests and limits
-      ## Ref: http://kubernetes.io/docs/user-guide/compute-resources/
-      ##
       resources: {}
 
-  # node-export must be disabled if there is an existing daemonset: https://guide.kubecost.com/hc/en-us/articles/4407601830679-Troubleshoot-Install#a-name-node-exporter-a-issue-failedscheduling-kubecost-prometheus-node-exporter
   nodeExporter:
     ## If false, node-exporter will not be installed.
     ## This is disabled by default in Kubecost 2.0, though it can be enabled as needed.
@@ -1735,344 +1161,53 @@ prometheus:
     ## Provide a full name override for node exporter.
     # fullnameOverride: ""
 
-    ## If true, node-exporter pods share the host network namespace
-    ##
     hostNetwork: true
-
-    ## If true, node-exporter pods share the host PID namespace
-    ##
     hostPID: true
-
-    ## node-exporter dns policy
-    ##
     dnsPolicy: ClusterFirstWithHostNet
-
-    ## node-exporter container name
-    ##
     name: node-exporter
-
-    ## node-exporter container image
-    ##
     image:
       repository: prom/node-exporter
-      tag: v1.8.2
+      tag: v1.9.1
       pullPolicy: IfNotPresent
-
-    ## node-exporter priorityClassName
-    ##
     priorityClassName: ""
-
-    ## Custom Update Strategy
-    ##
     updateStrategy:
       type: RollingUpdate
-
-    ## Additional node-exporter container arguments
-    ##
     extraArgs: {}
-
-    ## Additional node-exporter hostPath mounts
-    ##
     extraHostPathMounts: []
-      # - name: textfile-dir
-      #   mountPath: /srv/txt_collector
-      #   hostPath: /var/lib/node-exporter
-      #   readOnly: true
-      #   mountPropagation: HostToContainer
-
     extraConfigmapMounts: []
-      # - name: certs-configmap
-      #   mountPath: /prometheus
-      #   configMap: certs-configmap
-      #   readOnly: true
-
-    ## Set a custom affinity for node-exporter
-    ##
     # affinity:
-
-    ## Node tolerations for node-exporter scheduling to nodes with taints
-    ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
-    ##
     tolerations: []
-      # - key: "key"
-      #   operator: "Equal|Exists"
-      #   value: "value"
-      #   effect: "NoSchedule|PreferNoSchedule|NoExecute(1.6 only)"
-
-    ## Node labels for node-exporter pod assignment
-    ## Ref: https://kubernetes.io/docs/user-guide/node-selection/
-    ##
     nodeSelector: {}
-
-    ## Annotations to be added to node-exporter pods
-    ##
     podAnnotations: {}
-
-    ## Annotations to be added to the node-exporter DaemonSet
-    ##
-    deploymentAnnotations: {}
-
-    ## Labels to be added to node-exporter pods
-    ##
+    annotations: {}
     pod:
       labels: {}
-
-    ## PodDisruptionBudget settings
-    ## ref: https://kubernetes.io/docs/concepts/workloads/pods/disruptions/
-    ##
     podDisruptionBudget:
       enabled: false
       maxUnavailable: 1
-
-    ## node-exporter resource limits & requests
-    ## Ref: https://kubernetes.io/docs/user-guide/compute-resources/
-    ##
     resources: {}
-      # limits:
-      #   cpu: 200m
-      #   memory: 50Mi
-      # requests:
-      #   cpu: 100m
-      #   memory: 30Mi
-
-    ## Security context to be added to node-exporter pods
-    ##
     securityContext: {}
-      # runAsUser: 0
-
     service:
       annotations:
         prometheus.io/scrape: "true"
       labels: {}
-
-      # Exposed as a headless service:
-      # https://kubernetes.io/docs/concepts/services-networking/service/#headless-services
       clusterIP: None
-
-      ## List of IP addresses at which the node-exporter service is available
-      ## Ref: https://kubernetes.io/docs/user-guide/services/#external-ips
-      ##
       externalIPs: []
-
       hostPort: 9100
       loadBalancerIP: ""
       loadBalancerSourceRanges: []
       servicePort: 9100
       type: ClusterIP
 
-  # Install Prometheus Push Gateway.
-  pushgateway:
-    ## If false, pushgateway will not be installed
-    ##
-    enabled: false
-
-    ## Provide a full name override for Prometheus push gateway.
-    # fullnameOverride: ""
-
-    ## Use an alternate scheduler, e.g. "stork".
-    ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
-    ##
-    # schedulerName:
-
-    ## pushgateway container name
-    ##
-    name: pushgateway
-
-    ## pushgateway container image
-    ##
-    image:
-      repository: prom/pushgateway
-      tag: v1.9.0
-      pullPolicy: IfNotPresent
-
-    ## pushgateway priorityClassName
-    ##
-    priorityClassName: ""
-
-    ## Additional pushgateway container arguments
-    ##
-    ## for example: persistence.file: /data/pushgateway.data
-    extraArgs: {}
-
-    ingress:
-      ## If true, pushgateway Ingress will be created
-      ##
-      enabled: false
-
-      ## pushgateway Ingress annotations
-      ##
-      annotations: {}
-      #   kubernetes.io/ingress.class: nginx
-      #   kubernetes.io/tls-acme: 'true'
-
-      ## pushgateway Ingress hostnames with optional path
-      ## Must be provided if Ingress is enabled
-      ##
-      hosts: []
-      #   - pushgateway.domain.com
-      #   - domain.com/pushgateway
-
-      ## Extra paths to prepend to every host configuration. This is useful when working with annotation based services.
-      extraPaths: []
-      # - path: /*
-      #   backend:
-      #     serviceName: ssl-redirect
-      #     servicePort: use-annotation
-
-      ## pushgateway Ingress TLS configuration
-      ## Secrets must be manually created in the namespace
-      ##
-      tls: []
-      #   - secretName: prometheus-alerts-tls
-      #     hosts:
-      #       - pushgateway.domain.com
-
-    ## Node tolerations for pushgateway scheduling to nodes with taints
-    ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
-    ##
-    tolerations: []
-      # - key: "key"
-      #   operator: "Equal|Exists"
-      #   value: "value"
-      #   effect: "NoSchedule|PreferNoSchedule|NoExecute(1.6 only)"
-
-    ## Node labels for pushgateway pod assignment
-    ## Ref: https://kubernetes.io/docs/user-guide/node-selection/
-    ##
-    nodeSelector: {}
-
-    ## Annotations to be added to pushgateway pods
-    ##
-    podAnnotations: {}
-
-    replicaCount: 1
-
-    ## PodDisruptionBudget settings
-    ## ref: https://kubernetes.io/docs/concepts/workloads/pods/disruptions/
-    ##
-    podDisruptionBudget:
-      enabled: false
-      maxUnavailable: 1
-
-    ## pushgateway resource requests and limits
-    ## Ref: http://kubernetes.io/docs/user-guide/compute-resources/
-    ##
-    resources: {}
-      # limits:
-      #   cpu: 10m
-      #   memory: 32Mi
-      # requests:
-      #   cpu: 10m
-      #   memory: 32Mi
-
-    ## Security context to be added to push-gateway pods
-    ##
-    securityContext:
-      runAsUser: 1001
-      runAsNonRoot: true
-
-    service:
-      annotations:
-        prometheus.io/probe: pushgateway
-      labels: {}
-      clusterIP: ""
-
-      ## List of IP addresses at which the pushgateway service is available
-      ## Ref: https://kubernetes.io/docs/user-guide/services/#external-ips
-      ##
-      externalIPs: []
-
-      loadBalancerIP: ""
-      loadBalancerSourceRanges: []
-      servicePort: 9091
-      type: ClusterIP
-
-    strategy:
-      type: Recreate
-      rollingUpdate: null
-
-
-    persistentVolume:
-      ## If true, pushgateway will create/use a Persistent Volume Claim
-      ## If false, use emptyDir
-      ##
-      enabled: true
-
-      ## pushgateway data Persistent Volume access modes
-      ## Must match those of existing PV or dynamic provisioner
-      ## Ref: http://kubernetes.io/docs/user-guide/persistent-volumes/
-      ##
-      accessModes:
-        - ReadWriteOnce
-
-      ## pushgateway data Persistent Volume Claim annotations
-      ##
-      annotations: {}
-
-      ## pushgateway data Persistent Volume existing claim name
-      ## Requires pushgateway.persistentVolume.enabled: true
-      ## If defined, PVC must be created manually before volume will be bound
-      existingClaim: ""
-
-      ## pushgateway data Persistent Volume mount root path
-      ##
-      mountPath: /data
-
-      ## pushgateway data Persistent Volume size
-      ##
-      size: 2Gi
-
-      ## pushgateway data Persistent Volume Storage Class
-      ## If defined, storageClassName: <storageClass>
-      ## If set to "-", storageClassName: "", which disables dynamic provisioning
-      ## If undefined (the default) or set to null, no storageClassName spec is
-      ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
-      ##   GKE, AWS & OpenStack)
-      ##
-      # storageClass: "-"
-
-      ## pushgateway data Persistent Volume Binding Mode
-      ## If defined, volumeBindingMode: <volumeBindingMode>
-      ## If undefined (the default) or set to null, no volumeBindingMode spec is
-      ##   set, choosing the default mode.
-      ##
-      # volumeBindingMode: ""
-
-      ## Subdirectory of pushgateway data Persistent Volume to mount
-      ## Useful if the volume's root directory is not empty
-      ##
-      subPath: ""
-
   serverFiles:
     ## Alerts configuration
     ## Ref: https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/
     alerting_rules.yml: {}
-    # groups:
-    #   - name: Instances
-    #     rules:
-    #       - alert: InstanceDown
-    #         expr: up == 0
-    #         for: 5m
-    #         labels:
-    #           severity: page
-    #         annotations:
-    #           description: '{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 5 minutes.'
-    #           summary: 'Instance {{ $labels.instance }} down'
-    ## DEPRECATED DEFAULT VALUE, unless explicitly naming your files, please use alerting_rules.yml
-    alerts: {}
-
-    ## Records configuration
-    ## Ref: https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/
-    recording_rules.yml: {}
-    ## DEPRECATED DEFAULT VALUE, unless explicitly naming your files, please use recording_rules.yml
 
     prometheus.yml:
       rule_files:
         - /etc/config/recording_rules.yml
         - /etc/config/alerting_rules.yml
-      ## Below two files are DEPRECATED will be removed from this default values file
-        - /etc/config/rules
-        - /etc/config/alerts
 
       scrape_configs:
         - job_name: prometheus
@@ -2086,7 +1221,6 @@ prometheus:
         #
         # Kubernetes labels will be added as Prometheus labels on metrics via the
         # `labelmap` relabeling action.
-
         - job_name: 'kubernetes-nodes-cadvisor'
 
           # Default to scraping over https. If required, just disable this or change to
@@ -2117,7 +1251,7 @@ prometheus:
           # As the scrape endpoints for cAdvisor have changed
           # if you are using older version you need to change the replacement to
           # replacement: /api/v1/nodes/$1:4194/proxy/metrics
-          # more info here https://github.com/coreos/prometheus-operator/issues/633
+          # more info here https://github.com/prometheus-operator/prometheus-operator/issues/633
           relabel_configs:
             - action: labelmap
               regex: __meta_kubernetes_node_label_(.+)
@@ -2147,7 +1281,6 @@ prometheus:
         #
         # Kubernetes labels will be added as Prometheus labels on metrics via the
         # `labelmap` relabeling action.
-
         - job_name: 'kubernetes-nodes'
 
           # Default to scraping over https. If required, just disable this or change to
@@ -2241,19 +1374,9 @@ prometheus:
               regex: (container_cpu_allocation|container_cpu_usage_seconds_total|container_fs_limit_bytes|container_fs_writes_bytes_total|container_gpu_allocation|container_memory_allocation_bytes|container_memory_usage_bytes|container_memory_working_set_bytes|container_network_receive_bytes_total|container_network_transmit_bytes_total|DCGM_FI_DEV_GPU_UTIL|deployment_match_labels|kube_daemonset_status_desired_number_scheduled|kube_daemonset_status_number_ready|kube_deployment_spec_replicas|kube_deployment_status_replicas|kube_deployment_status_replicas_available|kube_job_status_failed|kube_namespace_annotations|kube_namespace_labels|kube_node_info|kube_node_labels|kube_node_status_allocatable|kube_node_status_allocatable_cpu_cores|kube_node_status_allocatable_memory_bytes|kube_node_status_capacity|kube_node_status_capacity_cpu_cores|kube_node_status_capacity_memory_bytes|kube_node_status_condition|kube_persistentvolume_capacity_bytes|kube_persistentvolume_status_phase|kube_persistentvolumeclaim_info|kube_persistentvolumeclaim_resource_requests_storage_bytes|kube_pod_container_info|kube_pod_container_resource_limits|kube_pod_container_resource_limits_cpu_cores|kube_pod_container_resource_limits_memory_bytes|kube_pod_container_resource_requests|kube_pod_container_resource_requests_cpu_cores|kube_pod_container_resource_requests_memory_bytes|kube_pod_container_status_restarts_total|kube_pod_container_status_running|kube_pod_container_status_terminated_reason|kube_pod_labels|kube_pod_owner|kube_pod_status_phase|kube_replicaset_owner|kube_statefulset_replicas|kube_statefulset_status_replicas|kubecost_cluster_info|kubecost_cluster_management_cost|kubecost_cluster_memory_working_set_bytes|kubecost_load_balancer_cost|kubecost_network_internet_egress_cost|kubecost_network_region_egress_cost|kubecost_network_zone_egress_cost|kubecost_node_is_spot|kubecost_pod_network_egress_bytes_total|node_cpu_hourly_cost|node_cpu_seconds_total|node_disk_reads_completed|node_disk_reads_completed_total|node_disk_writes_completed|node_disk_writes_completed_total|node_filesystem_device_error|node_gpu_count|node_gpu_hourly_cost|node_memory_Buffers_bytes|node_memory_Cached_bytes|node_memory_MemAvailable_bytes|node_memory_MemFree_bytes|node_memory_MemTotal_bytes|node_network_transmit_bytes_total|node_ram_hourly_cost|node_total_hourly_cost|pod_pvc_allocation|pv_hourly_cost|service_selector_labels|statefulSet_match_labels|kubecost_pv_info|up)
               action: keep
 
-
-  #  prometheus.yml: # Sample block -- enable if using an in cluster durable store.
-  #      remote_write:
-  #        - url: "http://pgprometheus-adapter:9201/write"
-  #          write_relabel_configs:
-  #            - source_labels: [__name__]
-  #              regex: 'container_.*_allocation|container_.*_allocation_bytes|.*_hourly_cost|kube_pod_container_resource_requests{resource="memory", unit="byte"}|container_memory_working_set_bytes|kube_pod_container_resource_requests{resource="cpu", unit="core"}|kube_pod_container_resource_requests|pod_pvc_allocation|kube_namespace_labels|kube_pod_labels'
-  #              action: keep
-  #          queue_config:
-  #            max_samples_per_send: 1000
-        # remote_read:
-        #  - url: "http://pgprometheus-adapter:9201/read"
-    rules:
+    ## Recording rules
+    ## Ref: https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/
+    recording_rules.yml:
       groups:
         - name: CPU
           rules:
@@ -2295,18 +1418,15 @@ prometheus:
     #   target_label: dc
 
   networkPolicy:
-    ## Enable creation of NetworkPolicy resources.
-    ##
     enabled: false
 
-
 ## Optional daemonset to more accurately attribute network costs to the correct workload
-## https://docs.kubecost.com/install-and-configure/advanced-configuration/network-costs-configuration
+## https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-network-cost
 networkCosts:
   enabled: false
   image:
     repository: gcr.io/kubecost1/kubecost-network-costs
-    tag: v0.17.6
+    tag: v0.17.10
   imagePullPolicy: IfNotPresent
   updateStrategy:
     type: RollingUpdate
@@ -2320,12 +1440,13 @@ networkCosts:
   # every 30 minutes.
   trafficLogging: true
 
+  # Log level for the network cost containers. Options are "trace", "debug", "info", "warn", "error", "fatal", "panic"
   logLevel: info
 
   # Port will set both the containerPort and hostPort to this value.
   # These must be identical due to network-costs being run on hostNetwork
   port: 3001
-  # this daemonset can use significant resources on large clusters: https://guide.kubecost.com/hc/en-us/articles/4407595973527-Network-Traffic-Cost-Allocation
+  # this daemonset can use significant resources on large clusters: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=dashboard-network-traffic-cost-allocation
   resources:
     limits:  # remove the limits by setting cpu: null
       cpu: 500m  # can be less, will depend on cluster size
@@ -2398,73 +1519,38 @@ networkCosts:
       #      - "15.128.15.2"
       #      - "20.0.0.0/8"
 
-  ## Node tolerations for server scheduling to nodes with taints
-  ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
-  ##
   tolerations: []
-  #  - key: "key"
-  #    operator: "Equal|Exists"
-  #    value: "value"
-  #    effect: "NoSchedule|PreferNoSchedule|NoExecute(1.6 only)"
-
   affinity: {}
-
   service:
     annotations: {}
     labels: {}
-
-  ## PriorityClassName
-  ## Ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/#priorityclass
   priorityClassName: ""
-  ## PodMonitor
-  ## Allows scraping of network metrics from a dedicated prometheus operator setup
   podMonitor:
     enabled: false
     additionalLabels: {}
-  # match the default extraScrapeConfig
   additionalLabels: {}
   nodeSelector: {}
+  # Annotations to be added to network cost daemonset template and pod template annotations
   annotations: {}
   healthCheckProbes: {}
-    # readinessProbe:
-    #   tcpSocket:
-    #     port: 3001
-    #   initialDelaySeconds: 5
-    #   periodSeconds: 10
-    #   failureThreshold: 5
-    # livenessProbe:
-    #   tcpSocket:
-    #     port: 3001
-    #   initialDelaySeconds: 5
-    #   periodSeconds: 10
-    #   failureThreshold: 5
   additionalSecurityContext: {}
-    # readOnlyRootFilesystem: true
 
 ## Kubecost Deployment Configuration
 ## Used for HA mode in Business & Enterprise tier
 ##
 kubecostDeployment:
   replicas: 1
-  # deploymentStrategy:
-  #   rollingUpdate:
-  #     maxSurge: 1
-  #     maxUnavailable: 1
-  #   type: RollingUpdate
   labels: {}
   annotations: {}
-
 
 ## Kubecost Forecasting forecasts future cost patterns based on historical
 ## patterns observed by Kubecost.
 forecasting:
   enabled: true
-
-  # fullImageName overrides the default image construction logic. The exact
-  # image provided (registry, image, tag) will be used for the forecasting
-  # container.
-  # Example: fullImageName: gcr.io/kubecost1/forecasting:v0.0.1
-  fullImageName: gcr.io/kubecost1/kubecost-modeling:v0.1.16
+  fullImageName: ""
+  image:
+    repository: gcr.io/kubecost1/kubecost-modeling
+    tag: v0.1.25
   imagePullPolicy: IfNotPresent
 
   # Resource specification block for the forecasting container.
@@ -2482,28 +1568,18 @@ forecasting:
     # if it is not high enough, training workers may die mid training
     "GUNICORN_CMD_ARGS": "--log-level info -t 1200"
 
-  # Define a priority class for the forecasting Deployment.
   priority:
     enabled: false
     name: ""
-
-  # Define a nodeSelector for the forecasting Deployment.
   nodeSelector: {}
-
-  # Define tolerations for the forecasting Deployment.
   tolerations: []
-
-  # Define Pod affinity for the forecasting Deployment.
+  annotations: {}
   affinity: {}
-
-  # Define a readiness probe for the forecasting container
   readinessProbe:
     enabled: true
     initialDelaySeconds: 10
     periodSeconds: 10
     failureThreshold: 200
-
-  # Define a liveness probe for the forecasting container.
   livenessProbe:
     enabled: true
     initialDelaySeconds: 10
@@ -2511,7 +1587,7 @@ forecasting:
     failureThreshold: 200
 
 ## The Kubecost Aggregator is the primary query backend for Kubecost
-## Ref: https://docs.kubecost.com/install-and-configure/install/multi-cluster/federated-etl/aggregator
+## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=federation-kubecost-aggregator
 ##
 kubecostAggregator:
   # deployMethod determines how Aggregator is deployed. Current options are
@@ -2533,6 +1609,7 @@ kubecostAggregator:
   # `deployMethod: "statefulset"`
   replicas: 1
 
+  # Log level for the aggregator container. Options are "trace", "debug", "info", "warn", "error", "fatal", "panic"
   logLevel: info
 
   # stagingEmptyDirSizeLimit changes how large the "staging"
@@ -2554,10 +1631,10 @@ kubecostAggregator:
   numDBCopyPartitions: 25
 
   # How many threads the read database is configured with (i.e. Kubecost API /
-  # UI queries). If increasing this value, it is recommended to increase the
-  # aggregator's memory requests & limits.
-  # default: 1
-  dbReadThreads: 1
+  # UI queries). If value is 0, the number of threads is bounded by the
+  # number of cores
+  # default: 0 is no limit
+  dbReadThreads: 0
 
   # How many threads the write database is configured with (i.e. ingestion of
   # new data from S3). If increasing this value, it is recommended to increase
@@ -2579,6 +1656,13 @@ kubecostAggregator:
   # default: 0GB is no limit
   dbMemoryLimit: 0GB
   dbWriteMemoryLimit: 0GB
+
+  # Enable the use of the v3 database (ClickHouse) as the database for the aggregator.
+  # the existing database will be migrated if it exists
+  # This is required to be 'true' to use the enterpriseCustomPricing feature prior to kubecost 3.0.0
+  # this will not be optional starting in kubecost 3.0.0 and will be removed
+  # default: false
+  useDBv3: false
 
   # How much data to ingest from the federated store bucket, and how much data
   # to keep in the DB before rolling the data off.
@@ -2661,6 +1745,9 @@ kubecostAggregator:
   ## Define tolerations for the aggregator pod
   # tolerations: []
 
+  ## Annotations to be added for aggregator deployment or statefulset
+  # annotations: {}
+
   ## Define Pod affinity for the aggregator pod
   # affinity: {}
 
@@ -2725,26 +1812,23 @@ kubecostAggregator:
     enabled: false
     image: jaegertracing/all-in-one
     imageVersion: latest
-    # containerSecurityContext:
 
   service:
     labels: {}
 
-## Kubecost Multi-cluster Diagnostics (beta)
+## Kubecost Multi-cluster Diagnostics
 ## A single view into the health of all agent clusters. Each agent cluster sends
-## its diagnostic data to a storage bucket. Future versions may include
-## repairing & alerting from the primary.
-## Ref: https://docs.kubecost.com/install-and-configure/install/multi-cluster/multi-cluster-diagnostics
+## its diagnostic data to a storage bucket.
+## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-multi-diagnostics
 ##
 diagnostics:
   enabled: true
 
-  ## The primary aggregates all diagnostic data and handles API requests. It's
-  ## also responsible for deleting diagnostic data (on disk & bucket) beyond
-  ## retention. When in readonly mode it does not push its own diagnostic data
-  ## to the bucket.
+  ## The primary must be enabled to query diagnostic data. It aggregates all
+  ## diagnostic data, handles API requests, and deletes data beyond retention.
+  ## In readonly mode, it does not push its own diagnostic data to the bucket.
   primary:
-    enabled: false
+    enabled: true
     retention: "7d"
     readonly: false
 
@@ -2773,34 +1857,38 @@ diagnostics:
     containerSecurityContext: {}
     nodeSelector: {}
     tolerations: []
+    annotations: {}
     affinity: {}
 
 ## Provide a full name override for the diagnostics Deployment.
-# diagnosticsFullnameOverride: ""
+diagnosticsFullnameOverride: ""
 
 # Kubecost Cluster Controller for Right Sizing and Cluster Turndown
 clusterController:
   enabled: false
   image:
     repository: gcr.io/kubecost1/cluster-controller
-    tag: v0.16.9
+    tag: v0.16.16
   imagePullPolicy: IfNotPresent
-  ## PriorityClassName
-  ## Ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/#priorityclass
+  extraEnv: []
+  # - name: EXTRA_ENV_VAR
+  #   value: "extra_env_var_value"
+  logLevel: info
   priorityClassName: ""
-  # Set custom tolerations for the cluster controller.
   tolerations: []
-  ## Set Affinity for pod assignment
-  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
-  ##
+  annotations: {}
+  labels: {}
+  securityContext: {}
+  resources: {}
   affinity: {}
-  ## Set Node labels for pod assignment. Evaluated as a template.
-  ## Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/
-  ##
   nodeSelector: {}
+  primaryKubecostURL: ""  # URL for secondary clusters to connect to primary Kubecost (ex: https://kubecost.myorganization.com)
+  kubecostAPIKey: ""  # API Key for secondary clusters to authenticate with primary
+  createClusterControllerSecret: true  # disable if you want to use your own secret manager
+  secretName: controller-secrets
   actionConfigs:
     # this configures the Kubecost Cluster Turndown action
-    # for more details, see documentation at https://github.com/kubecost/cluster-turndown/tree/develop?tab=readme-ov-file#setting-a-turndown-schedule
+    # for more details, see documentation at https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=controller-cluster-turndown
     clusterTurndown: []
       # - name: my-schedule
       #   start: "2024-02-09T00:00:00Z"
@@ -2811,7 +1899,7 @@ clusterController:
       #   end: "2024-02-09T01:00:00Z"
       #   repeat: weekly
     # this configures the Kubecost Namespace Turndown action
-    # for more details, see documentation at https://docs.kubecost.com/using-kubecost/navigating-the-kubecost-ui/savings/savings-actions#namespace-turndown
+    # for more details, see documentation at https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=savings-actions
     namespaceTurndown:
       # - name: my-ns-turndown-action
       #   dryRun: false
@@ -2826,7 +1914,7 @@ clusterController:
       #   params:
       #     minNamespaceAge: 4h
     # this configures the Kubecost Cluster Sizing action
-    # for more details, see documentation at https://docs.kubecost.com/using-kubecost/navigating-the-kubecost-ui/savings/savings-actions#cluster-sizing
+    # for more details, see documentation at https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=savings-actions
     clusterRightsize:
         # startTime: '2024-01-02T15:04:05Z'
         # frequencyMinutes: 1440
@@ -2845,7 +1933,7 @@ clusterController:
     # Continuous Request Sizing. Annotation configuration will be ignored while
     # this configuration method is present in the cluster.
     #
-    # For more details, see documentation at https://docs.kubecost.com/using-kubecost/navigating-the-kubecost-ui/savings/savings-actions#automated-request-sizing
+    # For more details, see documentation at https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=savings-actions
     containerRightsize:
       # Workloads can be selected by an _exact_ key (namespace, controllerKind,
       # controllerName). This will only match a single controller. The cluster
@@ -2870,7 +1958,7 @@ clusterController:
       #
       # See the examples below.
       #
-      # [1] https://docs.kubecost.com/apis/filters-api
+      # [1] https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=filter-parameters-v2
       # filterConfig:
       #   - filter: |
       #       namespace:"abc"+controllerKind:"deployment"
@@ -2899,7 +1987,7 @@ clusterController:
 
 reporting:
   # Kubecost bug report feature: Logs access/collection limited to .Release.Namespace
-  # Ref: http://docs.kubecost.com/bug-report
+  # Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=capture-bug-report
   logCollection: true
   # Basic frontend analytics
   productAnalytics: true
@@ -2945,10 +2033,9 @@ supportNFS: false
 initChownDataImage: "busybox"  # Supports a fully qualified Docker image, e.g. registry.hub.docker.com/library/busybox:latest
 initChownData:
   resources: {}
-    # requests:
-    #   cpu: "50m"
-    #   memory: "20Mi"
 
+## Kubecost's Bundled Grafana
+## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-grafana-guide
 grafana:
   # namespace_datasources: kubecost # override the default namespace here
   # namespace_dashboards: kubecost # override the default namespace here
@@ -2982,19 +2069,12 @@ grafana:
   #           prometheusVersion: 2.35.0
   #           timeInterval: 1m
 
-  ## Number of replicas for the Grafana deployment
   replicas: 1
-
-  ## Deployment strategy for the Grafana deployment
   deploymentStrategy: RollingUpdate
-
-  ## Readiness probe for the Grafana deployment
   readinessProbe:
     httpGet:
       path: /api/health
       port: 3000
-
-  ## Liveness probe for the Grafana deployment
   livenessProbe:
     httpGet:
       path: /api/health
@@ -3002,24 +2082,12 @@ grafana:
     initialDelaySeconds: 60
     timeoutSeconds: 30
     failureThreshold: 10
-
-  ## Container image settings for the Grafana deployment
   image:
-    repository: cgr.dev/chainguard/grafana
-    tag: latest
+    repository: grafana/grafana
+    tag: 11.6.0
     pullPolicy: IfNotPresent
-
-    ## Optionally specify an array of imagePullSecrets.
-    ## Secrets must be manually created in the namespace.
     # pullSecrets:
-    #   - myRegistrKeySecretName
-
-  ## Pod-level security context for the Grafana deployment. Recommended let global defaults take effect.
   securityContext: {}
-    # runAsUser: 472
-    # fsGroup: 472
-
-  ## PriorityClassName for the Grafana deployment
   priorityClassName: ""
 
   ## Container image settings for Grafana initContainer used to download dashboards. Will only be used when dashboards are present.
@@ -3027,59 +2095,17 @@ grafana:
     repository: curlimages/curl
     tag: latest
     pullPolicy: IfNotPresent
-
-  ## Pod Annotations for the Grafana deployment
   podAnnotations: {}
-
-  ## Deployment annotations for the Grafana deployment
   annotations: {}
-
-  ## Expose the Grafana service to be accessed from outside the cluster (LoadBalancer service).
-  ## or access it from within the cluster (ClusterIP service). Set the service type and the port to serve it.
   service:
     type: ClusterIP
     port: 80
     annotations: {}
     labels: {}
-
-  ##  This template is not needed and is not supported.
-  ##  It is here for backwards compatibility.
-  ##  Kubecost exposes grafana by default with the
-  ##  top level ingress template under /grafana/
-  ingress:
-    enabled: false
-    annotations: {}
-      # kubernetes.io/ingress.class: nginx
-      # kubernetes.io/tls-acme: "true"
-    labels: {}
-    path: /
-    pathType: Prefix
-    hosts:
-      - chart-example.local
-    tls: []
-    #  - secretName: chart-example-tls
-    #    hosts:
-    #      - chart-example.local
-
-  ## Resource requests and limits for the Grafana deployment
   resources: {}
-  #  limits:
-  #    cpu: 100m
-  #    memory: 128Mi
-  #  requests:
-  #    cpu: 100m
-  #    memory: 128Mi
-
-  ## Node labels for pod assignment of the Grafana deployment
   nodeSelector: {}
-
-  ## Tolerations for pod assignment of the Grafana deployment
   tolerations: []
-
-  ## Affinity for pod assignment of the Grafana deployment
   affinity: {}
-
-  ## Enable persistence using Persistent Volume Claims of the Grafana deployment
   persistence:
     enabled: false
     # storageClassName: default
@@ -3089,121 +2115,22 @@ grafana:
     # annotations: {}
     # subPath: ""
     # existingClaim:
-
-  ## Admin user for Grafana
   adminUser: admin
-
-  ## Admin password for Grafana
   adminPassword: strongpassword
-
-  ## Use an alternate scheduler for the Grafana deployment
   # schedulerName:
-
-  ## Extra environment variables that will be passed onto Grafana deployment pods
   env: {}
-
-  ## The name of a secret for Grafana in the same Kubernetes namespace which contain values to be added to the environment
-  ## This can be useful for auth tokens, etc
   envFromSecret: ""
-
-  ## Additional Grafana server secret mounts
-  ## Defines additional mounts with secrets. Secrets must be manually created in the namespace.
   extraSecretMounts: []
-    # - name: secret-files
-    #   mountPath: /etc/secrets
-    #   secretName: grafana-secret-files
-    #   readOnly: true
-
-  ## List of Grafana plugins
   plugins: []
-    # - digrich-bubblechart-panel
-    # - grafana-clock-panel
-
-  ## Grafana dashboard providers
-  ## ref: http://docs.grafana.org/administration/provisioning/#dashboards
-  ##
-  ## `path` must be /var/lib/grafana/dashboards/<provider_name>
-  ##
   dashboardProviders: {}
-  #  dashboardproviders.yaml:
-  #    apiVersion: 1
-  #    providers:
-  #    - name: 'default'
-  #      orgId: 1
-  #     folder: ''
-  #      type: file
-  #      disableDeletion: false
-  #      editable: true
-  #      options:
-  #        path: /var/lib/grafana/dashboards/default
-
-  ## Configure Grafana dashboard to import
-  ## NOTE: To use dashboards you must also enable/configure dashboardProviders
-  ## ref: https://grafana.com/dashboards
-  ##
-  ## dashboards per provider, use provider name as key.
-  ##
   dashboards: {}
-  #  default:
-  #    prometheus-stats:
-  #      gnetId: 3662
-  #      revision: 2
-  #      datasource: Prometheus
-
-  ## Reference to external Grafana ConfigMap per provider. Use provider name as key and ConfiMap name as value.
-  ## A provider dashboards must be defined either by external ConfigMaps or in values.yaml, not in both.
-  ## ConfigMap data example:
-  ##
-  ## data:
-  ##   example-dashboard.json: |
-  ##     RAW_JSON
-  ##
   dashboardsConfigMaps: {}
-  #  default: ""
-
-  ## LDAP Authentication for Grafana can be enabled with the following values on grafana.ini
-  ## NOTE: Grafana will fail to start if the value for ldap.toml is invalid
-    # auth.ldap:
-    #   enabled: true
-    #   allow_sign_up: true
-    #   config_file: /etc/grafana/ldap.toml
-
-  ## Grafana's LDAP configuration
-  ## Templated by the template in _helpers.tpl
-  ## NOTE: To enable the grafana.ini must be configured with auth.ldap.enabled
-  ## ref: http://docs.grafana.org/installation/configuration/#auth-ldap
-  ## ref: http://docs.grafana.org/installation/ldap/#configuration
-  ldap:
-    # `existingSecret` is a reference to an existing secret containing the ldap configuration
-    # for Grafana in a key `ldap-toml`.
-    existingSecret: ""
-    # `config` is the content of `ldap.toml` that will be stored in the created secret
-    config: ""
-    # config: |-
-    #   verbose_logging = true
-
-    #   [[servers]]
-    #   host = "my-ldap-server"
-    #   port = 636
-    #   use_ssl = true
-    #   start_tls = false
-    #   ssl_skip_verify = false
-    #   bind_dn = "uid=%s,ou=users,dc=myorg,dc=com"
-
-  ## Grafana's SMTP configuration
-  ## NOTE: To enable, grafana.ini must be configured with smtp.enabled
-  ## ref: http://docs.grafana.org/installation/configuration/#smtp
-  smtp:
-    # `existingSecret` is a reference to an existing secret containing the smtp configuration
-    # for Grafana in keys `user` and `password`.
-    existingSecret: ""
-
   ## Grafana sidecars that collect the configmaps with specified label and stores the included files them into the respective folders
   ## Requires at least Grafana 5 to work and can't be used together with parameters dashboardProviders, datasources and dashboards
   sidecar:
     image:
-      repository: cgr.dev/chainguard/k8s-sidecar
-      tag: latest
+      repository: ghcr.io/kiwigrid/k8s-sidecar
+      tag: 1.30.3
       pullPolicy: IfNotPresent
     resources: {}
     dashboards:
@@ -3221,7 +2148,6 @@ grafana:
       error_throttle_sleep: 0
       # label that the configmaps with datasources are marked with
       label: grafana_datasource
-
   ## Grafana's primary configuration
   ## NOTE: values in map will be converted to ini format
   ## ref: http://docs.grafana.org/installation/configuration/
@@ -3251,23 +2177,17 @@ grafana:
 serviceAccount:
   create: true  # Set this to false if you're bringing your own service account.
   annotations: {}
-  # name: kc-test
 
 awsstore:
   useAwsStore: false
-  imageNameAndVersion: gcr.io/kubecost1/awsstore:latest  # Name and version of the container image for AWSStore.
+  imageNameAndVersion: gcr.io/kubecost1/awsstore:latest
   createServiceAccount: false
-  ## PriorityClassName
-  ## Ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/#priorityclass
   priorityClassName: ""
-  # Use a custom nodeSelector for AWSStore.
   nodeSelector: {}
-    # kubernetes.io/arch: amd64
-  ## Annotations for the AWSStore ServiceAccount.
   annotations: {}
 
 ## Federated ETL Architecture
-## Ref: https://docs.kubecost.com/install-and-configure/install/multi-cluster/federated-etl
+## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-etl-federation
 ##
 federatedETL:
 
@@ -3310,7 +2230,7 @@ costEventsAudit:
 
 ## Disable updates to kubecost from the frontend UI and via POST request
 ## This feature is considered beta, entrprise users should use teams:
-## https://docs.kubecost.com/using-kubecost/navigating-the-kubecost-ui/teams
+## https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=ui-teams
 # readonly: false
 
 # # These configs can also be set from the Settings page in the Kubecost product
@@ -3326,7 +2246,7 @@ costEventsAudit:
 #       # Optional authentication credentials - only basic auth is currently supported.
 #       auth:
 #         type: basic
-#         # Secret name should be a secret formatted based on: https://github.com/kubecost/docs/blob/main/ingress-examples.md
+#         # Secret name should be a secret formatted based on: https://github.com/kubecost/poc-common-configurations/tree/main/ingress-examples
 #         secretName: cluster-a-auth
 #         # Or pass auth directly as base64 encoded user:pass
 #         data: YWRtaW46YWRtaW4=
@@ -3341,7 +2261,7 @@ costEventsAudit:
 #   # Kubecost considers there to be 730 hours in a month. Also note, that these
 #   # configurations will have no effect on metrics emitted such as
 #   # `node_ram_hourly_cost` or `node_cpu_hourly_cost`.
-#   # Ref: https://docs.kubecost.com/install-and-configure/install/provider-installations/air-gapped
+#   # Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=installations-installing-in-air-gapped-environments
 #   customPricesEnabled: false
 #   defaultModelPricing:
 #     enabled: true
@@ -3364,8 +2284,8 @@ costEventsAudit:
 #   gpuLabelValue: true
 #   alibabaServiceKeyName: ""
 #   alibabaServiceKeyPassword: ""
-#   awsServiceKeyName: ACCESSKEYID
-#   awsServiceKeyPassword:  fakepassword # Only use if your values.yaml are stored encrypted. Otherwise provide an existing secret via serviceKeySecretName
+#   awsServiceKeyName: ""
+#   awsServiceKeyPassword: ""
 #   awsSpotDataRegion: us-east-1
 #   awsSpotDataBucket: spot-data-feed-s3-bucket
 #   awsSpotDataPrefix: dev
@@ -3453,9 +2373,29 @@ costEventsAudit:
 #   hideSpotCommander: false
 #   hideUnclaimedVolumes: false
 #   hideCloudIntegrationsUI: false
-#   hideBellIcon: false
+#   hideBellIcon: true # deprecated in v2.7. default is true, which hides the bell icon in the top right corner of the UI. The new diagnostics is top level in left nav. Change to false to restore the bell icon.
 #   hideTeams: false
+#   savingsProfiles: # Define custom profiles used in the Right-Size Container Request savings card. Supported parameters are explained in https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=apis-container-request-right-sizing-recommendation-api.
+#     requestSizing:
+#     - name: "custom1"
+#       algorithmCPU: "max"
+#       algorithmRAM: "max"
+#       targetUtilizationCPU: 0.80
+#       targetUtilizationRAM: 0.80
+#       minRecCPUMillicores: 10
+#       minRecRAMBytes: 20971520
+#     - name: "custom2"
+#       algorithmCPU: "quantileOfAverages"
+#       algorithmRAM: "quantileOfAverages"
+#       quantileCPU: 0.95
+#       quantileRAM: 0.95
+#       targetUtilizationCPU: 0.50
+#       targetUtilizationRAM: 0.50
 #   savingsRecommendationsAllowLists: # Define select list of instance types to be evaluated in computing Savings Recommendations
+#     AWS: []
+#     GCP: []
+#     Azure: []
+#   savingsRecommendationsNodegroupCustomLabels: # Define select list of labels to be used to identify node groups
 #     AWS: []
 #     GCP: []
 #     Azure: []
@@ -3545,3 +2485,7 @@ extraObjects: []
 #             host: kubecost.kubecost.svc.cluster.local
 #             port:
 #               number: 80
+
+# -- Optional override for the image used for the basic health test container
+# basicHealth:
+#   fullImageName: alpine/k8s:1.26.9

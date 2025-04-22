@@ -12,8 +12,11 @@ metadata:
     {{- if and .Values.kubecostDeployment .Values.kubecostDeployment.labels }}
     {{- toYaml .Values.kubecostDeployment.labels | nindent 4 }}
     {{- end }}
-  {{- if and .Values.kubecostDeployment .Values.kubecostDeployment.annotations }}
   annotations:
+  {{- with .Values.global.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- if and .Values.kubecostDeployment .Values.kubecostDeployment.annotations }}
     {{- toYaml .Values.kubecostDeployment.annotations | nindent 4 }}
   {{- end }}
 spec:
@@ -64,6 +67,8 @@ spec:
       serviceAccountName: {{ template "cost-analyzer.serviceAccountName" . }}
       volumes:
         - name: tmp
+          emptyDir: {}
+        - name: log
           emptyDir: {}
         - name: nginx-conf
           configMap:
@@ -142,6 +147,8 @@ spec:
               mountPath: /var/lib/nginx/tmp
             - name: tmp
               mountPath: /var/run
+            - name: log
+              mountPath: /var/log/nginx
             - name: nginx-conf
               mountPath: /etc/nginx/conf.d/
             {{- if .Values.global.containerSecuritycontext }}
@@ -187,7 +194,9 @@ spec:
           {{- end }}
     {{- if .Values.imagePullSecrets }}
       imagePullSecrets:
-      {{ toYaml .Values.imagePullSecrets | indent 2 }}
+      {{- range $.Values.imagePullSecrets }}
+        - name: {{ .name }}
+      {{- end }}
     {{- end }}
       {{- if .Values.priority }}
       {{- if .Values.priority.enabled }}

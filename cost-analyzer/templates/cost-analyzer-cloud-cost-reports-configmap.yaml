@@ -6,7 +6,7 @@ metadata:
   name: {{default "cloud-cost-report-configs" .Values.cloudCostReportConfigmapName }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{ include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
 data:
   cloud-cost-reports.json: '{{ toJson .Values.global.cloudCostReports.reports }}'
 {{- end -}}

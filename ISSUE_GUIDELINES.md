@@ -1,16 +1,16 @@
 # Issue Guidelines
 
-Issues filed in this repository are specific to the Kubecost Helm chart only. If your issue pertains to the Kubecost application and not the Helm chart, follow the guidance below.
+Issues filed in this repository are specific to the Kubecost Helm chart only. If your issue pertains to the Kubecost application and not the Helm chart, please raise a request at https://support.kubecost.com.
 
 To help route you to the best location, see some examples of feature requests and bug reports [below](#examples-of-helm-requests).
 
 ## Kubecost Feature Requests
 
-For all feature requests to Kubecost, please create an enhancement request in the [feature requests and bugs repository](https://github.com/kubecost/features-bugs).
+For all feature requests to Kubecost, please create an enhancement request at https://support.kubecost.com.
 
 ## Kubecost Bug Reports
 
-Bug reports for the Kubecost application stack should be directed to the [feature requests and bugs repository](https://github.com/kubecost/features-bugs).
+Bug reports for the Kubecost application stack should be directed to https://support.kubecost.com.
 
 ## Examples of Helm Requests
 

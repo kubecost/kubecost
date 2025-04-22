@@ -5,13 +5,13 @@ metadata:
   name: {{ template "aggregator.serviceName" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-{{ include "aggregator.commonLabels" . | nindent 4 }}
-{{- if .Values.kubecostAggregator.service.labels }}
+    {{- include "aggregator.commonLabels" . | nindent 4 }}
+    {{- if .Values.kubecostAggregator.service.labels }}
     {{- toYaml .Values.kubecostAggregator.service.labels | nindent 4 }}
-{{- end }}
+    {{- end }}
 spec:
   selector:
-{{ include "aggregator.selectorLabels" . | nindent 4 }}
+    {{- include "aggregator.selectorLabels" . | nindent 4 }}
   type: "ClusterIP"
   ports:
     - name: tcp-api

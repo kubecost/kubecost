@@ -93,7 +93,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P0C970EB638C812D0"
+            "uid": "${datasource}"
           },
           "exemplar": false,
           "expr": "sum(\n  avg(container_cpu_allocation) by (pod,node)\n\n  * on (node) group_left()\n  avg(avg_over_time(node_cpu_hourly_cost[10m])) by (node)\n\n  * on (pod) group_left()\n  label_replace(\n    max(kube_pod_labels{label_$label=~\"$label_value\"}) by (pod),\n    \"pod_name\",\n    \"$1\", \n    \"pod\", \n    \"(.+)\"\n  )\n) * 730",
@@ -177,7 +177,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P0C970EB638C812D0"
+            "uid": "${datasource}"
           },
           "exemplar": false,
           "expr": "sum(\n  avg(container_memory_allocation_bytes) by (pod,node) / 1024 / 1024 / 1024\n\n  * on (node) group_left()\n  avg(avg_over_time(node_ram_hourly_cost[10m])) by (node)\n\n  * on (pod) group_left()\n  label_replace(\n    max(kube_pod_labels{label_$label=~\"$label_value\"}) by (pod),\n    \"pod_name\",\n    \"$1\", \n    \"pod\", \n    \"(.+)\"\n  )\n) * 730",
@@ -261,7 +261,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P0C970EB638C812D0"
+            "uid": "${datasource}"
           },
           "exemplar": false,
           "expr": "sum(\n sum(kube_persistentvolumeclaim_info{storageclass!=\".*ssd.*\"}) by (persistentvolumeclaim, storageclass)\n * on (persistentvolumeclaim) group_right(storageclass)\n sum(kube_persistentvolumeclaim_resource_requests_storage_bytes) by (persistentvolumeclaim)\n * on (persistentvolumeclaim) group_left(label_app)\n max(kube_persistentvolumeclaim_labels{label_$label=~\"$label_value\"}) by (persistentvolumeclaim) or up * 0\n) / 1024 / 1024 /1024 * .04 \n\n+\n\nsum(\n sum(kube_persistentvolumeclaim_info{storageclass=~\".*ssd.*\"}) by (persistentvolumeclaim, storageclass)\n * on (persistentvolumeclaim) group_right(storageclass)\n sum(kube_persistentvolumeclaim_resource_requests_storage_bytes) by (persistentvolumeclaim)\n * on (persistentvolumeclaim) group_left(label_app)\n max(kube_persistentvolumeclaim_labels{label_$label=~\"$label_value\"}) by (persistentvolumeclaim) or up * 0\n) / 1024 / 1024 /1024 * .17 \n",
@@ -345,7 +345,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "P0C970EB638C812D0"
+            "uid": "${datasource}"
           },
           "exemplar": false,
           "expr": "# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ CPU ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nsum(\n  avg(container_cpu_allocation) by (pod,node)\n\n  * on (node) group_left()\n  avg(avg_over_time(node_cpu_hourly_cost[10m])) by (node)\n\n  * on (pod) group_left()\n  label_replace(\n    max(kube_pod_labels{label_$label=~\"$label_value\"}) by (pod),\n    \"pod_name\",\n    \"$1\", \n    \"pod\", \n    \"(.+)\"\n  )\n) * 730\n\n#END CPU\n+\n\n# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Memory ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nsum(\n  avg(container_memory_allocation_bytes) by (pod,node) / 1024 / 1024 / 1024\n\n  * on (node) group_left()\n  avg(avg_over_time(node_ram_hourly_cost[10m])) by (node)\n\n  * on (pod) group_left()\n  label_replace(\n    max(kube_pod_labels{label_$label=~\"$label_value\"}) by (pod),\n    \"pod_name\",\n    \"$1\", \n    \"pod\", \n    \"(.+)\"\n  )\n) * 730\n\n# END MEMORY\n\n+\n\n# ~~~~~~~~~~~~~~~~~~~~~~~~~~~ STORAGE ~~~~~~~~~~~~~~~~~~~~~~~~~\n\nsum(\n sum(kube_persistentvolumeclaim_info{storageclass!=\".*ssd.*\"}) by (persistentvolumeclaim, storageclass)\n * on (persistentvolumeclaim) group_right(storageclass)\n sum(kube_persistentvolumeclaim_resource_requests_storage_bytes) by (persistentvolumeclaim)\n * on (persistentvolumeclaim) group_left(label_app)\n max(kube_persistentvolumeclaim_labels{label_$label=~\"$label_value\"}) by (persistentvolumeclaim) or up * 0\n) / 1024 / 1024 /1024 * .04 \n\n+\n\nsum(\n sum(kube_persistentvolumeclaim_info{storageclass=~\".*ssd.*\"}) by (persistentvolumeclaim, storageclass)\n * on (persistentvolumeclaim) group_right(storageclass)\n sum(kube_persistentvolumeclaim_resource_requests_storage_bytes) by (persistentvolumeclaim)\n * on (persistentvolumeclaim) group_left(label_app)\n max(kube_persistentvolumeclaim_labels{label_$label=~\"$label_value\"}) by (persistentvolumeclaim) or up * 0\n) / 1024 / 1024 /1024 * .17 \n\n\n# END STORAGE\n",
@@ -1140,7 +1140,7 @@
   },
   "timezone": "",
   "title": "Label costs & utilization",
-  "uid": "lWMhIA-ik",
+  "uid": "at-label-costs-and-utilization",
   "version": 1,
   "weekStart": ""
 }

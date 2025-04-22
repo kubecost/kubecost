@@ -9,6 +9,13 @@ metadata:
     {{- with .Values.global.additionalLabels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
+  annotations:
+  {{- with .Values.global.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.forecasting.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   replicas: 1
   selector:
@@ -48,6 +55,8 @@ spec:
         - name: forecasting
           {{- if .Values.forecasting.fullImageName }}
           image: {{ .Values.forecasting.fullImageName }}
+          {{- else if .Values.forecasting.image }}
+          image: {{ .Values.forecasting.image.repository }}:{{ .Values.forecasting.image.tag }}
           {{- else }}
           image: gcr.io/kubecost1/kubecost-modeling:prod-{{ $.Chart.AppVersion }}
           {{ end }}
@@ -108,7 +117,9 @@ spec:
           {{- end }}
       {{- if .Values.imagePullSecrets }}
       imagePullSecrets:
-      {{ toYaml .Values.imagePullSecrets | indent 2 }}
+        {{- range $.Values.imagePullSecrets }}
+        - name: {{ .name }}
+        {{- end }}
       {{- end }}
       {{- if .Values.forecasting.priority }}
       {{- if .Values.forecasting.priority.enabled }}

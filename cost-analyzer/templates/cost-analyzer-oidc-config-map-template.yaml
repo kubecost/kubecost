@@ -6,7 +6,7 @@ metadata:
   name: {{ template "cost-analyzer.fullname" . }}-oidc
   namespace: {{ .Release.Namespace }}
   labels:
-    {{ include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
 data:
 {{- $root := . }}
     oidc.json: |-
