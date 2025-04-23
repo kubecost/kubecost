@@ -698,19 +698,6 @@ kubecostModel:
     # nodeLabels:
     #   enabled: true
 
-  # Enables or disables the ContainerStats pipeline, used for quantile-based
-  # queries like for request sizing recommendations.
-  # ContainerStats provides support for quantile-based request right-sizing
-  # recommendations.
-  #
-  # It is disabled by default to avoid problems in extremely high-scale Thanos
-  # environments. If you would like to try quantile-based request-sizing
-  # recommendations, enable this! If you are in a high-scale environment,
-  # please monitor Kubecost logs, Thanos query logs, and Thanos load closely.
-  # We hope to make major improvements at scale here soon!
-  #
-  containerStatsEnabled: true  # enabled by default as of v2.2.0
-
   # max number of concurrent Prometheus queries
   maxQueryConcurrency: 5
   resources:
