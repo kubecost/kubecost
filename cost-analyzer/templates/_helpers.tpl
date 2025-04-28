@@ -1624,6 +1624,7 @@ for more information
   "kubecost-saml-secret-template.yaml"
   "mimir-proxy-configmap-template.yaml"
   "savings-recommendations-allowlists-config-map-template.yaml"
+  "kubecost-cluster-controller-template.yaml"
 -}}
 {{- $checksum := "" -}}
 {{- range $files -}}

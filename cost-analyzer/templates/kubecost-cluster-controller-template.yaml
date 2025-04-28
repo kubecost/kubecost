@@ -202,6 +202,7 @@ metadata:
   {{- with .Values.clusterController.annotations }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
+    checksum/configs: {{ include "configsChecksum" . }}
 spec:
   strategy:
     rollingUpdate:
