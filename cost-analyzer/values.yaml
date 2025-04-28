@@ -555,7 +555,7 @@ kubecostFrontend:
     server:
       - "'Access-Control-Allow-Origin' '*' always;"
       - "'Access-Control-Allow-Methods' 'GET, PUT, POST, DELETE, OPTIONS' always;"
-      - Content-Security-Policy "default-src 'self' 'unsafe-inline' api.userway.org cdn.userway.org api-js.mixpanel.com keyper.kubecost.com; frame-ancestors 'none'; font-src 'self' data:;";
+      - "Content-Security-Policy \"default-src 'self' 'unsafe-inline' http: https: ws: data:; frame-ancestors 'none';\";"
       - Cache-Control "must-revalidate";
 
 # Kubecost Metrics deploys a separate pod which will emit kubernetes specific metrics required
@@ -2084,7 +2084,7 @@ grafana:
     failureThreshold: 10
   image:
     repository: grafana/grafana
-    tag: 11.6.0
+    tag: 11.6.1
     pullPolicy: IfNotPresent
     # pullSecrets:
   securityContext: {}
