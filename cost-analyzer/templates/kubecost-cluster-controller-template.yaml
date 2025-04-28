@@ -202,6 +202,7 @@ metadata:
   {{- with .Values.clusterController.annotations }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
+    checksum/configs: {{ include "configsChecksum" . }}
 spec:
   strategy:
     rollingUpdate:
@@ -358,17 +359,4 @@ spec:
     targetPort: 9731
   selector:
     app: {{ template "kubecost.clusterControllerName" . }}
----
-{{- if and .Values.clusterController.createClusterControllerSecret .Values.clusterController.kubecostAPIKey }}
-apiVersion: v1
-kind: Secret
-type: Opaque
-metadata:
-  name: {{ .Values.clusterController.secretName }}
-  namespace: {{ .Release.Namespace }}
-  labels:
-    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
-data:
-  kubecostAPIKey: {{ .Values.clusterController.kubecostAPIKey | b64enc }}
-{{- end }}
 {{- end }}
