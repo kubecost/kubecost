@@ -37,7 +37,7 @@ global:
     prometheusServerEndpoint: http://localhost:8085/
     gmpProxy:
       enabled: false
-      image: gke.gcr.io/prometheus-engine/frontend:v0.15.3-gke.0
+      image: gke.gcr.io/prometheus-engine/frontend:v0.15.1-gke.0
       imagePullPolicy: IfNotPresent
       name: gmp-proxy
       port: 8085
@@ -698,6 +698,19 @@ kubecostModel:
     # nodeLabels:
     #   enabled: true
 
+  # Enables or disables the ContainerStats pipeline, used for quantile-based
+  # queries like for request sizing recommendations.
+  # ContainerStats provides support for quantile-based request right-sizing
+  # recommendations.
+  #
+  # It is disabled by default to avoid problems in extremely high-scale Thanos
+  # environments. If you would like to try quantile-based request-sizing
+  # recommendations, enable this! If you are in a high-scale environment,
+  # please monitor Kubecost logs, Thanos query logs, and Thanos load closely.
+  # We hope to make major improvements at scale here soon!
+  #
+  containerStatsEnabled: true  # enabled by default as of v2.2.0
+
   # max number of concurrent Prometheus queries
   maxQueryConcurrency: 5
   resources:
@@ -897,7 +910,7 @@ prometheus:
       rollingUpdate: null
     image:
       repository: quay.io/prometheus/prometheus
-      tag: v3.3.0
+      tag: v3.2.1
       pullPolicy: IfNotPresent
     priorityClassName: ""
     prefixURL: ""
@@ -1132,7 +1145,7 @@ prometheus:
       name: configmap-reload
       image:
         repository: quay.io/prometheus-operator/prometheus-config-reloader
-        tag: v0.82.0
+        tag: v0.81.0
         pullPolicy: IfNotPresent
       extraArgs: {}
       extraVolumeDirs: []
@@ -1145,7 +1158,7 @@ prometheus:
       name: configmap-reload
       image:
         repository: quay.io/prometheus-operator/prometheus-config-reloader
-        tag: v0.82.0
+        tag: v0.81.0
         pullPolicy: IfNotPresent
       extraArgs: {}
       extraVolumeDirs: []
@@ -1167,7 +1180,7 @@ prometheus:
     name: node-exporter
     image:
       repository: prom/node-exporter
-      tag: v1.9.1
+      tag: v1.9.0
       pullPolicy: IfNotPresent
     priorityClassName: ""
     updateStrategy:
@@ -1426,7 +1439,7 @@ networkCosts:
   enabled: false
   image:
     repository: gcr.io/kubecost1/kubecost-network-costs
-    tag: v0.17.10
+    tag: v0.17.9
   imagePullPolicy: IfNotPresent
   updateStrategy:
     type: RollingUpdate
@@ -1656,13 +1669,6 @@ kubecostAggregator:
   # default: 0GB is no limit
   dbMemoryLimit: 0GB
   dbWriteMemoryLimit: 0GB
-
-  # Enable the use of the v3 database (ClickHouse) as the database for the aggregator.
-  # the existing database will be migrated if it exists
-  # This is required to be 'true' to use the enterpriseCustomPricing feature prior to kubecost 3.0.0
-  # this will not be optional starting in kubecost 3.0.0 and will be removed
-  # default: false
-  useDBv3: false
 
   # How much data to ingest from the federated store bucket, and how much data
   # to keep in the DB before rolling the data off.
@@ -2084,7 +2090,7 @@ grafana:
     failureThreshold: 10
   image:
     repository: grafana/grafana
-    tag: 11.6.0
+    tag: 11.5.2
     pullPolicy: IfNotPresent
     # pullSecrets:
   securityContext: {}

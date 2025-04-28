@@ -1075,10 +1075,6 @@ Begin Kubecost 2.0 templates
     - name: NUM_DB_COPY_CHUNKS
       value: {{ .Values.kubecostAggregator.numDBCopyPartitions | quote }}
     {{- end }}
-    {{- if .Values.kubecostAggregator.useDBv3 }}
-    - name: CLICKHOUSE_ENABLED
-      value: "true"
-    {{- end }}
     {{- if .Values.kubecostAggregator.jaeger.enabled }}
     - name: TRACING_URL
       value: "http://localhost:14268/api/traces"
@@ -1624,6 +1620,7 @@ for more information
   "kubecost-saml-secret-template.yaml"
   "mimir-proxy-configmap-template.yaml"
   "savings-recommendations-allowlists-config-map-template.yaml"
+  "kubecost-cluster-controller-secret-template.yaml"
 -}}
 {{- $checksum := "" -}}
 {{- range $files -}}

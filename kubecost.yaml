@@ -23358,6 +23358,8 @@ spec:
               value: "true"
             - name: ETL_ASSET_RECONCILIATION_ENABLED
               value: "true"
+            - name: CONTAINER_STATS_ENABLED
+              value: "true"
             - name: RECONCILE_NETWORK
               value: "true"
             - name: KUBECOST_METRICS_POD_ENABLED
