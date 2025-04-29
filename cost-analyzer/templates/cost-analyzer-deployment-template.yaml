@@ -21,7 +21,7 @@ metadata:
   {{- end }}
 spec:
 {{- if .Values.kubecostDeployment }}
-  replicas: {{ .Values.kubecostDeployment.replicas | default 1 }}
+  replicas: {{ .Values.kubecostDeployment.replicas }}
 {{- end }}
   selector:
     matchLabels:
@@ -961,8 +961,6 @@ spec:
             {{- end }}
             {{- end }}
             {{- end }}
-            - name: CONTAINER_STATS_ENABLED
-              value: {{ (quote .Values.kubecostModel.containerStatsEnabled) | default (quote false) }}
             {{- if .Values.systemProxy.enabled }}
             - name: HTTP_PROXY
               value: {{ .Values.systemProxy.httpProxyUrl }}

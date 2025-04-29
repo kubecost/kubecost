@@ -37,7 +37,7 @@ global:
     prometheusServerEndpoint: http://localhost:8085/
     gmpProxy:
       enabled: false
-      image: gke.gcr.io/prometheus-engine/frontend:v0.15.1-gke.0
+      image: gke.gcr.io/prometheus-engine/frontend:v0.15.3-gke.0
       imagePullPolicy: IfNotPresent
       name: gmp-proxy
       port: 8085
@@ -576,7 +576,7 @@ kubecostFrontend:
     server:
       - "'Access-Control-Allow-Origin' '*' always;"
       - "'Access-Control-Allow-Methods' 'GET, PUT, POST, DELETE, OPTIONS' always;"
-      - Content-Security-Policy "default-src 'self' 'unsafe-inline' api.userway.org cdn.userway.org api-js.mixpanel.com keyper.kubecost.com; frame-ancestors 'none'; font-src 'self' data:;";
+      - "Content-Security-Policy \"default-src 'self' 'unsafe-inline' http: https: ws: data:; frame-ancestors 'none';\";"
       - Cache-Control "must-revalidate";
 
 # Kubecost Metrics deploys a separate pod which will emit kubernetes specific metrics required
@@ -718,19 +718,6 @@ kubecostModel:
     # the node labels of the nodes they are running on.
     # nodeLabels:
     #   enabled: true
-
-  # Enables or disables the ContainerStats pipeline, used for quantile-based
-  # queries like for request sizing recommendations.
-  # ContainerStats provides support for quantile-based request right-sizing
-  # recommendations.
-  #
-  # It is disabled by default to avoid problems in extremely high-scale Thanos
-  # environments. If you would like to try quantile-based request-sizing
-  # recommendations, enable this! If you are in a high-scale environment,
-  # please monitor Kubecost logs, Thanos query logs, and Thanos load closely.
-  # We hope to make major improvements at scale here soon!
-  #
-  containerStatsEnabled: true  # enabled by default as of v2.2.0
 
   # max number of concurrent Prometheus queries
   maxQueryConcurrency: 5
@@ -931,7 +918,7 @@ prometheus:
       rollingUpdate: null
     image:
       repository: quay.io/prometheus/prometheus
-      tag: v3.2.1
+      tag: v3.3.0
       pullPolicy: IfNotPresent
     priorityClassName: ""
     prefixURL: ""
@@ -1166,7 +1153,7 @@ prometheus:
       name: configmap-reload
       image:
         repository: quay.io/prometheus-operator/prometheus-config-reloader
-        tag: v0.81.0
+        tag: v0.82.0
         pullPolicy: IfNotPresent
       extraArgs: {}
       extraVolumeDirs: []
@@ -1179,7 +1166,7 @@ prometheus:
       name: configmap-reload
       image:
         repository: quay.io/prometheus-operator/prometheus-config-reloader
-        tag: v0.81.0
+        tag: v0.82.0
         pullPolicy: IfNotPresent
       extraArgs: {}
       extraVolumeDirs: []
@@ -1201,7 +1188,7 @@ prometheus:
     name: node-exporter
     image:
       repository: prom/node-exporter
-      tag: v1.9.0
+      tag: v1.9.1
       pullPolicy: IfNotPresent
     priorityClassName: ""
     updateStrategy:
@@ -1584,7 +1571,7 @@ forecasting:
   fullImageName: ""
   image:
     repository: gcr.io/kubecost1/kubecost-modeling
-    tag: v0.1.24
+    tag: v0.1.26
   imagePullPolicy: IfNotPresent
 
   # Resource specification block for the forecasting container.
@@ -1902,7 +1889,7 @@ clusterController:
   enabled: false
   image:
     repository: gcr.io/kubecost1/cluster-controller
-    tag: v0.16.16
+    tag: v0.16.18
   imagePullPolicy: IfNotPresent
   extraEnv: []
   # - name: EXTRA_ENV_VAR
@@ -2118,7 +2105,7 @@ grafana:
     failureThreshold: 10
   image:
     repository: grafana/grafana
-    tag: 11.6.0
+    tag: 11.6.1
     pullPolicy: IfNotPresent
     # pullSecrets:
   securityContext: {}
