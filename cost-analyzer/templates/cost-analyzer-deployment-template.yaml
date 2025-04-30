@@ -305,6 +305,10 @@ spec:
         # Extra volume(s)
         {{- toYaml .Values.extraVolumes | nindent 8 }}
         {{- end }}
+        - name: agent-export-config
+          secret:
+           defaultMode: 420
+           secretName: agent-export-config
         - name: persistent-configs
 {{- if .Values.persistentVolume }}
 {{- if .Values.persistentVolume.enabled }}
@@ -730,6 +734,9 @@ spec:
             - name: kubecost-master-api-key
               mountPath: /var/configs/auth
             {{- end }}
+            - name: agent-export-config
+              mountPath: /var/configs/agent/export
+              readOnly: true
           env:
             - name: CONTAINER_IMAGE_TAG
               value: {{ include "cost-model.imagetag" . }}
@@ -1128,6 +1135,12 @@ spec:
             - name: DIAGNOSTICS_COLLECT_HELM_VALUES
               value: {{ quote .Values.diagnostics.collectHelmValues }}
             {{- end }}
+            - name: EXPORT_BUCKET_CONFIG_FILE
+              value: "/var/configs/agent/export/bucket-config.yaml"
+            - name: MINUTE_METRICS_ENABLED
+              value: true
+            - name: OPENCOST_SOURCE_ENABLED
+              value: true
         {{- if and .Values.kubecostFrontend.enabled (not .Values.federatedETL.agentOnly) (not (eq (include "frontend.deployMethod" .) "haMode")) }}
         {{- if .Values.kubecostFrontend }}
         {{- if .Values.kubecostFrontend.fullImageName }}
