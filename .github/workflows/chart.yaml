@@ -1,4 +1,4 @@
-name: Chart build
+name: Chart build and test
 
 on:
   workflow_dispatch: {}
@@ -238,8 +238,8 @@ jobs:
         working-directory: ./cost-analyzer
         run: |
           helm install --wait --wait-for-jobs kubecost . -n kubecost -f values-eks-cost-monitoring.yaml \
-          --set persistentVolume.storageClass=gp2 \
-          --set prometheus.server.persistentVolume.storageClass=gp2
+          --set persistentVolume.enabled=false \
+          --set prometheus.server.persistentVolume.enabled=false
         # run: ct install --namespace kubecost --chart-dirs=cost-analyzer/ --charts cost-analyzer/
       - name: Wait for ready 
         run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/name=cost-analyzer --timeout=120s
