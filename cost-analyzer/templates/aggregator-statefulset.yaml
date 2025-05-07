@@ -218,6 +218,11 @@ spec:
         - name: ssl-path
           emptyDir: {}
         {{- end }}
+        {{- if (.Values.enterpriseCustomPricing).enabled }}
+        - name: kubecost-enterprise-pricing
+          configMap:
+            name: {{ .Values.enterpriseCustomPricing.configMapName }}
+        {{- end }}
         {{- if .Values.kubecostAggregator.extraVolumes }}
         {{- toYaml .Values.kubecostAggregator.extraVolumes | nindent 8 }}
         {{- end }}
