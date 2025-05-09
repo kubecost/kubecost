@@ -1141,6 +1141,10 @@ spec:
               value: "true"
             - name: OPENCOST_SOURCE_ENABLED
               value: "true"
+            - name: PROMLESS
+              value: "false"
+            - name: CLOUDY_EMITTER_ENABLED
+              value: "false"
         {{- if and .Values.kubecostFrontend.enabled (not .Values.federatedETL.agentOnly) (not (eq (include "frontend.deployMethod" .) "haMode")) }}
         {{- if .Values.kubecostFrontend }}
         {{- if .Values.kubecostFrontend.fullImageName }}
