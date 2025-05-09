@@ -39,7 +39,10 @@ rules:
     resources:
       - configmaps
       - nodes
+      - nodes/spec
       - pods
+      - jobs
+      - cronjobs
       - events
       - services
       - resourcequotas
@@ -49,30 +52,46 @@ rules:
       - persistentvolumes
       - namespaces
       - endpoints
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - apps
-    resources:
-      - statefulsets
       - deployments
-      - daemonsets
       - replicasets
+      - daemonsets
     verbs:
       - get
       - list
       - watch
   - apiGroups:
+      - ''
+    resources:
+      - services/proxy
+      - pods/proxy
+      - nodes/proxy
+      - nodes/stats
+      - nodes/metrics
+    verbs:
+      - get
+      - list
+  - apiGroups:
+      - extensions
+      - apps
       - batch
     resources:
-      - cronjobs
+      - namespaces
+      - replicationcontrollers
+      - services
+      - nodes
+      - nodes/spec
+      - pods
       - jobs
+      - cronjobs
+      - persistentvolumes
+      - persistentvolumeclaims
+      - deployments
+      - replicasets
+      - daemonsets
     verbs:
       - get
-      - list
       - watch
+      - list
   - apiGroups:
       - autoscaling
     resources:
