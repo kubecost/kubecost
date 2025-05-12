@@ -1667,7 +1667,7 @@ data:
                 "hideCloudIntegrationsUI": "{{ default false ((.Values.kubecostProductConfigs).hideCloudIntegrationsUI) }}",
                 "hideBellIcon": "{{ default true ((.Values.kubecostProductConfigs).hideBellIcon) }}",
                 "hideTeams": "{{ default false ((.Values.kubecostProductConfigs).hideTeams) }}",
-                "DBv3Enabled": "{{ .Values.kubecostAggregator.useDBv3 }}"
+                "legacyModeEnabled": "{{ .Values.kubecostAggregator.legacyMode }}"
                 }
             ';
         }

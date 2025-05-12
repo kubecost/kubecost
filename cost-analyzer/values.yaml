@@ -1678,12 +1678,10 @@ kubecostAggregator:
   dbMemoryLimit: 0GB
   dbWriteMemoryLimit: 0GB
 
-  # Enable the use of the v3 database (ClickHouse) as the database for the aggregator.
-  # the existing database will be migrated if it exists
-  # This is required to be 'true' to use the enterpriseCustomPricing feature prior to kubecost 3.0.0
-  # this will not be optional starting in kubecost 3.0.0 and will be removed
+  # Disable the use of the v3 database (ClickHouse) as the database for the aggregator.
+  # May require data re-ingestion
   # default: false
-  useDBv3: false
+  legacyMode: false
 
   # How much data to ingest from the federated store bucket, and how much data
   # to keep in the DB before rolling the data off.
