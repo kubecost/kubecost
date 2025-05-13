@@ -202,7 +202,6 @@ metadata:
   {{- with .Values.clusterController.annotations }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
-    checksum/configs: {{ include "configsChecksum" . }}
 spec:
   strategy:
     rollingUpdate:
@@ -222,10 +221,11 @@ spec:
         {{- if .Values.clusterController.labels }}
         {{- toYaml .Values.clusterController.labels | nindent 8 }}
         {{- end }}
-      {{- with .Values.global.podAnnotations}}
       annotations:
+      {{- with .Values.global.podAnnotations}}
         {{- toYaml . | nindent 8 }}
       {{- end }}
+        checksum/configs: {{ include "configsChecksum" . }}
     spec:
       {{- if .Values.global.platforms.openshift.enabled }}
       securityContext:
