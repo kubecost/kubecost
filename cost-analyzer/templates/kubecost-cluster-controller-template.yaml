@@ -294,7 +294,7 @@ spec:
           {{- else }}
           value: http://{{ $serviceName }}.{{ .Release.Namespace }}:{{ .Values.service.targetPort | default 9090 }}/model
           {{- end }}
-        {{- if .Values.clusterController.kubecostAPIKey }}
+        {{- if or .Values.clusterController.kubecostAPIKey (eq .Values.clusterController.createClusterControllerSecret false) }}
         - name: KUBECOST_API_KEY
           valueFrom:
             secretKeyRef:

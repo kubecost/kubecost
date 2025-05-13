@@ -1902,8 +1902,8 @@ clusterController:
   affinity: {}
   nodeSelector: {}
   primaryKubecostURL: ""  # URL for secondary clusters to connect to primary Kubecost (ex: https://kubecost.myorganization.com)
-  kubecostAPIKey: ""  # API Key for secondary clusters to authenticate with primary
-  createClusterControllerSecret: true  # disable if you want to use your own secret manager
+  kubecostAPIKey: ""  # Service Account API Key to allow secondary clusters to authenticate to primary Kubecost
+  createClusterControllerSecret: true  # disable if you want to use your own secret manager. Example:kubectl create secret generic controller-secrets --from-literal=kubecostAPIKey=<your-api-key>
   secretName: controller-secrets
   actionConfigs:
     # this configures the Kubecost Cluster Turndown action
