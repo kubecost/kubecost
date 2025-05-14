@@ -181,12 +181,10 @@ jobs:
         run: |
           helm install --wait --wait-for-jobs kubecost . -n kubecost -f values-openshift.yaml \
           --set global.platforms.openshift.route.enabled=true \
-          --set global.platforms.openshift.scc.nodeExporter=true \
           --set global.platforms.openshift.scc.networkCosts=true \
           --set global.platforms.openshift.scc.clusterController=true \
           --set networkCosts.enabled=true \
-          --set clusterController.enabled=true \
-          --set prometheus.nodeExporter.enabled=true 
+          --set clusterController.enabled=true
         # run: ct install --namespace kubecost --chart-dirs=cost-analyzer/ --charts cost-analyzer/
       - name: Wait for ready 
         run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/name=cost-analyzer --timeout=120s
