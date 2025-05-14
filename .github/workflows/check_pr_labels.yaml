@@ -15,7 +15,7 @@ on:
 jobs:
   check_labels:
     name: Check labels
-    runs-on: Kubecost-Linux-Small-x86
+    runs-on: Kubecost-Linux-Small-x86 # Debugging this runner
     steps:
       - id: check-labels
         uses: mheap/github-action-required-labels@v5
