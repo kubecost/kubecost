@@ -136,7 +136,7 @@ global:
     #     # Spend Change Alert
     #     - type: spendChange         # change relative to moving avg
     #       relativeThreshold: 0.20   # Proportional change relative to baseline. Must be greater than -1 (can be negative)
-    #       window: 1d                # accepts ‘d’, ‘h’
+    #       window: 1d                # accepts 'd', 'h'
     #       baselineWindow: 30d       # previous window, offset by window
     #       aggregation: namespace
     #       filter: kubecost, default # accepts csv
@@ -722,12 +722,11 @@ kubecostModel:
   # max number of concurrent Prometheus queries
   maxQueryConcurrency: 5
   resources:
+    limits:
+      memory: 1Gi
     requests:
-      cpu: "200m"
-      memory: "55Mi"
-    # limits:
-    #   cpu: "800m"
-    #   memory: "256Mi"
+      cpu: 50m
+      memory: 100Mi
 
   readinessProbe:
     enabled: true
@@ -1721,10 +1720,13 @@ kubecostAggregator:
     storageClass: ""  # default storage class
     storageRequest: 128Gi
 
-  resources: {}
-    # requests:
-    #   cpu: 1000m
-    #   memory: 1Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
 
   readinessProbe:
     enabled: true
