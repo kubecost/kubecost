@@ -528,9 +528,11 @@ kubecostFrontend:
   # securityContext:
   #   readOnlyRootFilesystem: true
   resources:
+    limits:
+      memory: 200Mi
     requests:
-      cpu: "10m"
-      memory: "55Mi"
+      cpu: 50m
+      memory: 10Mi
   deploymentStrategy: {}
   readinessProbe:
     enabled: true
@@ -722,12 +724,11 @@ kubecostModel:
   # max number of concurrent Prometheus queries
   maxQueryConcurrency: 5
   resources:
+    limits:
+      memory: 1Gi
     requests:
-      cpu: "200m"
-      memory: "55Mi"
-    # limits:
-    #   cpu: "800m"
-    #   memory: "256Mi"
+      cpu: 50m
+      memory: 100Mi
 
   readinessProbe:
     enabled: true
@@ -1721,10 +1722,12 @@ kubecostAggregator:
     storageClass: ""  # default storage class
     storageRequest: 128Gi
 
-  resources: {}
-    # requests:
-    #   cpu: 1000m
-    #   memory: 1Gi
+  resources:
+    limits:
+      memory: 10Gi
+    requests:
+      cpu: 3000m
+      memory: 10Gi
 
   readinessProbe:
     enabled: true
