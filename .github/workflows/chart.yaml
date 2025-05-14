@@ -109,6 +109,18 @@ jobs:
       - name: Run Helm tests 
         run: helm test -n kubecost kubecost
 
+      - name: Collect cluster logs
+        if: always()
+        run: |
+          echo "=== Pod Status ==="
+          kubectl get pods -A
+          echo "=== Cost Analyzer Pod Logs ==="
+          kubectl logs -n kubecost -l app.kubernetes.io/name=cost-analyzer
+          echo "=== Cost Analyzer Pod Description ==="
+          kubectl describe pod -n kubecost -l app.kubernetes.io/name=cost-analyzer
+          echo "=== Events in kubecost namespace ==="
+          kubectl get events -n kubecost
+
       - name: Uninstall chart
         run: helm uninstall kubecost -n kubecost --no-hooks --wait
 
@@ -190,6 +202,17 @@ jobs:
         run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/name=cost-analyzer --timeout=120s
       - name: Run Helm tests 
         run: helm test -n kubecost kubecost
+      - name: Collect cluster logs
+        if: always()
+        run: |
+          echo "=== Pod Status ==="
+          kubectl get pods -A
+          echo "=== Cost Analyzer Pod Logs ==="
+          kubectl logs -n kubecost -l app.kubernetes.io/name=cost-analyzer
+          echo "=== Cost Analyzer Pod Description ==="
+          kubectl describe pod -n kubecost -l app.kubernetes.io/name=cost-analyzer
+          echo "=== Events in kubecost namespace ==="
+          kubectl get events -n kubecost
       - name: Remove Cluster
         id: remove-cluster
         uses: replicatedhq/compatibility-actions/remove-cluster@v1
@@ -243,6 +266,17 @@ jobs:
         run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/name=cost-analyzer --timeout=120s
       - name: Run Helm tests 
         run: helm test -n kubecost kubecost
+      - name: Collect cluster logs
+        if: always()
+        run: |
+          echo "=== Pod Status ==="
+          kubectl get pods -A
+          echo "=== Cost Analyzer Pod Logs ==="
+          kubectl logs -n kubecost -l app.kubernetes.io/name=cost-analyzer
+          echo "=== Cost Analyzer Pod Description ==="
+          kubectl describe pod -n kubecost -l app.kubernetes.io/name=cost-analyzer
+          echo "=== Events in kubecost namespace ==="
+          kubectl get events -n kubecost
       - name: Remove Cluster
         id: remove-cluster
         uses: replicatedhq/compatibility-actions/remove-cluster@v1
