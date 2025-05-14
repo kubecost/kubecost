@@ -36,7 +36,9 @@ spec:
       - -c
       - >-
         svc="{{ .Release.Name }}-cost-analyzer";
-        echo Getting current Kubecost state.;
+        echo "Waiting for Kubecost to be ready...";
+        sleep 60;
+        echo "Getting current Kubecost state.";
         response=$(curl -sL http://${svc}:9090/model/getConfigs);
         code=$(echo ${response} | jq .code);
         if [ "$code" -eq 200 ]; then
