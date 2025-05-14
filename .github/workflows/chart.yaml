@@ -118,8 +118,16 @@ jobs:
           kubectl logs -n kubecost -l app.kubernetes.io/name=cost-analyzer
           echo "=== Cost Analyzer Pod Description ==="
           kubectl describe pod -n kubecost -l app.kubernetes.io/name=cost-analyzer
+          echo "=== Test Pod Logs ==="
+          kubectl logs -n kubecost -l test=basic-health
+          echo "=== Test Pod Description ==="
+          kubectl describe pod -n kubecost -l test=basic-health
           echo "=== Events in kubecost namespace ==="
           kubectl get events -n kubecost
+          echo "=== Service Status ==="
+          kubectl get svc -n kubecost
+          echo "=== Endpoint Status ==="
+          kubectl get endpoints -n kubecost
 
       - name: Uninstall chart
         run: helm uninstall kubecost -n kubecost --no-hooks --wait
@@ -211,8 +219,16 @@ jobs:
           kubectl logs -n kubecost -l app.kubernetes.io/name=cost-analyzer
           echo "=== Cost Analyzer Pod Description ==="
           kubectl describe pod -n kubecost -l app.kubernetes.io/name=cost-analyzer
+          echo "=== Test Pod Logs ==="
+          kubectl logs -n kubecost -l test=basic-health
+          echo "=== Test Pod Description ==="
+          kubectl describe pod -n kubecost -l test=basic-health
           echo "=== Events in kubecost namespace ==="
           kubectl get events -n kubecost
+          echo "=== Service Status ==="
+          kubectl get svc -n kubecost
+          echo "=== Endpoint Status ==="
+          kubectl get endpoints -n kubecost
       - name: Remove Cluster
         id: remove-cluster
         uses: replicatedhq/compatibility-actions/remove-cluster@v1
@@ -275,8 +291,16 @@ jobs:
           kubectl logs -n kubecost -l app.kubernetes.io/name=cost-analyzer
           echo "=== Cost Analyzer Pod Description ==="
           kubectl describe pod -n kubecost -l app.kubernetes.io/name=cost-analyzer
+          echo "=== Test Pod Logs ==="
+          kubectl logs -n kubecost -l test=basic-health
+          echo "=== Test Pod Description ==="
+          kubectl describe pod -n kubecost -l test=basic-health
           echo "=== Events in kubecost namespace ==="
           kubectl get events -n kubecost
+          echo "=== Service Status ==="
+          kubectl get svc -n kubecost
+          echo "=== Endpoint Status ==="
+          kubectl get endpoints -n kubecost
       - name: Remove Cluster
         id: remove-cluster
         uses: replicatedhq/compatibility-actions/remove-cluster@v1
