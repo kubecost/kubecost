@@ -21,7 +21,7 @@ metadata:
   {{- end }}
 spec:
 {{- if .Values.kubecostDeployment }}
-  replicas: {{ .Values.kubecostDeployment.replicas }}
+  replicas: {{ .Values.kubecostDeployment.replicas | default 1 }}
 {{- end }}
   selector:
     matchLabels:
@@ -304,11 +304,6 @@ spec:
         {{- if .Values.extraVolumes }}
         # Extra volume(s)
         {{- toYaml .Values.extraVolumes | nindent 8 }}
-        {{- end }}
-        {{- if (.Values.enterpriseCustomPricing).enabled }}
-        - name: kubecost-enterprise-pricing
-          configMap:
-            name: {{ .Values.enterpriseCustomPricing.configMapName }}
         {{- end }}
         - name: persistent-configs
 {{- if .Values.persistentVolume }}
@@ -961,6 +956,8 @@ spec:
             {{- end }}
             {{- end }}
             {{- end }}
+            - name: CONTAINER_STATS_ENABLED
+              value: {{ (quote .Values.kubecostModel.containerStatsEnabled) | default (quote false) }}
             {{- if .Values.systemProxy.enabled }}
             - name: HTTP_PROXY
               value: {{ .Values.systemProxy.httpProxyUrl }}

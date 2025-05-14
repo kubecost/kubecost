@@ -37,7 +37,7 @@ global:
     prometheusServerEndpoint: http://localhost:8085/
     gmpProxy:
       enabled: false
-      image: gke.gcr.io/prometheus-engine/frontend:v0.15.3-gke.0
+      image: gke.gcr.io/prometheus-engine/frontend:v0.15.1-gke.0
       imagePullPolicy: IfNotPresent
       name: gmp-proxy
       port: 8085
@@ -359,27 +359,6 @@ pricingCsv:
     region: "us-east-1"
     URI: s3://kc-csv-test/pricing_schema.csv  # a valid file URI
     csvAccessCredentials: pricing-schema-access-secret
-
-# Enterprise custom pricing, enterprise key required
-enterpriseCustomPricing:
-  # Enabled the feature by setting this flag to "true". If enabled, the feature
-  # requires a CSV pricing spec to be provided at the location, below, using a
-  # ConfigMap, for which we provide instructions, also below.
-  enabled: false
-  # Use the following command to create a ConfigMap from your pricing spec CSV.
-  # You may change the ConfigMap name, or file name, as long as you set the
-  # correct configMapName and location.URI, respectively.
-  #
-  #  kubectl create configmap -n kubecost kubecost-enterprise-pricing --from-file pricing.csv
-  #
-  configMapName: kubecost-enterprise-pricing
-  # The file name (e.g. pricing.csv) needs to match the file name used to make the ConfigMap (above)
-  location:
-    URI: /var/configs/enterprise-pricing/pricing.csv
-  # By default, enterprise custom pricing takes effect moving forward from when
-  # it is enabled. To price all historic data according to the given pricing
-  # spec, set "applyRetroactively" to true, below.
-  applyRetroactively: false
 
 ## Kubecost SAML (enterprise key required)
 ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-user-management-saml
@@ -719,6 +698,19 @@ kubecostModel:
     # nodeLabels:
     #   enabled: true
 
+  # Enables or disables the ContainerStats pipeline, used for quantile-based
+  # queries like for request sizing recommendations.
+  # ContainerStats provides support for quantile-based request right-sizing
+  # recommendations.
+  #
+  # It is disabled by default to avoid problems in extremely high-scale Thanos
+  # environments. If you would like to try quantile-based request-sizing
+  # recommendations, enable this! If you are in a high-scale environment,
+  # please monitor Kubecost logs, Thanos query logs, and Thanos load closely.
+  # We hope to make major improvements at scale here soon!
+  #
+  containerStatsEnabled: true  # enabled by default as of v2.2.0
+
   # max number of concurrent Prometheus queries
   maxQueryConcurrency: 5
   resources:
@@ -918,7 +910,7 @@ prometheus:
       rollingUpdate: null
     image:
       repository: quay.io/prometheus/prometheus
-      tag: v3.3.1
+      tag: v3.3.0
       pullPolicy: IfNotPresent
     priorityClassName: ""
     prefixURL: ""
@@ -1188,7 +1180,7 @@ prometheus:
     name: node-exporter
     image:
       repository: prom/node-exporter
-      tag: v1.9.1
+      tag: v1.9.0
       pullPolicy: IfNotPresent
     priorityClassName: ""
     updateStrategy:
@@ -1678,11 +1670,6 @@ kubecostAggregator:
   dbMemoryLimit: 0GB
   dbWriteMemoryLimit: 0GB
 
-  # Disable the use of the v3 database (ClickHouse) as the database for the aggregator.
-  # May require data re-ingestion
-  # default: false
-  legacyMode: false
-
   # How much data to ingest from the federated store bucket, and how much data
   # to keep in the DB before rolling the data off.
   #
@@ -2103,7 +2090,7 @@ grafana:
     failureThreshold: 10
   image:
     repository: grafana/grafana
-    tag: 12.0.0
+    tag: 11.6.1
     pullPolicy: IfNotPresent
     # pullSecrets:
   securityContext: {}

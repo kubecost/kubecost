@@ -5,7 +5,6 @@ This is the official Helm chart for [Kubecost](https://www.kubecost.com/), an en
 ## Version Support
 
 Kubecost strives to support as many versions of Kubernetes as possible. Below is the version support matrix which has been tested. Versions outside of the stated range may still work but are untested.
-While the below versions may work with the given versions of Kubernetes, Kubecost generally supports the current and previous version
 
 | Chart Version                  | Kubernetes Min | Kubernetes Max |
 |--------------------------------|----------------|----------------|
@@ -15,8 +14,8 @@ While the below versions may work with the given versions of Kubernetes, Kubecos
 | 2.2                            | 1.21           | 1.29           |
 | 2.3                            | 1.21           | 1.30           |
 | 2.4                            | 1.22           | 1.31           |
-| 2.5                            | 1.22           | 1.32           |
-| 2.6                            | 1.22           | 1.32           |
+| 2.5                            | 1.22           | 1.31           |
+| 2.6                            | 1.22           | 1.31           |
 
 ## Installation
 
