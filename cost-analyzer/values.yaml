@@ -1153,7 +1153,7 @@ prometheus:
       name: configmap-reload
       image:
         repository: quay.io/prometheus-operator/prometheus-config-reloader
-        tag: v0.82.0
+        tag: v0.82.2
         pullPolicy: IfNotPresent
       extraArgs: {}
       extraVolumeDirs: []
@@ -1166,7 +1166,7 @@ prometheus:
       name: configmap-reload
       image:
         repository: quay.io/prometheus-operator/prometheus-config-reloader
-        tag: v0.82.0
+        tag: v0.82.2
         pullPolicy: IfNotPresent
       extraArgs: {}
       extraVolumeDirs: []
