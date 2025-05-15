@@ -23358,8 +23358,6 @@ spec:
               value: "true"
             - name: ETL_ASSET_RECONCILIATION_ENABLED
               value: "true"
-            - name: CONTAINER_STATS_ENABLED
-              value: "true"
             - name: RECONCILE_NETWORK
               value: "true"
             - name: KUBECOST_METRICS_POD_ENABLED
@@ -23569,7 +23567,7 @@ spec:
       restartPolicy: Always
       containers:
         - name: forecasting
-          image: gcr.io/kubecost1/kubecost-modeling:v0.1.24
+          image: gcr.io/kubecost1/kubecost-modeling:v0.1.26
           volumeMounts:
             - name: tmp
               mountPath: /tmp

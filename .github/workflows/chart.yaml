@@ -1,4 +1,4 @@
-name: Chart build
+name: Chart build and test
 
 on:
   workflow_dispatch: {}
@@ -9,6 +9,13 @@ on:
   # pull_request:
   #   branches:
   #     - develop
+
+# Prevents multiple runs of the same workflow on the same branch from executing 
+# simultaneously. Saves resources.
+# Ref: https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/control-the-concurrency-of-workflows-and-jobs
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test-chart:
@@ -174,12 +181,10 @@ jobs:
         run: |
           helm install --wait --wait-for-jobs kubecost . -n kubecost -f values-openshift.yaml \
           --set global.platforms.openshift.route.enabled=true \
-          --set global.platforms.openshift.scc.nodeExporter=true \
           --set global.platforms.openshift.scc.networkCosts=true \
           --set global.platforms.openshift.scc.clusterController=true \
           --set networkCosts.enabled=true \
-          --set clusterController.enabled=true \
-          --set prometheus.nodeExporter.enabled=true 
+          --set clusterController.enabled=true
         # run: ct install --namespace kubecost --chart-dirs=cost-analyzer/ --charts cost-analyzer/
       - name: Wait for ready 
         run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/name=cost-analyzer --timeout=120s
@@ -231,8 +236,8 @@ jobs:
         working-directory: ./cost-analyzer
         run: |
           helm install --wait --wait-for-jobs kubecost . -n kubecost -f values-eks-cost-monitoring.yaml \
-          --set persistentVolume.storageClass=gp2 \
-          --set prometheus.server.persistentVolume.storageClass=gp2
+          --set persistentVolume.enabled=false \
+          --set prometheus.server.persistentVolume.enabled=false
         # run: ct install --namespace kubecost --chart-dirs=cost-analyzer/ --charts cost-analyzer/
       - name: Wait for ready 
         run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/name=cost-analyzer --timeout=120s

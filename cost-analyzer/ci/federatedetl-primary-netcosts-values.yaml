@@ -5,7 +5,6 @@ federatedETL:
   useExistingS3Config: false
   federatedCluster: true
 kubecostModel:
-  containerStatsEnabled: true
   federatedStorageConfigSecret: federated-store
 serviceAccount:  # this example uses AWS IRSA, which creates a service account with rights to the s3 bucket. If using keys+secrets in the federated-store, set create: true
   create: true
