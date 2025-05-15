@@ -158,6 +158,26 @@ will result in failure. Users are asked to select one of the two presently-avail
 {{- end -}}
 
 {{/*
+Cluster Controller API Key check
+*/}}
+{{- define "clusterController.kubecostAPIKeyCheck" -}}
+  {{- if .Values.clusterController.enabled }}
+    {{- if and .Values.clusterController.kubecostAPIKey ((eq .Values.clusterController.createClusterControllerSecret false)) }}
+      {{- fail "\n\nConfiguration error:\nWhen setting clusterController.kubecostAPIKey, clusterController.createClusterControllerSecret must be true." -}}
+    {{- end -}}
+    {{- if and (not .Values.clusterController.createClusterControllerSecret) .Values.clusterController.secretName }}
+      {{- if not (lookup "v1" "Secret" .Release.Namespace .Values.clusterController.secretName) }}
+        {{- fail (printf "\n\nConfiguration error:\nSecret '%s' specified in clusterController.secretName does not exist in namespace %s" .Values.clusterController.secretName .Release.Namespace) -}}
+      {{- end -}}
+      {{- $secret := lookup "v1" "Secret" .Release.Namespace .Values.clusterController.secretName -}}
+      {{- if not (index $secret.data "kubecostAPIKey") }}
+        {{- fail (printf "\n\nConfiguration error:\nSecret '%s' specified in clusterController.secretName does not contain kubecostAPIKey" .Values.clusterController.secretName) -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+{{/*
 RBAC exclusivity check: make sure either simple RBAC or RBAC Teams is configured, not both
 */}}
 {{- define "rbacCheck" -}}
