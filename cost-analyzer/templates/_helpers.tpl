@@ -969,6 +969,16 @@ Begin Kubecost 2.0 templates
       # This hasn't been observed as a problem in cost-analyzer, likely because
       # of the init container that gives everything under /var/configs 777.
       mountPath: /var/configs/waterfowl
+      {{- if (not .Values.kubecostAggregator.legacyMode ) }}
+      # mount the clickhouse directories on the same PV as the duckdb, 
+      # this way they can seamlessly share the same PV before, during, and after the upgrade
+    - name: aggregator-db-storage
+      mountPath: /var/lib/clickhouse
+      {{- end }}
+    {{- end }}
+    {{- if and (not .Values.kubecostAggregator.legacyMode) (eq (include "aggregator.deployMethod" .) "singlepod") }}
+    - name: persistent-configs
+      mountPath: /var/lib/clickhouse
     {{- end }}
     {{- if and ((.Values.kubecostProductConfigs).productKey).enabled ((.Values.kubecostProductConfigs).productKey).secretname (eq (include "aggregator.deployMethod" .) "statefulset") }}
     - name: productkey-secret
@@ -1039,6 +1049,10 @@ Begin Kubecost 2.0 templates
       mountPath: "/etc/pki/ca-trust/extracted"
       readOnly: false
     {{- end }}
+    {{- if (.Values.enterpriseCustomPricing).enabled }}
+    - name: kubecost-enterprise-pricing
+      mountPath: /var/configs/enterprise-pricing
+    {{- end }}
     {{- /* Only adds extraVolumeMounts if aggregator is running as its own pod */}}
     {{- if and .Values.kubecostAggregator.extraVolumeMounts (eq (include "aggregator.deployMethod" .) "statefulset") }}
     {{- toYaml .Values.kubecostAggregator.extraVolumeMounts | nindent 4 }}
@@ -1075,8 +1089,8 @@ Begin Kubecost 2.0 templates
     - name: NUM_DB_COPY_CHUNKS
       value: {{ .Values.kubecostAggregator.numDBCopyPartitions | quote }}
     {{- end }}
-    {{- if .Values.kubecostAggregator.useDBv3 }}
-    - name: CLICKHOUSE_ENABLED
+    {{- if .Values.kubecostAggregator.legacyMode }}
+    - name: LEGACY_MODE
       value: "true"
     {{- end }}
     {{- if .Values.kubecostAggregator.jaeger.enabled }}
@@ -1255,6 +1269,14 @@ Begin Kubecost 2.0 templates
       value: "true"
     {{- end}}
     {{- end }}
+    {{- end }}
+    {{- if (.Values.enterpriseCustomPricing).enabled }}
+    - name: ENTERPRISE_CUSTOM_PRICING_ENABLED
+      value: "true"
+    - name: ENTERPRISE_CUSTOM_PRICING_CSV_LOCATION_URI
+      value: {{ (quote .Values.enterpriseCustomPricing.location.URI) }}
+    - name: ENTERPRISE_CUSTOM_PRICING_APPLY_RETROACTIVELY
+      value: {{ (quote .Values.enterpriseCustomPricing.applyRetroactively) }}
     {{- end }}
 {{- end }}
 
