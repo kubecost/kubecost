@@ -15,6 +15,7 @@ metadata:
     {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
 data:
   nginx.conf: |
+    server_tokens off;
     gzip_static  on;
 
     # Enable gzip encoding for content of the provided types of 50kb and higher.
