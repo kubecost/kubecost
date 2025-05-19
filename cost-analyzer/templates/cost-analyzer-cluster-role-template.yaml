@@ -59,8 +59,6 @@ rules:
       - get
       - list
     resources:
-      - services/proxy
-      - pods/proxy
       - nodes/proxy
   - apiGroups:
       - apps
