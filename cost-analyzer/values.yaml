@@ -1153,7 +1153,7 @@ prometheus:
       name: configmap-reload
       image:
         repository: quay.io/prometheus-operator/prometheus-config-reloader
-        tag: v0.82.0
+        tag: v0.82.2
         pullPolicy: IfNotPresent
       extraArgs: {}
       extraVolumeDirs: []
@@ -1166,7 +1166,7 @@ prometheus:
       name: configmap-reload
       image:
         repository: quay.io/prometheus-operator/prometheus-config-reloader
-        tag: v0.82.0
+        tag: v0.82.2
         pullPolicy: IfNotPresent
       extraArgs: {}
       extraVolumeDirs: []
@@ -1721,10 +1721,12 @@ kubecostAggregator:
     storageClass: ""  # default storage class
     storageRequest: 128Gi
 
-  resources: {}
-    # requests:
-    #   cpu: 1000m
-    #   memory: 1Gi
+  resources:
+    limits:
+      memory: 2Gi
+    requests:
+      cpu: 1000m
+      memory: 1Gi
 
   readinessProbe:
     enabled: true
