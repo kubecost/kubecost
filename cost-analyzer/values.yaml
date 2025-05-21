@@ -576,8 +576,9 @@ kubecostFrontend:
     server:
       - "'Access-Control-Allow-Origin' '*' always;"
       - "'Access-Control-Allow-Methods' 'GET, PUT, POST, DELETE, OPTIONS' always;"
-      - "Content-Security-Policy \"default-src 'self' 'unsafe-inline' http: https: ws: data:; frame-ancestors 'none';\";"
+      - "Content-Security-Policy \"default-src 'self' data: api.userway.com cdn.userway.com api.mixpanel.com; connect-src http: https:; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'; form-action 'self';\";"
       - Cache-Control "must-revalidate";
+      - "X-Content-Type-Options \"nosniff\";"
 
 # Kubecost Metrics deploys a separate pod which will emit kubernetes specific metrics required
 # by the cost-model. This pod is designed to remain active and decoupled from the cost-model itself.
