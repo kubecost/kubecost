@@ -18,3 +18,7 @@ enterpriseCustomPricing:
   # it is enabled. To price all historic data according to the given pricing
   # file, set "applyRetroactively" to true, below.
   applyRetroactively: false
+
+# This value will only be required until the release of Kubecost 3.0.0, at which point it will be removed
+kubecostAggregator:
+  useDBv3: true
