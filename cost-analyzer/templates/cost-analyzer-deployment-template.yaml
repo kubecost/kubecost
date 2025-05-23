@@ -345,19 +345,6 @@ spec:
 {{- end }}
 {{- end }}
       initContainers:
-        {{- if and .Values.kubecostModel.plugins.enabled (not (eq (include "aggregator.deployMethod" .) "statefulset")) }}
-        - name: plugin-installer
-          image: {{ .Values.kubecostModel.plugins.install.fullImageName }}
-          command: ["sh", "/install/install_plugins.sh"]
-          {{- with .Values.kubecostModel.plugins.install.securityContext }}
-          securityContext: {{- toYaml . | nindent 12 }}
-          {{- end }}
-          volumeMounts:
-            - name: install-script
-              mountPath: /install
-            - name: plugins-dir
-              mountPath: {{ .Values.kubecostModel.plugins.folder }}
-        {{- end }}
         {{- if .Values.supportNFS }}
         - name: config-db-perms-fix
         {{- if .Values.initChownDataImage }}
@@ -1218,14 +1205,6 @@ spec:
           {{- toYaml .Values.global.containerSecuritycontext | nindent 12 }}
           {{- end }}
         {{ end }}
-
-        {{- if and (eq (include "aggregator.deployMethod" .) "singlepod") (not .Values.federatedETL.agentOnly) }}
-        {{- include "aggregator.containerTemplate" . | nindent 8 }}
-        {{- if .Values.kubecostAggregator.jaeger.enabled }}
-        {{- include "aggregator.jaeger.sidecarContainerTemplate" . | nindent 8 }}
-        {{- end }}
-        {{- include "aggregator.cloudCost.containerTemplate" . | nindent 8 }}
-        {{- end }}
 
     {{- if .Values.imagePullSecrets }}
       imagePullSecrets:

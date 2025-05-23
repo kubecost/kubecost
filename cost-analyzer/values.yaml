@@ -514,7 +514,7 @@ systemProxy:
 
 kubecostFrontend:
   enabled: true
-  deployMethod: singlepod  # haMode or singlepod - haMode is currently only supported with Enterprise tier
+  deployMethod: haMode 
   haReplicas: 2  # only used with haMode
   image: "gcr.io/kubecost1/frontend"
   imagePullPolicy: IfNotPresent
@@ -1612,10 +1612,10 @@ forecasting:
 ##
 kubecostAggregator:
   # deployMethod determines how Aggregator is deployed. Current options are
-  # "singlepod" (within cost-analyzer Pod) "statefulset" (separate
-  # StatefulSet), and "disabled". Only use "disabled" if this is a secondary
-  # Federated ETL cluster which does not need to answer queries.
-  deployMethod: singlepod
+  # "statefulset" (separate StatefulSet), and "disabled". Only use "disabled" 
+  # if this is a secondary Federated ETL cluster which does not need to answer 
+  # queries.
+  deployMethod: statefulset
 
   # fullImageName overrides the default image construction logic. The exact
   # image provided (registry, image, tag) will be used for aggregator.
