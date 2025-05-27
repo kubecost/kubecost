@@ -376,11 +376,6 @@ enterpriseCustomPricing:
   # The file name (e.g. pricing.csv) needs to match the file name used to make the ConfigMap (above)
   location:
     URI: /var/configs/enterprise-pricing/pricing.csv
-  # Enterprise Custom Pricing will update all prices that match the labels in the CSV
-  # and this is the only supported method as of kubecost 2.8.0. Please reach out to support 
-  # if forward-only pricing is required and it will be considered for a future release.
-  # Note that cloud provider reconciliation always wins if there is a matching resource ID.
-  applyRetroactively: true  # true is the only supported value as of kubecost 2.8.0
 
 ## Kubecost SAML (enterprise key required)
 ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-user-management-saml
