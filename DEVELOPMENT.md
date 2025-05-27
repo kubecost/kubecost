@@ -71,7 +71,3 @@ For the `values.yaml` file, these are the design decisions we make:
         ```
     - Use `##` for comments that describe a single line of configuration.
     - Use `#` for commented out example values.
-
-For Helm chart templates, these are the design decisions we make:
-
-- Avoid using the [`default`](https://helm.sh/docs/chart_template_guide/functions_and_pipelines/#using-the-default-function) function in templates. Instead, explicitly define the configuration and its default value in the `values.yaml` file.

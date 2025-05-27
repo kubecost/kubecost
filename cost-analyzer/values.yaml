@@ -576,9 +576,8 @@ kubecostFrontend:
     server:
       - "'Access-Control-Allow-Origin' '*' always;"
       - "'Access-Control-Allow-Methods' 'GET, PUT, POST, DELETE, OPTIONS' always;"
-      - "Content-Security-Policy \"default-src 'self' data: api.userway.com cdn.userway.com api.mixpanel.com; connect-src http: https:; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'; form-action 'self';\";"
+      - "Content-Security-Policy \"default-src 'self' 'unsafe-inline' http: https: ws: data:; frame-ancestors 'none';\";"
       - Cache-Control "must-revalidate";
-      - "X-Content-Type-Options \"nosniff\";"
 
 # Kubecost Metrics deploys a separate pod which will emit kubernetes specific metrics required
 # by the cost-model. This pod is designed to remain active and decoupled from the cost-model itself.
@@ -1679,10 +1678,12 @@ kubecostAggregator:
   dbMemoryLimit: 0GB
   dbWriteMemoryLimit: 0GB
 
-  # Disable the use of the v3 database (ClickHouse) as the database for the aggregator.
-  # May require data re-ingestion
+  # Enable the use of the v3 database (ClickHouse) as the database for the aggregator.
+  # the existing database will be migrated if it exists
+  # This is required to be 'true' to use the enterpriseCustomPricing feature prior to kubecost 3.0.0
+  # this will not be optional starting in kubecost 3.0.0 and will be removed
   # default: false
-  legacyMode: false
+  useDBv3: false
 
   # How much data to ingest from the federated store bucket, and how much data
   # to keep in the DB before rolling the data off.
@@ -1722,12 +1723,10 @@ kubecostAggregator:
     storageClass: ""  # default storage class
     storageRequest: 128Gi
 
-  resources:
-    limits:
-      memory: 2Gi
-    requests:
-      cpu: 1000m
-      memory: 1Gi
+  resources: {}
+    # requests:
+    #   cpu: 1000m
+    #   memory: 1Gi
 
   readinessProbe:
     enabled: true

@@ -21,7 +21,7 @@ metadata:
   {{- end }}
 spec:
 {{- if .Values.kubecostDeployment }}
-  replicas: {{ .Values.kubecostDeployment.replicas }}
+  replicas: {{ .Values.kubecostDeployment.replicas | default 1 }}
 {{- end }}
   selector:
     matchLabels:
@@ -780,10 +780,6 @@ spec:
             {{- if .Values.cloudCostReportConfigmapName }}
             - name: CLOUD_COST_REPORT_CONFIGMAP_NAME
               value: {{ .Values.cloudCostReportConfigmapName }}
-            {{- end }}
-             {{- if .Values.containerRequestRightSizingReportConfigmapName }}
-            - name: CONTAINER_REQUEST_RIGHTSIZING_REPORT_CONFIGMAP_NAME
-              value: {{ .Values.containerRequestRightSizingReportConfigmapName }}
             {{- end }}
             {{- if .Values.savedReportConfigmapName }}
             - name: SAVED_REPORT_CONFIGMAP_NAME
