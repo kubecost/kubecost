@@ -2204,6 +2204,9 @@ awsstore:
   nodeSelector: {}
   annotations: {}
 
+# set to true if you want to deploy only the aggregator WITHOUT the cost-analyzer
+aggregatorOnly: false
+
 ## Federated ETL Architecture
 ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-etl-federation
 ##
