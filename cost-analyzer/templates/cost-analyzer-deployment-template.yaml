@@ -1,4 +1,4 @@
-{{- if and (not .Values.agent) (not .Values.cloudAgent) }}
+{{- if and (not .Values.agent) (not .Values.cloudAgent) (not .Values.aggregatorOnly) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
