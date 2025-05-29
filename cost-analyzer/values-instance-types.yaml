@@ -1,0 +1,7 @@
+instanceTypes:
+  enabled: true
+  #  kubectl create configmap -n kubecost custom-instance-types --from-file custom.json
+  custom:
+    configMapName: custom-instance-types
+    location:
+      URI: /var/configs/instance-types/custom.json
