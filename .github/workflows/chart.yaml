@@ -4,7 +4,7 @@ on:
   workflow_dispatch: {}
   # Normally using pull_request_target along with checking out the ref of the PR is not
   # a good idea, but this is low risk since it's a Helm chart repo.
-  pull_request_target:
+  pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
   # pull_request:
   #   branches:
@@ -106,7 +106,7 @@ jobs:
       - name: Wait for ready 
         run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/name=cost-analyzer --timeout=120s
       
-      - name: gather debug info 
+      - name: gather debug info - install 
         if: failure()
         run: |
           kubectl get pods -n kubecost
@@ -119,6 +119,17 @@ jobs:
 
       - name: Run Helm tests 
         run: helm test -n kubecost kubecost
+
+      - name: gather debug info - test
+        if: failure()
+        run: |
+          kubectl get pods -n kubecost
+          kubectl get pods -n kubecost -o yaml
+          kubectl get pods -n kubecost -o json
+          kubectl get pods -n kubecost -o jsonpath='{.items[*].spec.containers[*].image}'
+          kubectl get pods -n kubecost -o jsonpath='{.items[*].spec.containers[*].image}'
+          kubectl -n kubecost describe pods
+          kubectl -n kubecost logs -l app.kubernetes.io/name=cost-analyzer
 
       - name: Uninstall chart
         run: helm uninstall kubecost -n kubecost --no-hooks --wait
