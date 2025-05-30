@@ -130,6 +130,7 @@ jobs:
           kubectl get pods -n kubecost -o jsonpath='{.items[*].spec.containers[*].image}'
           kubectl -n kubecost describe pods
           kubectl -n kubecost logs -l app.kubernetes.io/name=cost-analyzer
+          kubectl -n kubecost logs basic-health
 
       - name: Uninstall chart
         run: helm uninstall kubecost -n kubecost --no-hooks --wait
