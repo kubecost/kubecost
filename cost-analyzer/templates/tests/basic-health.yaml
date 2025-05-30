@@ -35,8 +35,10 @@ spec:
     args:
       - -c
       - >-
+        set -x
         svc="{{ .Release.Name }}-cost-analyzer";
         echo Getting current Kubecost state.;
+        curl -vvv http://${svc}:9090/model/healthz
         response=$(curl -sL http://${svc}:9090/model/healthz);
         code=$(echo ${response} | jq .code);
         if [ "$code" -eq 200 ]; then
