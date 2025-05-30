@@ -55,12 +55,10 @@ data:
     upstream model {
         {{- if .Values.kubecostFrontend.useDefaultFqdn }}
         server {{ .Release.Name }}-aggregator.{{ .Release.Namespace }}.svc.cluster.local:9004;
-        {{- else }}
-        {{- if (.Values.kubecostFrontend.aggregator).fqdn }}
+        {{- else if (.Values.kubecostFrontend.aggregator).fqdn }}
         server {{ .Values.kubecostFrontend.aggregator.fqdn }};
         {{- else }}
         server {{ .Release.Name }}-aggregator.{{ .Release.Namespace }}:9004;
-        {{- end }}
         {{- end }}
     }
 
