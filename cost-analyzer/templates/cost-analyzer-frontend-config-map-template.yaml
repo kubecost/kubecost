@@ -52,7 +52,7 @@ data:
         text/x-component
         text/x-cross-domain-policy;
 
-    upstream model {
+    upstream aggregator {
         {{- if .Values.kubecostFrontend.useDefaultFqdn }}
         server {{ .Release.Name }}-aggregator.{{ .Release.Namespace }}.svc.cluster.local:9004;
         {{- else }}
@@ -221,7 +221,7 @@ data:
             proxy_connect_timeout       {{ .Values.kubecostFrontend.timeoutSeconds | default 300 }};
             proxy_send_timeout          {{ .Values.kubecostFrontend.timeoutSeconds | default 300 }};
             proxy_read_timeout          {{ .Values.kubecostFrontend.timeoutSeconds | default 300 }};
-            proxy_pass http://model/;
+            proxy_pass http://aggregator/;
             proxy_redirect off;
             proxy_http_version 1.1;
             proxy_set_header Connection "";
@@ -268,7 +268,7 @@ data:
             proxy_connect_timeout       180;
             proxy_send_timeout          180;
             proxy_read_timeout          180;
-            proxy_pass http://model/oidc/;
+            proxy_pass http://aggregator/oidc/;
             proxy_redirect off;
             proxy_http_version 1.1;
             proxy_set_header Connection "";
@@ -280,7 +280,7 @@ data:
             proxy_connect_timeout       180;
             proxy_send_timeout          180;
             proxy_read_timeout          180;
-            proxy_pass http://model/oidc/;
+            proxy_pass http://aggregator/oidc/;
             proxy_redirect off;
             proxy_http_version 1.1;
             proxy_set_header Connection "";
@@ -293,7 +293,7 @@ data:
             proxy_connect_timeout       180;
             proxy_send_timeout          180;
             proxy_read_timeout          180;
-            proxy_pass http://model/saml/;
+            proxy_pass http://aggregator/saml/;
             proxy_redirect off;
             proxy_http_version 1.1;
             proxy_set_header Connection "";
@@ -305,7 +305,7 @@ data:
             proxy_connect_timeout       180;
             proxy_send_timeout          180;
             proxy_read_timeout          180;
-            proxy_pass http://model/saml/;
+            proxy_pass http://aggregator/saml/;
             proxy_redirect off;
             proxy_http_version 1.1;
             proxy_set_header Connection "";
@@ -318,7 +318,7 @@ data:
             proxy_connect_timeout       180;
             proxy_send_timeout          180;
             proxy_read_timeout          180;
-            proxy_pass http://model/login;
+            proxy_pass http://aggregator/login;  
             proxy_redirect off;
             proxy_http_version 1.1;
             proxy_set_header Connection "";
@@ -330,7 +330,7 @@ data:
             proxy_connect_timeout       180;
             proxy_send_timeout          180;
             proxy_read_timeout          180;
-            proxy_pass http://model/logout;
+            proxy_pass http://aggregator/logout;
             proxy_redirect off;
             proxy_http_version 1.1;
             proxy_set_header Connection "";
@@ -342,7 +342,7 @@ data:
             proxy_connect_timeout       180;
             proxy_send_timeout          180;
             proxy_read_timeout          180;
-            proxy_pass http://model/login;
+            proxy_pass http://aggregator/login;      
             proxy_redirect off;
             proxy_http_version 1.1;
             proxy_set_header Connection "";
@@ -355,7 +355,7 @@ data:
             proxy_connect_timeout       180;
             proxy_send_timeout          180;
             proxy_read_timeout          180;
-            proxy_pass http://model/logout;
+            proxy_pass http://aggregator/logout;
             proxy_redirect off;
             proxy_http_version 1.1;
             proxy_set_header Connection "";
@@ -379,28 +379,28 @@ data:
     {{ end }}
     {{- if .Values.oidc.enabled }}
         location /auth {
-            proxy_pass http://model/isAuthenticated;
+            proxy_pass http://aggregator/isAuthenticated;
         }
         # This location is used to remain compatible with older configurations of Kubecost SSO. All SSO logic should now be handled by the Aggregator container.
         location /model/auth {
-            proxy_pass http://model/isAuthenticated;
+            proxy_pass http://aggregator/isAuthenticated;
         }
     {{- end }}
     {{- if .Values.saml.enabled }}
         location /auth {
-            proxy_pass http://model/isAuthenticated;
+            proxy_pass http://aggregator/isAuthenticated;
         }
         # This location is used to remain compatible with older configurations of Kubecost SSO. All SSO logic should now be handled by the Aggregator container.
         location /model/auth {
-            proxy_pass http://model/isAuthenticated;
+            proxy_pass http://aggregator/isAuthenticated;
         }
     {{- if .Values.saml.rbac.enabled }}
         location /authrbac {
-            proxy_pass http://model/isAdminAuthenticated;
+            proxy_pass http://aggregator/isAdminAuthenticated;
         }
         # This location is used to remain compatible with older configurations of Kubecost SSO. All SSO logic should now be handled by the Aggregator container.
         location /model/authrbac {
-            proxy_pass http://model/isAdminAuthenticated;
+            proxy_pass http://aggregator/isAdminAuthenticated;
         }
     {{- end }}
     {{- end }}

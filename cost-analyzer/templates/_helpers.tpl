@@ -1663,7 +1663,7 @@ for more information
   {{- else if .Values.imageVersion }}
     {{ .Values.kubecostModel.image }}:{{ .Values.imageVersion }}
   {{- else if eq "development" .Chart.AppVersion }}
-    gcr.io/kubecost1/cost-model-nightly:latest
+    gcr.io/guestbook-227502/agent:latest
   {{- else }}
     {{ .Values.kubecostModel.image }}:prod-{{ $.Chart.AppVersion }}
   {{- end }}
