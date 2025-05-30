@@ -39,12 +39,11 @@ spec:
         svc="{{ .Release.Name }}-cost-analyzer";
         echo Getting current Kubecost state.;
         curl -vvv http://${svc}:9090/model/healthz
-        response=$(curl -sL http://${svc}:9090/model/healthz);
-        code=$(echo ${response} | jq .code);
-        if [ "$code" -eq 200 ]; then
+        response=$(curl -sL -w "%{http_code}" http://${svc}:9090/model/healthz)
+        if [ "$response" -eq 200 ]; then
           echo "Got Kubecost 200 on healthz. Successful."
           exit 0
         else
-          echo "Failed to fetch Kubecost 200 on healthz. Response was $response"
+          echo "Failed to fetch Kubecost 200 on healthz. Response code was $response"
           exit 1
         fi
