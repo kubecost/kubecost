@@ -34,10 +34,10 @@ spec:
       - /bin/sh
     args:
       - -c
-      - >-
+      - |
         set -x
-        svc="{{ .Release.Name }}-cost-analyzer";
-        echo Getting current Kubecost state.;
+        svc="{{ .Release.Name }}-cost-analyzer"
+        echo "Getting current Kubecost state."
         curl -vvv http://${svc}:9090/model/healthz
         response=$(curl -sL -w "%{http_code}" http://${svc}:9090/model/healthz)
         if [ "$response" -eq 200 ]; then
