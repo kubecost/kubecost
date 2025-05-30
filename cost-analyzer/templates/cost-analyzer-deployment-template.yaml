@@ -738,7 +738,7 @@ spec:
               mountPath: /var/configs/auth
             {{- end }}
           env:
-          {{- if or .Values.kubecostModel.federatedStorageConfigSecret .Values.kubecostModel.federatedStorageConfig }}
+            {{- if or .Values.kubecostModel.federatedStorageConfigSecret .Values.kubecostModel.federatedStorageConfig }}
             - name: EXPORT_BUCKET_CONFIG_FILE
               value: /var/configs/etl/federated/federated-store.yaml
             {{- end }}
