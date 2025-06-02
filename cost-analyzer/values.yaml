@@ -378,7 +378,7 @@ enterpriseCustomPricing:
     URI: /var/configs/enterprise-pricing/pricing.csv
 
 instanceTypes:
-  enabled: true
+  enabled: false
   #  kubectl create configmap -n kubecost custom-instance-types --from-file custom.json
   custom:
     configMapName: custom-instance-types
