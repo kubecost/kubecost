@@ -376,10 +376,6 @@ enterpriseCustomPricing:
   # The file name (e.g. pricing.csv) needs to match the file name used to make the ConfigMap (above)
   location:
     URI: /var/configs/enterprise-pricing/pricing.csv
-  # By default, enterprise custom pricing takes effect moving forward from when
-  # it is enabled. To price all historic data according to the given pricing
-  # spec, set "applyRetroactively" to true, below.
-  applyRetroactively: false
 
 instanceTypes:
   enabled: true
@@ -636,6 +632,17 @@ kubecostModel:
   # For deploying kubecost in a cluster that does not self-monitor
   etlReadOnlyMode: false
 
+  # to enable 10 minute metrics pipeline
+  minuteMetricsEnabled: false
+
+  # to enable opencost source
+  opencostSourceEnabled: false
+
+  # to enable collector data source
+  collectorDataSourceEnabled: false
+
+  # to enable cloudy emitter
+  cloudyEmitterEnabled: false
   ## The name of the Secret containing a bucket config for Federated storage.
   ## The contents should be stored under a key named federated-store.yaml.
   ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-long-term-storage-configuration
@@ -2114,7 +2121,7 @@ grafana:
     failureThreshold: 10
   image:
     repository: grafana/grafana
-    tag: 12.0.0
+    tag: 12.0.1
     pullPolicy: IfNotPresent
     # pullSecrets:
   securityContext: {}
@@ -2215,6 +2222,9 @@ awsstore:
   priorityClassName: ""
   nodeSelector: {}
   annotations: {}
+
+# set to true if you want to deploy only the aggregator WITHOUT the cost-analyzer
+aggregatorOnly: false
 
 ## Federated ETL Architecture
 ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-etl-federation

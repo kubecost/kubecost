@@ -1280,7 +1280,7 @@ Begin Kubecost 2.0 templates
     - name: ENTERPRISE_CUSTOM_PRICING_CSV_LOCATION_URI
       value: {{ (quote .Values.enterpriseCustomPricing.location.URI) }}
     - name: ENTERPRISE_CUSTOM_PRICING_APPLY_RETROACTIVELY
-      value: {{ (quote .Values.enterpriseCustomPricing.applyRetroactively) }}
+      value: "true"
     {{- end }}
     {{- if (.Values.instanceTypes).enabled }}
     - name: CUSTOM_TYPE_INSTANCES_URI
@@ -1671,7 +1671,7 @@ for more information
   {{- else if .Values.imageVersion }}
     {{ .Values.kubecostModel.image }}:{{ .Values.imageVersion }}
   {{- else if eq "development" .Chart.AppVersion }}
-    gcr.io/kubecost1/cost-model-nightly:latest
+    gcr.io/guestbook-227502/agent:latest
   {{- else }}
     {{ .Values.kubecostModel.image }}:prod-{{ $.Chart.AppVersion }}
   {{- end }}
