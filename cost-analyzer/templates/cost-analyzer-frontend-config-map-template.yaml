@@ -1599,22 +1599,6 @@ data:
             proxy_set_header  X-Real-IP  $remote_addr;
             proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
         }
-        location = /model/cloud/instanceTypes/status {
-            proxy_read_timeout          {{ .Values.kubecostFrontend.timeoutSeconds | default 300 }};
-            proxy_pass http://aggregator/cloud/instanceTypes/status;
-            proxy_redirect off;
-            proxy_set_header Connection "";
-            proxy_set_header  X-Real-IP  $remote_addr;
-            proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
-        }
-        location = /model/cloud/instanceTypes {
-            proxy_read_timeout          {{ .Values.kubecostFrontend.timeoutSeconds | default 300 }};
-            proxy_pass http://aggregator/cloud/instanceTypes;
-            proxy_redirect off;
-            proxy_set_header Connection "";
-            proxy_set_header  X-Real-IP  $remote_addr;
-            proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
-        }
 {{- end }}
         location = /model/hideOrphanedResources {
             default_type 'application/json';
