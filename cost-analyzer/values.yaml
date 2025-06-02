@@ -624,6 +624,17 @@ kubecostModel:
   # For deploying kubecost in a cluster that does not self-monitor
   etlReadOnlyMode: false
 
+  # to enable 10 minute metrics pipeline
+  minuteMetricsEnabled: false
+
+  # to enable opencost source
+  opencostSourceEnabled: false
+
+  # to enable collector data source
+  collectorDataSourceEnabled: false
+
+  # to enable cloudy emitter
+  cloudyEmitterEnabled: false
   ## The name of the Secret containing a bucket config for Federated storage.
   ## The contents should be stored under a key named federated-store.yaml.
   ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-long-term-storage-configuration
