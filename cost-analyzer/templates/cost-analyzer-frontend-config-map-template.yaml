@@ -594,6 +594,25 @@ data:
                 }
             ';
         }
+
+        location = /model/getConfigs {
+            default_type 'application/json';
+            return 200 '{
+                "code": 200,
+                "status": "success",
+                "data": {
+               
+                    "defaultIdle": "{{ .Values.kubecostProductConfigs.defaultIdle }}",
+                    "currencyCode": "{{ .Values.kubecostProductConfigs.currencyCode }}",
+                    "negotiatedDiscount": "{{ .Values.kubecostProductConfigs.negotiatedDiscount }}",
+                    "sharedOverhead": "{{ .Values.kubecostProductConfigs.sharedOverhead }}",
+                    "sharedNamespaces": "{{ .Values.kubecostProductConfigs.sharedNamespaces }}",
+                    "sharedLabelNames": "{{ .Values.kubecostProductConfigs.sharedLabelNames }}",
+                    "sharedLabelValues": "{{ .Values.kubecostProductConfigs.sharedLabelValues }}",
+                    "shareTenancyCosts": "{{ .Values.kubecostProductConfigs.shareTenancyCosts }}",
+                }
+            }';
+        }
     }
 
 
