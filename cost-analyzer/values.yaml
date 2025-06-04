@@ -2268,7 +2268,7 @@ costEventsAudit:
 # # These configs can also be set from the Settings page in the Kubecost product
 # # UI. Values in this block override config changes in the Settings UI on pod
 # # restart
-# kubecostProductConfigs:
+kubecostProductConfigs:
 #   # An optional list of cluster definitions that can be added for frontend
 #   # access. The local cluster is *always* included by default, so this list is
 #   # for non-local clusters.
@@ -2359,7 +2359,7 @@ costEventsAudit:
 #     EXAMPLE_ACCOUNT_ID: EXAMPLE_ACCOUNT_NAME
 #   clusterName: "" # clusterName is the default context name in settings.
 #   clusterAccountID: "" # Manually set Account property for assets
-#   currencyCode: "USD" # official support for USD, AUD, BRL, CAD, CHF, CNY, DKK, EUR, GBP, IDR, INR, JPY, NOK, PLN, SEK
+currencyCode: "USD" # official support for USD, AUD, BRL, CAD, CHF, CNY, DKK, EUR, GBP, IDR, INR, JPY, NOK, PLN, SEK
 #   azureBillingRegion: US # Represents 2-letter region code, e.g. West Europe = NL, Canada = CA. ref: https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes
 #   azureSubscriptionID: 0bd50fdf-c923-4e1e-850c-196dd3dcc5d3
 #   azureClientID: f2ef6f7d-71fb-47c8-b766-8d63a19db017
@@ -2367,14 +2367,15 @@ costEventsAudit:
 #   azureClientPassword: fake key # Only use if your values.yaml are stored encrypted. Otherwise provide an existing secret via serviceKeySecretName
 #   azureOfferDurableID: "MS-AZR-0003p"
 #   discount: "" # percentage discount applied to compute
-#   negotiatedDiscount: "" # custom negotiated cloud provider discount
+negotiatedDiscount: "" # custom negotiated cloud provider discount
 #   standardDiscount: "" # custom negotiated cloud provider discount, applied to all incoming asset compute costs in a federated environment. Overrides negotiatedDiscount on any cluster in the federated environment.
-#   defaultIdle: false
+defaultIdle: false
 #   serviceKeySecretName: "" # Use an existing AWS or Azure secret with format as in aws-service-key-secret.yaml or azure-service-key-secret.yaml. Leave blank if using createServiceKeySecret
 #   createServiceKeySecret: true # Creates a secret representing your cloud service key based on data in values.yaml. If you are storing unencrypted values, add a secret manually
-#   sharedNamespaces: "" # namespaces with shared workloads, example value: "kube-system\,ingress-nginx\,kubecost\,monitoring"
-#   sharedOverhead: "" # value representing a fixed external cost per month to be distributed among aggregations.
-#   shareTenancyCosts: true # enable or disable sharing costs such as cluster management fees (defaults to "true" on Settings page)
+sharedNamespaces: "" # namespaces with shared workloads, example value: "kube-system\,ingress-nginx\,kubecost\,monitoring"
+sharedLabelValues: "" # default shared label values, e.g., "app:prometheus"
+sharedOverhead: 0 # value representing a fixed external cost per month to be distributed among aggregations.
+shareTenancyCosts: true # enable or disable sharing costs such as cluster management fees (defaults to "true" on Settings page)
 #   metricsConfigs: # configuration for metrics emitted by Kubecost
 #     disabledMetrics: [] # list of metrics that Kubecost will not emit. Note that disabling metrics can lead to unexpected behavior in the cost-model.
 #   productKey: # Apply enterprise product license
