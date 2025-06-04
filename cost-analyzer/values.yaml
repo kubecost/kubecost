@@ -377,6 +377,14 @@ enterpriseCustomPricing:
   location:
     URI: /var/configs/enterprise-pricing/pricing.csv
 
+instanceTypes:
+  enabled: false
+  #  kubectl create configmap -n kubecost custom-instance-types --from-file custom.json
+  custom:
+    configMapName: custom-instance-types
+    location:
+      URI: /var/configs/instance-types/custom.json
+
 ## Kubecost SAML (enterprise key required)
 ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-user-management-saml
 saml:

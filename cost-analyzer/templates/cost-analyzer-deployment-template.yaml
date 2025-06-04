@@ -310,6 +310,11 @@ spec:
           configMap:
             name: {{ .Values.enterpriseCustomPricing.configMapName }}
         {{- end }}
+        {{- if (.Values.instanceTypes).enabled }}
+        - name: custom-instance-types
+          configMap:
+            name: {{ .Values.instanceTypes.custom.configMapName }}
+        {{- end }}
         - name: persistent-configs
 {{- if .Values.persistentVolume }}
 {{- if .Values.persistentVolume.enabled }}

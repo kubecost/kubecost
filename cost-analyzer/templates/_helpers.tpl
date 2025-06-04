@@ -1053,6 +1053,10 @@ Begin Kubecost 2.0 templates
     - name: kubecost-enterprise-pricing
       mountPath: /var/configs/enterprise-pricing
     {{- end }}
+    {{- if and (.Values.instanceTypes.enabled) (.Values.instanceTypes.custom) }}
+    - name: custom-instance-types
+      mountPath: /var/configs/instance-types
+    {{- end }}
     {{- /* Only adds extraVolumeMounts if aggregator is running as its own pod */}}
     {{- if and .Values.kubecostAggregator.extraVolumeMounts (eq (include "aggregator.deployMethod" .) "statefulset") }}
     {{- toYaml .Values.kubecostAggregator.extraVolumeMounts | nindent 4 }}
@@ -1277,6 +1281,10 @@ Begin Kubecost 2.0 templates
       value: {{ (quote .Values.enterpriseCustomPricing.location.URI) }}
     - name: ENTERPRISE_CUSTOM_PRICING_APPLY_RETROACTIVELY
       value: "true"
+    {{- end }}
+    {{- if (.Values.instanceTypes).enabled }}
+    - name: CUSTOM_TYPE_INSTANCES_URI
+      value: {{ (quote .Values.instanceTypes.custom.location.URI) }}
     {{- end }}
 {{- end }}
 
