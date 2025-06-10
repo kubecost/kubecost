@@ -609,7 +609,7 @@ data:
                     "sharedNamespaces": "{{ .Values.kubecostProductConfigs.sharedNamespaces }}",
                     "sharedLabelNames": "{{ .Values.kubecostProductConfigs.sharedLabelNames }}",
                     "sharedLabelValues": "{{ .Values.kubecostProductConfigs.sharedLabelValues }}",
-                    "shareTenancyCosts": "{{ .Values.kubecostProductConfigs.shareTenancyCosts }}",
+                    "shareTenancyCosts": "{{ .Values.kubecostProductConfigs.shareTenancyCosts }}"
                 }
             }';
         }

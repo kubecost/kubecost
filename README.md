@@ -75,6 +75,7 @@ Parameter | Description | Default
 `ingress.hosts` | Ingress hostnames | `[cost-analyzer.local]`
 `ingress.tls` | Ingress TLS configuration (YAML) | `[]`
 `networkCosts.enabled` | If true, collect network allocation metrics [More info](https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=dashboard-network-traffic-cost-allocation) | `false`
+`networkCosts.prometheusScrape` | If true, scrape the network allocation metrics from the `network-costs` daemonset | `false`
 `networkCosts.podMonitor.enabled` | If true, a PodMonitor for the network-cost daemonset is created | `false`
 `serviceMonitor.enabled` | Set this to `true` to create ServiceMonitor for Prometheus operator | `false`
 `serviceMonitor.additionalLabels` | Additional labels that can be used so ServiceMonitor will be discovered by Prometheus | `{}`
