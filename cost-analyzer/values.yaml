@@ -73,7 +73,7 @@ global:
       # password: pwd
     # imagePullSecrets:
       # - name: "image-pull-secret"
-    
+
   ## Azure Monitor Managed Service for Prometheus
   ## Ref: https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/prometheus-remote-write-virtual-machines
   ##
