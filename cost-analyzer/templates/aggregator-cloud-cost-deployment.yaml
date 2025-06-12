@@ -1,12 +1,6 @@
 {{- if eq (include "aggregator.deployMethod" .) "statefulset" }}
 {{- if ((.Values.kubecostAggregator).cloudCost).enabled }}
-{{/*
-  A cloud integration secret is required for cloud cost to function as a dedicated pod.
-  UI based configuration is not supported for cloud cost with aggregator.
-*/}}
-{{- if not ( or (.Values.kubecostProductConfigs).cloudIntegrationSecret (.Values.kubecostProductConfigs).cloudIntegrationJSON ((.Values.kubecostProductConfigs).athenaBucketName)) }}
-{{- fail "\n\nA cloud-integration secret is required when using the aggregator statefulset and cloudCost is enabled." }}
-{{- end }}
+{{- include "cloudIntegrationSourceConfiguredCheck" . -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:

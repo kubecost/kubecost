@@ -143,7 +143,7 @@ Kubecost 2.0 preconditions
 {{/*
 Cloud integration source contents check. Either the Secret must be specified or the JSON, not both.
 Additionally, for upgrade protection, certain individual values populated under the kubecostProductConfigs map, if found,
-will result in failure. Users are asked to select one of the two presently-available sources for cloud integration information.
+will result in failure. Users are asked to select one of the three presently-available sources for cloud integration information.
 */}}
 {{- define "cloudIntegrationSourceCheck" -}}
   {{- if and (.Values.kubecostProductConfigs).cloudIntegrationSecret (.Values.kubecostProductConfigs).cloudIntegrationJSON -}}
@@ -155,6 +155,16 @@ will result in failure. Users are asked to select one of the two presently-avail
 {{- if and (.Values.kubecostProductConfigs).cloudIntegrationJSON ((.Values.kubecostProductConfigs).athenaBucketName) }}
     {{- fail "\nkubecostProductConfigs.cloudIntegrationJSON and kubecostProductConfigs.athena* values are mutually exclusive. Please specifiy only one." -}}
   {{- end -}}
+{{- end -}}
+
+{{/*
+A cloud integration secret is required for cloud cost to function as a dedicated pod.
+UI based configuration is not supported for cloud cost with aggregator.
+*/}}
+{{- define "cloudIntegrationSourceConfiguredCheck" -}}
+  {{- if not ( or (.Values.kubecostProductConfigs).cloudIntegrationSecret (.Values.kubecostProductConfigs).cloudIntegrationJSON ((.Values.kubecostProductConfigs).athenaBucketName)) }}
+    {{- fail "\n\nA cloud-integration secret is required when using the aggregator statefulset and cloudCost is enabled." }}
+  {{- end }}
 {{- end -}}
 
 {{/*
