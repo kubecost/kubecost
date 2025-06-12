@@ -71,7 +71,7 @@ global:
     basicAuth:
       # username: user
       # password: pwd
-    # imagePullSecrets:
+    imagePullSecrets: []
       # - name: "image-pull-secret"
 
   ## Azure Monitor Managed Service for Prometheus
