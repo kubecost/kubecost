@@ -1628,6 +1628,7 @@ for more information
 */ -}}
 {{- define "configsChecksum" -}}
 {{- $files := list
+  "actions-config-configmap-template.yaml"
   "alibaba-service-key-secret.yaml"
   "aws-service-key-secret.yaml"
   "azure-service-key-secret.yaml"
@@ -1654,13 +1655,12 @@ for more information
   "integrations-postgres-secret.yaml"
   "kubecost-cluster-context-switcher.yaml"
   "kubecost-cluster-controller-actions-config.yaml"
+  "kubecost-cluster-controller-secret-template.yaml"
   "kubecost-oidc-secret-template.yaml"
   "kubecost-saml-secret-template.yaml"
   "mimir-proxy-configmap-template.yaml"
   "savings-recommendations-allowlists-config-map-template.yaml"
   "savings-recommendations-nodegroup-config-map-template.yaml"
-  "kubecost-cluster-controller-secret-template.yaml"
-  "actions-config-configmap-template.yaml"
 -}}
 {{- $checksum := "" -}}
 {{- range $files -}}
