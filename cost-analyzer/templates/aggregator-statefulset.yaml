@@ -228,6 +228,11 @@ spec:
           configMap:
             name: {{ .Values.instanceTypes.custom.configMapName }}
         {{- end }}
+        {{- if .Values.kubecostProductConfigs.actions.config }}
+        - name: actions-config
+          configMap:
+            name: actions-config
+        {{- end }}
         {{- if .Values.kubecostAggregator.extraVolumes }}
         {{- toYaml .Values.kubecostAggregator.extraVolumes | nindent 8 }}
         {{- end }}

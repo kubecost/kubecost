@@ -1,0 +1,15 @@
+{{- if .Values.kubecostProductConfigs }}
+{{- if .Values.kubecostProductConfigs.actions }}
+{{- if .Values.kubecostProductConfigs.actions.config }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "actions-config"
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+data:
+  config.yaml: '{{ toJson .Values.kubecostProductConfigs.actions.config }}'
+{{- end -}}
+{{- end -}}
+{{- end -}}
