@@ -1057,6 +1057,10 @@ Begin Kubecost 2.0 templates
     - name: custom-instance-types
       mountPath: /var/configs/instance-types
     {{- end }}
+    {{- if ((.Values.kubecostProductConfigs).actions).config }}
+    - name: actions-config
+      mountPath: /var/configs/actions
+    {{- end }}
     {{- /* Only adds extraVolumeMounts if aggregator is running as its own pod */}}
     {{- if and .Values.kubecostAggregator.extraVolumeMounts (eq (include "aggregator.deployMethod" .) "statefulset") }}
     {{- toYaml .Values.kubecostAggregator.extraVolumeMounts | nindent 4 }}
@@ -1624,6 +1628,7 @@ for more information
 */ -}}
 {{- define "configsChecksum" -}}
 {{- $files := list
+  "actions-config-configmap-template.yaml"
   "alibaba-service-key-secret.yaml"
   "aws-service-key-secret.yaml"
   "azure-service-key-secret.yaml"
@@ -1650,11 +1655,12 @@ for more information
   "integrations-postgres-secret.yaml"
   "kubecost-cluster-context-switcher.yaml"
   "kubecost-cluster-controller-actions-config.yaml"
+  "kubecost-cluster-controller-secret-template.yaml"
   "kubecost-oidc-secret-template.yaml"
   "kubecost-saml-secret-template.yaml"
   "mimir-proxy-configmap-template.yaml"
   "savings-recommendations-allowlists-config-map-template.yaml"
-  "kubecost-cluster-controller-secret-template.yaml"
+  "savings-recommendations-nodegroup-config-map-template.yaml"
 -}}
 {{- $checksum := "" -}}
 {{- range $files -}}
