@@ -315,7 +315,7 @@ spec:
           configMap:
             name: {{ .Values.instanceTypes.custom.configMapName }}
         {{- end }}
-        {{- if .Values.kubecostProductConfigs.actions.config }}
+        {{- if (.Values.kubecostProductConfigs.actions.config) }}
         - name: actions-config
           configMap:
             name: actions-config
