@@ -9,7 +9,8 @@ metadata:
   labels:
     {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
 data:
-  config.yaml: '{{ toYaml .Values.kubecostProductConfigs.actions.config }}'
+  config.yaml: |-
+{{- toYaml .Values.kubecostProductConfigs.actions.config | nindent 4 }}
 {{- end -}}
 {{- end -}}
 {{- end -}}
