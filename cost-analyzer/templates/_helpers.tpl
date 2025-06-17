@@ -1057,7 +1057,7 @@ Begin Kubecost 2.0 templates
     - name: custom-instance-types
       mountPath: /var/configs/instance-types
     {{- end }}
-    {{- if .Values.kubecostProductConfigs.actions.config }}
+    {{- if ((.Values.kubecostProductConfigs).actions).config }}
     - name: actions-config
       mountPath: /var/configs/actions
     {{- end }}
