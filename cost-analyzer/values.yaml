@@ -2544,3 +2544,5 @@ extraObjects: []
 # -- Optional override for the image used for the basic health test container
 # basicHealth:
 #   fullImageName: alpine/k8s:1.26.9
+
+
