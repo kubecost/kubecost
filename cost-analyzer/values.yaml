@@ -2442,6 +2442,18 @@ kubecostProductConfigs:
 #     AWS: []
 #     GCP: []
 #     Azure: []
+#    actions:
+#      config:
+#        global: # Define global action configuration
+#          rightsizing:
+#            enabled: true
+#        clusters: # Define cluster-specific action configuration, where top-level keys are cluster names
+#          cluster-1:
+#            rightsizing:
+#              enabled: false
+#          cluster-2:
+#            rightsizing:
+#              enabled: false
 
   ## Specify an existing Kubernetes Secret holding the cloud integration information. This Secret must contain
   ## a key with name `cloud-integration.json` and the contents must be in a specific format. It is expected
