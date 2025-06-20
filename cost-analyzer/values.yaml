@@ -71,6 +71,8 @@ global:
     basicAuth:
       # username: user
       # password: pwd
+    imagePullSecrets: []
+      # - name: "image-pull-secret"
 
   ## Azure Monitor Managed Service for Prometheus
   ## Ref: https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/prometheus-remote-write-virtual-machines
@@ -1587,7 +1589,7 @@ forecasting:
   fullImageName: ""
   image:
     repository: gcr.io/kubecost1/kubecost-modeling
-    tag: v0.1.26
+    tag: v0.1.27
   imagePullPolicy: IfNotPresent
 
   # Resource specification block for the forecasting container.
@@ -1604,7 +1606,7 @@ forecasting:
     # -t is the worker timeout which primarily affects model training time;
     # if it is not high enough, training workers may die mid training
     "GUNICORN_CMD_ARGS": "--log-level info -t 1200"
-
+    "LOG_LEVEL": "info"
   priority:
     enabled: false
     name: ""
@@ -2440,6 +2442,18 @@ kubecostProductConfigs:
 #     AWS: []
 #     GCP: []
 #     Azure: []
+#    actions:
+#      config:
+#        global: # Define global action configuration
+#          rightsizing:
+#            enabled: true
+#        clusters: # Define cluster-specific action configuration, where top-level keys are cluster names
+#          cluster-1:
+#            rightsizing:
+#              enabled: false
+#          cluster-2:
+#            rightsizing:
+#              enabled: false
 
   ## Specify an existing Kubernetes Secret holding the cloud integration information. This Secret must contain
   ## a key with name `cloud-integration.json` and the contents must be in a specific format. It is expected

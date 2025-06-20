@@ -315,6 +315,11 @@ spec:
           configMap:
             name: {{ .Values.instanceTypes.custom.configMapName }}
         {{- end }}
+        {{- if ((.Values.kubecostProductConfigs).actions).config }}
+        - name: actions-config
+          configMap:
+            name: actions-config
+        {{- end }}
         - name: persistent-configs
 {{- if .Values.persistentVolume }}
 {{- if .Values.persistentVolume.enabled }}
