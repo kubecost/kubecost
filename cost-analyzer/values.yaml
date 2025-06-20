@@ -1563,7 +1563,7 @@ forecasting:
   fullImageName: ""
   image:
     repository: gcr.io/kubecost1/kubecost-modeling
-    tag: v0.1.26
+    tag: v0.1.27
   imagePullPolicy: IfNotPresent
 
   # Resource specification block for the forecasting container.
@@ -1580,7 +1580,7 @@ forecasting:
     # -t is the worker timeout which primarily affects model training time;
     # if it is not high enough, training workers may die mid training
     "GUNICORN_CMD_ARGS": "--log-level info -t 1200"
-
+    "LOG_LEVEL": "info"
   priority:
     enabled: false
     name: ""
