@@ -36,7 +36,7 @@ Kubecost 2.3 notices
 */}}
 {{- define "kubecostV2-3-notices" -}}
   {{- if (.Values.kubecostAggregator).env -}}
-    {{- printf "\n\n\nNotice: Issue in values detected.\nKubecost 2.3 has updated the aggregator's environment variables. Please update your Helm values to use the new key pairs.\nFor more information, see: https://docs.kubecost.com/install-and-configure/install/multi-cluster/federated-etl/aggregator#aggregator-optimizations\nIn Kubecost 2.3, kubecostAggregator.env is no longer used in favor of the new key pairs. This was done to prevent unexpected behavior and to simplify the aggregator's configuration." -}}
+    {{- printf "\n\n\nNotice: Issue in values detected.\nKubecost 2.3 has updated the aggregator's environment variables. Please update your Helm values to use the new key pairs.\nFor more information, see: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=federation-kubecost-aggregator\nIn Kubecost 2.3, kubecostAggregator.env is no longer used in favor of the new key pairs. This was done to prevent unexpected behavior and to simplify the aggregator's configuration." -}}
   {{- end -}}
 {{- end -}}
 
@@ -59,7 +59,7 @@ Kubecost 2.0 preconditions
             {{- if gt (len $chartNameAndVersion) 2 -}}
               {{- $chartVersion := $chartNameAndVersion._2 -}}        {{/* 1.108.1 */}}
               {{- if semverCompare ">=1.0.0-0 <2.0.0-0" $chartVersion -}}
-                {{- fail "\n\nAn existing Aggregator StatefulSet was found in your namespace.\nBefore upgrading to Kubecost 2.x, please `kubectl delete` this Statefulset.\nRefer to the following documentation for more information: https://docs.kubecost.com/install-and-configure/install/kubecostv2" -}}
+                {{- fail "\n\nAn existing Aggregator StatefulSet was found in your namespace.\nBefore upgrading to Kubecost 2.x, please `kubectl delete` this Statefulset.\nRefer to the following documentation for more information: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=installation-kubecost-v2-installupgrade" -}}
               {{- end -}}
             {{- end -}}
           {{- end -}}
@@ -70,12 +70,12 @@ Kubecost 2.0 preconditions
 
   {{/*https://github.com/helm/helm/issues/8026#issuecomment-881216078*/}}
   {{- if ((.Values.thanos).store).enabled -}}
-    {{- fail "\n\nYou are attempting to upgrade to Kubecost 2.x.\nKubecost no longer includes Thanos by default. \nPlease see https://docs.kubecost.com/install-and-configure/install/kubecostv2 for more information.\nIf you have any questions or concerns, please reach out to us at product@kubecost.com" -}}
+    {{- fail "\n\nYou are attempting to upgrade to Kubecost 2.x.\nKubecost no longer includes Thanos by default. \nPlease see https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=installation-kubecost-v2-installupgrade for more information.\nIf you have any questions or concerns, please reach out to us at product@kubecost.com" -}}
   {{- end -}}
 
   {{- if or ((.Values.saml).rbac).enabled ((.Values.oidc).rbac).enabled -}}
     {{- if (not (.Values.upgrade).toV2) -}}
-      {{- fail "\n\nSSO with RBAC is enabled.\nNote that Kubecost 2.x has significant architectural changes that may impact RBAC.\nThis should be tested before giving end-users access to the UI.\nKubecost has tested various configurations and believe that 2.x will be 100% compatible with existing configurations.\nRefer to the following documentation for more information: https://docs.kubecost.com/install-and-configure/install/kubecostv2\n\nWhen ready to upgrade, add `--set upgrade.toV2=true`." -}}
+      {{- fail "\n\nSSO with RBAC is enabled.\nNote that Kubecost 2.x has significant architectural changes that may impact RBAC.\nThis should be tested before giving end-users access to the UI.\nKubecost has tested various configurations and believe that 2.x will be 100% compatible with existing configurations.\nRefer to the following documentation for more information: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=installation-kubecost-v2-installupgrade\n\nWhen ready to upgrade, add `--set upgrade.toV2=true`." -}}
     {{- end -}}
   {{- end -}}
 
@@ -185,7 +185,7 @@ Print a warning if PV is enabled AND EKS is detected AND the EBS-CSI driver is n
 {{- $EBSCSINotExists := (empty (lookup "apps/v1" "Deployment" "kube-system" "ebs-csi-controller")) }}
 {{- if (and $isEKS $isGT22 .Values.persistentVolume.enabled $EBSCSINotExists) -}}
 
-ERROR: MISSING EBS-CSI DRIVER WHICH IS REQUIRED ON EKS v1.23+ TO MANAGE PERSISTENT VOLUMES. LEARN MORE HERE: https://docs.kubecost.com/install-and-configure/install/provider-installations/aws-eks-cost-monitoring#prerequisites
+ERROR: MISSING EBS-CSI DRIVER WHICH IS REQUIRED ON EKS v1.23+ TO MANAGE PERSISTENT VOLUMES. LEARN MORE HERE: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=installations-amazon-eks-integration
 
 {{- end -}}
 {{- end -}}
@@ -969,6 +969,16 @@ Begin Kubecost 2.0 templates
       # This hasn't been observed as a problem in cost-analyzer, likely because
       # of the init container that gives everything under /var/configs 777.
       mountPath: /var/configs/waterfowl
+      {{- if (not .Values.kubecostAggregator.legacyMode ) }}
+      # mount the clickhouse directories on the same PV as the duckdb, 
+      # this way they can seamlessly share the same PV before, during, and after the upgrade
+    - name: aggregator-db-storage
+      mountPath: /var/lib/clickhouse
+      {{- end }}
+    {{- end }}
+    {{- if and (not .Values.kubecostAggregator.legacyMode) (eq (include "aggregator.deployMethod" .) "singlepod") }}
+    - name: persistent-configs
+      mountPath: /var/lib/clickhouse
     {{- end }}
     {{- if and ((.Values.kubecostProductConfigs).productKey).enabled ((.Values.kubecostProductConfigs).productKey).secretname (eq (include "aggregator.deployMethod" .) "statefulset") }}
     - name: productkey-secret
@@ -1018,6 +1028,10 @@ Begin Kubecost 2.0 templates
     - name: kubecost-rbac-secret
       mountPath: /var/configs/kubecost-rbac-secret
     {{- end }}
+    {{- if eq (include "authMasterKeyEnabled" .) "true" }}
+    - name: kubecost-master-api-key
+      mountPath: /var/configs/auth
+    {{- end }}
     {{- if eq (include "rbacTeamsConfigEnabled" .) "true" }}
     - name: kubecost-rbac-teams-config
       mountPath: /var/configs/rbac-teams-configs
@@ -1034,6 +1048,18 @@ Begin Kubecost 2.0 templates
     - name: ssl-path
       mountPath: "/etc/pki/ca-trust/extracted"
       readOnly: false
+    {{- end }}
+    {{- if (.Values.enterpriseCustomPricing).enabled }}
+    - name: kubecost-enterprise-pricing
+      mountPath: /var/configs/enterprise-pricing
+    {{- end }}
+    {{- if and (.Values.instanceTypes.enabled) (.Values.instanceTypes.custom) }}
+    - name: custom-instance-types
+      mountPath: /var/configs/instance-types
+    {{- end }}
+    {{- if ((.Values.kubecostProductConfigs).actions).config }}
+    - name: actions-config
+      mountPath: /var/configs/actions
     {{- end }}
     {{- /* Only adds extraVolumeMounts if aggregator is running as its own pod */}}
     {{- if and .Values.kubecostAggregator.extraVolumeMounts (eq (include "aggregator.deployMethod" .) "statefulset") }}
@@ -1070,6 +1096,10 @@ Begin Kubecost 2.0 templates
     {{- if (gt (int .Values.kubecostAggregator.numDBCopyPartitions) 0) }}
     - name: NUM_DB_COPY_CHUNKS
       value: {{ .Values.kubecostAggregator.numDBCopyPartitions | quote }}
+    {{- end }}
+    {{- if .Values.kubecostAggregator.legacyMode }}
+    - name: LEGACY_MODE
+      value: "true"
     {{- end }}
     {{- if .Values.kubecostAggregator.jaeger.enabled }}
     - name: TRACING_URL
@@ -1188,6 +1218,10 @@ Begin Kubecost 2.0 templates
       value: "true"
     {{- end }}
     {{- end }}
+    {{- if eq (include "authMasterKeyEnabled" .) "true" }}
+    - name: AUTH_MASTER_API_KEY_ENABLED
+      value: "true"
+    {{- end }}
     {{- if eq (include "rbacTeamsConfigEnabled" .) "true" }}
     - name: RBAC_TEAMS_HELM_CONFIG_PATH
       value: "/var/configs/rbac-teams-configs/rbac-teams-configs.json"
@@ -1243,6 +1277,18 @@ Begin Kubecost 2.0 templates
       value: "true"
     {{- end}}
     {{- end }}
+    {{- end }}
+    {{- if (.Values.enterpriseCustomPricing).enabled }}
+    - name: ENTERPRISE_CUSTOM_PRICING_ENABLED
+      value: "true"
+    - name: ENTERPRISE_CUSTOM_PRICING_CSV_LOCATION_URI
+      value: {{ (quote .Values.enterpriseCustomPricing.location.URI) }}
+    - name: ENTERPRISE_CUSTOM_PRICING_APPLY_RETROACTIVELY
+      value: "true"
+    {{- end }}
+    {{- if (.Values.instanceTypes).enabled }}
+    - name: CUSTOM_TYPE_INSTANCES_URI
+      value: {{ (quote .Values.instanceTypes.custom.location.URI) }}
     {{- end }}
 {{- end }}
 
@@ -1421,6 +1467,22 @@ Groups is only used when using simple RBAC.
     {{- end }}
 {{- end }}
 
+{{- define "authMasterKeyEnabled" -}}
+  {{- if or (.Values.saml).enabled (.Values.oidc).enabled -}}
+    {{- if or (.Values.saml).apiMasterKey (.Values.oidc).apiMasterKey -}}
+      {{- printf "true" -}}
+    {{- else -}}
+      {{- if or (.Values.saml).apiMasterKeySecret (.Values.oidc).apiMasterKeySecret -}}
+        {{- printf "true" -}}
+      {{- else -}}
+        {{- printf "false" -}}
+      {{- end -}}
+    {{- end -}}
+  {{- else -}}
+    {{- printf "false" -}}
+  {{- end -}}
+{{- end -}}
+
 {{/*
 Backups configured flag for nginx configmap
 */}}
@@ -1451,10 +1513,24 @@ costEventsAuditEnabled flag for nginx configmap
   {{- end -}}
 {{- end -}}
 
+{{/*
+Multi-Cluster Diagnostics is only fully functional when its agent and primary
+are both running, and when the federated storage config is present.
+*/}}
+{{- define "multiClusterDiagnosticsPrimaryEnabled" -}}
+{{- if and .Values.diagnostics.enabled .Values.diagnostics.primary.enabled -}}
+  {{- if or .Values.kubecostModel.federatedStorageConfigSecret .Values.kubecostModel.federatedStorageConfig -}}
+    {{- printf "true" -}}
+  {{- else -}}
+    {{- printf "false" -}}
+  {{- end -}}
+{{- end -}}
+{{- end -}}
+
 {{- define "gcpCloudIntegrationJSON" }}
 Kubecost 2.x requires a change to the method that cloud-provider billing integrations are configured.
 Please use this output to create a cloud-integration.json config. See:
-<https://docs.kubecost.com/install-and-configure/install/cloud-integration#adding-a-cloud-integration>
+<https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=installation-cloud-billing-integrations>
 for more information
 
   {
@@ -1478,12 +1554,11 @@ for more information
 {{- end }}
 {{- end }}
 
-
 {{- define "azureCloudIntegrationJSON" }}
 
 Kubecost 2.x requires a change to the method that cloud-provider billing integrations are configured.
 Please use this output to create a cloud-integration.json config. See:
-<https://docs.kubecost.com/install-and-configure/install/cloud-integration#adding-a-cloud-integration>
+<https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=installation-cloud-billing-integrations>
 for more information
   {
     "azure":
@@ -1553,6 +1628,7 @@ for more information
 */ -}}
 {{- define "configsChecksum" -}}
 {{- $files := list
+  "actions-config-configmap-template.yaml"
   "alibaba-service-key-secret.yaml"
   "aws-service-key-secret.yaml"
   "azure-service-key-secret.yaml"
@@ -1573,17 +1649,18 @@ for more information
   "cost-analyzer-server-configmap.yaml"
   "cost-analyzer-smtp-configmap.yaml"
   "external-grafana-config-map-template.yaml"
-  "gcpstore-config-map-template.yaml"
   "grafana/grafana-secret.yaml"
   "install-plugins.yaml"
   "integrations-postgres-queries-configmap.yaml"
   "integrations-postgres-secret.yaml"
   "kubecost-cluster-context-switcher.yaml"
   "kubecost-cluster-controller-actions-config.yaml"
+  "kubecost-cluster-controller-secret-template.yaml"
   "kubecost-oidc-secret-template.yaml"
   "kubecost-saml-secret-template.yaml"
   "mimir-proxy-configmap-template.yaml"
   "savings-recommendations-allowlists-config-map-template.yaml"
+  "savings-recommendations-nodegroup-config-map-template.yaml"
 -}}
 {{- $checksum := "" -}}
 {{- range $files -}}
@@ -1600,7 +1677,7 @@ for more information
   {{- else if .Values.imageVersion }}
     {{ .Values.kubecostModel.image }}:{{ .Values.imageVersion }}
   {{- else if eq "development" .Chart.AppVersion }}
-    gcr.io/kubecost1/cost-model-nightly:latest
+    gcr.io/guestbook-227502/agent:latest
   {{- else }}
     {{ .Values.kubecostModel.image }}:prod-{{ $.Chart.AppVersion }}
   {{- end }}

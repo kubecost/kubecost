@@ -1,5 +1,5 @@
-{{- if and (.Values.diagnostics.enabled) (.Values.diagnostics.deployment.enabled) (not .Values.kubecostFrontend.adminMode) }}
-{{- if or (not (empty .Values.kubecostModel.federatedStorageConfigSecret )) .Values.kubecostModel.federatedStorageConfig -}}
+{{- if and .Values.diagnostics.enabled .Values.diagnostics.deployment.enabled (not .Values.kubecostFrontend.adminMode) }}
+{{- if or .Values.kubecostModel.federatedStorageConfigSecret .Values.kubecostModel.federatedStorageConfig -}}
 
 {{- if eq .Values.prometheus.server.global.external_labels.cluster_id "cluster-one" }}
 {{- fail "Error: The 'cluster_id' is set to default 'cluster-one'. Please update so that the diagnostics service can uniquely identify data coming from this cluster." }}

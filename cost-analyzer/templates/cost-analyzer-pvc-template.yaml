@@ -1,6 +1,7 @@
 {{- if and (.Values.persistentVolume) (not .Values.kubecostFrontend.adminMode) -}}
 {{- if not .Values.persistentVolume.existingClaim -}}
 {{- if .Values.persistentVolume.enabled -}}
+{{- if and (not .Values.agent) (not .Values.cloudAgent) (not .Values.aggregatorOnly) }}
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
@@ -28,6 +29,7 @@ spec:
     {{- else }}
       storage: 32.0Gi
     {{ end }}
+{{- end -}}
 {{- end -}}
 {{- end -}}
 {{- end -}}

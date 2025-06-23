@@ -1,4 +1,4 @@
-{{- if and (not .Values.agent) (not .Values.cloudAgent) (not .Values.kubecostFrontend.adminMode) }}
+{{- if and (not .Values.agent) (not .Values.cloudAgent) (not .Values.aggregatorOnly) (not .Values.kubecostFrontend.adminMode) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -21,7 +21,7 @@ metadata:
   {{- end }}
 spec:
 {{- if .Values.kubecostDeployment }}
-  replicas: {{ .Values.kubecostDeployment.replicas | default 1 }}
+  replicas: {{ .Values.kubecostDeployment.replicas }}
 {{- end }}
   selector:
     matchLabels:
@@ -98,11 +98,6 @@ spec:
           configMap:
             name: {{ template "cost-analyzer.fullname" . }}-install-plugins
         {{- end }}
-        {{- end }}
-        {{- if .Values.global.gcpstore.enabled }}
-        - name: ubbagent-config
-          configMap:
-            name: ubbagent-config
         {{- end }}
         - name: tmp
           emptyDir: {}
@@ -263,6 +258,11 @@ spec:
           configMap:
             name: {{ template "cost-analyzer.fullname" . }}-saml
         {{- end }}
+        {{- if eq (include "authMasterKeyEnabled" .) "true" }}
+        - name: kubecost-master-api-key
+          secret:
+            secretName: {{ .Values.saml.apiMasterKeySecret | default "kubecost-master-api-key" }}
+        {{- end }}
         {{- end }}
         {{- end }}
         {{- if .Values.oidc }}
@@ -279,6 +279,11 @@ spec:
         - name: oidc-client-secret
           secret:
             secretName: {{ .Values.oidc.existingCustomSecret.name }}
+        {{- end }}
+        {{- if eq (include "authMasterKeyEnabled" .) "true" }}
+        - name: kubecost-master-api-key
+          secret:
+            secretName: {{ .Values.oidc.apiMasterKeySecret | default "kubecost-master-api-key" }}
         {{- end }}
         {{- end }}
         {{- end }}
@@ -299,6 +304,21 @@ spec:
         {{- if .Values.extraVolumes }}
         # Extra volume(s)
         {{- toYaml .Values.extraVolumes | nindent 8 }}
+        {{- end }}
+        {{- if (.Values.enterpriseCustomPricing).enabled }}
+        - name: kubecost-enterprise-pricing
+          configMap:
+            name: {{ .Values.enterpriseCustomPricing.configMapName }}
+        {{- end }}
+        {{- if (.Values.instanceTypes).enabled }}
+        - name: custom-instance-types
+          configMap:
+            name: {{ .Values.instanceTypes.custom.configMapName }}
+        {{- end }}
+        {{- if ((.Values.kubecostProductConfigs).actions).config }}
+        - name: actions-config
+          configMap:
+            name: actions-config
         {{- end }}
         - name: persistent-configs
 {{- if .Values.persistentVolume }}
@@ -494,42 +514,6 @@ spec:
           {{- toYaml .Values.sigV4Proxy.extraEnv | nindent 10 }}
           {{- end }}
         {{- end }}
-        {{- if .Values.global.gcpstore.enabled }}
-        - name: ubbagent
-          image: gcr.io/kubecost1/gcp-mp/ent/cost-model/ubbagent:1.0
-          env:
-          {{- if .Values.systemProxy.enabled }}
-          - name: HTTP_PROXY
-            value: {{ .Values.systemProxy.httpProxyUrl }}
-          - name: http_proxy
-            value: {{ .Values.systemProxy.httpProxyUrl }}
-          - name: HTTPS_PROXY
-            value:  {{ .Values.systemProxy.httpsProxyUrl }}
-          - name: https_proxy
-            value:  {{ .Values.systemProxy.httpsProxyUrl }}
-          - name: NO_PROXY
-            value:  {{ .Values.systemProxy.noProxy }}
-          - name: no_proxy
-            value:  {{ .Values.systemProxy.noProxy }}
-          {{- end }}
-          - name: AGENT_CONFIG_FILE
-            value: "/etc/ubbagent/config.yaml"
-          - name: AGENT_LOCAL_PORT
-            value: "6080"
-          - name: AGENT_ENCODED_KEY
-            valueFrom:
-              secretKeyRef:
-                name: {{ default "kubecost-reporting-secret" .Values.reportingSecret }}
-                key: reporting-key
-          - name: AGENT_CONSUMER_ID
-            valueFrom:
-              secretKeyRef:
-                name: {{ default "kubecost-reporting-secret" .Values.reportingSecret }}
-                key: consumer-id
-          volumeMounts:
-          - name: ubbagent-config
-            mountPath: /etc/ubbagent
-        {{- end }}
         {{- if .Values.global.ammsp.enabled }}
         # This section of the chart borrows liberally from
         # https://github.com/Azure/aad-auth-proxy/blob/main/deploy/chart/aad-auth-proxy/templates/deployment.yaml
@@ -657,6 +641,8 @@ spec:
           {{- toYaml .Values.global.containerSecuritycontext | nindent 12 }}
           {{- end }}
           volumeMounts:
+            - name: tmp
+              mountPath: /tmp
             - name: persistent-configs
               mountPath: /var/configs
             {{- if .Values.extraVolumeMounts }}
@@ -757,9 +743,34 @@ spec:
             - name: kubecost-rbac-secret
               mountPath: /var/configs/kubecost-rbac-secret
             {{- end }}
+            {{- if eq (include "authMasterKeyEnabled" .) "true" }}
+            - name: kubecost-master-api-key
+              mountPath: /var/configs/auth
+            {{- end }}
           env:
+            {{- if or .Values.kubecostModel.federatedStorageConfigSecret .Values.kubecostModel.federatedStorageConfig }}
+            - name: EXPORT_BUCKET_CONFIG_FILE
+              value: /var/configs/etl/federated/federated-store.yaml
+            {{- end }}
+            {{- if .Values.kubecostModel.minuteMetricsEnabled }}
+            - name: MINUTE_METRICS_ENABLED
+              value: "true"
+            {{- end }}
+            {{- if .Values.kubecostModel.opencostSourceEnabled }}
+            - name: OPENCOST_SOURCE_ENABLED
+              value: "true"
+            {{- end }}
+            {{- if .Values.kubecostModel.collectorDataSourceEnabled }}
+            - name: COLLECTOR_DATA_SOURCE_ENABLED
+              value: "true"
+            {{- end }}
+            {{- if .Values.kubecostModel.cloudyEmitterEnabled }}
+            - name: CLOUDY_EMITTER_ENABLED
+              value: "true"
+            {{- end }}
             - name: CONTAINER_IMAGE_TAG
               value: {{ include "cost-model.imagetag" . }}
+
             {{- if .Values.global.grafana }}
             - name: GRAFANA_ENABLED
               value: "{{ template "cost-analyzer.grafanaEnabled" . }}"
@@ -775,52 +786,10 @@ spec:
               value: {{ template "cost-analyzer.filterEnabled" .Values }}
             {{- end }}
             {{- end }}
-            {{- if .Values.alertConfigmapName }}
-            - name: ALERT_CONFIGMAP_NAME
-              value: {{ .Values.alertConfigmapName }}
-            {{- end }}
-            {{- if .Values.productConfigmapName }}
-            - name: PRODUCT_CONFIGMAP_NAME
-              value: {{ .Values.productConfigmapName }}
-            {{- end }}
-            {{- if .Values.smtpConfigmapName }}
-            - name: SMTP_CONFIGMAP_NAME
-              value: {{ .Values.smtpConfigmapName }}
-            {{- end }}
-            {{- if .Values.appConfigmapName }}
-            - name: APP_CONFIGMAP_NAME
-              value: {{ .Values.appConfigmapName }}
-            {{- end }}
             {{- if .Values.kubecostModel.softMemoryLimit }}
             - name: GOMEMLIMIT
               value: {{ .Values.kubecostModel.softMemoryLimit }}
             {{- end }}
-            {{- if .Values.assetReportConfigmapName }}
-            - name: ASSET_REPORT_CONFIGMAP_NAME
-              value: {{ .Values.assetReportConfigmapName }}
-            {{- end }}
-            {{- if .Values.cloudCostReportConfigmapName }}
-            - name: CLOUD_COST_REPORT_CONFIGMAP_NAME
-              value: {{ .Values.cloudCostReportConfigmapName }}
-            {{- end }}
-            {{- if .Values.savedReportConfigmapName }}
-            - name: SAVED_REPORT_CONFIGMAP_NAME
-              value: {{ .Values.savedReportConfigmapName }}
-            {{- end }}
-            {{- if .Values.groupFiltersConfigmapName }}
-            - name: GROUP_FILTERS_CONFIGMAP_NAME
-              value: {{ .Values.groupFiltersConfigmapName }}
-            {{- end }}
-            {{- if .Values.pricingConfigmapName }}
-            - name: PRICING_CONFIGMAP_NAME
-              value: {{ .Values.pricingConfigmapName }}
-            {{- end }}
-            {{- if .Values.metricsConfigmapName }}
-            - name: METRICS_CONFIGMAP_NAME
-              value: {{ .Values.metricsConfigmapName }}
-            {{- end }}
-            - name: READ_ONLY
-              value: {{ (quote .Values.readonly) | default (quote false) }}
             - name: PROMETHEUS_SERVER_ENDPOINT
               valueFrom:
                 configMapKeyRef:
@@ -836,22 +805,11 @@ spec:
             {{- end }}
             - name: CONFIG_PATH
               value: /var/configs/
-            - name: DB_PATH
-              value: /var/db/
-            - name: CLUSTER_PROFILE
-            {{- if .Values.kubecostProductConfigs }}
-              value: {{ .Values.kubecostProductConfigs.clusterProfile | default "production" }}
-            {{- else }}
-              value: production
-            {{- end }}
+          
             {{- if .Values.kubecostProductConfigs }}
             {{- if ((.Values.kubecostProductConfigs).productKey).mountPath }}
             - name: PRODUCT_KEY_MOUNT_PATH
               value: {{ .Values.kubecostProductConfigs.productKey.mountPath }}
-            {{- end }}
-            {{- if ((.Values.kubecostProductConfigs).smtp).mountPath }}
-            - name: SMTP_CONFIG_MOUNT_PATH
-              value: {{ .Values.kubecostProductConfigs.smtp.mountPath }}
             {{- end }}
             {{- if .Values.kubecostProductConfigs.ingestPodUID }}
             - name: INGEST_POD_UID
@@ -862,57 +820,12 @@ spec:
               value: {{ (quote .Values.kubecostProductConfigs.regionOverrides) }}
             {{- end }}
             {{- end }}
-            {{- if .Values.global.prometheus.queryServiceBasicAuthSecretName}}
-            - name: DB_BASIC_AUTH_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.global.prometheus.queryServiceBasicAuthSecretName }}
-                  key: USERNAME
-            - name: DB_BASIC_AUTH_PW
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.global.prometheus.queryServiceBasicAuthSecretName }}
-                  key: PASSWORD
-            {{- end }}
-            {{- if .Values.global.prometheus.queryServiceBearerTokenSecretName }}
-            - name: DB_BEARER_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.global.prometheus.queryServiceBearerTokenSecretName }}
-                  key: TOKEN
-            {{- end }}
             {{- if .Values.global.prometheus.insecureSkipVerify }}
             - name: INSECURE_SKIP_VERIFY
               value: {{ (quote .Values.global.prometheus.insecureSkipVerify) }}
             {{- end }}
-            {{- if .Values.global.prometheus.kubeRBACProxy }}
-            - name: KUBE_RBAC_PROXY_ENABLED
-              value: {{ (quote .Values.global.prometheus.kubeRBACProxy) }}
-            {{- end }}
-            {{- if .Values.pricingCsv }}
-            {{- if .Values.pricingCsv.enabled }}
-            - name: USE_CSV_PROVIDER
-              value: "true"
-            - name: CSV_PATH
-              value: {{ .Values.pricingCsv.location.URI }}
-            - name: CSV_REGION
-              value: {{ .Values.pricingCsv.location.region }}
-            {{- if eq .Values.pricingCsv.location.provider "AWS"}}
-            {{- if .Values.pricingCsv.location.csvAccessCredentials }}
-            - name: AWS_ACCESS_KEY_ID
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.pricingCsv.location.csvAccessCredentials }}
-                  key: AWS_ACCESS_KEY_ID
-            - name: AWS_SECRET_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.pricingCsv.location.csvAccessCredentials }}
-                  key: AWS_SECRET_ACCESS_KEY
-            {{- end }}
-            {{- end }}
-            {{- end }}
-            {{- end }}
+
+            
             {{- if .Values.kubecostMetrics }}
             - name: EMIT_POD_ANNOTATIONS_METRIC
               value: {{ (quote .Values.kubecostMetrics.emitPodAnnotations) | default (quote false) }}
@@ -983,8 +896,6 @@ spec:
             {{- end }}
             {{- end }}
             {{- end }}
-            - name: CONTAINER_STATS_ENABLED
-              value: {{ (quote .Values.kubecostModel.containerStatsEnabled) | default (quote false) }}
             {{- if .Values.systemProxy.enabled }}
             - name: HTTP_PROXY
               value: {{ .Values.systemProxy.httpProxyUrl }}
@@ -1021,6 +932,10 @@ spec:
             {{- end }}
             {{- end }}
             {{- end }}
+            {{- end }}
+            {{- if eq (include "authMasterKeyEnabled" .) "true" }}
+            - name: AUTH_MASTER_API_KEY_ENABLED
+              value: "true"
             {{- end }}
             {{- if .Values.oidc.enabled }}
             - name: OIDC_ENABLED
@@ -1093,14 +1008,6 @@ spec:
             - name: PROM_CLUSTER_ID_LABEL
               value: {{ .Values.kubecostModel.promClusterIDLabel }}
             {{- end }}
-            {{- if .Values.reporting.googleAnalyticsTag }}
-            - name: GOOGLE_ANALYTICS_TAG
-              value: {{ .Values.reporting.googleAnalyticsTag }}
-            {{- end }}
-            {{- if .Values.costEventsAudit }}
-            - name: COST_EVENTS_AUDIT_ENABLED
-              value: {{ (quote .Values.costEventsAudit.enabled) | default (quote false) }}
-            {{- end }}
             - name: RELEASE_NAME
               value: {{ .Release.Name }}
             - name: KUBECOST_NAMESPACE
@@ -1115,8 +1022,6 @@ spec:
                 configMapKeyRef:
                   name: {{ template "cost-analyzer.fullname" . }}
                   key: kubecost-token
-            - name: WATERFOWL_ENABLED
-              value: "true"
             {{- if not (.Values.diagnostics.enabled) }}
             - name: DIAGNOSTICS_RUN_IN_COST_MODEL
               value: "false"

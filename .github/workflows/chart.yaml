@@ -1,4 +1,4 @@
-name: Chart build
+name: Chart build and test
 
 on:
   workflow_dispatch: {}
@@ -9,6 +9,13 @@ on:
   # pull_request:
   #   branches:
   #     - develop
+
+# Prevents multiple runs of the same workflow on the same branch from executing 
+# simultaneously. Saves resources.
+# Ref: https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/control-the-concurrency-of-workflows-and-jobs
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test-chart:
@@ -54,26 +61,16 @@ jobs:
       fail-fast: false
       matrix:
         k8s-version:
-          - name: v1.22
-            version: v1.22.17
-          - name: v1.23
-            version: v1.23.17
-          - name: v1.24
-            version: v1.24.17
-          - name: v1.25
-            version: v1.25.16
-          - name: v1.26
-            version: v1.26.15
-          - name: v1.27
-            version: v1.27.16
           - name: v1.28
             version: v1.28.13
           - name: v1.29
-            version: v1.29.8
+            version: v1.29.14
           - name: v1.30
-            version: v1.30.4
+            version: v1.30.10
           - name: v1.31
-            version: v1.31.0
+            version: v1.31.6
+          - name: v1.32
+            version: v1.32.3
     needs: test-chart
     name: ${{ matrix.k8s-version.name }} test
     steps:
@@ -108,9 +105,32 @@ jobs:
 
       - name: Wait for ready 
         run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/name=cost-analyzer --timeout=120s
+      
+      - name: gather debug info - install 
+        if: failure()
+        run: |
+          kubectl get pods -n kubecost
+          kubectl get pods -n kubecost -o yaml
+          kubectl get pods -n kubecost -o json
+          kubectl get pods -n kubecost -o jsonpath='{.items[*].spec.containers[*].image}'
+          kubectl get pods -n kubecost -o jsonpath='{.items[*].spec.containers[*].image}'
+          kubectl -n kubecost describe pods
+          kubectl -n kubecost logs -l app.kubernetes.io/name=cost-analyzer
 
       - name: Run Helm tests 
         run: helm test -n kubecost kubecost
+
+      - name: gather debug info - test
+        if: failure()
+        run: |
+          kubectl get pods -n kubecost
+          kubectl get pods -n kubecost -o yaml
+          kubectl get pods -n kubecost -o json
+          kubectl get pods -n kubecost -o jsonpath='{.items[*].spec.containers[*].image}'
+          kubectl get pods -n kubecost -o jsonpath='{.items[*].spec.containers[*].image}'
+          kubectl -n kubecost describe pods
+          kubectl -n kubecost logs -l app.kubernetes.io/name=cost-analyzer
+          kubectl -n kubecost logs basic-health
 
       - name: Uninstall chart
         run: helm uninstall kubecost -n kubecost --no-hooks --wait
@@ -151,11 +171,11 @@ jobs:
       matrix:
         cluster:
         - distribution: openshift
-          version: 4.13.0-okd
-        - distribution: openshift
-          version: 4.14.0-okd
-        - distribution: openshift
           version: 4.15.0-okd
+        - distribution: openshift
+          version: 4.16.0-okd
+        - distribution: openshift
+          version: 4.17.0-okd
     steps:
       - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
         with:
@@ -184,12 +204,10 @@ jobs:
         run: |
           helm install --wait --wait-for-jobs kubecost . -n kubecost -f values-openshift.yaml \
           --set global.platforms.openshift.route.enabled=true \
-          --set global.platforms.openshift.scc.nodeExporter=true \
           --set global.platforms.openshift.scc.networkCosts=true \
           --set global.platforms.openshift.scc.clusterController=true \
           --set networkCosts.enabled=true \
-          --set clusterController.enabled=true \
-          --set prometheus.nodeExporter.enabled=true 
+          --set clusterController.enabled=true
         # run: ct install --namespace kubecost --chart-dirs=cost-analyzer/ --charts cost-analyzer/
       - name: Wait for ready 
         run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/name=cost-analyzer --timeout=120s
@@ -209,11 +227,11 @@ jobs:
       matrix:
         cluster:
         - distribution: eks
-          version: v1.28
-        - distribution: eks
-          version: v1.29
-        - distribution: eks
           version: v1.30
+        - distribution: eks
+          version: v1.31
+        - distribution: eks
+          version: v1.32
     steps:
       - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
         with:
@@ -241,8 +259,8 @@ jobs:
         working-directory: ./cost-analyzer
         run: |
           helm install --wait --wait-for-jobs kubecost . -n kubecost -f values-eks-cost-monitoring.yaml \
-          --set persistentVolume.storageClass=gp2 \
-          --set prometheus.server.persistentVolume.storageClass=gp2
+          --set persistentVolume.enabled=false \
+          --set prometheus.server.persistentVolume.enabled=false
         # run: ct install --namespace kubecost --chart-dirs=cost-analyzer/ --charts cost-analyzer/
       - name: Wait for ready 
         run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/name=cost-analyzer --timeout=120s

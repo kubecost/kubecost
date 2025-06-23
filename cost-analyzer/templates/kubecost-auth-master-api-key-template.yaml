@@ -1,0 +1,18 @@
+ {{- if eq (include "authMasterKeyEnabled" .) "true" }}
+apiVersion: v1
+kind: Secret
+type: Opaque
+metadata:
+  name: kubecost-master-api-key
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+stringData:
+  master-api-key:
+    {{- if .Values.oidc.enabled }}
+    {{ .Values.oidc.apiMasterKey }}
+    {{- end }}
+    {{- if .Values.saml.enabled }}
+    {{ .Values.saml.apiMasterKey }}
+    {{- end }}
+{{- end }}
