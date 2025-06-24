@@ -5,7 +5,6 @@ This is the official Helm chart for [Kubecost](https://www.kubecost.com/), an en
 ## Version Support
 
 Kubecost strives to support as many versions of Kubernetes as possible. Below is the version support matrix which has been tested. Versions outside of the stated range may still work but are untested.
-While the below versions may work with the given versions of Kubernetes, Kubecost generally supports the current and previous version
 
 | Chart Version                  | Kubernetes Min | Kubernetes Max |
 |--------------------------------|----------------|----------------|
@@ -15,8 +14,8 @@ While the below versions may work with the given versions of Kubernetes, Kubecos
 | 2.2                            | 1.21           | 1.29           |
 | 2.3                            | 1.21           | 1.30           |
 | 2.4                            | 1.22           | 1.31           |
-| 2.5                            | 1.22           | 1.32           |
-| 2.6                            | 1.22           | 1.32           |
+| 2.5                            | 1.22           | 1.31           |
+| 2.6                            | 1.22           | 1.31           |
 
 ## Installation
 
@@ -54,7 +53,7 @@ The following table lists commonly used configuration parameters for the Kubecos
 
 Parameter | Description | Default
 --------- | ----------- | -------
-`global.prometheus.enabled` | If false, use an existing Prometheus install. [More info](https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-prometheus-guide) | `true`
+`global.prometheus.enabled` | If false, use an existing Prometheus install. [More info](https://docs.kubecost.com/install-and-configure/install/custom-prom). | `true`
 `prometheus.server.persistentVolume.enabled` | If true, Prometheus server will create a Persistent Volume Claim. | `true`
 `prometheus.server.persistentVolume.size` | Prometheus server data Persistent Volume size. Default set to retain ~6000 samples per second for 15 days. | `32Gi`
 `prometheus.server.persistentVolume.storageClass` | Define storage class for Prometheus persistent volume  | `-`
@@ -74,8 +73,7 @@ Parameter | Description | Default
 `ingress.paths` | Ingress paths | `["/"]`
 `ingress.hosts` | Ingress hostnames | `[cost-analyzer.local]`
 `ingress.tls` | Ingress TLS configuration (YAML) | `[]`
-`networkCosts.enabled` | If true, collect network allocation metrics [More info](https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=dashboard-network-traffic-cost-allocation) | `false`
-`networkCosts.prometheusScrape` | If true, scrape the network allocation metrics from the `network-costs` daemonset | `false`
+`networkCosts.enabled` | If true, collect network allocation metrics [More info](https://docs.kubecost.com/using-kubecost/navigating-the-kubecost-ui/cost-allocation/network-allocation) | `false`
 `networkCosts.podMonitor.enabled` | If true, a PodMonitor for the network-cost daemonset is created | `false`
 `serviceMonitor.enabled` | Set this to `true` to create ServiceMonitor for Prometheus operator | `false`
 `serviceMonitor.additionalLabels` | Additional labels that can be used so ServiceMonitor will be discovered by Prometheus | `{}`

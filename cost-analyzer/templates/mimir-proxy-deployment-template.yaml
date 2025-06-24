@@ -46,12 +46,6 @@ spec:
         - mountPath: /etc/nginx/conf.d
           name: default-conf
           readOnly: true
-    {{- if .Values.global.mimirProxy.imagePullSecrets }}
-      imagePullSecrets:
-      {{- range $.Values.global.mimirProxy.imagePullSecrets }}
-        - name: {{ .name }}
-      {{- end }}
-    {{- end }}
       volumes:
       - name: default-conf
         configMap:

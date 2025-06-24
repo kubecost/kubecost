@@ -218,21 +218,6 @@ spec:
         - name: ssl-path
           emptyDir: {}
         {{- end }}
-        {{- if (.Values.enterpriseCustomPricing).enabled }}
-        - name: kubecost-enterprise-pricing
-          configMap:
-            name: {{ .Values.enterpriseCustomPricing.configMapName }}
-        {{- end }}
-        {{- if (.Values.instanceTypes).enabled }}
-        - name: custom-instance-types
-          configMap:
-            name: {{ .Values.instanceTypes.custom.configMapName }}
-        {{- end }}
-        {{- if ((.Values.kubecostProductConfigs).actions).config }}
-        - name: actions-config
-          configMap:
-            name: actions-config
-        {{- end }}
         {{- if .Values.kubecostAggregator.extraVolumes }}
         {{- toYaml .Values.kubecostAggregator.extraVolumes | nindent 8 }}
         {{- end }}

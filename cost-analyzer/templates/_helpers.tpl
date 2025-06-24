@@ -969,16 +969,6 @@ Begin Kubecost 2.0 templates
       # This hasn't been observed as a problem in cost-analyzer, likely because
       # of the init container that gives everything under /var/configs 777.
       mountPath: /var/configs/waterfowl
-      {{- if (not .Values.kubecostAggregator.legacyMode ) }}
-      # mount the clickhouse directories on the same PV as the duckdb, 
-      # this way they can seamlessly share the same PV before, during, and after the upgrade
-    - name: aggregator-db-storage
-      mountPath: /var/lib/clickhouse
-      {{- end }}
-    {{- end }}
-    {{- if and (not .Values.kubecostAggregator.legacyMode) (eq (include "aggregator.deployMethod" .) "singlepod") }}
-    - name: persistent-configs
-      mountPath: /var/lib/clickhouse
     {{- end }}
     {{- if and ((.Values.kubecostProductConfigs).productKey).enabled ((.Values.kubecostProductConfigs).productKey).secretname (eq (include "aggregator.deployMethod" .) "statefulset") }}
     - name: productkey-secret
@@ -1049,18 +1039,6 @@ Begin Kubecost 2.0 templates
       mountPath: "/etc/pki/ca-trust/extracted"
       readOnly: false
     {{- end }}
-    {{- if (.Values.enterpriseCustomPricing).enabled }}
-    - name: kubecost-enterprise-pricing
-      mountPath: /var/configs/enterprise-pricing
-    {{- end }}
-    {{- if and (.Values.instanceTypes.enabled) (.Values.instanceTypes.custom) }}
-    - name: custom-instance-types
-      mountPath: /var/configs/instance-types
-    {{- end }}
-    {{- if ((.Values.kubecostProductConfigs).actions).config }}
-    - name: actions-config
-      mountPath: /var/configs/actions
-    {{- end }}
     {{- /* Only adds extraVolumeMounts if aggregator is running as its own pod */}}
     {{- if and .Values.kubecostAggregator.extraVolumeMounts (eq (include "aggregator.deployMethod" .) "statefulset") }}
     {{- toYaml .Values.kubecostAggregator.extraVolumeMounts | nindent 4 }}
@@ -1096,10 +1074,6 @@ Begin Kubecost 2.0 templates
     {{- if (gt (int .Values.kubecostAggregator.numDBCopyPartitions) 0) }}
     - name: NUM_DB_COPY_CHUNKS
       value: {{ .Values.kubecostAggregator.numDBCopyPartitions | quote }}
-    {{- end }}
-    {{- if .Values.kubecostAggregator.legacyMode }}
-    - name: LEGACY_MODE
-      value: "true"
     {{- end }}
     {{- if .Values.kubecostAggregator.jaeger.enabled }}
     - name: TRACING_URL
@@ -1277,18 +1251,6 @@ Begin Kubecost 2.0 templates
       value: "true"
     {{- end}}
     {{- end }}
-    {{- end }}
-    {{- if (.Values.enterpriseCustomPricing).enabled }}
-    - name: ENTERPRISE_CUSTOM_PRICING_ENABLED
-      value: "true"
-    - name: ENTERPRISE_CUSTOM_PRICING_CSV_LOCATION_URI
-      value: {{ (quote .Values.enterpriseCustomPricing.location.URI) }}
-    - name: ENTERPRISE_CUSTOM_PRICING_APPLY_RETROACTIVELY
-      value: "true"
-    {{- end }}
-    {{- if (.Values.instanceTypes).enabled }}
-    - name: CUSTOM_TYPE_INSTANCES_URI
-      value: {{ (quote .Values.instanceTypes.custom.location.URI) }}
     {{- end }}
 {{- end }}
 
@@ -1628,7 +1590,6 @@ for more information
 */ -}}
 {{- define "configsChecksum" -}}
 {{- $files := list
-  "actions-config-configmap-template.yaml"
   "alibaba-service-key-secret.yaml"
   "aws-service-key-secret.yaml"
   "azure-service-key-secret.yaml"
@@ -1655,12 +1616,11 @@ for more information
   "integrations-postgres-secret.yaml"
   "kubecost-cluster-context-switcher.yaml"
   "kubecost-cluster-controller-actions-config.yaml"
-  "kubecost-cluster-controller-secret-template.yaml"
   "kubecost-oidc-secret-template.yaml"
   "kubecost-saml-secret-template.yaml"
   "mimir-proxy-configmap-template.yaml"
   "savings-recommendations-allowlists-config-map-template.yaml"
-  "savings-recommendations-nodegroup-config-map-template.yaml"
+  "kubecost-cluster-controller-secret-template.yaml"
 -}}
 {{- $checksum := "" -}}
 {{- range $files -}}
@@ -1677,7 +1637,7 @@ for more information
   {{- else if .Values.imageVersion }}
     {{ .Values.kubecostModel.image }}:{{ .Values.imageVersion }}
   {{- else if eq "development" .Chart.AppVersion }}
-    gcr.io/guestbook-227502/agent:latest
+    gcr.io/kubecost1/cost-model-nightly:latest
   {{- else }}
     {{ .Values.kubecostModel.image }}:prod-{{ $.Chart.AppVersion }}
   {{- end }}
