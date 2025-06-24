@@ -936,7 +936,7 @@ prometheus:
       rollingUpdate: null
     image:
       repository: quay.io/prometheus/prometheus
-      tag: v3.4.0
+      tag: v3.4.1
       pullPolicy: IfNotPresent
     priorityClassName: ""
     prefixURL: ""
