@@ -129,7 +129,11 @@ jobs:
           kubectl get pods -n kubecost -o jsonpath='{.items[*].spec.containers[*].image}'
           kubectl get pods -n kubecost -o jsonpath='{.items[*].spec.containers[*].image}'
           kubectl -n kubecost describe pods
+          echo "cost-analyzer logs"
           kubectl -n kubecost logs -l app.kubernetes.io/name=cost-analyzer
+          echo "agg logs"
+          kubectl -n kubecost logs -l app.kubernetes.io/name=aggregator
+          echo "basic-health logs"
           kubectl -n kubecost logs basic-health
 
       - name: Uninstall chart
