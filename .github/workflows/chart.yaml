@@ -1,4 +1,4 @@
-name: Chart build and test
+name: Chart build and test - debug
 
 on:
   workflow_dispatch: {}
@@ -6,9 +6,9 @@ on:
   # a good idea, but this is low risk since it's a Helm chart repo.
   pull_request_target:
     types: [opened, synchronize, reopened, ready_for_review]
-  # pull_request:
-  #   branches:
-  #     - develop
+  pull_request:
+    branches:
+      - develop
 
 # Prevents multiple runs of the same workflow on the same branch from executing 
 # simultaneously. Saves resources.
@@ -154,8 +154,13 @@ jobs:
             kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/name=cost-analyzer --timeout=120s
             echo "### Sleeping for 60 seconds longer. ###"
             sleep 60
-            echo "### [DEBUG] Listing Pods in Kubecost Namespace. ###"
+            echo "### [DEBUG] printing debug info ###"
             kubectl -n kubecost get pods
+            kubectl get pods -n kubecost -o yaml
+            kubectl get pods -n kubecost -o jsonpath='{.items[*].spec.containers[*].image}'
+            kubectl get pods -n kubecost -o jsonpath='{.items[*].spec.containers[*].image}'
+            kubectl -n kubecost describe pods
+            kubectl -n kubecost logs -l app.kubernetes.io/name=cost-analyzer
             echo "### Performing helm tests ###"
             helm test -n kubecost $(helm ls -n kubecost --all --short)
             echo "### Performing uninstallation ###"
