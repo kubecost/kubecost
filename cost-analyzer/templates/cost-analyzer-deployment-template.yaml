@@ -320,6 +320,12 @@ spec:
           configMap:
             name: actions-config
         {{- end }}
+        {{- if or ((.Values.kubecostProductConfigs).actions).storageConfigSecret ((.Values.kubecostProductConfigs).actions).storageConfig }}
+        - name: actions-storage-config
+          secret:
+            defaultMode: 420
+            secretName: {{ ((.Values.kubecostProductConfigs).actions).storageConfigSecret | default "actions-store" }}
+        {{- end }}
         - name: persistent-configs
 {{- if .Values.persistentVolume }}
 {{- if .Values.persistentVolume.enabled }}

@@ -1061,6 +1061,10 @@ Begin Kubecost 2.0 templates
     - name: actions-config
       mountPath: /var/configs/actions
     {{- end }}
+    {{- if or ((.Values.kubecostProductConfigs).actions).storageConfigSecret ((.Values.kubecostProductConfigs).actions).storageConfig }}
+    - name: actions-storage-config
+      mountPath: /var/configs/actions
+    {{- end }}
     {{- /* Only adds extraVolumeMounts if aggregator is running as its own pod */}}
     {{- if and .Values.kubecostAggregator.extraVolumeMounts (eq (include "aggregator.deployMethod" .) "statefulset") }}
     {{- toYaml .Values.kubecostAggregator.extraVolumeMounts | nindent 4 }}
@@ -1289,6 +1293,10 @@ Begin Kubecost 2.0 templates
     {{- if (.Values.instanceTypes).enabled }}
     - name: CUSTOM_TYPE_INSTANCES_URI
       value: {{ (quote .Values.instanceTypes.custom.location.URI) }}
+    {{- end }}
+    {{- if or ((.Values.kubecostProductConfigs).actions).storageConfigSecret ((.Values.kubecostProductConfigs).actions).storageConfig }}
+    - name: ACTIONS_BUCKET_CONFIG
+      value: /var/configs/actions/actions-store.yaml
     {{- end }}
 {{- end }}
 
