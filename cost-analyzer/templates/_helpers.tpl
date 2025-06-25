@@ -980,7 +980,7 @@ Begin Kubecost 2.0 templates
     - name: persistent-configs
       mountPath: /var/lib/clickhouse
     {{- end }}
-    {{- if and ((.Values.kubecostProductConfigs).productKey).enabled ((.Values.kubecostProductConfigs).productKey).secretname (eq (include "aggregator.deployMethod" .) "statefulset") }}
+    {{- if ((.Values.kubecostProductConfigs).productKey).enabled }}
     - name: productkey-secret
       mountPath: /var/configs/productkey
     {{- end }}
@@ -1642,7 +1642,7 @@ for more information
   "cost-analyzer-metrics-config-map-template.yaml"
   "cost-analyzer-network-costs-config-map-template.yaml"
   "cost-analyzer-oidc-config-map-template.yaml"
-  "cost-analyzer-pkey-configmap.yaml"
+  "cost-analyzer-pkey-secret.yaml"
   "cost-analyzer-pricing-configmap.yaml"
   "cost-analyzer-saml-config-map-template.yaml"
   "cost-analyzer-saved-reports-configmap.yaml"
@@ -1692,3 +1692,10 @@ for more information
 {{- $tag := last $parts }}
 {{- $tag }}
 {{- end }}
+
+{{/*
+Product key secret name with default fallback
+*/}}
+{{- define "cost-analyzer.productKeySecretName" -}}
+{{- default "product-key" .Values.kubecostProductConfigs.productKey.secretname -}}
+{{- end -}}
