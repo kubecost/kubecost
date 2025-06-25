@@ -54,6 +54,13 @@ rules:
       - list
       - watch
   - apiGroups:
+      - ''
+    verbs:
+      - get
+      - list
+    resources:
+      - nodes/proxy
+  - apiGroups:
       - apps
     resources:
       - statefulsets

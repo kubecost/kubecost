@@ -71,6 +71,8 @@ global:
     basicAuth:
       # username: user
       # password: pwd
+    imagePullSecrets: []
+      # - name: "image-pull-secret"
 
   ## Azure Monitor Managed Service for Prometheus
   ## Ref: https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/prometheus-remote-write-virtual-machines
@@ -376,10 +378,14 @@ enterpriseCustomPricing:
   # The file name (e.g. pricing.csv) needs to match the file name used to make the ConfigMap (above)
   location:
     URI: /var/configs/enterprise-pricing/pricing.csv
-  # By default, enterprise custom pricing takes effect moving forward from when
-  # it is enabled. To price all historic data according to the given pricing
-  # spec, set "applyRetroactively" to true, below.
-  applyRetroactively: false
+
+instanceTypes:
+  enabled: false
+  #  kubectl create configmap -n kubecost custom-instance-types --from-file custom.json
+  custom:
+    configMapName: custom-instance-types
+    location:
+      URI: /var/configs/instance-types/custom.json
 
 ## Kubecost SAML (enterprise key required)
 ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-user-management-saml
@@ -576,8 +582,9 @@ kubecostFrontend:
     server:
       - "'Access-Control-Allow-Origin' '*' always;"
       - "'Access-Control-Allow-Methods' 'GET, PUT, POST, DELETE, OPTIONS' always;"
-      - "Content-Security-Policy \"default-src 'self' 'unsafe-inline' http: https: ws: data:; frame-ancestors 'none';\";"
+      - "Content-Security-Policy \"default-src 'self' data: api.userway.com cdn.userway.com api.mixpanel.com; connect-src http: https:; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'; form-action 'self';\";"
       - Cache-Control "must-revalidate";
+      - "X-Content-Type-Options \"nosniff\";"
 
 # Kubecost Metrics deploys a separate pod which will emit kubernetes specific metrics required
 # by the cost-model. This pod is designed to remain active and decoupled from the cost-model itself.
@@ -627,6 +634,17 @@ kubecostModel:
   # For deploying kubecost in a cluster that does not self-monitor
   etlReadOnlyMode: false
 
+  # to enable 10 minute metrics pipeline
+  minuteMetricsEnabled: false
+
+  # to enable opencost source
+  opencostSourceEnabled: false
+
+  # to enable collector data source
+  collectorDataSourceEnabled: false
+
+  # to enable cloudy emitter
+  cloudyEmitterEnabled: false
   ## The name of the Secret containing a bucket config for Federated storage.
   ## The contents should be stored under a key named federated-store.yaml.
   ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-long-term-storage-configuration
@@ -918,7 +936,7 @@ prometheus:
       rollingUpdate: null
     image:
       repository: quay.io/prometheus/prometheus
-      tag: v3.3.1
+      tag: v3.4.1
       pullPolicy: IfNotPresent
     priorityClassName: ""
     prefixURL: ""
@@ -1153,7 +1171,7 @@ prometheus:
       name: configmap-reload
       image:
         repository: quay.io/prometheus-operator/prometheus-config-reloader
-        tag: v0.82.2
+        tag: v0.83.0
         pullPolicy: IfNotPresent
       extraArgs: {}
       extraVolumeDirs: []
@@ -1166,7 +1184,7 @@ prometheus:
       name: configmap-reload
       image:
         repository: quay.io/prometheus-operator/prometheus-config-reloader
-        tag: v0.82.2
+        tag: v0.83.0
         pullPolicy: IfNotPresent
       extraArgs: {}
       extraVolumeDirs: []
@@ -1571,7 +1589,7 @@ forecasting:
   fullImageName: ""
   image:
     repository: gcr.io/kubecost1/kubecost-modeling
-    tag: v0.1.26
+    tag: v0.1.27
   imagePullPolicy: IfNotPresent
 
   # Resource specification block for the forecasting container.
@@ -1588,7 +1606,7 @@ forecasting:
     # -t is the worker timeout which primarily affects model training time;
     # if it is not high enough, training workers may die mid training
     "GUNICORN_CMD_ARGS": "--log-level info -t 1200"
-
+    "LOG_LEVEL": "info"
   priority:
     enabled: false
     name: ""
@@ -1723,10 +1741,10 @@ kubecostAggregator:
 
   resources:
     limits:
-      memory: 2Gi
+      memory: 5Gi
     requests:
       cpu: 1000m
-      memory: 1Gi
+      memory: 5Gi
 
   readinessProbe:
     enabled: true
@@ -1889,7 +1907,7 @@ clusterController:
   enabled: false
   image:
     repository: gcr.io/kubecost1/cluster-controller
-    tag: v0.16.18
+    tag: v0.16.19
   imagePullPolicy: IfNotPresent
   extraEnv: []
   # - name: EXTRA_ENV_VAR
@@ -2105,7 +2123,7 @@ grafana:
     failureThreshold: 10
   image:
     repository: grafana/grafana
-    tag: 12.0.0
+    tag: 12.0.1
     pullPolicy: IfNotPresent
     # pullSecrets:
   securityContext: {}
@@ -2207,6 +2225,9 @@ awsstore:
   nodeSelector: {}
   annotations: {}
 
+# set to true if you want to deploy only the aggregator WITHOUT the cost-analyzer
+aggregatorOnly: false
+
 ## Federated ETL Architecture
 ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-etl-federation
 ##
@@ -2257,7 +2278,7 @@ costEventsAudit:
 # # These configs can also be set from the Settings page in the Kubecost product
 # # UI. Values in this block override config changes in the Settings UI on pod
 # # restart
-# kubecostProductConfigs:
+kubecostProductConfigs:
 #   # An optional list of cluster definitions that can be added for frontend
 #   # access. The local cluster is *always* included by default, so this list is
 #   # for non-local clusters.
@@ -2348,7 +2369,7 @@ costEventsAudit:
 #     EXAMPLE_ACCOUNT_ID: EXAMPLE_ACCOUNT_NAME
 #   clusterName: "" # clusterName is the default context name in settings.
 #   clusterAccountID: "" # Manually set Account property for assets
-#   currencyCode: "USD" # official support for USD, AUD, BRL, CAD, CHF, CNY, DKK, EUR, GBP, IDR, INR, JPY, NOK, PLN, SEK
+  currencyCode: "USD"   # official support for USD, AUD, BRL, CAD, CHF, CNY, DKK, EUR, GBP, IDR, INR, JPY, NOK, PLN, SEK
 #   azureBillingRegion: US # Represents 2-letter region code, e.g. West Europe = NL, Canada = CA. ref: https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes
 #   azureSubscriptionID: 0bd50fdf-c923-4e1e-850c-196dd3dcc5d3
 #   azureClientID: f2ef6f7d-71fb-47c8-b766-8d63a19db017
@@ -2356,14 +2377,15 @@ costEventsAudit:
 #   azureClientPassword: fake key # Only use if your values.yaml are stored encrypted. Otherwise provide an existing secret via serviceKeySecretName
 #   azureOfferDurableID: "MS-AZR-0003p"
 #   discount: "" # percentage discount applied to compute
-#   negotiatedDiscount: "" # custom negotiated cloud provider discount
+  negotiatedDiscount: ""   # custom negotiated cloud provider discount
 #   standardDiscount: "" # custom negotiated cloud provider discount, applied to all incoming asset compute costs in a federated environment. Overrides negotiatedDiscount on any cluster in the federated environment.
-#   defaultIdle: false
+  defaultIdle: false
 #   serviceKeySecretName: "" # Use an existing AWS or Azure secret with format as in aws-service-key-secret.yaml or azure-service-key-secret.yaml. Leave blank if using createServiceKeySecret
 #   createServiceKeySecret: true # Creates a secret representing your cloud service key based on data in values.yaml. If you are storing unencrypted values, add a secret manually
-#   sharedNamespaces: "" # namespaces with shared workloads, example value: "kube-system\,ingress-nginx\,kubecost\,monitoring"
-#   sharedOverhead: "" # value representing a fixed external cost per month to be distributed among aggregations.
-#   shareTenancyCosts: true # enable or disable sharing costs such as cluster management fees (defaults to "true" on Settings page)
+  sharedNamespaces: ""   # namespaces with shared workloads, example value: "kube-system\,ingress-nginx\,kubecost\,monitoring"
+  sharedLabelValues: ""   # default shared label values, e.g., "app:prometheus"
+  sharedOverhead: 0   # value representing a fixed external cost per month to be distributed among aggregations.
+  shareTenancyCosts: true   # enable or disable sharing costs such as cluster management fees (defaults to "true" on Settings page)
 #   metricsConfigs: # configuration for metrics emitted by Kubecost
 #     disabledMetrics: [] # list of metrics that Kubecost will not emit. Note that disabling metrics can lead to unexpected behavior in the cost-model.
 #   productKey: # Apply enterprise product license
@@ -2420,6 +2442,18 @@ costEventsAudit:
 #     AWS: []
 #     GCP: []
 #     Azure: []
+#    actions:
+#      config:
+#        global: # Define global action configuration
+#          rightsizing:
+#            enabled: true
+#        clusters: # Define cluster-specific action configuration, where top-level keys are cluster names
+#          cluster-1:
+#            rightsizing:
+#              enabled: false
+#          cluster-2:
+#            rightsizing:
+#              enabled: false
 
   ## Specify an existing Kubernetes Secret holding the cloud integration information. This Secret must contain
   ## a key with name `cloud-integration.json` and the contents must be in a specific format. It is expected

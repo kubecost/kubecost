@@ -1000,7 +1000,7 @@ Begin Kubecost 2.0 templates
     - name: persistent-configs
       mountPath: /var/lib/clickhouse
     {{- end }}
-    {{- if and ((.Values.kubecostProductConfigs).productKey).enabled ((.Values.kubecostProductConfigs).productKey).secretname (eq (include "aggregator.deployMethod" .) "statefulset") }}
+    {{- if ((.Values.kubecostProductConfigs).productKey).enabled }}
     - name: productkey-secret
       mountPath: /var/configs/productkey
     {{- end }}
@@ -1072,6 +1072,14 @@ Begin Kubecost 2.0 templates
     {{- if (.Values.enterpriseCustomPricing).enabled }}
     - name: kubecost-enterprise-pricing
       mountPath: /var/configs/enterprise-pricing
+    {{- end }}
+    {{- if and (.Values.instanceTypes.enabled) (.Values.instanceTypes.custom) }}
+    - name: custom-instance-types
+      mountPath: /var/configs/instance-types
+    {{- end }}
+    {{- if ((.Values.kubecostProductConfigs).actions).config }}
+    - name: actions-config
+      mountPath: /var/configs/actions
     {{- end }}
     {{- /* Only adds extraVolumeMounts if aggregator is running as its own pod */}}
     {{- if and .Values.kubecostAggregator.extraVolumeMounts (eq (include "aggregator.deployMethod" .) "statefulset") }}
@@ -1296,7 +1304,11 @@ Begin Kubecost 2.0 templates
     - name: ENTERPRISE_CUSTOM_PRICING_CSV_LOCATION_URI
       value: {{ (quote .Values.enterpriseCustomPricing.location.URI) }}
     - name: ENTERPRISE_CUSTOM_PRICING_APPLY_RETROACTIVELY
-      value: {{ (quote .Values.enterpriseCustomPricing.applyRetroactively) }}
+      value: "true"
+    {{- end }}
+    {{- if (.Values.instanceTypes).enabled }}
+    - name: CUSTOM_TYPE_INSTANCES_URI
+      value: {{ (quote .Values.instanceTypes.custom.location.URI) }}
     {{- end }}
 {{- end }}
 
@@ -1636,6 +1648,7 @@ for more information
 */ -}}
 {{- define "configsChecksum" -}}
 {{- $files := list
+  "actions-config-configmap-template.yaml"
   "alibaba-service-key-secret.yaml"
   "aws-service-key-secret.yaml"
   "azure-service-key-secret.yaml"
@@ -1649,7 +1662,7 @@ for more information
   "cost-analyzer-metrics-config-map-template.yaml"
   "cost-analyzer-network-costs-config-map-template.yaml"
   "cost-analyzer-oidc-config-map-template.yaml"
-  "cost-analyzer-pkey-configmap.yaml"
+  "cost-analyzer-pkey-secret.yaml"
   "cost-analyzer-pricing-configmap.yaml"
   "cost-analyzer-saml-config-map-template.yaml"
   "cost-analyzer-saved-reports-configmap.yaml"
@@ -1662,11 +1675,12 @@ for more information
   "integrations-postgres-secret.yaml"
   "kubecost-cluster-context-switcher.yaml"
   "kubecost-cluster-controller-actions-config.yaml"
+  "kubecost-cluster-controller-secret-template.yaml"
   "kubecost-oidc-secret-template.yaml"
   "kubecost-saml-secret-template.yaml"
   "mimir-proxy-configmap-template.yaml"
   "savings-recommendations-allowlists-config-map-template.yaml"
-  "kubecost-cluster-controller-secret-template.yaml"
+  "savings-recommendations-nodegroup-config-map-template.yaml"
 -}}
 {{- $checksum := "" -}}
 {{- range $files -}}
@@ -1683,7 +1697,7 @@ for more information
   {{- else if .Values.imageVersion }}
     {{ .Values.kubecostModel.image }}:{{ .Values.imageVersion }}
   {{- else if eq "development" .Chart.AppVersion }}
-    gcr.io/kubecost1/cost-model-nightly:latest
+    gcr.io/guestbook-227502/agent:latest
   {{- else }}
     {{ .Values.kubecostModel.image }}:prod-{{ $.Chart.AppVersion }}
   {{- end }}
@@ -1698,3 +1712,10 @@ for more information
 {{- $tag := last $parts }}
 {{- $tag }}
 {{- end }}
+
+{{/*
+Product key secret name with default fallback
+*/}}
+{{- define "cost-analyzer.productKeySecretName" -}}
+{{- default "product-key" .Values.kubecostProductConfigs.productKey.secretname -}}
+{{- end -}}

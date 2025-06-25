@@ -99,10 +99,10 @@ spec:
         {{- else }}
         {{- fail "\n\nKubecost Aggregator Enterprise Config requires either .Values.kubecostModel.federatedStorageConfigSecret or .Values.kubecostModel.federatedStorageConfig" }}
         {{- end }}
-        {{- if and ((.Values.kubecostProductConfigs).productKey).enabled ((.Values.kubecostProductConfigs).productKey).secretname }}
+        {{- if ((.Values.kubecostProductConfigs).productKey).enabled }}
         - name: productkey-secret
           secret:
-            secretName: {{ .Values.kubecostProductConfigs.productKey.secretname }}
+            secretName: {{ include "cost-analyzer.productKeySecretName" . }}
             items:
             - key: productkey.json
               path: productkey.json
@@ -222,6 +222,16 @@ spec:
         - name: kubecost-enterprise-pricing
           configMap:
             name: {{ .Values.enterpriseCustomPricing.configMapName }}
+        {{- end }}
+        {{- if (.Values.instanceTypes).enabled }}
+        - name: custom-instance-types
+          configMap:
+            name: {{ .Values.instanceTypes.custom.configMapName }}
+        {{- end }}
+        {{- if ((.Values.kubecostProductConfigs).actions).config }}
+        - name: actions-config
+          configMap:
+            name: actions-config
         {{- end }}
         {{- if .Values.kubecostAggregator.extraVolumes }}
         {{- toYaml .Values.kubecostAggregator.extraVolumes | nindent 8 }}
