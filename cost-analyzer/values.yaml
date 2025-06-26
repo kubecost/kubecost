@@ -1741,10 +1741,10 @@ kubecostAggregator:
 
   resources:
     limits:
-      memory: 5Gi
+      memory: 8Gi
     requests:
-      cpu: 1000m
-      memory: 5Gi
+      cpu: 2000m
+      memory: 8Gi
 
   readinessProbe:
     enabled: true
