@@ -32,3 +32,10 @@ networkCosts:
       amazon-web-services: true
       # google-cloud-services: true
       # azure-cloud-services: true
+kubecostAggregator:
+  resources:
+    limits:
+      memory: 10Gi
+    requests:
+      cpu: 2000m
+      memory: 10Gi
