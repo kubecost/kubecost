@@ -39,4 +39,3 @@ kubecostAggregator:
     requests:
       cpu: 2000m
       memory: 10Gi
-      
