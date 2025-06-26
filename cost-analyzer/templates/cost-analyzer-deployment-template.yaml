@@ -137,10 +137,10 @@ spec:
           emptyDir: {}
         {{- end }}
         {{- if .Values.kubecostProductConfigs }}
-        {{- if and ((.Values.kubecostProductConfigs).productKey).enabled ((.Values.kubecostProductConfigs).productKey).secretname }}
+         {{- if ((.Values.kubecostProductConfigs).productKey).enabled }}
         - name: productkey-secret
           secret:
-            secretName: {{ .Values.kubecostProductConfigs.productKey.secretname }}
+            secretName: {{ include "cost-analyzer.productKeySecretName" . }}
             items:
             - key: productkey.json
               path: productkey.json
