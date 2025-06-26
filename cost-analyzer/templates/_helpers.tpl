@@ -1637,6 +1637,7 @@ for more information
 {{- define "configsChecksum" -}}
 {{- $files := list
   "actions-config-configmap-template.yaml"
+  "actions-store-secret.yaml"
   "alibaba-service-key-secret.yaml"
   "aws-service-key-secret.yaml"
   "azure-service-key-secret.yaml"
