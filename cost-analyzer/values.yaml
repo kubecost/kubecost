@@ -2443,6 +2443,45 @@ kubecostProductConfigs:
 #     GCP: []
 #     Azure: []
 #    actions:
+#      # The Actions feature requires an external storage config.
+#      # The name of the Secret containing a bucket config for actions storage. The contents should be stored under a key named actions-store.yaml
+#      storageConfigSecret: actions-store
+#      # Alternatively, the storage config can be supplied directly in yaml, as below:
+#      storageConfig: |-
+#      # AWS EXAMPLE
+#        type: S3
+#        config:
+#          bucket: kubecost-actions-storage-bucket
+#          endpoint: s3.amazonaws.com
+#          region: us-east-1
+#          # best practice is to use pod identities to access AWS resources. Otherwise it is possible to use an access_key and secret_key
+#          access_key: "<your-access-key>"
+#          secret_key: "<your-secret-key>"
+#      # AZURE EXAMPLE
+#        type: AZURE
+#        config:
+#          storage_account: ""
+#          storage_account_key: ""
+#          container: ""
+#          max_retries: 0
+#      # GCP EXAMPLE
+#        type: GCS
+#        config:
+#          bucket: kubecost-actions-storage-bucket
+#          service_account: |-
+#            {
+#              "type": "service_account",
+#              "project_id": "...",
+#              "private_key_id": "...",
+#              "private_key": "...",
+#              "client_email": "...",
+#              "client_id": "...",
+#              "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+#              "token_uri": "https://oauth2.googleapis.com/token",
+#              "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+#              "client_x509_cert_url": ""
+#            }
+#      # Actions can reference configuration at a global or cluster-specific level
 #      config:
 #        global: # Define global action configuration
 #          rightsizing:
