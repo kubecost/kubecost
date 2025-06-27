@@ -1063,7 +1063,7 @@ Begin Kubecost 2.0 templates
     {{- end }}
     {{- if or ((.Values.kubecostProductConfigs).actions).storageConfigSecret ((.Values.kubecostProductConfigs).actions).storageConfig }}
     - name: actions-storage-config
-      mountPath: /var/configs/actions
+      mountPath: /var/configs/actions/storage
     {{- end }}
     {{- /* Only adds extraVolumeMounts if aggregator is running as its own pod */}}
     {{- if and .Values.kubecostAggregator.extraVolumeMounts (eq (include "aggregator.deployMethod" .) "statefulset") }}
@@ -1296,7 +1296,7 @@ Begin Kubecost 2.0 templates
     {{- end }}
     {{- if or ((.Values.kubecostProductConfigs).actions).storageConfigSecret ((.Values.kubecostProductConfigs).actions).storageConfig }}
     - name: ACTIONS_BUCKET_CONFIG
-      value: /var/configs/actions/actions-store.yaml
+      value: /var/configs/actions/storage/actions-store.yaml
     {{- end }}
 {{- end }}
 
