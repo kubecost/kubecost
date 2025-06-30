@@ -150,10 +150,10 @@ will result in failure. Users are asked to select one of the two presently-avail
     {{- fail "\nkubecostProductConfigs.cloudIntegrationSecret and kubecostProductConfigs.cloudIntegrationJSON are mutually exclusive. Please specify only one." -}}
   {{- end -}}
   {{- if and (.Values.kubecostProductConfigs).cloudIntegrationSecret ((.Values.kubecostProductConfigs).athenaBucketName) }}
-    {{- fail "\nkubecostProductConfigs.cloudIntegrationSecret and kubecostProductConfigs.athena* values are mutually exclusive. Please specifiy only one." -}}
+    {{- fail "\nkubecostProductConfigs.cloudIntegrationSecret and kubecostProductConfigs.athena* values are mutually exclusive. Please specify only one." -}}
   {{- end -}}
 {{- if and (.Values.kubecostProductConfigs).cloudIntegrationJSON ((.Values.kubecostProductConfigs).athenaBucketName) }}
-    {{- fail "\nkubecostProductConfigs.cloudIntegrationJSON and kubecostProductConfigs.athena* values are mutually exclusive. Please specifiy only one." -}}
+    {{- fail "\nkubecostProductConfigs.cloudIntegrationJSON and kubecostProductConfigs.athena* values are mutually exclusive. Please specify only one." -}}
   {{- end -}}
 {{- end -}}
 
@@ -1676,6 +1676,7 @@ for more information
   "kubecost-cluster-context-switcher.yaml"
   "kubecost-cluster-controller-actions-config.yaml"
   "kubecost-cluster-controller-secret-template.yaml"
+  "kubecost-cluster-controller-api-secret-template.yaml"
   "kubecost-oidc-secret-template.yaml"
   "kubecost-saml-secret-template.yaml"
   "mimir-proxy-configmap-template.yaml"
@@ -1718,4 +1719,12 @@ Product key secret name with default fallback
 */}}
 {{- define "cost-analyzer.productKeySecretName" -}}
 {{- default "product-key" .Values.kubecostProductConfigs.productKey.secretname -}}
+{{- end -}}
+
+{{- if not (and .Values.global.platforms.cicd.enabled .Values.global.platforms.cicd.skipSanityChecks) }}
+  {{- define "controllerApiKeyCheck" -}}
+    {{- if .Values.clusterController.kubecostAPIKey -}}
+      {{- fail "\n\nThe settings for clusterController.kubecostAPIKey have been updated, please remove this value and use clusterController.primaryApiKey instead. \nPlease see the readme for more details: \nhttps://github.com/kubecost/cost-analyzer-helm-chart/blob/develop/README.md" -}}
+    {{- end -}}
+  {{- end -}}
 {{- end -}}

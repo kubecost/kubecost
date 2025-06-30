@@ -283,22 +283,22 @@ spec:
         - name: CC_LOG_LEVEL
           value: {{ .Values.clusterController.logLevel | default "info" }}
         - name: CC_KUBESCALER_COST_MODEL_PATH
-          {{- if .Values.clusterController.primaryKubecostURL }}
+          {{- if .Values.clusterController.usePrimaryApiForRightSizing }}
           value: {{ .Values.clusterController.primaryKubecostURL }}/model
           {{- else }}
           value: http://{{ $serviceName }}.{{ .Release.Namespace }}:{{ .Values.service.targetPort | default 9090 }}/model
           {{- end }}
         - name: CC_CCL_COST_MODEL_PATH
-          {{- if .Values.clusterController.primaryKubecostURL }}
+          {{- if .Values.clusterController.usePrimaryApiForRightSizing }}
           value: {{ .Values.clusterController.primaryKubecostURL }}/model
           {{- else }}
           value: http://{{ $serviceName }}.{{ .Release.Namespace }}:{{ .Values.service.targetPort | default 9090 }}/model
           {{- end }}
-        {{- if or .Values.clusterController.kubecostAPIKey (eq .Values.clusterController.createClusterControllerSecret false) }}
+        {{- if .Values.clusterController.usePrimaryApiForRightSizing }}
         - name: KUBECOST_API_KEY
           valueFrom:
             secretKeyRef:
-              name: {{ .Values.clusterController.secretName }}
+              name: {{ .Values.clusterController.primaryApiSecretName }}
               key: kubecostAPIKey
         {{- end }}
         {{- if .Values.clusterController.kubescaler }}

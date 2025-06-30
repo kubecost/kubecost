@@ -1921,10 +1921,22 @@ clusterController:
   resources: {}
   affinity: {}
   nodeSelector: {}
-  primaryKubecostURL: ""  # URL for secondary clusters to connect to primary Kubecost (ex: https://kubecost.myorganization.com)
-  kubecostAPIKey: ""  # Service Account API Key to allow secondary clusters to authenticate to primary Kubecost
-  createClusterControllerSecret: true  # disable if you want to use your own secret manager. Example:kubectl create secret generic controller-secrets --from-literal=kubecostAPIKey=<your-api-key>
+  # When using Cluster Controller from a secondary/agent cluster, you will need to set the following to allow
+  # the secondary to query the Primary cluster API for container right-sizing information.
+  # This method should also be used for the Kubecost Primary when using single-sign-on to use an api key (service account).
+  # These setting are not needed when running Kubecost on a single cluster without single-sign-on.
+  usePrimaryApiForRightSizing: false
+  primaryKubecostURL: "" # URL for secondary clusters to connect to primary Kubecost (ex: https://kubecost.myorganization.com)
+  # There are two methods available to configure the API key, either with a secret created externally or via helm
+  # When creating the secret externally, the secret must use kubecostAPIKey as the file name.
+  # Example: kubectl create secret generic kubecost-primary-api-secret --from-literal=kubecostAPIKey=<your-api-key>
+  createPrimaryApiSecret: false # disable if you want to use your own secret or use a secrets manager.
+  primaryApiSecretName: kubecost-primary-api-secret
+  primaryApiKey: "" # If set, createPrimaryApiSecret must be true
+  # The following are used for cloud service provider access, this is not required for in-cluster optimizations
+  createClusterControllerSecret: true
   secretName: controller-secrets
+  # The following are used to define rules via IaC and are not required otherwise
   actionConfigs:
     # this configures the Kubecost Cluster Turndown action
     # for more details, see documentation at https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=controller-cluster-turndown
