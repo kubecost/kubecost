@@ -1062,8 +1062,15 @@ Begin Kubecost 2.0 templates
       mountPath: /var/configs/actions
     {{- end }}
     {{- if or ((.Values.kubecostProductConfigs).actions).storageConfigSecret ((.Values.kubecostProductConfigs).actions).storageConfig }}
+    {{- if eq ((.Values.kubecostProductConfigs).actions).storageConfigSecret (.Values.kubecostModel).federatedStorageConfigSecret }}
+    - name: federated-storage-config
+      mountPath: /var/configs/actions/storage/actions-store.yaml
+      subPath: federated-store.yaml
+      readOnly: true
+    {{- else }}
     - name: actions-storage-config
       mountPath: /var/configs/actions/storage
+    {{- end }}
     {{- end }}
     {{- /* Only adds extraVolumeMounts if aggregator is running as its own pod */}}
     {{- if and .Values.kubecostAggregator.extraVolumeMounts (eq (include "aggregator.deployMethod" .) "statefulset") }}
