@@ -241,7 +241,7 @@ spec:
             secretName: {{ ((.Values.kubecostProductConfigs).actions).storageConfigSecret | default "actions-store" }}
         {{- else }}
         - name: actions-storage
-        - emptyDir: { }
+          emptyDir: { }
         {{- end }}
         {{- end }}
         {{- if .Values.kubecostAggregator.extraVolumes }}
