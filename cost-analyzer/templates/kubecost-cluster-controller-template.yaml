@@ -295,6 +295,17 @@ spec:
           value: http://{{ $serviceName }}.{{ .Release.Namespace }}:{{ .Values.service.targetPort | default 9090 }}/model
           {{- end }}
         {{- if .Values.clusterController.usePrimaryApiForRightSizing }}
+          {{- if not (and .Values.global.platforms.cicd.enabled .Values.global.platforms.cicd.skipSanityChecks) }}
+            {{- if .Values.clusterController.usePrimaryApiForRightSizing }}
+              {{- if not (lookup "v1" "Secret" .Release.Namespace .Values.clusterController.primaryApiSecretName) }}
+                {{- fail (printf "\n\nConfiguration error:\nSecret '%s' specified in clusterController.primaryApiSecretName does not exist in namespace %s" .Values.clusterController.primaryApiSecretName .Release.Namespace) -}}
+              {{- end -}}
+              {{- $secret := lookup "v1" "Secret" .Release.Namespace .Values.clusterController.primaryApiSecretName -}}
+              {{- if not (index $secret.data "kubecostAPIKey") }}
+                {{- fail (printf "\n\nConfiguration error:\nSecret '%s' specified in clusterController.primaryApiSecretName does not contain kubecostAPIKey" .Values.clusterController.primaryApiSecretName) -}}
+              {{- end -}}
+            {{- end -}}
+          {{- end }}
         - name: KUBECOST_API_KEY
           valueFrom:
             secretKeyRef:

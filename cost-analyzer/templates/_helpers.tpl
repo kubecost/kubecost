@@ -162,17 +162,8 @@ Cluster Controller API Key check
 */}}
 {{- define "clusterController.kubecostAPIKeyCheck" -}}
   {{- if .Values.clusterController.enabled }}
-    {{- if and .Values.clusterController.kubecostAPIKey ((eq .Values.clusterController.createClusterControllerSecret false)) }}
-      {{- fail "\n\nConfiguration error:\nWhen setting clusterController.kubecostAPIKey, clusterController.createClusterControllerSecret must be true." -}}
-    {{- end -}}
-    {{- if and (not .Values.clusterController.createClusterControllerSecret) .Values.clusterController.secretName }}
-      {{- if not (lookup "v1" "Secret" .Release.Namespace .Values.clusterController.secretName) }}
-        {{- fail (printf "\n\nConfiguration error:\nSecret '%s' specified in clusterController.secretName does not exist in namespace %s" .Values.clusterController.secretName .Release.Namespace) -}}
-      {{- end -}}
-      {{- $secret := lookup "v1" "Secret" .Release.Namespace .Values.clusterController.secretName -}}
-      {{- if not (index $secret.data "kubecostAPIKey") }}
-        {{- fail (printf "\n\nConfiguration error:\nSecret '%s' specified in clusterController.secretName does not contain kubecostAPIKey" .Values.clusterController.secretName) -}}
-      {{- end -}}
+    {{- if .Values.clusterController.kubecostAPIKey -}}
+      {{- fail "\n\nThe settings for clusterController.kubecostAPIKey have been updated, please remove this value and use clusterController.primaryApiKey instead. \nPlease see the readme for more details: \nhttps://github.com/kubecost/cost-analyzer-helm-chart/blob/develop/README.md" -}}
     {{- end -}}
   {{- end -}}
 {{- end -}}
@@ -1719,12 +1710,4 @@ Product key secret name with default fallback
 */}}
 {{- define "cost-analyzer.productKeySecretName" -}}
 {{- default "product-key" .Values.kubecostProductConfigs.productKey.secretname -}}
-{{- end -}}
-
-{{- if not (and .Values.global.platforms.cicd.enabled .Values.global.platforms.cicd.skipSanityChecks) }}
-  {{- define "controllerApiKeyCheck" -}}
-    {{- if .Values.clusterController.kubecostAPIKey -}}
-      {{- fail "\n\nThe settings for clusterController.kubecostAPIKey have been updated, please remove this value and use clusterController.primaryApiKey instead. \nPlease see the readme for more details: \nhttps://github.com/kubecost/cost-analyzer-helm-chart/blob/develop/README.md" -}}
-    {{- end -}}
-  {{- end -}}
 {{- end -}}
