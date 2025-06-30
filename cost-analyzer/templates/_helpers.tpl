@@ -179,7 +179,7 @@ Federated Storage source contents check. Either the Secret must be specified or 
 Actions Storage source contents check. Either the Secret must be specified or the YAML, not both.
 */}}
 {{- define "actionsStorageSourceCheck" -}}
-  {{- if ((.Values.kubecostProductConfigs).actions) -}}
+  {{- if ((.Values.kubecostProductConfigs).actions).enabled -}}
   {{- if and ((.Values.kubecostProductConfigs).actions).storageConfigSecret ((.Values.kubecostProductConfigs).actions).storageConfig -}}
     {{- fail "\nkubecostProductConfigs.actions.storageConfigSecret and kubecostProductConfigs.actions.storageConfig are mutually exclusive. Please specify only one." -}}
   {{- end -}}
@@ -1073,16 +1073,30 @@ Begin Kubecost 2.0 templates
       mountPath: /var/configs/actions
     {{- end }}
     {{- if ((.Values.kubecostProductConfigs).actions).enabled }}
-    {{- if not (eq ((.Values.kubecostProductConfigs).actions).storageConfigSecret (.Values.kubecostModel).federatedStorageConfigSecret) }}
-    - name: actions-storage-config
-      mountPath: /var/configs/actions/storage
-    {{- else }}
+    {{- if and (not (((.Values.kubecostProductConfigs).actions).storageConfigSecret)) (not (((.Values.kubecostProductConfigs).actions).storageConfig)) }}
     - name: actions-storage
       mountPath: /var/configs/actions/storage
     - name: federated-storage-config
       mountPath: /var/configs/actions/storage/actions-store.yaml
       subPath: federated-store.yaml
       readOnly: true
+    {{- end }}
+    {{- if ((.Values.kubecostProductConfigs).actions).storageConfig }}
+    - name: actions-storage-config
+      mountPath: /var/configs/actions/storage
+    {{- end }}
+    {{- if ((.Values.kubecostProductConfigs).actions).storageConfigSecret }}
+    {{- if eq ((.Values.kubecostProductConfigs).actions).storageConfigSecret (.Values.kubecostModel).federatedStorageConfigSecret }}
+    - name: actions-storage
+      mountPath: /var/configs/actions/storage
+    - name: federated-storage-config
+      mountPath: /var/configs/actions/storage/actions-store.yaml
+      subPath: federated-store.yaml
+      readOnly: true
+    {{- else }}
+    - name: actions-storage-config
+      mountPath: /var/configs/actions/storage
+    {{- end }}
     {{- end }}
     {{- end }}
     {{- /* Only adds extraVolumeMounts if aggregator is running as its own pod */}}
@@ -1314,7 +1328,7 @@ Begin Kubecost 2.0 templates
     - name: CUSTOM_TYPE_INSTANCES_URI
       value: {{ (quote .Values.instanceTypes.custom.location.URI) }}
     {{- end }}
-    {{- if or ((.Values.kubecostProductConfigs).actions).storageConfigSecret ((.Values.kubecostProductConfigs).actions).storageConfig }}
+    {{- if or ((.Values.kubecostProductConfigs).actions).enabled }}
     - name: ACTIONS_BUCKET_CONFIG
       value: /var/configs/actions/storage/actions-store.yaml
     {{- end }}
