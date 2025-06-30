@@ -936,7 +936,7 @@ prometheus:
       rollingUpdate: null
     image:
       repository: quay.io/prometheus/prometheus
-      tag: v3.4.0
+      tag: v3.4.1
       pullPolicy: IfNotPresent
     priorityClassName: ""
     prefixURL: ""
@@ -1589,7 +1589,7 @@ forecasting:
   fullImageName: ""
   image:
     repository: gcr.io/kubecost1/kubecost-modeling
-    tag: v0.1.26
+    tag: v0.1.27
   imagePullPolicy: IfNotPresent
 
   # Resource specification block for the forecasting container.
@@ -1606,7 +1606,7 @@ forecasting:
     # -t is the worker timeout which primarily affects model training time;
     # if it is not high enough, training workers may die mid training
     "GUNICORN_CMD_ARGS": "--log-level info -t 1200"
-
+    "LOG_LEVEL": "info"
   priority:
     enabled: false
     name: ""
@@ -1741,10 +1741,10 @@ kubecostAggregator:
 
   resources:
     limits:
-      memory: 2Gi
+      memory: 5Gi
     requests:
-      cpu: 1000m
-      memory: 1Gi
+      cpu: 2000m
+      memory: 5Gi
 
   readinessProbe:
     enabled: true
@@ -1907,7 +1907,7 @@ clusterController:
   enabled: false
   image:
     repository: gcr.io/kubecost1/cluster-controller
-    tag: v0.16.18
+    tag: v0.16.19
   imagePullPolicy: IfNotPresent
   extraEnv: []
   # - name: EXTRA_ENV_VAR
@@ -2443,6 +2443,45 @@ kubecostProductConfigs:
 #     GCP: []
 #     Azure: []
 #    actions:
+#      # The Actions feature requires an external storage config.
+#      # The name of the Secret containing a bucket config for actions storage. The contents should be stored under a key named actions-store.yaml
+#      storageConfigSecret: actions-store
+#      # Alternatively, the storage config can be supplied directly in yaml, as below:
+#      storageConfig: |-
+#      # AWS EXAMPLE
+#        type: S3
+#        config:
+#          bucket: kubecost-actions-storage-bucket
+#          endpoint: s3.amazonaws.com
+#          region: us-east-1
+#          # best practice is to use pod identities to access AWS resources. Otherwise it is possible to use an access_key and secret_key
+#          access_key: "<your-access-key>"
+#          secret_key: "<your-secret-key>"
+#      # AZURE EXAMPLE
+#        type: AZURE
+#        config:
+#          storage_account: ""
+#          storage_account_key: ""
+#          container: ""
+#          max_retries: 0
+#      # GCP EXAMPLE
+#        type: GCS
+#        config:
+#          bucket: kubecost-actions-storage-bucket
+#          service_account: |-
+#            {
+#              "type": "service_account",
+#              "project_id": "...",
+#              "private_key_id": "...",
+#              "private_key": "...",
+#              "client_email": "...",
+#              "client_id": "...",
+#              "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+#              "token_uri": "https://oauth2.googleapis.com/token",
+#              "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+#              "client_x509_cert_url": ""
+#            }
+#      # Actions can reference configuration at a global or cluster-specific level
 #      config:
 #        global: # Define global action configuration
 #          rightsizing:

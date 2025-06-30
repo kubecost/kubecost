@@ -17,6 +17,12 @@ kubecostProductConfigs:
   clusterName: CLUSTER_NAME
 kubecostAggregator:
   deployMethod: statefulset
+  resources:
+    limits:
+      memory: 10Gi
+    requests:
+      cpu: 2000m
+      memory: 10Gi
 kubecostModel:
   federatedStorageConfigSecret: federated-store
 clusterController:
