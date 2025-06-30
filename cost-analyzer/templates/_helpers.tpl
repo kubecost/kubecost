@@ -1072,6 +1072,10 @@ Begin Kubecost 2.0 templates
     - name: actions-config
       mountPath: /var/configs/actions
     {{- end }}
+    {{- if or ((.Values.kubecostProductConfigs).actions).storageConfigSecret ((.Values.kubecostProductConfigs).actions).storageConfig }}
+    - name: actions-storage-config
+      mountPath: /var/configs/actions/storage
+    {{- end }}
     {{- /* Only adds extraVolumeMounts if aggregator is running as its own pod */}}
     {{- if and .Values.kubecostAggregator.extraVolumeMounts (eq (include "aggregator.deployMethod" .) "statefulset") }}
     {{- toYaml .Values.kubecostAggregator.extraVolumeMounts | nindent 4 }}
@@ -1300,6 +1304,10 @@ Begin Kubecost 2.0 templates
     {{- if (.Values.instanceTypes).enabled }}
     - name: CUSTOM_TYPE_INSTANCES_URI
       value: {{ (quote .Values.instanceTypes.custom.location.URI) }}
+    {{- end }}
+    {{- if or ((.Values.kubecostProductConfigs).actions).storageConfigSecret ((.Values.kubecostProductConfigs).actions).storageConfig }}
+    - name: ACTIONS_BUCKET_CONFIG
+      value: /var/configs/actions/storage/actions-store.yaml
     {{- end }}
 {{- end }}
 
@@ -1640,6 +1648,7 @@ for more information
 {{- define "configsChecksum" -}}
 {{- $files := list
   "actions-config-configmap-template.yaml"
+  "actions-store-secret.yaml"
   "alibaba-service-key-secret.yaml"
   "aws-service-key-secret.yaml"
   "azure-service-key-secret.yaml"
