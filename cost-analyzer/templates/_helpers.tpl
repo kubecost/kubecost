@@ -176,6 +176,17 @@ Federated Storage source contents check. Either the Secret must be specified or 
 {{- end -}}
 
 {{/*
+Actions Storage source contents check. Either the Secret must be specified or the YAML, not both.
+*/}}
+{{- define "actionsStorageSourceCheck" -}}
+  {{- if ((.Values.kubecostProductConfigs).actions) -}}
+  {{- if and ((.Values.kubecostProductConfigs).actions).storageConfigSecret ((.Values.kubecostProductConfigs).actions).storageConfig -}}
+    {{- fail "\nkubecostProductConfigs.actions.storageConfigSecret and kubecostProductConfigs.actions.storageConfig are mutually exclusive. Please specify only one." -}}
+  {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+{{/*
 Print a warning if PV is enabled AND EKS is detected AND the EBS-CSI driver is not installed
 */}}
 {{- define "eksCheck" }}
@@ -1061,15 +1072,17 @@ Begin Kubecost 2.0 templates
     - name: actions-config
       mountPath: /var/configs/actions
     {{- end }}
-    {{- if or ((.Values.kubecostProductConfigs).actions).storageConfigSecret ((.Values.kubecostProductConfigs).actions).storageConfig }}
-    {{- if eq ((.Values.kubecostProductConfigs).actions).storageConfigSecret (.Values.kubecostModel).federatedStorageConfigSecret }}
+    {{- if ((.Values.kubecostProductConfigs).actions).enabled }}
+    {{- if not (eq ((.Values.kubecostProductConfigs).actions).storageConfigSecret (.Values.kubecostModel).federatedStorageConfigSecret) }}
+    - name: actions-storage-config
+      mountPath: /var/configs/actions/storage
+    {{- else }}
+    - name: actions-storage
+      mountPath: /var/configs/actions/storage
     - name: federated-storage-config
       mountPath: /var/configs/actions/storage/actions-store.yaml
       subPath: federated-store.yaml
       readOnly: true
-    {{- else }}
-    - name: actions-storage-config
-      mountPath: /var/configs/actions/storage
     {{- end }}
     {{- end }}
     {{- /* Only adds extraVolumeMounts if aggregator is running as its own pod */}}
