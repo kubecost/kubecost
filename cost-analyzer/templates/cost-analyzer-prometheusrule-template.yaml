@@ -1,6 +1,6 @@
 {{- if .Values.prometheus }}
 {{- if .Values.prometheus.serverFiles }}
-{{- if .Values.prometheus.serverFiles.rules }}
+{{- if (index .Values.prometheus.serverFiles "recording_rules.yml") }}
 {{- if .Values.prometheusRule }}
 {{- if .Values.prometheusRule.enabled }}
 apiVersion: monitoring.coreos.com/v1
@@ -14,7 +14,7 @@ metadata:
     {{ toYaml .Values.prometheusRule.additionalLabels | nindent 4 }}
     {{- end }}
 spec:
-  {{ toYaml .Values.prometheus.serverFiles.rules | nindent 2 }}
+  {{ toYaml (index .Values.prometheus.serverFiles "recording_rules.yml") | nindent 2 }}
 {{- end }}
 {{- end }}
 {{- end }}
