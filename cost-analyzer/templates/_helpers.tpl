@@ -176,6 +176,17 @@ Federated Storage source contents check. Either the Secret must be specified or 
 {{- end -}}
 
 {{/*
+Actions Storage source contents check. Either the Secret must be specified or the YAML, not both.
+*/}}
+{{- define "actionsStorageSourceCheck" -}}
+  {{- if ((.Values.kubecostProductConfigs).actions).enabled -}}
+  {{- if and ((.Values.kubecostProductConfigs).actions).storageConfigSecret ((.Values.kubecostProductConfigs).actions).storageConfig -}}
+    {{- fail "\nkubecostProductConfigs.actions.storageConfigSecret and kubecostProductConfigs.actions.storageConfig are mutually exclusive. Please specify only one." -}}
+  {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+{{/*
 Print a warning if PV is enabled AND EKS is detected AND the EBS-CSI driver is not installed
 */}}
 {{- define "eksCheck" }}
@@ -1061,9 +1072,32 @@ Begin Kubecost 2.0 templates
     - name: actions-config
       mountPath: /var/configs/actions
     {{- end }}
-    {{- if or ((.Values.kubecostProductConfigs).actions).storageConfigSecret ((.Values.kubecostProductConfigs).actions).storageConfig }}
+    {{- if ((.Values.kubecostProductConfigs).actions).enabled }}
+    {{- if and (not (((.Values.kubecostProductConfigs).actions).storageConfigSecret)) (not (((.Values.kubecostProductConfigs).actions).storageConfig)) }}
+    - name: actions-storage
+      mountPath: /var/configs/actions/storage
+    - name: federated-storage-config
+      mountPath: /var/configs/actions/storage/actions-store.yaml
+      subPath: federated-store.yaml
+      readOnly: true
+    {{- end }}
+    {{- if ((.Values.kubecostProductConfigs).actions).storageConfig }}
     - name: actions-storage-config
       mountPath: /var/configs/actions/storage
+    {{- end }}
+    {{- if ((.Values.kubecostProductConfigs).actions).storageConfigSecret }}
+    {{- if eq ((.Values.kubecostProductConfigs).actions).storageConfigSecret (.Values.kubecostModel).federatedStorageConfigSecret }}
+    - name: actions-storage
+      mountPath: /var/configs/actions/storage
+    - name: federated-storage-config
+      mountPath: /var/configs/actions/storage/actions-store.yaml
+      subPath: federated-store.yaml
+      readOnly: true
+    {{- else }}
+    - name: actions-storage-config
+      mountPath: /var/configs/actions/storage
+    {{- end }}
+    {{- end }}
     {{- end }}
     {{- /* Only adds extraVolumeMounts if aggregator is running as its own pod */}}
     {{- if and .Values.kubecostAggregator.extraVolumeMounts (eq (include "aggregator.deployMethod" .) "statefulset") }}
@@ -1294,7 +1328,7 @@ Begin Kubecost 2.0 templates
     - name: CUSTOM_TYPE_INSTANCES_URI
       value: {{ (quote .Values.instanceTypes.custom.location.URI) }}
     {{- end }}
-    {{- if or ((.Values.kubecostProductConfigs).actions).storageConfigSecret ((.Values.kubecostProductConfigs).actions).storageConfig }}
+    {{- if or ((.Values.kubecostProductConfigs).actions).enabled }}
     - name: ACTIONS_BUCKET_CONFIG
       value: /var/configs/actions/storage/actions-store.yaml
     {{- end }}

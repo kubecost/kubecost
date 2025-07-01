@@ -2443,10 +2443,17 @@ kubecostProductConfigs:
 #     GCP: []
 #     Azure: []
 #    actions:
+#      # Enable multi-cluster cluster controller actions (v2)
+#      enabled: true
+#
 #      # The Actions feature requires an external storage config.
-#      # The name of the Secret containing a bucket config for actions storage. The contents should be stored under a key named actions-store.yaml
+#      # By default, will use the same bucket config as set in kubecostModel.federatedStorageConfig (or federatedStorageConfigSecret)
+#
+#      # A separate bucket config specific to action storage can alternatively be supplied via a Secret or a yaml block
+#      # The name of the Secret containing the bucket config. The contents should be stored under a key named actions-store.yaml
 #      storageConfigSecret: actions-store
-#      # Alternatively, the storage config can be supplied directly in yaml, as below:
+#
+#      # (If not using Secret) Define storage config directly in yaml, as below:
 #      storageConfig: |-
 #      # AWS EXAMPLE
 #        type: S3
