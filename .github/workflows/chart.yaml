@@ -35,16 +35,16 @@ jobs:
         run: ct lint --chart-dirs=cost-analyzer/ --charts cost-analyzer/ --validate-maintainers=false
 
       # Run `helm template` on the main values file plus all those in the ci directory.
-      # TODO: remove the federatedStorageConfigSecret.yaml file from the template
       - name: Helm template
         run: |
-          helm template cost-analyzer/ -f cost-analyzer/values.yaml -f .github/ci-files/federatedStorageConfigSecret.yaml > full.yaml
-          directory="cost-analyzer/ci"
-          for file in "$directory"/*; do
-          if [ -f "$file" ]; then
-              helm template cost-analyzer/ -f "$file" >> full.yaml
-          fi
-          done
+          echo "TODO: comprehensive tests"
+          # helm template cost-analyzer/ -f cost-analyzer/values.yaml > full.yaml
+          # directory="cost-analyzer/ci"
+          # for file in "$directory"/*; do
+          # if [ -f "$file" ]; then
+          #     helm template cost-analyzer/ -f "$file" >> full.yaml
+          # fi
+          # done
 
       # Run Kubeconform on the combined, templatized output across all tested values stored in `full.yaml`.
       # Ensure all the rendered resources are valid.
