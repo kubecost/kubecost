@@ -1414,7 +1414,7 @@ costEventsAudit:
 # # UI. Values in this block override config changes in the Settings UI on pod
 # # restart
 kubecostProductConfigs:
-  clusterName: "cluster-one" # globally unique cluster name
+  clusterName: "cluster-one"  # globally unique cluster name
 #   clusters:
 #     - name: "Cluster A"
 #       address: http://cluster-a.kubecost.com:9090
