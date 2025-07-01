@@ -32,15 +32,6 @@ Set important variables before starting main templates
 {{- end -}}
 
 {{/*
-Kubecost 2.3 notices
-*/}}
-{{- define "kubecostV2-3-notices" -}}
-  {{- if (.Values.kubecostAggregator).env -}}
-    {{- printf "\n\n\nNotice: Issue in values detected.\nKubecost 2.3 has updated the aggregator's environment variables. Please update your Helm values to use the new key pairs.\nFor more information, see: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=federation-kubecost-aggregator\nIn Kubecost 2.3, kubecostAggregator.env is no longer used in favor of the new key pairs. This was done to prevent unexpected behavior and to simplify the aggregator's configuration." -}}
-  {{- end -}}
-{{- end -}}
-
-{{/*
 Kubecost 2.0 preconditions
 */}}
 {{- define "kubecostV2-preconditions" -}}
@@ -207,7 +198,7 @@ Verify a cluster_id is set in the Prometheus global config
 */}}
 {{- define "clusterIDCheck" -}}
   {{- if ((((.Values.prometheus).server).global).external_labels).cluster_id }}
-    {{- printf "\n\nIn Kubecost 3.0, `.Values.kubecostProductConfigs.clusterName` is no longer required.\nWhen it is set, it does is used first for backwards compatibility. \nPlease replace this value with `.Values.kubecostProductConfigs.clusterName`\n See <TODO> for more information.\n" -}}
+    {{- printf "\n\nIn Kubecost 3.0, `.Values.prometheus.server.global.external_labels.cluster_id` is no longer required.\nWhen it is set, it is used for backwards compatibility. \nPlease replace this value with `.Values.kubecostProductConfigs.clusterName`\nSee <TODO> for more information.\n" -}}
   {{- end -}}
   {{- if or (.Values.kubecostModel).federatedStorageConfigSecret (.Values.kubecostModel).federatedStorageConfig }}
     {{- if eq .Values.kubecostProductConfigs.clusterName "cluster-one" }}
