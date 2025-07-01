@@ -2,7 +2,7 @@
 apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
 metadata:
-  name: {{ template "kubecost.clusterControllerName" . }}
+  name: {{ include "kubecost.clusterControllerName" . }}
 priority: 10
 allowPrivilegedContainer: true
 allowHostDirVolumePlugin: true
@@ -27,5 +27,5 @@ volumes:
   - configMap
   - secret
 users:
-  - system:serviceaccount:{{ .Release.Namespace }}:{{ template "kubecost.clusterControllerName" . }}
+  - system:serviceaccount:{{ .Release.Namespace }}:{{ include "kubecost.clusterControllerName" . }}
 {{- end }}

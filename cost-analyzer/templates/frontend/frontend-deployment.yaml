@@ -1,4 +1,4 @@
-{{- if and .Values.kubecostFrontend.enabled (not .Values.federatedETL.agentOnly) }}
+{{- if (.Values.kubecostFrontend).enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:

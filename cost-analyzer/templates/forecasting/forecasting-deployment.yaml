@@ -1,4 +1,4 @@
-{{- if and .Values.forecasting.enabled (not .Values.federatedETL.agentOnly)  }}
+{{- if (.Values.forecasting).enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:

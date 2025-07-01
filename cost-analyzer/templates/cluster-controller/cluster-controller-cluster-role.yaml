@@ -1,0 +1,160 @@
+{{- if (.Values.clusterController).enabled }}
+#
+# NOTE:
+# The following ClusterRole permissions are only created and assigned for the
+# cluster controller feature. They will not be added to any clusters by default.
+#
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "kubecost.clusterControllerName" . }}
+  labels:
+      {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+rules:
+  - apiGroups:
+      - kubecost.com
+    resources:
+      - turndownschedules
+      - turndownschedules/status
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - patch
+      - update
+      - delete
+  - apiGroups:
+      - ''
+      - events.k8s.io
+    resources:
+      - events
+    verbs:
+      - create
+      - patch
+      - update
+  - apiGroups:
+      - ''
+    resources:
+      - deployments
+      - nodes
+      - pods
+      - resourcequotas
+      - replicationcontrollers
+      - limitranges
+      - pods/eviction
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - patch
+      - update
+      - delete
+  - apiGroups:
+      - ''
+    resources:
+      - configmaps
+    verbs:
+      - get
+      - list
+      - watch
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - ''
+    resources:
+      - configmaps
+      - namespaces
+      - persistentvolumeclaims
+      - persistentvolumes
+      - endpoints
+      - events
+      - services
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ''
+    resources:
+      - configmaps
+    resourceNames:
+      - 'cluster-controller-nsturndown-config'
+    verbs:
+      - get
+      - create
+      - update
+  - apiGroups:
+      - apps
+    resources:
+      - statefulsets
+      - deployments
+      - daemonsets
+      - replicasets
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - patch
+      - update
+      - delete
+  - apiGroups:
+      - batch
+    resources:
+      - cronjobs
+      - jobs
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - patch
+      - update
+      - delete
+  - apiGroups:
+      - autoscaling
+    resources:
+      - horizontalpodautoscalers
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - policy
+    resources:
+      - poddisruptionbudgets
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - storage.k8s.io
+    resources:
+      - storageclasses
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - events.k8s.io
+    resources:
+      - events
+    verbs:
+      - get
+      - list
+      - watch
+    # Used for namespace turndown
+    # When cleaning a namespace, we need the ability to remove
+    # arbitrary resources (since we helm uninstall all releases in that NS first)
+    {{- if .Values.clusterController.namespaceTurndown.rbac.enabled }}
+  - apiGroups: [ "*" ]
+    resources: [ "*" ]
+    verbs:
+      - list
+      - get
+      - delete
+    {{- end }}
+{{- end }}

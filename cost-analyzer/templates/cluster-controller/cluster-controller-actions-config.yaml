@@ -1,5 +1,4 @@
-{{- if .Values.clusterController }}
-{{- if .Values.clusterController.enabled }}
+{{- if (.Values.clusterController).enabled }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -51,6 +50,5 @@ spec:
   start: {{ .start }}
   end: {{ .end }}
   repeat: {{ .repeat }}
-{{- end }}
 {{- end }}
 {{- end }}

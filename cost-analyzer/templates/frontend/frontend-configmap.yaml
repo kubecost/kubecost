@@ -1,4 +1,4 @@
-{{- if and .Values.kubecostFrontend.enabled (not .Values.federatedETL.agentOnly) }}
+{{- if (.Values.kubecostFrontend).enabled }}
 {{- if .Values.saml.enabled }}
 {{- if .Values.oidc.enabled }}
 {{- fail "SAML and OIDC cannot both be enabled" }}
@@ -551,5 +551,8 @@ data:
         }
     }
 
+<<<<<<<< HEAD:cost-analyzer/templates/frontend-configmap-template.yaml
 
+========
+>>>>>>>> 58c3eab7 (Set base structure and start deletions):cost-analyzer/templates/frontend/frontend-configmap.yaml
 {{- end }}

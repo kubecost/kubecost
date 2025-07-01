@@ -183,7 +183,117 @@ spec:
             readOnly: false
       {{- end}}
       containers:
-        {{- include "aggregator.cloudCost.containerTemplate" . | nindent 8 }}
+        - name: cloud-cost
+          {{- if .Values.kubecostModel }}
+          {{- if .Values.kubecostAggregator.fullImageName }}
+          image: {{ .Values.kubecostAggregator.fullImageName }}
+          {{- else if .Values.kubecostModel.fullImageName }}
+          image: {{ .Values.kubecostModel.fullImageName }}
+          {{- else if .Values.imageVersion }}
+          image: {{ .Values.kubecostModel.image }}:{{ .Values.imageVersion }}
+          {{- else if eq "development" .Chart.AppVersion }}
+          image: gcr.io/kubecost1/cost-model-nightly:latest
+          {{- else }}
+          image: {{ .Values.kubecostModel.image }}:prod-{{ $.Chart.AppVersion }}
+          {{ end }}
+          {{- else }}
+          image: gcr.io/kubecost1/cost-model:prod-{{ $.Chart.AppVersion }}
+          {{ end }}
+          {{- if .Values.kubecostAggregator.cloudCost.readinessProbe.enabled }}
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 9005
+            initialDelaySeconds: {{ .Values.kubecostAggregator.cloudCost.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.kubecostAggregator.cloudCost.readinessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.kubecostAggregator.cloudCost.readinessProbe.failureThreshold }}
+          {{- end }}
+          {{- if .Values.kubecostAggregator.imagePullPolicy }}
+          imagePullPolicy: {{ .Values.kubecostAggregator.imagePullPolicy }}
+          {{- else }}
+          imagePullPolicy: Always
+          {{- end }}
+          args: ["cloud-cost"]
+          ports:
+            - name: tcp-api
+              containerPort: 9005
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.kubecostAggregator.cloudCost.resources | nindent 4 }}
+          securityContext:
+            {{- if .Values.global.containerSecurityContext }}
+            {{- toYaml .Values.global.containerSecurityContext | nindent 4 }}
+            {{- end }}
+          volumeMounts:
+            - name: persistent-configs
+              mountPath: /var/configs
+          {{- if or (.Values.kubecostModel).federatedStorageConfigSecret (.Values.kubecostModel).federatedStorageConfig }}
+            - name: federated-storage-config
+              mountPath: /var/configs/etl/federated
+              readOnly: true
+          {{- end }}
+          {{- if or (.Values.kubecostProductConfigs).cloudIntegrationSecret (.Values.kubecostProductConfigs).cloudIntegrationJSON ((.Values.kubecostProductConfigs).athenaBucketName) }}
+            - name: cloud-integration
+              mountPath: /var/configs/cloud-integration
+          {{- end }}
+            {{- if .Values.kubecostModel.plugins.enabled }}
+            - mountPath: {{ .Values.kubecostModel.plugins.folder }}
+              name: plugins-dir
+              readOnly: false
+            - name: tmp
+              mountPath: /tmp
+            - mountPath: {{ $.Values.kubecostModel.plugins.folder }}/config
+              name: plugins-config
+              readOnly: true
+            {{- end }}
+            {{- if .Values.global.updateCaTrust.enabled }}
+            - name: ca-certs-secret
+              mountPath: {{ .Values.global.updateCaTrust.caCertsMountPath | quote }}
+            - name: ssl-path
+              mountPath: "/etc/pki/ca-trust/extracted"
+              readOnly: false
+            {{- end }}
+          {{- /* Only adds extraVolumeMounts when cloudcosts is running as its own pod */}}
+          {{- if and .Values.kubecostAggregator.cloudCost.extraVolumeMounts (eq (include "aggregator.deployMethod" .) "statefulset") }}
+            {{- toYaml .Values.kubecostAggregator.cloudCost.extraVolumeMounts | nindent 4 }}
+          {{- end }}
+          env:
+            - name: CONFIG_PATH
+              value: /var/configs/
+            {{- if or .Values.kubecostModel.federatedStorageConfigSecret .Values.kubecostModel.federatedStorageConfig }}
+            - name: FEDERATED_STORE_CONFIG
+              value: /var/configs/etl/federated/federated-store.yaml
+            - name: FEDERATED_CLUSTER
+              value: "true"
+            {{- end}}
+            - name: ETL_DAILY_STORE_DURATION_DAYS
+              value: {{ (quote .Values.kubecostModel.etlDailyStoreDurationDays) }}
+            - name: CLOUD_COST_REFRESH_RATE_HOURS
+              value: {{ .Values.kubecostAggregator.cloudCost.refreshRateHours | default 6 | quote }}
+            - name: CLOUD_COST_QUERY_WINDOW_DAYS
+              value: {{ .Values.kubecostAggregator.cloudCost.queryWindowDays | default 7 | quote }}
+            - name: CLOUD_COST_RUN_WINDOW_DAYS
+              value: {{ .Values.kubecostAggregator.cloudCost.runWindowDays | default 3 | quote }}
+            - name: CUSTOM_COST_ENABLED
+              value: {{ .Values.kubecostModel.plugins.enabled | quote }}
+            {{- range $key, $value := .Values.kubecostAggregator.cloudCost.env }}
+            - name: {{ $key | quote }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- if .Values.systemProxy.enabled }}
+            - name: HTTP_PROXY
+              value: {{ .Values.systemProxy.httpProxyUrl }}
+            - name: http_proxy
+              value: {{ .Values.systemProxy.httpProxyUrl }}
+            - name: HTTPS_PROXY
+              value: {{ .Values.systemProxy.httpsProxyUrl }}
+            - name: https_proxy
+              value: {{ .Values.systemProxy.httpsProxyUrl }}
+            - name: NO_PROXY
+              value: {{ .Values.systemProxy.noProxy }}
+            - name: no_proxy
+              value: {{ .Values.systemProxy.noProxy }}
+            {{- end }}
     {{- if .Values.imagePullSecrets }}
       imagePullSecrets:
       {{- range $.Values.imagePullSecrets }}

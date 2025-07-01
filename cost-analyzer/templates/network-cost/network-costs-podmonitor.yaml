@@ -1,7 +1,5 @@
-{{- if .Values.networkCosts }}
-{{- if .Values.networkCosts.enabled }}
-{{- if .Values.networkCosts.podMonitor }}
-{{- if .Values.networkCosts.podMonitor.enabled }}
+{{- if (.Values.networkCosts).enabled }}
+{{- if (.Values.networkCosts.podMonitor).enabled }}
 apiVersion: monitoring.coreos.com/v1
 kind: PodMonitor
 metadata:
@@ -26,7 +24,5 @@ spec:
   selector:
     matchLabels:
       app: {{ template "cost-analyzer.networkCostsName" . }}
-{{- end }}
-{{- end }}
 {{- end }}
 {{- end }}
