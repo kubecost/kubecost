@@ -1399,6 +1399,9 @@ kubecostProductConfigs:
 #      # Enable multi-cluster cluster controller actions (v2)
 #      enabled: true
 #
+#      # Enable multi-cluster cluster controller actions (v2)
+#      enabled: true
+#
 #      # The Actions feature requires an external storage config.
 #      # By default, will use the same bucket config as set in federatedStorage.config (or global.federatedStorage.existingSecret)
 #
