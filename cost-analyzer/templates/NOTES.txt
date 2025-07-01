@@ -12,6 +12,7 @@
 {{- include "kubeRBACProxyBearerTokenCheck" . -}}
 {{- include "caCertsSecretConfigCheck" . -}}
 {{- include "clusterController.kubecostAPIKeyCheck" . -}}
+{{- include "actionsStorageSourceCheck" . -}}
 
 {{- $servicePort := .Values.service.port | default 9090 }}
 Kubecost {{ .Chart.Version }} has been successfully installed.
