@@ -171,7 +171,7 @@ Federated Storage source contents check. Either the Secret must be specified or 
 */}}
 {{- define "federatedStorageSourceCheck" -}}
   {{- if and (.Values.kubecostModel).federatedStorageConfigSecret (.Values.kubecostModel).federatedStorageConfig -}}
-    {{- fail "\nkubecostkubecostModel.federatedStorageConfigSecret and kubecostModel.federatedStorageConfig are mutually exclusive. Please specify only one." -}}
+    {{- fail "\nkubecostModel.federatedStorageConfigSecret and kubecostModel.federatedStorageConfig are mutually exclusive. Please specify only one." -}}
   {{- end -}}
 {{- end -}}
 
@@ -205,24 +205,26 @@ ERROR: MISSING EBS-CSI DRIVER WHICH IS REQUIRED ON EKS v1.23+ TO MANAGE PERSISTE
 Verify a cluster_id is set in the Prometheus global config
 */}}
 {{- define "clusterIDCheck" -}}
+  {{- if ((((.Values.prometheus).server).global).external_labels).cluster_id }}
+    {{- printf "\n\nIn Kubecost 3.0, `.Values.kubecostProductConfigs.clusterName` is no longer required.\nWhen it is set, it does is used first for backwards compatibility. \nPlease replace this value with `.Values.kubecostProductConfigs.clusterName`\n See <TODO> for more information.\n" -}}
+  {{- end -}}
   {{- if or (.Values.kubecostModel).federatedStorageConfigSecret (.Values.kubecostModel).federatedStorageConfig }}
-    {{- if not .Values.prometheus.server.clusterIDConfigmap }}
-      {{- if eq .Values.prometheus.server.global.external_labels.cluster_id "cluster-one" }}
-        {{- fail "\n\nWhen using multi-cluster Kubecost, you must specify a unique `.Values.prometheus.server.global.external_labels.cluster_id` for each cluster.\nNote this must be set even if you are using your own Prometheus or another identifier.\n" -}}
-      {{- end -}}
+    {{- if eq .Values.kubecostProductConfigs.clusterName "cluster-one" }}
+      {{- printf "\n\nWarning: it is recommended to specify a unique `.Values.kubecostProductConfigs.clusterName` for each cluster.\nNote this must be a globally unique identifier in multi-cluster environments.\n" -}}
     {{- end -}}
   {{- end -}}
 {{- end -}}
-
-{{/*
-  Verify if both kube-rbac-proxy and bearer token are set
-*/}}
-{{- define "kubeRBACProxyBearerTokenCheck" -}}
-{{- if and (.Values.global.prometheus.kubeRBACProxy) (.Values.global.prometheus.queryServiceBearerTokenSecretName) }}
-  {{- fail "\n\nBoth kubeRBACProxy and queryServiceBearerTokenSecretName are set. Please specify only one." -}}
+{{- define "kubecost.clusterName" -}}
+  {{- if.Values.kubecostProductConfigs.clusterName }}
+    {{- printf "%s" .Values.kubecostProductConfigs.clusterName }}
+  {{- else }}
+    {{- if(((((.Values.prometheus).server).global).external_labels).cluster_id) }}
+      {{- printf "%s" (((((.Values.prometheus).server).global).external_labels).cluster_id) }}
+    {{- else }}
+      {{- fail "\n\nWhen using multi-cluster Prometheus, you must specify a unique `(((((.Values.prometheus).server).global).external_labels).cluster_id)` for each cluster.\nNote this must be a globally unique identifier.\n" -}}
+    {{- end -}}
+  {{- end -}}
 {{- end -}}
-{{- end -}}
-
 
 {{/*
 Verify the cloud integration secret exists with the expected key when cloud integration is enabled.
@@ -862,47 +864,6 @@ Create the name of the service account to use for the server component
 
 {{/*
 ==============================================================
-Begin Grafana templates
-==============================================================
-*/}}
-{{/*
-Expand the name of the chart.
-*/}}
-{{- define "grafana.name" -}}
-{{- "grafana" -}}
-{{- end -}}
-
-{{/*
-Create a default fully qualified app name.
-We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
-If release name contains chart name it will be used as a full name.
-*/}}
-{{- define "grafana.fullname" -}}
-{{- if .Values.grafana.fullnameOverride -}}
-{{- .Values.grafana.fullnameOverride | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{- $name := default "grafana" .Values.grafana.nameOverride -}}
-{{- if contains $name .Release.Name -}}
-{{- .Release.Name | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Create the name of the service account
-*/}}
-{{- define "grafana.serviceAccountName" -}}
-{{- if .Values.grafana.serviceAccount.create -}}
-    {{ default (include "grafana.fullname" .) .Values.grafana.serviceAccount.name }}
-{{- else -}}
-    {{ default "default" .Values.grafana.serviceAccount.name }}
-{{- end -}}
-{{- end -}}
-
-{{/*
-==============================================================
 Begin Kubecost 2.0 templates
 ==============================================================
 */}}
@@ -1108,15 +1069,15 @@ Begin Kubecost 2.0 templates
       mountPath: /var/configs/turbonomic
     {{- end }}
   env:
-    {{- if and (.Values.prometheus.server.global.external_labels.cluster_id) (not .Values.prometheus.server.clusterIDConfigmap) }}
+    {{- if not (((.Values.prometheus).server).clusterIDConfigmap) }}
     - name: CLUSTER_ID
-      value: {{ .Values.prometheus.server.global.external_labels.cluster_id }}
+      value: {{ include "kubecost.clusterName" . }}
     {{- end }}
-    {{- if .Values.prometheus.server.clusterIDConfigmap }}
+    {{- if (((.Values.prometheus).server).clusterIDConfigmap) }}
     - name: CLUSTER_ID
       valueFrom:
         configMapKeyRef:
-          name: {{ .Values.prometheus.server.clusterIDConfigmap }}
+          name: {{ (((.Values.prometheus).server).clusterIDConfigmap) }}
           key: CLUSTER_ID
     {{- end }}
     {{- if and ((.Values.kubecostProductConfigs).productKey).mountPath (eq (include "aggregator.deployMethod" .) "statefulset") }}
@@ -1236,10 +1197,6 @@ Begin Kubecost 2.0 templates
       value: {{ .Values.kubecostAggregator.dbTrimMemoryOnClose | quote }}
     - name: KUBECOST_NAMESPACE
       value: {{ .Release.Namespace }}
-    {{- if .Values.global.grafana }}
-    - name: GRAFANA_ENABLED
-      value: "{{ template "cost-analyzer.grafanaEnabled" . }}"
-    {{- end}}
     {{- if .Values.oidc.enabled }}
     - name: OIDC_ENABLED
       value: "true"
@@ -1547,14 +1504,6 @@ costEventsAuditEnabled flag for nginx configmap
   {{- end -}}
 {{- end -}}
 
-{{- define "cost-analyzer.grafanaEnabled" -}}
-  {{- if and (.Values.global.grafana.enabled) (not .Values.federatedETL.agentOnly)  -}}
-    {{- printf "true" -}}
-  {{- else -}}
-    {{- printf "false" -}}
-  {{- end -}}
-{{- end -}}
-
 {{/*
 Multi-Cluster Diagnostics is only fully functional when its agent and primary
 are both running, and when the federated storage config is present.
@@ -1680,7 +1629,6 @@ for more information
   "cost-analyzer-alerts-configmap.yaml"
   "cost-analyzer-asset-reports-configmap.yaml"
   "cost-analyzer-cloud-cost-reports-configmap.yaml"
-  "cost-analyzer-config-map-template.yaml"
   "cost-analyzer-frontend-config-map-template.yaml"
   "cost-analyzer-metrics-config-map-template.yaml"
   "cost-analyzer-network-costs-config-map-template.yaml"
@@ -1691,17 +1639,13 @@ for more information
   "cost-analyzer-saved-reports-configmap.yaml"
   "cost-analyzer-server-configmap.yaml"
   "cost-analyzer-smtp-configmap.yaml"
-  "external-grafana-config-map-template.yaml"
-  "grafana/grafana-secret.yaml"
   "install-plugins.yaml"
   "integrations-postgres-queries-configmap.yaml"
   "integrations-postgres-secret.yaml"
-  "kubecost-cluster-context-switcher.yaml"
   "kubecost-cluster-controller-actions-config.yaml"
   "kubecost-cluster-controller-secret-template.yaml"
   "kubecost-oidc-secret-template.yaml"
   "kubecost-saml-secret-template.yaml"
-  "mimir-proxy-configmap-template.yaml"
   "savings-recommendations-allowlists-config-map-template.yaml"
   "savings-recommendations-nodegroup-config-map-template.yaml"
 -}}

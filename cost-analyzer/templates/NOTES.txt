@@ -9,7 +9,6 @@
 {{- include "federatedStorageSourceCheck" . -}}
 {{- include "prometheusRetentionCheck" . -}}
 {{- include "clusterIDCheck" . -}}
-{{- include "kubeRBACProxyBearerTokenCheck" . -}}
 {{- include "caCertsSecretConfigCheck" . -}}
 {{- include "actionsStorageSourceCheck" . -}}
 

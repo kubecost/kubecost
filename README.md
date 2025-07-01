@@ -54,16 +54,6 @@ The following table lists commonly used configuration parameters for the Kubecos
 
 Parameter | Description | Default
 --------- | ----------- | -------
-`global.prometheus.enabled` | If false, use an existing Prometheus install. [More info](https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-prometheus-guide) | `true`
-`prometheus.server.persistentVolume.enabled` | If true, Prometheus server will create a Persistent Volume Claim. | `true`
-`prometheus.server.persistentVolume.size` | Prometheus server data Persistent Volume size. Default set to retain ~6000 samples per second for 15 days. | `32Gi`
-`prometheus.server.persistentVolume.storageClass` | Define storage class for Prometheus persistent volume  | `-`
-`prometheus.server.retention` | Determines when to remove old data. | `97h`
-`prometheus.server.resources` | Prometheus server resource requests and limits. | `{}`
-`prometheus.nodeExporter.resources` | Node exporter resource requests and limits. | `{}`
-`prometheus.nodeExporter.enabled` `prometheus.serviceAccounts.nodeExporter.create` | If false, do not create NodeExporter daemonset.  | `true`
-`prometheus.alertmanager.persistentVolume.enabled` | If true, Alertmanager will create a Persistent Volume Claim. | `false`
-`prometheus.pushgateway.persistentVolume.enabled` | If true, Prometheus Pushgateway will create a Persistent Volume Claim. | `false`
 `persistentVolume.enabled` | If true, Kubecost will create a Persistent Volume Claim for product config data.  | `true`
 `persistentVolume.size` | Define PVC size for cost-analyzer  | `32.0Gi`
 `persistentVolume.dbSize` | Define PVC size for cost-analyzer's flat file database  | `32.0Gi`
@@ -79,11 +69,6 @@ Parameter | Description | Default
 `networkCosts.podMonitor.enabled` | If true, a PodMonitor for the network-cost daemonset is created | `false`
 `serviceMonitor.enabled` | Set this to `true` to create ServiceMonitor for Prometheus operator | `false`
 `serviceMonitor.additionalLabels` | Additional labels that can be used so ServiceMonitor will be discovered by Prometheus | `{}`
-`prometheusRule.enabled` | Set this to `true` to create PrometheusRule for Prometheus operator | `false`
-`prometheusRule.additionalLabels` | Additional labels that can be used so PrometheusRule will be discovered by Prometheus | `{}`
-`grafana.resources` | Grafana resource requests and limits. | `{}`
-`grafana.sidecar.dashboards.enabled` | Set this to `false` to disable creation of Dashboards in Grafana | `true`
-`grafana.sidecar.datasources.defaultDatasourceEnabled` | Set this to `false` to disable creation of Prometheus datasource in Grafana | `true`
 `serviceAccount.create` | Set this to `false` if you want to create the service account `kubecost-cost-analyzer` on your own | `true`
 `tolerations` | node taints to tolerate | `[]`
 `affinity` | pod affinity | `{}`
