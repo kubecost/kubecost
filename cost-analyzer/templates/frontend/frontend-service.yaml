@@ -1,8 +1,4 @@
-<<<<<<< HEAD:cost-analyzer/templates/frontend-service-template.yaml
-{{- if and .Values.kubecostFrontend.enabled (not .Values.federatedETL.agentOnly) }}
-=======
 {{- if (.Values.kubecostFrontend).enabled }}
->>>>>>> 58c3eab7 (Set base structure and start deletions):cost-analyzer/templates/frontend/frontend-service.yaml
 kind: Service
 apiVersion: v1
 metadata:

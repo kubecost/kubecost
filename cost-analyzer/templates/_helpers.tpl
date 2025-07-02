@@ -47,16 +47,6 @@ Kubecost 2.0 preconditions
 
 {{- end -}}
 
-{{- define "federatedStorageCheck" -}}
-  {{- if or (.Values.federatedETL).federatedStore (.Values.kubecostModel).federatedStorageConfig }}
-    {{- if and (not (eq (include "aggregator.deployMethod" .) "statefulset")) (not (.Values.federatedETL).agentOnly) }}
-      {{- printf "\n\n***Configuration issue detected:***\nWhen a federated store is provided, Kubecost should either be running as agentOnly or as a statefulset.\n.Values.federatedETL.agentOnly=true\nOr\n.Values.kubecostAggregator.deployMethod=statefulset\n***" }}
-    {{- end }}
-  {{- end }}
-{{- end }}
-
-
-
 {{/*
 RBAC exclusivity check: make sure either simple RBAC or RBAC Teams is configured, not both
 */}}
@@ -115,17 +105,9 @@ Verify a cluster_id is set in the Prometheus global config
   {{- end -}}
 {{- end -}}
 
-{{- define "kubecost.clusterName" -}}
-  {{- if.Values.kubecostProductConfigs.clusterName }}
-    {{- printf "%s" .Values.kubecostProductConfigs.clusterName }}
-  {{- else }}
-    {{- if(((((.Values.prometheus).server).global).external_labels).cluster_id) }}
-      {{- printf "%s" (((((.Values.prometheus).server).global).external_labels).cluster_id) }}
-    {{- else }}
-      {{- fail "\n\nWhen using multi-cluster Prometheus, you must specify a unique `(((((.Values.prometheus).server).global).external_labels).cluster_id)` for each cluster.\nNote this must be a globally unique identifier.\n" -}}
-    {{- end -}}
-  {{- end -}}
-{{- end -}}
+{{- define "kubecost.clusterId" }}
+{{ default (index .Values "finops-agent").clusterId .Values.global.clusterId }}
+{{- end }}
 
 {{/*
 Verify the federated storage config secret exists with the expected key.
@@ -346,31 +328,26 @@ costEventsAuditEnabled flag for nginx configmap
 */ -}}
 {{- define "configsChecksum" -}}
 {{- $files := list
-  "actions-config-configmap.yaml"
-  "actions-store-secret.yaml"
-  "alibaba-service-key-secret.yaml"
-  "aws-service-key-secret.yaml"
-  "azure-service-key-secret.yaml"
-  "cloud-cost-integration-secret.yaml"
-  "cost-analyzer-account-mapping-configmap.yaml"
-  "cost-analyzer-alerts-configmap.yaml"
-  "cost-analyzer-asset-reports-configmap.yaml"
-  "cost-analyzer-cloud-cost-reports-configmap.yaml"
-  "frontend-configmap.yaml"\
+  "aggregator/actions-config-configmap.yaml"
+  "aggregator/actions-store-secret.yaml"
+  "cloud-cost/cloud-cost-integration-secret.yaml"
+  "aggregator/cost-analyzer-account-mapping-configmap.yaml"
+  "aggregator/cost-analyzer-alerts-configmap.yaml"
+  "aggregator/cost-analyzer-asset-reports-configmap.yaml"
+  "aggregator/cost-analyzer-cloud-cost-reports-configmap.yaml"
+  "frontend/frontend-configmap.yaml"
   "cost-analyzer-metrics-config-map-template.yaml"
-  "network-costs-configmap.yaml"
+  "network-costs/network-costs-configmap.yaml"
   "cost-analyzer-oidc-config-map-template.yaml"
   "cost-analyzer-pkey-secret.yaml"
-  "cost-analyzer-pricing-configmap.yaml"
-  "cost-analyzer-saml-config-map-template.yaml"
+  "aggregator/saml-configmap.yaml"
   "cost-analyzer-saved-reports-configmap.yaml"
-  "cost-analyzer-server-configmap.yaml"
-  "cost-analyzer-smtp-configmap.yaml"
+  "aggregator/cost-analyzer-smtp-configmap.yaml"
   "install-plugins.yaml"
   "integrations-postgres-queries-configmap.yaml"
   "integrations-postgres-secret.yaml"
-  "cluster-controller-actions-config.yaml"
-  "cluster-controller-secret.yaml"
+  "cluster-controller/cluster-controller-actions-config.yaml"
+  "cluster-controller/cluster-controller-secret.yaml"
   "kubecost-oidc-secret-template.yaml"
   "kubecost-saml-secret-template.yaml"
   "savings-recommendations-allowlists-config-map-template.yaml"

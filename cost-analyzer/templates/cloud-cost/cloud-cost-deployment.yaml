@@ -1,4 +1,4 @@
-{{- if eq (include "aggregator.deployMethod" .) "statefulset" }}
+{{- if (.Values.cloudCost).enabled }}
 
 {{/*
   A cloud integration secret is required for cloud cost to function as a dedicated pod.
@@ -12,7 +12,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ template "cloudCost.fullname" . }}
+  name: {{ include "cloudCost.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "cloudCost.commonLabels" . | nindent 4 }}
@@ -254,7 +254,7 @@ spec:
               readOnly: false
             {{- end }}
           {{- /* Only adds extraVolumeMounts when cloudcosts is running as its own pod */}}
-          {{- if and .Values.kubecostAggregator.cloudCost.extraVolumeMounts (eq (include "aggregator.deployMethod" .) "statefulset") }}
+          {{- if .Values.kubecostAggregator.cloudCost.extraVolumeMounts }}
             {{- toYaml .Values.kubecostAggregator.cloudCost.extraVolumeMounts | nindent 4 }}
           {{- end }}
           env:

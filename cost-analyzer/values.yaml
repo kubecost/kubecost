@@ -6,6 +6,8 @@ global:
   ##
   zone: ""  # cluster.local
 
+  clusterId: cluster-one # globally unique cluster name
+
   ## Kubecost Alerting
   ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=ui-alerts
   ##
@@ -417,6 +419,9 @@ systemProxy:
 # pulled. It should be avoided. If non-default behavior is needed, use
 # fullImageName for the relevant component.
 # imageVersion:
+
+finops-agent:
+  enabled: true
 
 kubecostFrontend:
   enabled: true
@@ -1058,10 +1063,6 @@ kubecostAggregator:
   ## the same serviceaccount as the cost-analyzer pod. A custom serviceaccount
   ## can be specified.
   cloudCost:
-    # The cloudCost component of Aggregator depends on
-    # kubecostAggregator.deployMethod:
-    # kA.dM = "singlepod" -> cloudCost is run as container inside cost-analyzer
-    # kA.dM = "statefulset" -> cloudCost is run as single-replica Deployment
     resources: {}
       # requests:
       #   cpu: 1000m
@@ -1392,7 +1393,6 @@ costEventsAudit:
 # # UI. Values in this block override config changes in the Settings UI on pod
 # # restart
 kubecostProductConfigs:
-  clusterName: "cluster-one"  # globally unique cluster name
 #   clusters:
 #     - name: "Cluster A"
 #       address: http://cluster-a.kubecost.com:9090

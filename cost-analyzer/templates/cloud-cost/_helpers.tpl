@@ -54,13 +54,9 @@ support templating a chart which uses the lookup function.
 {{- end -}}
 
 {{- define "cloudCost.selectorLabels" -}}
-{{- if eq (include "aggregator.deployMethod" .) "statefulset" }}
 app.kubernetes.io/name: {{ include "cloudCost.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app: {{ include "cloudCost.name" . }}
-{{- else }}
-{{- include "cost-analyzer.selectorLabels" . }}
-{{- end }}
 {{- end }}
 
 

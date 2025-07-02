@@ -88,7 +88,6 @@ data:
     }
   {{- end }}
 
-  {{- if and (not .Values.agent) (not .Values.cloudAgent) (not (eq (include "aggregator.deployMethod" .) "disabled")) }}
     upstream cloudCost {
         {{- if .Values.kubecostFrontend.useDefaultFqdn }}
         server {{ include "cloudCost.serviceName" . }}.{{ .Release.Namespace }}.svc.cluster.local:9005;
@@ -100,7 +99,6 @@ data:
         {{- end }}
         {{- end }}
     }
-  {{- end }}
 
     server {
         server_name _;
@@ -356,8 +354,6 @@ data:
     {{- end }}
     {{- end }}
 
-
-{{- if and (not .Values.agent) (not .Values.cloudAgent) (not (eq (include "aggregator.deployMethod" .) "disabled")) }}
         #Cloud Cost Endpoints
         location = /model/cloudCost/status {
             proxy_read_timeout          {{ .Values.kubecostFrontend.timeoutSeconds | default 300 }};
@@ -439,7 +435,6 @@ data:
             proxy_set_header  X-Real-IP  $remote_addr;
             proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
         }
-{{- end }}
 
         location = /model/hideOrphanedResources {
             default_type 'application/json';
@@ -500,7 +495,6 @@ data:
                 "rbacTeamsEnabled": "{{ include "rbacTeamsEnabled" . }}",
                 "dataBackupConfigured": "{{ include "dataBackupConfigured" . }}",
                 "costEventsAuditEnabled": "{{ include "costEventsAuditEnabled" . }}",
-                "frontendDeployMethod": "{{ include "frontend.deployMethod" . }}",
                 "pluginsEnabled": "{{ include "pluginsEnabled" . }}",
                 "carbonEstimatesEnabled": "{{ include "carbonEstimatesEnabled" . }}",
                 "clusterControllerEnabled": "{{ include "clusterControllerEnabled" . }}",
@@ -550,9 +544,4 @@ data:
             }';
         }
     }
-
-<<<<<<<< HEAD:cost-analyzer/templates/frontend-configmap-template.yaml
-
-========
->>>>>>>> 58c3eab7 (Set base structure and start deletions):cost-analyzer/templates/frontend/frontend-configmap.yaml
 {{- end }}

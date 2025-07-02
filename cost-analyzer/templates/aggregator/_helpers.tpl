@@ -24,13 +24,7 @@ app: aggregator
 {{- end -}}
 
 {{- define "aggregator.selectorLabels" -}}
-{{- if eq (include "aggregator.deployMethod" .) "statefulset" }}
 app.kubernetes.io/name: {{ include "aggregator.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app: aggregator
-{{- else if eq (include "aggregator.deployMethod" .) "singlepod" }}
-{{- include "cost-analyzer.selectorLabels" . }}
-{{- else }}
-{{ fail "Failed to set aggregator.selectorLabels" }}
-{{- end }}
 {{- end }}
