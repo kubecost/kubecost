@@ -20,4 +20,4 @@ prometheus:
     global:
       external_labels:
         # cluster_id should be unique for all clusters and the same value as .kubecostProductConfigs.clusterName
-        cluster_id: CLUSTER_NAME
+        cluster_id: CLUSTER_NAME  # keeping for backward compatibility testing

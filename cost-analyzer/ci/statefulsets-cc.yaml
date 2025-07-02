@@ -1,5 +1,5 @@
 ### This test is to verify that Kubecost aggregator is deployed as a StatefulSet,
-### cluster controller is installed, and the various Prometheus components are installed.
+### cluster controller is installed
 global:
   podAnnotations:
     kubecost.io/test1: value1
@@ -7,13 +7,7 @@ global:
   additionalLabels:
     kubecosttest1: value1
     kubecosttest2: value2
-  prometheus:
-    enabled: true
-    # fqdn: http://prometheus-operated.monitoring:9090
-  grafana:  # prometheus metrics will be local cluster only, disable grafana to save resources
-    enabled: false
-    proxy: false
-kubecostProductConfigs:
+  kubecostProductConfigs:
   clusterName: CLUSTER_NAME
 kubecostAggregator:
   deployMethod: statefulset
@@ -33,20 +27,3 @@ clusterController:
         start: "2034-02-09T00:00:00Z"
         end: "2034-02-09T01:00:00Z"
         repeat: none
-prometheus:
-  nodeExporter:
-    enabled: true
-  alertmanager:
-    enabled: true
-  configmapReload:
-    prometheus:
-      enabled: true
-  pushgateway:
-    enabled: true
-  server:
-    statefulSet:
-      enabled: true
-    global:
-      external_labels:
-        # cluster_id should be unique for all clusters and the same value as .kubecostProductConfigs.clusterName
-        cluster_id: CLUSTER_NAME
