@@ -67,7 +67,7 @@ Kubecost 2.0 preconditions
   {{/* TODO: update comments and rules for v3 */}}
   {{- if or ((.Values.saml).rbac).enabled ((.Values.oidc).rbac).enabled -}}
     {{- if (not (.Values.upgrade).tov3) -}}
-      {{- fail "\n\nSSO with RBAC is enabled.\nNote that Kubecost 2.x has significant architectural changes that may impact RBAC.\nThis should be tested before giving end-users access to the UI.\nKubecost has tested various configurations and believe that 2.x will be 100% compatible with existing configurations.\nRefer to the following documentation for more information: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=installation-kubecost-v2-installupgrade\n\nWhen ready to upgrade, add `--set upgrade.tov3=true`." -}}
+      {{- printf "\n\nSSO with RBAC is enabled.\nNote that Kubecost 3.x has significant architectural changes that need to be TODO...\n\nWhen ready to upgrade, add `--set upgrade.tov3=true`." -}}
     {{- end -}}
   {{- end -}}
 
