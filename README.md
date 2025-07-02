@@ -104,3 +104,4 @@ Adjusting the log format changes the format in which the logs are output making 
 |--------|----------------------------------------------------------------------------------------------------------------------------|
 | `JSON`   | `{"level":"info","time":"2006-01-02T15:04:05.999999999Z07:00","message":"Starting cost-model (git commit \"1.91.0-rc.0\")"}` |
 | `pretty` | `2006-01-02T15:04:05.999999999Z07:00 INF Starting cost-model (git commit "1.91.0-rc.0")`                                     |
+# Test commit
