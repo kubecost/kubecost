@@ -9,24 +9,21 @@
 {{- include "federatedStorageSourceCheck" . -}}
 {{- include "prometheusRetentionCheck" . -}}
 {{- include "clusterIDCheck" . -}}
-{{- include "kubeRBACProxyBearerTokenCheck" . -}}
 {{- include "caCertsSecretConfigCheck" . -}}
 {{- include "actionsStorageSourceCheck" . -}}
 
-{{- $servicePort := .Values.service.port | default 9090 }}
 Kubecost {{ .Chart.Version }} has been successfully installed.
 
-Kubecost 2.x is a major upgrade from previous versions and includes major new features including a brand new API Backend. Please review the following documentation to ensure a smooth transition: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=installation-kubecost-v2-installupgrade
+Kubecost 3.x is a major upgrade from previous versions and includes major new features including a brand new API Backend. Please review the following documentation to ensure a smooth transition: TODO
 
 When pods are Ready, you can enable port-forwarding with the following command:
 
-    kubectl port-forward --namespace {{ .Release.Namespace }} deployment/{{ template "cost-analyzer.fullname" . }} {{ $servicePort }}
+    kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ include "frontend.serviceName" . }} {{ .Values.service.targetPort }}
 
-Then, navigate to http://localhost:{{ $servicePort }} in a web browser.
+Then, navigate to http://localhost:{{ .Values.service.targetPort }} in a web browser.
 
 Please allow 25 minutes for Kubecost to gather metrics. A progress indicator will appear at the top of the UI.
 
 Having installation issues? View our Troubleshooting Guide at https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=troubleshoot-install
 
-{{- include "kubecostV2-3-notices" . -}}
 {{- include "federatedStorageCheck" . -}}

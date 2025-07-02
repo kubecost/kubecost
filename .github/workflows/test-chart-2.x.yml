@@ -1,11 +1,11 @@
-name: Chart build and test
+name: Chart build and test 2.x
 
 on:
   workflow_dispatch: {}
   # Normally using pull_request_target along with checking out the ref of the PR is not
   # a good idea, but this is low risk since it's a Helm chart repo.
-  pull_request_target:
-    types: [opened, synchronize, reopened, ready_for_review]
+  # pull_request_target:
+  #   types: [opened, synchronize, reopened, ready_for_review]
   # pull_request:
   #   branches:
   #     - develop

@@ -1,18 +1,12 @@
-{{- if .Values.ingress -}}
 {{- if .Values.ingress.enabled -}}
-{{- $fullName := include "cost-analyzer.fullname" . -}}
-{{- $serviceName := "" -}}
-{{- if eq (include "frontend.deployMethod" .) "haMode" }}
-{{- $serviceName = include  "frontend.serviceName" . }}
-{{- else }}
-{{- $serviceName = include "cost-analyzer.serviceName" . -}}
-{{- end }}
 {{- $ingressPaths := .Values.ingress.paths -}}
 {{- $ingressPathType := .Values.ingress.pathType -}}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ $fullName }}
+  # NOTE: In my minimal testing, the name cannot be changed.
+  # Ingress webhook protections will not allow duplicate names during helm upgrades.
+  name: {{ include "cost-analyzer.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
@@ -47,10 +41,9 @@ spec:
             pathType: {{ $ingressPathType }}
             backend:
               service:
-                name: {{ $serviceName }}
+                name: {{ include "frontend.serviceName" $ }}
                 port:
                   name: tcp-frontend
-        {{- end }}
   {{- end }}
 {{- end }}
 {{- end }}
