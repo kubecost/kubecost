@@ -6,95 +6,6 @@ global:
   ##
   zone: ""  # cluster.local
 
-  ## Kubecost-bundled Prometheus
-  ## It is recommended to leave these configurations as-is. If using your own
-  ## Prometheus, read the following documentation to understand the risks.
-  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-prometheus-guide
-  ##
-  prometheus:
-    enabled: true
-    fqdn: http://cost-analyzer-prometheus-server.default.svc  # Address of a Prometheus to connect to if enabled=false
-    insecureSkipVerify: false  # If true, Kubecost will not check the TLS cert of prometheus
-    # queryServiceBasicAuthSecretName: dbsecret  # kubectl create secret generic dbsecret -n kubecost --from-file=USERNAME --from-file=PASSWORD
-    # queryServiceBearerTokenSecretName: mcdbsecret  # kubectl create secret generic mcdbsecret -n kubecost --from-file=TOKEN
-    kubeRBACProxy: false  # If true, Kubecost will use kube-rbac-proxy to authenticate with in cluster Prometheus for openshift
-
-  ## Kubecost-bundled Grafana
-  ##
-  grafana:
-    enabled: true
-    domainName: cost-analyzer-grafana.default.svc  # Address to Grafana. Ignored if enabled=true.
-    scheme: "http"
-    proxy: true  # If true, the Kubecost frontend will route to your grafana through its service endpoint
-    # fqdn: cost-analyzer-grafana.default.svc
-
-  ## Google Cloud Managed Service for Prometheus (GMP)
-  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=guide-google-cloud-managed-service-prometheus
-  ## Ref: https://cloud.google.com/stackdriver/docs/managed-prometheus/setup-unmanaged
-  ##
-  gmp:
-    enabled: false
-    prometheusServerEndpoint: http://localhost:8085/
-    gmpProxy:
-      enabled: false
-      image: gke.gcr.io/prometheus-engine/frontend:v0.15.3-gke.0
-      imagePullPolicy: IfNotPresent
-      name: gmp-proxy
-      port: 8085
-      projectId: ""
-
-  ## Amazon Managed Service for Prometheus (AMP)
-  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=guide-amazon-managed-service-prometheus-amp-overview
-  ##
-  amp:
-    enabled: false
-    prometheusServerEndpoint: http://localhost:8005/workspaces/<WORKSPACE_ID>/
-    remoteWriteService: https://aps-workspaces.us-west-2.amazonaws.com/workspaces/<WORKSPACE_ID>/api/v1/remote_write
-    sigv4:
-      region: us-west-2
-      # access_key: AWS_ACCESS_KEY
-      # secret_key: AWS_SECRET_KEY
-      # role_arn: AWS_ROLE_ARN
-      # profile: AWS_PROFILE
-
-  ## GrafanaMimir Proxy
-  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=guide-grafana-mimir-integration-kubecost
-  ##
-  mimirProxy:
-    enabled: false
-    annotations: {}
-    name: mimir-proxy
-    image: nginxinc/nginx-unprivileged
-    port: 8085
-    mimirEndpoint: ""  # If your Mimir query endpoint is http://example.com/prometheus, use http://example.com/
-    orgIdentifier: ""  # Your Grafana Mimir tenant ID
-    basicAuth:
-      # username: user
-      # password: pwd
-    imagePullSecrets: []
-      # - name: "image-pull-secret"
-
-  ## Azure Monitor Managed Service for Prometheus
-  ## Ref: https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/prometheus-remote-write-virtual-machines
-  ##
-  ammsp:
-    enabled: false
-    prometheusServerEndpoint: http://localhost:8081/
-    remoteWriteService: $<AMMSP_METRICS_INGESTION_ENDPOINT>
-    queryEndpoint: $<AMMSP_QUERY_ENDPOINT>
-    aadAuthProxy:
-      enabled: false
-      ## Ref: https://github.com/Azure/aad-auth-proxy/releases/tag/0.1.0-main-04-10-2024-7067ac84
-      ## Example: mcr.microsoft.com/azuremonitor/auth-proxy/prod/aad-auth-proxy/images/aad-auth-proxy:0.1.0-main-04-10-2024-7067ac84
-      image: $<IMAGE>
-      imagePullPolicy: IfNotPresent
-      name: aad-auth-proxy
-      port: 8081
-      audience: https://prometheus.monitor.azure.com/.default
-      identityType: userAssigned
-      aadClientId: $<AZURE_MANAGED_IDENTITY_CLIENT_ID>
-      aadTenantId: $<AZURE_MANAGED_IDENTITY_TENANT_ID>
-
   ## Kubecost Alerting
   ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=ui-alerts
   ##
@@ -147,12 +58,8 @@ global:
     #       window: 10m
     #       threshold: 5              # Send Alert if health scores changes by 5 or more
     #     # Kubecost Health Diagnostic
-    #     - type: diagnostic          # Alerts when kubecost is unable to compute costs - ie: Prometheus unreachable
+    #     - type: diagnostic          # Alerts when kubecost is unable to compute costs - ie: unreachable metric sources
     #       window: 10m
-
-    alertmanager:  # Supply an alertmanager FQDN to receive notifications from the app.
-      enabled: false  # If true, allow kubecost to write to your alertmanager
-      fqdn: http://cost-analyzer-prometheus-server.default.svc  # example fqdn. Ignored if prometheus.enabled: true
 
   ## Kubecost Saved Reports
   ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=ui-reports
@@ -264,15 +171,8 @@ global:
         annotations: {}  # Add annotations to the Route.
         # host: kubecost.apps.okd4.example.com  # Add a custom host for your Route.
 
-      ## OPTIONAL. The following configs only to be enabled when using a Prometheus instance already installed in the cluster.
-      createMonitoringClusterRoleBinding: false  # Create a ClusterRoleBinding to grant the Kubecost serviceaccount access to query Prometheus.
-      createMonitoringResourceReaderRoleBinding: false  # Create a Role and Role Binding to allow Prometheus to list and watch Kubecost resources.
-      monitoringServiceAccountName: prometheus-k8s  # Name of the Prometheus serviceaccount to bind to the Resource Reader Role Binding.
-      monitoringServiceAccountNamespace: openshift-monitoring  # Namespace of the Prometheus serviceaccount to bind to the Resource Reader Role Binding.
-
       ## Create Security Context Constraint resources for the DaemonSets requiring additional privileges.
       scc:
-        nodeExporter: false  # Creates an SCC for Prometheus Node Exporter. This requires Node Exporter be enabled.
         networkCosts: false  # Creates an SCC for Kubecost network-costs. This requires network-costs be enabled.
         clusterController: false  # Creates an SCC for Kubecost Cluster Controller. This requires clusterController be enabled.
       ## When OpenShift is enabled, the following securityContext will be applied to all resources unless they define their own.
@@ -348,7 +248,7 @@ global:
 ## (potentially breaking) changes included in the new version.
 ##
 upgrade:
-  toV2: false
+  toV3: false
 
 # generated at http://kubecost.com/install, used for alerts tracking and free trials
 kubecostToken:  # ""
@@ -520,8 +420,8 @@ systemProxy:
 
 kubecostFrontend:
   enabled: true
-  deployMethod: singlepod  # haMode or singlepod - haMode is currently only supported with Enterprise tier
-  haReplicas: 2  # only used with haMode
+  deployMethod: haMode  # haMode or singlepod - haMode is currently only supported with Enterprise tier
+  haReplicas: 1  # only used with haMode
   image: "gcr.io/kubecost1/frontend"
   imagePullPolicy: IfNotPresent
   # fullImageName overrides the default image construction logic. The exact
@@ -562,8 +462,6 @@ kubecostFrontend:
 
   # set to true to set all upstreams to use <service>.<namespace>.svc.cluster.local instead of just <service>.<namespace>
   useDefaultFqdn: false
-#  model:
-#    fqdn: kubecost-model.kubecost.svc.cluster.local:9003
 #  forecasting:
 #    fqdn: kubecost-forcasting.kubecost.svc.cluster.local:5000
 #  aggregator:
@@ -582,7 +480,7 @@ kubecostFrontend:
     server:
       - "'Access-Control-Allow-Origin' '*' always;"
       - "'Access-Control-Allow-Methods' 'GET, PUT, POST, DELETE, OPTIONS' always;"
-      - "Content-Security-Policy \"default-src 'self' data: api.userway.com cdn.userway.com api.mixpanel.com; connect-src http: https:; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'; form-action 'self';\";"
+      - "Content-Security-Policy \"default-src 'self' data: telemetry.monitoring.kubecost.cloud api.userway.com cdn.userway.com api.mixpanel.com; connect-src http: https:; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'; form-action 'self';\";"
       - Cache-Control "must-revalidate";
       - "X-Content-Type-Options \"nosniff\";"
 
@@ -737,8 +635,6 @@ kubecostModel:
     # nodeLabels:
     #   enabled: true
 
-  # max number of concurrent Prometheus queries
-  maxQueryConcurrency: 5
   resources:
     requests:
       cpu: "200m"
@@ -771,40 +667,23 @@ kubecostModel:
 
   extraPorts: []
 
-## etlUtils is a utility typically used by Enterprise customers transitioning
-## from v1 to v2 of Kubecost. It translates the data from the "/etl" dir of the
-## bucket, to the "/federated" dir of the bucket.
-## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=federation-migration-guide-from-thanos-kubecost-v2-aggregator
-##
-etlUtils:
-  enabled: false
-  fullImageName: null
-  resources: {}
-  env: {}
-  nodeSelector: {}
-  tolerations: []
-  ## Annotations to be added to etlutils deployment
-  annotations: {}
-  affinity: {}
-
 # Basic Kubecost ingress, more examples available at https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=installation-ingress-examples
 ingress:
   enabled: false
-  # className: nginx
+  # className: "nginx"
   labels:
-    # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
   annotations:
-    # kubernetes.io/ingress.class: nginx
+    # cert-manager.io/cluster-issuer: letsencrypt-http
     # kubernetes.io/tls-acme: "true"
   paths: ["/"]  # There's no need to route specifically to the pods-- we have an nginx deployed that handles routing
   pathType: ImplementationSpecific
   hosts:
-    - cost-analyzer.local
+    - kubecost.local
   tls: []
   #  - secretName: cost-analyzer-tls
   #    hosts:
-  #      - cost-analyzer.local
+  #      - kubecost.local
 
 nodeSelector: {}
 tolerations: []
@@ -836,628 +715,6 @@ service:
   sessionAffinity:
     enabled: false  # Makes sure that connections from a client are passed to the same Pod each time, when set to `true`. You should set it when you enabled authentication through OIDC or SAML integration.
     timeoutSeconds: 10800
-
-prometheus:
-  ## Provide a full name override for Prometheus.
-  # fullnameOverride: ""
-  ## Provide a name override for Prometheus.
-  # nameOverride: ""
-
-  rbac:
-    create: true  # Create the RBAC resources for Prometheus.
-
-  serviceAccounts:
-    alertmanager:
-      create: true
-      name:
-    nodeExporter:
-      create: true
-      name:
-    server:
-      create: true
-      name:
-      ## Prometheus server ServiceAccount annotations.
-      ## Can be used for AWS IRSA annotations when using Remote Write mode with Amazon Managed Prometheus.
-      annotations: {}
-
-  ## Specify an existing ConfigMap to be used by Prometheus when using self-signed certificates.
-  ##
-  # selfsignedCertConfigMapName: ""
-
-  imagePullSecrets:
-
-  extraScrapeConfigs: |
-    - job_name: kubecost
-      honor_labels: true
-      scrape_interval: 1m
-      scrape_timeout: 60s
-      metrics_path: /metrics
-      scheme: http
-      dns_sd_configs:
-      - names:
-        - {{ template "cost-analyzer.serviceName" . }}
-        type: 'A'
-        port: 9003
-    - job_name: kubecost-networking
-      kubernetes_sd_configs:
-        - role: pod
-      relabel_configs:
-      # Scrape only the the targets matching the following metadata
-        - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_instance]
-          action: keep
-          regex:  kubecost
-        - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
-          action: keep
-          regex:  network-costs
-    - job_name: kubecost-aggregator
-      scrape_interval: 1m
-      scrape_timeout: 60s
-      metrics_path: /metrics
-      scheme: http
-      dns_sd_configs:
-      - names:
-        - {{ template "aggregator.serviceName" . }}
-        type: 'A'
-        {{- if or .Values.saml.enabled .Values.oidc.enabled }}
-        port: 9008
-        {{- else }}
-        port: 9004
-        {{- end }}
-    ## Enables scraping of NVIDIA GPU metrics via dcgm-exporter. Scrapes all
-    ## endpoints which contain "dcgm-exporter" in labels "app",
-    ## "app.kubernetes.io/component", or "app.kubernetes.io/name" with a case
-    ## insensitive match. The label must be present on the K8s service endpoints and not just pods.
-    ## Refs:
-    ## https://github.com/NVIDIA/gpu-operator/blob/d4316a415bbd684ce8416a88042305fc1a093aa4/assets/state-dcgm-exporter/0600_service.yaml#L7
-    ## https://github.com/NVIDIA/dcgm-exporter/blob/54fd1ca137c66511a87a720390613680b9bdabdd/deployment/templates/service.yaml#L23
-    - job_name: kubecost-dcgm-exporter
-      kubernetes_sd_configs:
-        - role: endpoints
-      relabel_configs:
-        - source_labels: [__meta_kubernetes_pod_label_app, __meta_kubernetes_pod_label_app_kubernetes_io_component, __meta_kubernetes_pod_label_app_kubernetes_io_name]
-          action: keep
-          regex: (?i)(.*dcgm-exporter.*|.*dcgm-exporter.*|.*dcgm-exporter.*)
-
-  server:
-    # If clusterIDConfigmap is defined, instead use user-generated configmap with key CLUSTER_ID
-    # to use as unique cluster ID in kubecost cost-analyzer deployment.
-    # This overrides the cluster_id set in prometheus.server.global.external_labels.
-    # NOTE: This does not affect the external_labels set in prometheus config.
-    # clusterIDConfigmap: cluster-id-configmap
-
-    ## Provide a full name override for the Prometheus server.
-    # fullnameOverride: ""
-
-    enabled: true
-    name: server
-    sidecarContainers:
-    strategy:
-      type: Recreate
-      rollingUpdate: null
-    image:
-      repository: quay.io/prometheus/prometheus
-      tag: v3.4.1
-      pullPolicy: IfNotPresent
-    priorityClassName: ""
-    prefixURL: ""
-    baseURL: ""
-    env: []
-    extraFlags:
-      - web.enable-lifecycle
-    configPath: /etc/config/prometheus.yml
-    global:
-      scrape_interval: 1m
-      scrape_timeout: 60s
-      evaluation_interval: 1m
-      external_labels:
-        cluster_id: cluster-one  # Each cluster should have a unique ID
-    remoteWrite: {}
-    remoteRead: {}
-    extraArgs:
-      query.max-concurrency: 1
-      query.max-samples: 100000000
-    extraInitContainers: []
-    extraVolumeMounts: []
-    extraVolumes: []
-    extraHostPathMounts: []
-    extraConfigmapMounts: []
-    extraSecretMounts: []
-    configMapOverrideName: ""
-    ingress:
-      enabled: false
-      # className: nginx
-      annotations: {}
-      extraLabels: {}
-      hosts: []
-      pathType: "Prefix"
-      extraPaths: []
-      tls: []
-    # strategy:
-    #   type: Recreate
-    tolerations: []
-    nodeSelector: {}
-    affinity: {}
-    podDisruptionBudget:
-      enabled: false
-      maxUnavailable: 1
-    # schedulerName:
-    persistentVolume:
-      enabled: true
-      accessModes:
-        - ReadWriteOnce
-      annotations: {}
-      existingClaim: ""
-      mountPath: /data
-      size: 32Gi
-      # storageClass: "-"
-      # volumeBindingMode: ""
-      subPath: ""
-    emptyDir:
-      sizeLimit: ""
-    podAnnotations: {}
-    annotations: {}
-    podLabels: {}
-    alertmanagers: []
-    replicaCount: 1
-    statefulSet:
-      enabled: false
-      annotations: {}
-      labels: {}
-      podManagementPolicy: OrderedReady
-      headless:
-        annotations: {}
-        labels: {}
-        servicePort: 80
-    readinessProbeInitialDelay: 5
-    readinessProbeTimeout: 3
-    readinessProbeFailureThreshold: 3
-    readinessProbeSuccessThreshold: 1
-    livenessProbeInitialDelay: 5
-    livenessProbeTimeout: 3
-    livenessProbeFailureThreshold: 3
-    livenessProbeSuccessThreshold: 1
-    resources: {}
-    verticalAutoscaler:
-      enabled: false
-      ## Optional. Defaults to "Auto" if not specified.
-      # updateMode: "Auto"
-      ## Mandatory. Without, VPA will not be created.
-      # containerPolicies:
-      # - containerName: 'prometheus-server'
-    securityContext: {}
-    containerSecurityContext: {}
-    service:
-      annotations: {}
-      labels: {}
-      clusterIP: ""
-      externalIPs: []
-      loadBalancerIP: ""
-      loadBalancerSourceRanges: []
-      servicePort: 80
-      sessionAffinity: None
-      type: ClusterIP
-      gRPC:
-        enabled: false
-        servicePort: 10901
-      statefulsetReplica:
-        enabled: false
-        replica: 0
-    terminationGracePeriodSeconds: 300
-
-    ## Prometheus data retention period (default if not specified is 97 hours)
-    ##
-    ## Kubecost builds up its own persistent store of metric data on the
-    ## filesystem (usually a PV) and, when using ETL Backup and/or Federated
-    ## ETL, in more durable object storage like S3 or GCS. Kubecost's data
-    ## retention is _not_ tied to the configured Prometheus retention.
-    ##
-    ## For data durability, we recommend using ETL Backup instead of relying on
-    ## Prometheus retention.
-    ##
-    ## Lower retention values will affect Prometheus by reducing resource
-    ## consumption and increasing stability. It _must not_ be set below or equal
-    ## to kubecostModel.etlHourlyStoreDurationHours, otherwise empty data sets
-    ## may overwrite good data sets. For now, it must also be >= 49h for Daily
-    ## ETL stability.
-    ##
-    ## "ETL Rebuild" and "ETL Repair" is only possible on data available within
-    ## this retention window. This is an extremely rare operation.
-    ##
-    ## If you want maximum security in the event of a Kubecost agent
-    ## (cost-model) outage, increase this value. The current default of 97h is
-    ## intended to balance Prometheus stability and resource consumption
-    ## against the event of an outage in Kubecost which would necessitate a
-    ## version change. 4 days should provide enough time for most users to
-    ## notice a problem and initiate corrective action.
-    retention: 97h
-    # retentionSize: should be significantly greater than the storage used in the number of hours set in etlHourlyStoreDurationHours
-
-  # Install Prometheus Alert Manager
-  alertmanager:
-    enabled: false
-    ## Provide a full name override for Prometheus alertmanager.
-    # fullnameOverride: ""
-    strategy:
-      type: Recreate
-      rollingUpdate: null
-    name: alertmanager
-    image:
-      repository: quay.io/prometheus/alertmanager
-      tag: v0.28.1
-      pullPolicy: IfNotPresent
-    priorityClassName: ""
-    extraArgs: {}
-    prefixURL: ""
-    baseURL: "http://localhost:9093"
-    extraEnv: {}
-    extraSecretMounts: []
-    configMapOverrideName: ""
-    configFromSecret: ""
-    configFileName: alertmanager.yml
-    ingress:
-      enabled: false
-      annotations: {}
-      extraLabels: {}
-      hosts: []
-      extraPaths: []
-      tls: []
-    # strategy:
-    #   type: Recreate
-    tolerations: []
-    nodeSelector: {}
-    affinity: {}
-    podDisruptionBudget:
-      enabled: false
-      maxUnavailable: 1
-    # schedulerName:
-    persistentVolume:
-      enabled: true
-      accessModes:
-        - ReadWriteOnce
-      annotations: {}
-      existingClaim: ""
-      mountPath: /data
-      size: 2Gi
-      # storageClass: "-"
-      # volumeBindingMode: ""
-      subPath: ""
-    podAnnotations: {}
-    annotations: {}
-    podLabels: {}
-    replicaCount: 1
-    statefulSet:
-      enabled: false
-      annotations: {}
-      podManagementPolicy: OrderedReady
-      headless:
-        annotations: {}
-        labels: {}
-        # enableMeshPeer : true
-        servicePort: 80
-    resources: {}
-    securityContext:
-      runAsUser: 1001
-      runAsNonRoot: true
-      runAsGroup: 1001
-      fsGroup: 1001
-    service:
-      annotations: {}
-      labels: {}
-      clusterIP: ""
-      # enableMeshPeer : true
-      externalIPs: []
-      loadBalancerIP: ""
-      loadBalancerSourceRanges: []
-      servicePort: 80
-      # nodePort: 30000
-      sessionAffinity: None
-      type: ClusterIP
-
-  alertmanagerFiles:
-    alertmanager.yml:
-      global: {}
-      receivers:
-        - name: default-receiver
-      route:
-        group_wait: 10s
-        group_interval: 5m
-        receiver: default-receiver
-        repeat_interval: 3h
-
-  ## Monitors ConfigMap changes and POSTs to a URL
-  configmapReload:
-    prometheus:
-      enabled: false
-      name: configmap-reload
-      image:
-        repository: quay.io/prometheus-operator/prometheus-config-reloader
-        tag: v0.83.0
-        pullPolicy: IfNotPresent
-      extraArgs: {}
-      extraVolumeDirs: []
-      extraConfigmapMounts: []
-      resources: {}
-      containerSecurityContext: {}
-
-    alertmanager:
-      enabled: false
-      name: configmap-reload
-      image:
-        repository: quay.io/prometheus-operator/prometheus-config-reloader
-        tag: v0.83.0
-        pullPolicy: IfNotPresent
-      extraArgs: {}
-      extraVolumeDirs: []
-      extraConfigmapMounts: []
-      resources: {}
-
-  nodeExporter:
-    ## If false, node-exporter will not be installed.
-    ## This is disabled by default in Kubecost 2.0, though it can be enabled as needed.
-    ##
-    enabled: false
-
-    ## Provide a full name override for node exporter.
-    # fullnameOverride: ""
-
-    hostNetwork: true
-    hostPID: true
-    dnsPolicy: ClusterFirstWithHostNet
-    name: node-exporter
-    image:
-      repository: prom/node-exporter
-      tag: v1.9.1
-      pullPolicy: IfNotPresent
-    priorityClassName: ""
-    updateStrategy:
-      type: RollingUpdate
-    extraArgs: {}
-    extraHostPathMounts: []
-    extraConfigmapMounts: []
-    # affinity:
-    tolerations: []
-    nodeSelector: {}
-    podAnnotations: {}
-    annotations: {}
-    pod:
-      labels: {}
-    podDisruptionBudget:
-      enabled: false
-      maxUnavailable: 1
-    resources: {}
-    securityContext: {}
-    service:
-      annotations:
-        prometheus.io/scrape: "true"
-      labels: {}
-      clusterIP: None
-      externalIPs: []
-      hostPort: 9100
-      loadBalancerIP: ""
-      loadBalancerSourceRanges: []
-      servicePort: 9100
-      type: ClusterIP
-
-  serverFiles:
-    ## Alerts configuration
-    ## Ref: https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/
-    alerting_rules.yml: {}
-
-    prometheus.yml:
-      rule_files:
-        - /etc/config/recording_rules.yml
-        - /etc/config/alerting_rules.yml
-
-      scrape_configs:
-        - job_name: prometheus
-          static_configs:
-            - targets:
-              - localhost:9090
-
-        # A scrape configuration for running Prometheus on a Kubernetes cluster.
-        # This uses separate scrape configs for cluster components (i.e. API server, node)
-        # and services to allow each to use different authentication configs.
-        #
-        # Kubernetes labels will be added as Prometheus labels on metrics via the
-        # `labelmap` relabeling action.
-        - job_name: 'kubernetes-nodes-cadvisor'
-
-          # Default to scraping over https. If required, just disable this or change to
-          # `http`.
-          scheme: https
-
-          # This TLS & bearer token file config is used to connect to the actual scrape
-          # endpoints for cluster components. This is separate to discovery auth
-          # configuration because discovery & scraping are two separate concerns in
-          # Prometheus. The discovery auth config is automatic if Prometheus runs inside
-          # the cluster. Otherwise, more config options have to be provided within the
-          # <kubernetes_sd_config>.
-          tls_config:
-            ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-            # If your node certificates are self-signed or use a different CA to the
-            # master CA, then disable certificate verification below. Note that
-            # certificate verification is an integral part of a secure infrastructure
-            # so this should only be disabled in a controlled environment. You can
-            # disable certificate verification by uncommenting the line below.
-            #
-            insecure_skip_verify: true
-          bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-
-          kubernetes_sd_configs:
-            - role: node
-
-          # This configuration will work only on kubelet 1.7.3+
-          # As the scrape endpoints for cAdvisor have changed
-          # if you are using older version you need to change the replacement to
-          # replacement: /api/v1/nodes/$1:4194/proxy/metrics
-          # more info here https://github.com/prometheus-operator/prometheus-operator/issues/633
-          relabel_configs:
-            - action: labelmap
-              regex: __meta_kubernetes_node_label_(.+)
-            - target_label: __address__
-              replacement: kubernetes.default.svc:443
-            - source_labels: [__meta_kubernetes_node_name]
-              regex: (.+)
-              target_label: __metrics_path__
-              replacement: /api/v1/nodes/$1/proxy/metrics/cadvisor
-
-          metric_relabel_configs:
-            - source_labels: [__name__]
-              regex: (container_cpu_usage_seconds_total|container_memory_working_set_bytes|container_network_receive_errors_total|container_network_transmit_errors_total|container_network_receive_packets_dropped_total|container_network_transmit_packets_dropped_total|container_memory_usage_bytes|container_cpu_cfs_throttled_periods_total|container_cpu_cfs_periods_total|container_fs_usage_bytes|container_fs_limit_bytes|container_cpu_cfs_periods_total|container_fs_inodes_free|container_fs_inodes_total|container_fs_usage_bytes|container_fs_limit_bytes|container_cpu_cfs_throttled_periods_total|container_cpu_cfs_periods_total|container_network_receive_bytes_total|container_network_transmit_bytes_total|container_fs_inodes_free|container_fs_inodes_total|container_fs_usage_bytes|container_fs_limit_bytes|container_spec_cpu_shares|container_spec_memory_limit_bytes|container_network_receive_bytes_total|container_network_transmit_bytes_total|container_fs_reads_bytes_total|container_network_receive_bytes_total|container_fs_writes_bytes_total|container_fs_reads_bytes_total|cadvisor_version_info|kubecost_pv_info)
-              action: keep
-            - source_labels: [container]
-              target_label: container_name
-              regex: (.+)
-              action: replace
-            - source_labels: [pod]
-              target_label: pod_name
-              regex: (.+)
-              action: replace
-
-        # A scrape configuration for running Prometheus on a Kubernetes cluster.
-        # This uses separate scrape configs for cluster components (i.e. API server, node)
-        # and services to allow each to use different authentication configs.
-        #
-        # Kubernetes labels will be added as Prometheus labels on metrics via the
-        # `labelmap` relabeling action.
-        - job_name: 'kubernetes-nodes'
-
-          # Default to scraping over https. If required, just disable this or change to
-          # `http`.
-          scheme: https
-
-          # This TLS & bearer token file config is used to connect to the actual scrape
-          # endpoints for cluster components. This is separate to discovery auth
-          # configuration because discovery & scraping are two separate concerns in
-          # Prometheus. The discovery auth config is automatic if Prometheus runs inside
-          # the cluster. Otherwise, more config options have to be provided within the
-          # <kubernetes_sd_config>.
-          tls_config:
-            ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-            # If your node certificates are self-signed or use a different CA to the
-            # master CA, then disable certificate verification below. Note that
-            # certificate verification is an integral part of a secure infrastructure
-            # so this should only be disabled in a controlled environment. You can
-            # disable certificate verification by uncommenting the line below.
-            #
-            insecure_skip_verify: true
-          bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-
-          kubernetes_sd_configs:
-            - role: node
-
-          relabel_configs:
-            - action: labelmap
-              regex: __meta_kubernetes_node_label_(.+)
-            - target_label: __address__
-              replacement: kubernetes.default.svc:443
-            - source_labels: [__meta_kubernetes_node_name]
-              regex: (.+)
-              target_label: __metrics_path__
-              replacement: /api/v1/nodes/$1/proxy/metrics
-
-          metric_relabel_configs:
-            - source_labels: [__name__]
-              regex: (kubelet_volume_stats_used_bytes)  # this metric is in alpha
-              action: keep
-
-        # Scrape config for service endpoints.
-        #
-        # The relabeling allows the actual service scrape endpoint to be configured
-        # via the following annotations:
-        #
-        # * `prometheus.io/scrape`: Only scrape services that have a value of `true`
-        # * `prometheus.io/scheme`: If the metrics endpoint is secured then you will need
-        # to set this to `https` & most likely set the `tls_config` of the scrape config.
-        # * `prometheus.io/path`: If the metrics path is not `/metrics` override this.
-        # * `prometheus.io/port`: If the metrics are exposed on a different port to the
-        # service then set this appropriately.
-        - job_name: 'kubernetes-service-endpoints'
-
-          kubernetes_sd_configs:
-            - role: endpoints
-
-          relabel_configs:
-            - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
-              action: keep
-              regex: true
-            - source_labels: [__meta_kubernetes_endpoints_name]
-              action: keep
-              regex: (.*node-exporter|kubecost-network-costs)
-            - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scheme]
-              action: replace
-              target_label: __scheme__
-              regex: (https?)
-            - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_path]
-              action: replace
-              target_label: __metrics_path__
-              regex: (.+)
-            - source_labels: [__address__, __meta_kubernetes_service_annotation_prometheus_io_port]
-              action: replace
-              target_label: __address__
-              regex: ([^:]+)(?::\d+)?;(\d+)
-              replacement: $1:$2
-            - action: labelmap
-              regex: __meta_kubernetes_service_label_(.+)
-            - source_labels: [__meta_kubernetes_namespace]
-              action: replace
-              target_label: kubernetes_namespace
-            - source_labels: [__meta_kubernetes_service_name]
-              action: replace
-              target_label: kubernetes_name
-            - source_labels: [__meta_kubernetes_pod_node_name]
-              action: replace
-              target_label: kubernetes_node
-          metric_relabel_configs:
-            - source_labels: [__name__]
-              regex: (container_cpu_allocation|container_cpu_usage_seconds_total|container_fs_limit_bytes|container_fs_writes_bytes_total|container_gpu_allocation|container_memory_allocation_bytes|container_memory_usage_bytes|container_memory_working_set_bytes|container_network_receive_bytes_total|container_network_transmit_bytes_total|DCGM_FI_DEV_GPU_UTIL|deployment_match_labels|kube_daemonset_status_desired_number_scheduled|kube_daemonset_status_number_ready|kube_deployment_spec_replicas|kube_deployment_status_replicas|kube_deployment_status_replicas_available|kube_job_status_failed|kube_namespace_annotations|kube_namespace_labels|kube_node_info|kube_node_labels|kube_node_status_allocatable|kube_node_status_allocatable_cpu_cores|kube_node_status_allocatable_memory_bytes|kube_node_status_capacity|kube_node_status_capacity_cpu_cores|kube_node_status_capacity_memory_bytes|kube_node_status_condition|kube_persistentvolume_capacity_bytes|kube_persistentvolume_status_phase|kube_persistentvolumeclaim_info|kube_persistentvolumeclaim_resource_requests_storage_bytes|kube_pod_container_info|kube_pod_container_resource_limits|kube_pod_container_resource_limits_cpu_cores|kube_pod_container_resource_limits_memory_bytes|kube_pod_container_resource_requests|kube_pod_container_resource_requests_cpu_cores|kube_pod_container_resource_requests_memory_bytes|kube_pod_container_status_restarts_total|kube_pod_container_status_running|kube_pod_container_status_terminated_reason|kube_pod_labels|kube_pod_owner|kube_pod_status_phase|kube_replicaset_owner|kube_statefulset_replicas|kube_statefulset_status_replicas|kubecost_cluster_info|kubecost_cluster_management_cost|kubecost_cluster_memory_working_set_bytes|kubecost_load_balancer_cost|kubecost_network_internet_egress_cost|kubecost_network_region_egress_cost|kubecost_network_zone_egress_cost|kubecost_node_is_spot|kubecost_pod_network_egress_bytes_total|node_cpu_hourly_cost|node_cpu_seconds_total|node_disk_reads_completed|node_disk_reads_completed_total|node_disk_writes_completed|node_disk_writes_completed_total|node_filesystem_device_error|node_gpu_count|node_gpu_hourly_cost|node_memory_Buffers_bytes|node_memory_Cached_bytes|node_memory_MemAvailable_bytes|node_memory_MemFree_bytes|node_memory_MemTotal_bytes|node_network_transmit_bytes_total|node_ram_hourly_cost|node_total_hourly_cost|pod_pvc_allocation|pv_hourly_cost|service_selector_labels|statefulSet_match_labels|kubecost_pv_info|up)
-              action: keep
-
-    ## Recording rules
-    ## Ref: https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/
-    recording_rules.yml:
-      groups:
-        - name: CPU
-          rules:
-            - expr: sum(rate(container_cpu_usage_seconds_total{container!=""}[5m]))
-              record: cluster:cpu_usage:rate5m
-            - expr: rate(container_cpu_usage_seconds_total{container!=""}[5m])
-              record: cluster:cpu_usage_nosum:rate5m
-            - expr: avg(irate(container_cpu_usage_seconds_total{container!="POD", container!=""}[5m])) by (container,pod,namespace)
-              record: kubecost_container_cpu_usage_irate
-            - expr: sum(container_memory_working_set_bytes{container!="POD",container!=""}) by (container,pod,namespace)
-              record: kubecost_container_memory_working_set_bytes
-            - expr: sum(container_memory_working_set_bytes{container!="POD",container!=""})
-              record: kubecost_cluster_memory_working_set_bytes
-        - name: Savings
-          rules:
-            - expr: sum(avg(kube_pod_owner{owner_kind!="DaemonSet"}) by (pod) * sum(container_cpu_allocation) by (pod))
-              record: kubecost_savings_cpu_allocation
-              labels:
-                daemonset: "false"
-            - expr: sum(avg(kube_pod_owner{owner_kind="DaemonSet"}) by (pod) * sum(container_cpu_allocation) by (pod)) / sum(kube_node_info)
-              record: kubecost_savings_cpu_allocation
-              labels:
-                daemonset: "true"
-            - expr: sum(avg(kube_pod_owner{owner_kind!="DaemonSet"}) by (pod) * sum(container_memory_allocation_bytes) by (pod))
-              record: kubecost_savings_memory_allocation_bytes
-              labels:
-                daemonset: "false"
-            - expr: sum(avg(kube_pod_owner{owner_kind="DaemonSet"}) by (pod) * sum(container_memory_allocation_bytes) by (pod)) / sum(kube_node_info)
-              record: kubecost_savings_memory_allocation_bytes
-              labels:
-                daemonset: "true"
-
-  # Adds option to add alert_relabel_configs to avoid duplicate alerts in alertmanager
-  # useful in H/A prometheus with different external labels but the same alerts
-  alertRelabelConfigs:
-    # alert_relabel_configs:
-    # - source_labels: [dc]
-    #   regex: (.+)\d+
-    #   target_label: dc
-
-  networkPolicy:
-    enabled: false
 
 ## Optional daemonset to more accurately attribute network costs to the correct workload
 ## https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-network-cost
@@ -1629,11 +886,12 @@ forecasting:
 ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=federation-kubecost-aggregator
 ##
 kubecostAggregator:
+  # TODO: update comments
   # deployMethod determines how Aggregator is deployed. Current options are
   # "singlepod" (within cost-analyzer Pod) "statefulset" (separate
   # StatefulSet), and "disabled". Only use "disabled" if this is a secondary
   # Federated ETL cluster which does not need to answer queries.
-  deployMethod: singlepod
+  deployMethod: statefulset
 
   # fullImageName overrides the default image construction logic. The exact
   # image provided (registry, image, tag) will be used for aggregator.
@@ -1899,9 +1157,6 @@ diagnostics:
     annotations: {}
     affinity: {}
 
-## Provide a full name override for the diagnostics Deployment.
-diagnosticsFullnameOverride: ""
-
 # Kubecost Cluster Controller for Right Sizing and Cluster Turndown
 clusterController:
   enabled: false
@@ -2050,6 +1305,7 @@ reporting:
   # googleAnalyticsTag is only included in our Enterprise offering.
   # googleAnalyticsTag: G-XXXXXXXXX
 
+# This may be useful for monitoring cpu/memory, keeping in 3.0
 serviceMonitor:  # the kubecost included prometheus uses scrapeConfigs and does not support service monitors. The following options assume an existing prometheus that supports serviceMonitors.
   enabled: false
   interval: 1m
@@ -2075,155 +1331,12 @@ serviceMonitor:  # the kubecost included prometheus uses scrapeConfigs and does 
       sourceLabels:
       - __meta_kubernetes_namespace
       targetLabel: namespace
-prometheusRule:
-  enabled: false
-  additionalLabels: {}
 
 supportNFS: false
 # initChownDataImage ensures all Kubecost filepath permissions on PV or local storage are set up correctly.
 initChownDataImage: "busybox"  # Supports a fully qualified Docker image, e.g. registry.hub.docker.com/library/busybox:latest
 initChownData:
   resources: {}
-
-## Kubecost's Bundled Grafana
-## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-grafana-guide
-grafana:
-  # namespace_datasources: kubecost # override the default namespace here
-  # namespace_dashboards: kubecost # override the default namespace here
-  rbac:
-    create: true
-
-  serviceAccount:
-    create: true
-    name: ""
-
-  ## Provide a full name override for the Grafana Deployment.
-  # fullnameOverride: ""
-  ## Provide a name override for the Grafana Deployment.
-  # nameOverride: ""
-
-  ## Configure grafana datasources
-  ## ref: http://docs.grafana.org/administration/provisioning/#datasources
-  ##
-  # datasources:
-  #   datasources.yaml:
-  #     apiVersion: 1
-  #     datasources:
-  #       - name: prometheus-kubecost
-  #         type: prometheus
-  #         url: http://kubecost-prometheus-server.kubecost.svc.cluster.local
-  #         access: proxy
-  #         isDefault: false
-  #         jsonData:
-  #           httpMethod: POST
-  #           prometheusType: Prometheus
-  #           prometheusVersion: 2.35.0
-  #           timeInterval: 1m
-
-  replicas: 1
-  deploymentStrategy: RollingUpdate
-  readinessProbe:
-    httpGet:
-      path: /api/health
-      port: 3000
-  livenessProbe:
-    httpGet:
-      path: /api/health
-      port: 3000
-    initialDelaySeconds: 60
-    timeoutSeconds: 30
-    failureThreshold: 10
-  image:
-    repository: grafana/grafana
-    tag: 12.0.1
-    pullPolicy: IfNotPresent
-    # pullSecrets:
-  securityContext: {}
-  priorityClassName: ""
-
-  ## Container image settings for Grafana initContainer used to download dashboards. Will only be used when dashboards are present.
-  downloadDashboardsImage:
-    repository: curlimages/curl
-    tag: latest
-    pullPolicy: IfNotPresent
-  podAnnotations: {}
-  annotations: {}
-  service:
-    type: ClusterIP
-    port: 80
-    annotations: {}
-    labels: {}
-  resources: {}
-  nodeSelector: {}
-  tolerations: []
-  affinity: {}
-  persistence:
-    enabled: false
-    # storageClassName: default
-    # accessModes:
-    #   - ReadWriteOnce
-    # size: 10Gi
-    # annotations: {}
-    # subPath: ""
-    # existingClaim:
-  adminUser: admin
-  adminPassword: strongpassword
-  # schedulerName:
-  env: {}
-  envFromSecret: ""
-  extraSecretMounts: []
-  plugins: []
-  dashboardProviders: {}
-  dashboards: {}
-  dashboardsConfigMaps: {}
-  ## Grafana sidecars that collect the configmaps with specified label and stores the included files them into the respective folders
-  ## Requires at least Grafana 5 to work and can't be used together with parameters dashboardProviders, datasources and dashboards
-  sidecar:
-    image:
-      repository: ghcr.io/kiwigrid/k8s-sidecar
-      tag: 1.30.3
-      pullPolicy: IfNotPresent
-    resources: {}
-    dashboards:
-      enabled: true
-      # label that the configmaps with dashboards are marked with
-      label: grafana_dashboard
-      labelValue: "1"
-      # set sidecar ERROR_THROTTLE_SLEEP env var from default 5s to 0s -> fixes https://github.com/kubecost/cost-analyzer-helm-chart/issues/877
-      annotations: {}
-      error_throttle_sleep: 0
-      folder: /tmp/dashboards
-    datasources:
-      # dataSourceFilename: foo.yml # If you need to change the name of the datasource file
-      enabled: false
-      error_throttle_sleep: 0
-      # label that the configmaps with datasources are marked with
-      label: grafana_datasource
-  ## Grafana's primary configuration
-  ## NOTE: values in map will be converted to ini format
-  ## ref: http://docs.grafana.org/installation/configuration/
-  ##
-  ## For grafana to be accessible, add the path to root_url. For example, if you run kubecost at www.foo.com:9090/kubecost
-  ## set root_url to "%(protocol)s://%(domain)s:%(http_port)s/kubecost/grafana". No change is necessary here if kubecost runs at a root URL
-  grafana.ini:
-    server:
-      serve_from_sub_path: false  # Set to false on Grafana v10+
-      root_url: "%(protocol)s://%(domain)s:%(http_port)s/grafana"
-    paths:
-      data: /var/lib/grafana/data
-      logs: /var/log/grafana
-      plugins: /var/lib/grafana/plugins
-      provisioning: /etc/grafana/provisioning
-    analytics:
-      check_for_updates: true
-    log:
-      mode: console
-    grafana_net:
-      url: https://grafana.net
-    auth.anonymous:
-      enabled: true
-      org_role: Editor
-      org_name: Main Org.
 
 serviceAccount:
   create: true  # Set this to false if you're bringing your own service account.
@@ -2283,7 +1396,7 @@ costEventsAudit:
   enabled: false
 
 ## Disable updates to kubecost from the frontend UI and via POST request
-## This feature is considered beta, entrprise users should use teams:
+## This feature is considered beta, enterprise users should use teams:
 ## https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=ui-teams
 # readonly: false
 
@@ -2291,9 +1404,7 @@ costEventsAudit:
 # # UI. Values in this block override config changes in the Settings UI on pod
 # # restart
 kubecostProductConfigs:
-#   # An optional list of cluster definitions that can be added for frontend
-#   # access. The local cluster is *always* included by default, so this list is
-#   # for non-local clusters.
+  clusterName: "cluster-one"  # globally unique cluster name
 #   clusters:
 #     - name: "Cluster A"
 #       address: http://cluster-a.kubecost.com:9090
@@ -2374,12 +1485,10 @@ kubecostProductConfigs:
 #     statefulset_external_label: "kubernetes_statefulset"
 #     daemonset_external_label: "kubernetes_daemonset"
 #     pod_external_label: "kubernetes_pod"
-#   grafanaURL: ""
 #   # Provide a mapping from Account ID to a readable Account Name in a key/value object. Provide Account IDs as they are displayed in CloudCost
 #   # as the 'key' and the Account Name associated with it as the 'value'
 #   cloudAccountMapping:
 #     EXAMPLE_ACCOUNT_ID: EXAMPLE_ACCOUNT_NAME
-#   clusterName: "" # clusterName is the default context name in settings.
 #   clusterAccountID: "" # Manually set Account property for assets
   currencyCode: "USD"   # official support for USD, AUD, BRL, CAD, CHF, CNY, DKK, EUR, GBP, IDR, INR, JPY, NOK, PLN, SEK
 #   azureBillingRegion: US # Represents 2-letter region code, e.g. West Europe = NL, Canada = CA. ref: https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes
