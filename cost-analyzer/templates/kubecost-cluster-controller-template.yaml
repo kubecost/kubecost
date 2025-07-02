@@ -1,9 +1,8 @@
 {{- if (.Values.clusterController).enabled }}
-{{- $serviceName := include "cost-analyzer.serviceName" . -}}
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: {{ template "kubecost.clusterControllerName" . }}
+  name: {{ include "kubecost.clusterControllerName" . }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
@@ -16,7 +15,7 @@ metadata:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ template "kubecost.clusterControllerName" . }}
+  name: {{ include "kubecost.clusterControllerName" . }}
   labels:
     {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
 rules:
@@ -170,22 +169,22 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: {{ template "kubecost.clusterControllerName" . }}
+  name: {{ include "kubecost.clusterControllerName" . }}
   labels:
     {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: {{ template "kubecost.clusterControllerName" . }}
+  name: {{ include "kubecost.clusterControllerName" . }}
 subjects:
   - kind: ServiceAccount
-    name: {{ template "kubecost.clusterControllerName" . }}
+    name: {{ include "kubecost.clusterControllerName" . }}
     namespace: {{ .Release.Namespace }}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ template "kubecost.clusterControllerName" . }}
+  name: {{ include "kubecost.clusterControllerName" . }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
@@ -211,11 +210,11 @@ spec:
     type: RollingUpdate
   selector:
     matchLabels:
-      app: {{ template "kubecost.clusterControllerName" . }}
+      app: {{ include "kubecost.clusterControllerName" . }}
   template:
     metadata:
       labels:
-        app: {{ template "kubecost.clusterControllerName" . }}
+        app: {{ include "kubecost.clusterControllerName" . }}
         {{- if .Values.global.additionalLabels }}
         {{- toYaml .Values.global.additionalLabels | nindent 8 }}
         {{- end }}
@@ -243,7 +242,7 @@ spec:
       priorityClassName: "{{ .Values.clusterController.priorityClassName }}"
       {{- end }}
       containers:
-      - name: {{ template "kubecost.clusterControllerName" . }}
+      - name: {{ include "kubecost.clusterControllerName" . }}
         {{- if eq (typeOf .Values.clusterController.image) "string" }}
         image: {{ .Values.clusterController.image }}
         {{- else }}
@@ -277,7 +276,7 @@ spec:
         - name: TURNDOWN_NAMESPACE
           value: {{ .Release.Namespace }}
         - name: TURNDOWN_DEPLOYMENT
-          value: {{ template "kubecost.clusterControllerName" . }}
+          value: {{ include "kubecost.clusterControllerName" . }}
         - name: GOOGLE_APPLICATION_CREDENTIALS
           value: /var/keys/service-key.json
         - name: CC_LOG_LEVEL
@@ -286,13 +285,13 @@ spec:
           {{- if .Values.clusterController.primaryKubecostURL }}
           value: {{ .Values.clusterController.primaryKubecostURL }}/model
           {{- else }}
-          value: http://{{ $serviceName }}.{{ .Release.Namespace }}:{{ .Values.service.targetPort | default 9090 }}/model
+          value: http://{{ include "frontend.serviceName" . }}.{{ .Release.Namespace }}:{{ .Values.service.targetPort | default 9090 }}/model
           {{- end }}
         - name: CC_CCL_COST_MODEL_PATH
           {{- if .Values.clusterController.primaryKubecostURL }}
           value: {{ .Values.clusterController.primaryKubecostURL }}/model
           {{- else }}
-          value: http://{{ $serviceName }}.{{ .Release.Namespace }}:{{ .Values.service.targetPort | default 9090 }}/model
+          value: http://{{ include "frontend.serviceName" . }}.{{ .Release.Namespace }}:{{ .Values.service.targetPort | default 9090 }}/model
           {{- end }}
         {{- if .Values.clusterController.kubecostAPIKey }}
         - name: KUBECOST_API_KEY
@@ -319,8 +318,8 @@ spec:
         - name: {{ .name }}
         {{- end }}
       {{- end }}
-      serviceAccount: {{ template "kubecost.clusterControllerName" . }}
-      serviceAccountName: {{ template "kubecost.clusterControllerName" . }}
+      serviceAccount: {{ include "kubecost.clusterControllerName" . }}
+      serviceAccountName: {{ include "kubecost.clusterControllerName" . }}
       {{- with .Values.clusterController.tolerations }}
       tolerations:
       {{- toYaml . | nindent 8 }}
@@ -346,7 +345,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ template "kubecost.clusterControllerName" . }}-service
+  name: {{ include "kubecost.clusterControllerName" . }}-service
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
@@ -358,5 +357,5 @@ spec:
     port: 9731
     targetPort: 9731
   selector:
-    app: {{ template "kubecost.clusterControllerName" . }}
+    app: {{ include "kubecost.clusterControllerName" . }}
 {{- end }}

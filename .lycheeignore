@@ -21,8 +21,6 @@ http://multi-cluster-diagnostics/
 http://model/
 http://api/
 kubecost-aggregator.kubecost:9004
-kubecost-cost-analyzer.kubecost:9001
-kubecost-cost-analyzer.kubecost:9003
 kubecost-forecasting.kubecost:5000
 kubecost-cloud-cost.kubecost:9005
 

@@ -462,8 +462,6 @@ kubecostFrontend:
 
   # set to true to set all upstreams to use <service>.<namespace>.svc.cluster.local instead of just <service>.<namespace>
   useDefaultFqdn: false
-#  model:
-#    fqdn: kubecost-model.kubecost.svc.cluster.local:9003
 #  forecasting:
 #    fqdn: kubecost-forcasting.kubecost.svc.cluster.local:5000
 #  aggregator:
@@ -669,40 +667,23 @@ kubecostModel:
 
   extraPorts: []
 
-## etlUtils is a utility typically used by Enterprise customers transitioning
-## from v1 to v2 of Kubecost. It translates the data from the "/etl" dir of the
-## bucket, to the "/federated" dir of the bucket.
-## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=federation-migration-guide-from-thanos-kubecost-v2-aggregator
-##
-etlUtils:
-  enabled: false
-  fullImageName: null
-  resources: {}
-  env: {}
-  nodeSelector: {}
-  tolerations: []
-  ## Annotations to be added to etlutils deployment
-  annotations: {}
-  affinity: {}
-
 # Basic Kubecost ingress, more examples available at https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=installation-ingress-examples
 ingress:
   enabled: false
-  # className: nginx
+  # className: "nginx"
   labels:
-    # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
   annotations:
-    # kubernetes.io/ingress.class: nginx
+    # cert-manager.io/cluster-issuer: letsencrypt-http
     # kubernetes.io/tls-acme: "true"
   paths: ["/"]  # There's no need to route specifically to the pods-- we have an nginx deployed that handles routing
   pathType: ImplementationSpecific
   hosts:
-    - cost-analyzer.local
+    - kubecost.local
   tls: []
   #  - secretName: cost-analyzer-tls
   #    hosts:
-  #      - cost-analyzer.local
+  #      - kubecost.local
 
 nodeSelector: {}
 tolerations: []
@@ -1176,9 +1157,6 @@ diagnostics:
     annotations: {}
     affinity: {}
 
-## Provide a full name override for the diagnostics Deployment.
-diagnosticsFullnameOverride: ""
-
 # Kubecost Cluster Controller for Right Sizing and Cluster Turndown
 clusterController:
   enabled: false
@@ -1406,7 +1384,7 @@ costEventsAudit:
   enabled: false
 
 ## Disable updates to kubecost from the frontend UI and via POST request
-## This feature is considered beta, entrprise users should use teams:
+## This feature is considered beta, enterprise users should use teams:
 ## https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=ui-teams
 # readonly: false
 

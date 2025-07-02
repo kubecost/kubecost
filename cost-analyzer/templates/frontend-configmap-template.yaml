@@ -1,6 +1,4 @@
-{{- if .Values.kubecostFrontend.enabled }}
-{{- if and (not .Values.agent) (not .Values.cloudAgent) (not .Values.federatedETL.agentOnly) }}
-{{- $serviceName := include "cost-analyzer.serviceName" . -}}
+{{- if and .Values.kubecostFrontend.enabled (not .Values.federatedETL.agentOnly) }}
 {{- if .Values.saml.enabled }}
 {{- if .Values.oidc.enabled }}
 {{- fail "SAML and OIDC cannot both be enabled" }}
@@ -65,12 +63,12 @@ data:
 {{- if and .Values.clusterController .Values.clusterController.enabled }}
     upstream clustercontroller {
 {{- if .Values.kubecostFrontend.useDefaultFqdn }}
-        server {{ template "kubecost.clusterControllerName" . }}-service.{{ .Release.Namespace }}.svc.cluster.local:9731;
+        server {{ include "kubecost.clusterControllerName" . }}-service.{{ .Release.Namespace }}.svc.cluster.local:9731;
 {{- else }}
 {{- if (.Values.kubecostFrontend.clusterController).fqdn }}
         server {{ .Values.kubecostFrontend.clusterController.fqdn }};
 {{- else }}
-        server {{ template "kubecost.clusterControllerName" . }}-service.{{ .Release.Namespace }}:9731;
+        server {{ include "kubecost.clusterControllerName" . }}-service.{{ .Release.Namespace }}:9731;
 {{- end }}
 {{- end }}
     }
@@ -93,30 +91,16 @@ data:
   {{- if and (not .Values.agent) (not .Values.cloudAgent) (not (eq (include "aggregator.deployMethod" .) "disabled")) }}
     upstream cloudCost {
         {{- if .Values.kubecostFrontend.useDefaultFqdn }}
-        server {{ template "cloudCost.serviceName" . }}.{{ .Release.Namespace }}.svc.cluster.local:9005;
+        server {{ include "cloudCost.serviceName" . }}.{{ .Release.Namespace }}.svc.cluster.local:9005;
         {{- else }}
         {{- if (.Values.kubecostFrontend.cloudCost).fqdn }}
         server {{ .Values.kubecostFrontend.cloudCost.fqdn }};
         {{- else }}
-        server {{ template "cloudCost.serviceName" . }}.{{ .Release.Namespace }}:9005;
+        server {{ include "cloudCost.serviceName" . }}.{{ .Release.Namespace }}:9005;
         {{- end }}
         {{- end }}
     }
   {{- end }}
-
-    {{- if and (include "multiClusterDiagnosticsPrimaryEnabled" .) .Values.diagnostics.deployment.enabled }}
-    upstream multi-cluster-diagnostics {
-        {{- if .Values.kubecostFrontend.useDefaultFqdn }}
-        server {{ template "diagnostics.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:9007;
-        {{- else}}
-        {{- if (.Values.kubecostFrontend.multiClusterDiagnostics).fqdn }}
-        server {{ .Values.kubecostFrontend.multiClusterDiagnostics.fqdn }};
-        {{- else }}
-        server {{ template "diagnostics.fullname" . }}.{{ .Release.Namespace }}:9007;
-        {{- end }}
-        {{- end }}
-    }
-    {{- end }}
 
     server {
         server_name _;
@@ -480,28 +464,11 @@ data:
             return 204 'endpoint disabled';
         }
         {{ end }}
-
+        # TODO: Is this always enabled?
         location /model/multi-cluster-diagnostics-enabled {
             default_type 'application/json';
-            return 200 '{"multiClusterDiagnosticsEnabled": {{ template "multiClusterDiagnosticsPrimaryEnabled" . }}}';
+            return 200 '{"multiClusterDiagnosticsEnabled": "true"}';
         }
-
-        {{- if and (include "multiClusterDiagnosticsPrimaryEnabled" .) .Values.diagnostics.deployment.enabled }}
-        # When the Multi-cluster Diagnostics Service is run within the
-        # cost-model container, its endpoint is available at the path
-        # `/model/diagnostics/multicluster`. No additional Nginx path forwarding
-        # needed. When the Multi-cluster Diagnostics Service is run as a K8s
-        # Deployment, we should forward that path to the K8s Service.
-        location /model/diagnostics/multicluster {
-            default_type 'application/json';
-            proxy_read_timeout          300;
-            proxy_pass http://multi-cluster-diagnostics/status;
-            proxy_redirect off;
-            proxy_set_header Connection "";
-            proxy_set_header  X-Real-IP  $remote_addr;
-            proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
-        }
-        {{- end }}
 
         location /model/aggregatorEnabled {
             default_type 'application/json';
@@ -529,15 +496,15 @@ data:
             default_type 'application/json';
             return 200 '\n
                 {
-                "ssoConfigured": "{{ template "ssoEnabled" . }}",
-                "rbacTeamsEnabled": "{{ template "rbacTeamsEnabled" . }}",
-                "dataBackupConfigured": "{{ template "dataBackupConfigured" . }}",
-                "costEventsAuditEnabled": "{{ template "costEventsAuditEnabled" . }}",
-                "frontendDeployMethod": "{{ template "frontend.deployMethod" . }}",
-                "pluginsEnabled": "{{ template "pluginsEnabled" . }}",
-                "carbonEstimatesEnabled": "{{ template "carbonEstimatesEnabled" . }}",
-                "clusterControllerEnabled": "{{ template "clusterControllerEnabled" . }}",
-                "forecastingEnabled": "{{ template "forecastingEnabled" . }}",
+                "ssoConfigured": "{{ include "ssoEnabled" . }}",
+                "rbacTeamsEnabled": "{{ include "rbacTeamsEnabled" . }}",
+                "dataBackupConfigured": "{{ include "dataBackupConfigured" . }}",
+                "costEventsAuditEnabled": "{{ include "costEventsAuditEnabled" . }}",
+                "frontendDeployMethod": "{{ include "frontend.deployMethod" . }}",
+                "pluginsEnabled": "{{ include "pluginsEnabled" . }}",
+                "carbonEstimatesEnabled": "{{ include "carbonEstimatesEnabled" . }}",
+                "clusterControllerEnabled": "{{ include "clusterControllerEnabled" . }}",
+                "forecastingEnabled": "{{ include "forecastingEnabled" . }}",
                 "chartVersion": "DEVELOP_BRANCH",
                 "hourlyDataRetention": "{{ (.Values.kubecostAggregator.etlHourlyStoreDurationHours) }}",
                 "dailyDataRetention": "{{ (.Values.kubecostAggregator.etlDailyStoreDurationDays) }}",
@@ -585,5 +552,4 @@ data:
     }
 
 
-{{- end }}
 {{- end }}

@@ -298,9 +298,6 @@ Expand the name of the chart.
 {{- define "cloudCost.name" -}}
 {{- default "cloud-cost" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
-{{- define "etlUtils.name" -}}
-{{- default "etl-utils" | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
 {{- define "forecasting.name" -}}
 {{- default "forecasting" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
@@ -326,14 +323,6 @@ If release name contains chart name it will be used as a full name.
 {{- end -}}
 {{- end -}}
 
-{{- define "diagnostics.fullname" -}}
-{{- if .Values.diagnosticsFullnameOverride -}}
-{{- .Values.diagnosticsFullnameOverride | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{- printf "%s-%s" .Release.Name "diagnostics" | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-{{- end -}}
-
 {{- define "aggregator.fullname" -}}
 {{- printf "%s-%s" .Release.Name "aggregator" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
@@ -342,9 +331,6 @@ If release name contains chart name it will be used as a full name.
 {{- printf "%s-%s" .Release.Name (include "cloudCost.name" .) | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
-{{- define "etlUtils.fullname" -}}
-{{- printf "%s-%s" .Release.Name (include "etlUtils.name" .) | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
 {{- define "forecasting.fullname" -}}
 {{- printf "%s-%s" .Release.Name (include "forecasting.name" .) | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
@@ -390,34 +376,15 @@ Create the fully qualified name for Prometheus alertmanager service.
 {{- end -}}
 {{- end -}}
 
-{{- define "cost-analyzer.serviceName" -}}
-{{- if .Values.fullnameOverride -}}
-{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{- $name := default .Chart.Name .Values.nameOverride -}}
-{{- if contains $name .Release.Name -}}
-{{- .Release.Name | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-{{- end -}}
-{{- end -}}
-
 {{- define "frontend.serviceName" -}}
-{{ include "frontend.fullname" . }}
+{{- printf "%s-%s" .Release.Name "frontend" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
-{{- define "diagnostics.serviceName" -}}
-{{- printf "%s-%s" .Release.Name "diagnostics" | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
 {{- define "aggregator.serviceName" -}}
 {{- printf "%s-%s" .Release.Name "aggregator" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 {{- define "cloudCost.serviceName" -}}
 {{ include "cloudCost.fullname" . }}
-{{- end -}}
-{{- define "etlUtils.serviceName" -}}
-{{ include "etlUtils.fullname" . }}
 {{- end -}}
 {{- define "forecasting.serviceName" -}}
 {{ include "forecasting.fullname" . }}
@@ -503,20 +470,11 @@ app: cost-analyzer
 app: aggregator
 {{- end -}}
 
-{{- define "diagnostics.commonLabels" -}}
-{{ include "cost-analyzer.chartLabels" . }}
-app: diagnostics
-{{- end -}}
-
 {{- define "cloudCost.commonLabels" -}}
 {{ include "cost-analyzer.chartLabels" . }}
 {{ include "cloudCost.selectorLabels" . }}
 {{- end -}}
 
-{{- define "etlUtils.commonLabels" -}}
-{{ include "cost-analyzer.chartLabels" . }}
-{{ include "etlUtils.selectorLabels" . }}
-{{- end -}}
 {{- define "forecasting.commonLabels" -}}
 {{ include "cost-analyzer.chartLabels" . }}
 {{ include "forecasting.selectorLabels" . }}
@@ -534,11 +492,6 @@ app: {{ template "cost-analyzer.networkCostsName" . }}
 {{- end -}}
 {{- define "networkcosts.selectorLabels" -}}
 app: {{ template "cost-analyzer.networkCostsName" . }}
-{{- end }}
-{{- define "diagnostics.selectorLabels" -}}
-app.kubernetes.io/name: diagnostics
-app.kubernetes.io/instance: {{ .Release.Name }}
-app: diagnostics
 {{- end }}
 
 {{/*
@@ -585,11 +538,6 @@ app: {{ include "cloudCost.name" . }}
 app.kubernetes.io/name: {{ include "forecasting.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app: {{ include "forecasting.name" . }}
-{{- end -}}
-{{- define "etlUtils.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "etlUtils.name" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
-app: {{ include "etlUtils.name" . }}
 {{- end -}}
 
 {{/*
@@ -1061,17 +1009,8 @@ Begin Kubecost 2.0 templates
       mountPath: /var/configs/turbonomic
     {{- end }}
   env:
-    {{- if not (((.Values.prometheus).server).clusterIDConfigmap) }}
     - name: CLUSTER_ID
       value: {{ include "kubecost.clusterName" . }}
-    {{- end }}
-    {{- if (((.Values.prometheus).server).clusterIDConfigmap) }}
-    - name: CLUSTER_ID
-      valueFrom:
-        configMapKeyRef:
-          name: {{ (((.Values.prometheus).server).clusterIDConfigmap) }}
-          key: CLUSTER_ID
-    {{- end }}
     {{- if and ((.Values.kubecostProductConfigs).productKey).mountPath (eq (include "aggregator.deployMethod" .) "statefulset") }}
     - name: PRODUCT_KEY_MOUNT_PATH
       value: {{ .Values.kubecostProductConfigs.productKey.mountPath }}
@@ -1496,20 +1435,6 @@ costEventsAuditEnabled flag for nginx configmap
   {{- end -}}
 {{- end -}}
 
-{{/*
-Multi-Cluster Diagnostics is only fully functional when its agent and primary
-are both running, and when the federated storage config is present.
-*/}}
-{{- define "multiClusterDiagnosticsPrimaryEnabled" -}}
-{{- if and .Values.diagnostics.enabled .Values.diagnostics.primary.enabled -}}
-  {{- if or .Values.kubecostModel.federatedStorageConfigSecret .Values.kubecostModel.federatedStorageConfig -}}
-    {{- printf "true" -}}
-  {{- else -}}
-    {{- printf "false" -}}
-  {{- end -}}
-{{- end -}}
-{{- end -}}
-
 {{- define "gcpCloudIntegrationJSON" }}
 Kubecost 2.x requires a change to the method that cloud-provider billing integrations are configured.
 Please use this output to create a cloud-integration.json config. See:
@@ -1621,7 +1546,6 @@ for more information
   "cost-analyzer-alerts-configmap.yaml"
   "cost-analyzer-asset-reports-configmap.yaml"
   "cost-analyzer-cloud-cost-reports-configmap.yaml"
-  "cost-analyzer-frontend-config-map-template.yaml"
   "cost-analyzer-metrics-config-map-template.yaml"
   "cost-analyzer-network-costs-config-map-template.yaml"
   "cost-analyzer-oidc-config-map-template.yaml"
@@ -1631,6 +1555,7 @@ for more information
   "cost-analyzer-saved-reports-configmap.yaml"
   "cost-analyzer-server-configmap.yaml"
   "cost-analyzer-smtp-configmap.yaml"
+  "frontend-configmap-template.yaml"
   "install-plugins.yaml"
   "integrations-postgres-queries-configmap.yaml"
   "integrations-postgres-secret.yaml"
