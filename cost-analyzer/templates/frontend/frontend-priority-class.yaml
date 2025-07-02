@@ -9,7 +9,7 @@ metadata:
     {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
 value: {{ .Values.priority.value | default "1000000" }}
 globalDefault: false
-description: "Priority class for scheduling the cost-analyzer pod"
+description: "Priority class for scheduling the frontend pod"
 {{- end }}
 {{- end }}
 {{- end }}
