@@ -57,11 +57,11 @@ RBAC exclusivity check: make sure either simple RBAC or RBAC Teams is configured
 {{- end -}}
 
 {{/*
-Federated Storage source contents check. Either the Secret must be specified or the JSON, not both.
+export bucket source check. Either the Secret must be specified or the JSON, not both.
 */}}
-{{- define "federatedStorageSourceCheck" -}}
-  {{- if and (.Values.kubecostModel).federatedStorageConfigSecret (.Values.kubecostModel).federatedStorageConfig -}}
-    {{- fail "\nkubecostModel.federatedStorageConfigSecret and kubecostModel.federatedStorageConfig are mutually exclusive. Please specify only one." -}}
+{{- define "kubecost.exportBucket.source.check" -}}
+  {{- if and ((.Values.global).exportBucket).existingSecret ((.Values.exportBucket).secret).config -}}
+    {{- fail "\n.Values.global.exportBucket.existingSecret and .Values.exportBucket.secret.config both set, please specify only one." -}}
   {{- end -}}
 {{- end -}}
 
@@ -92,34 +92,40 @@ ERROR: MISSING EBS-CSI DRIVER WHICH IS REQUIRED ON EKS v1.23+ TO MANAGE PERSISTE
 {{- end -}}
 
 {{/*
-Verify a cluster_id is set in the Prometheus global config
+Verify that the global cluster id is set
 */}}
 {{- define "clusterIDCheck" -}}
   {{- if ((((.Values.prometheus).server).global).external_labels).cluster_id }}
-    {{- printf "\n\nIn Kubecost 3.0, `.Values.prometheus.server.global.external_labels.cluster_id` is no longer required.\nWhen it is set, it is used for backwards compatibility. \nPlease replace this value with `.Values.kubecostProductConfigs.clusterName`\nSee TODO for more information.\n" -}}
-  {{- end -}}
-  {{- if or (.Values.kubecostModel).federatedStorageConfigSecret (.Values.kubecostModel).federatedStorageConfig }}
-    {{- if eq .Values.kubecostProductConfigs.clusterName "cluster-one" }}
-      {{- printf "\n\nWarning: it is recommended to specify a unique `.Values.kubecostProductConfigs.clusterName` for each cluster.\nNote this must be a globally unique identifier in multi-cluster environments.\n" -}}
+    {{- printf "\n\nIn Kubecost 3.0, `.Values.prometheus.server.global.external_labels.cluster_id` is no longer required.\nWhen it is set, it is used for backwards compatibility. \nSee TODO for more information.\n" -}}
+  {{- end }}
+  {{- if (.Values.kubecostProductConfigs).clusterName }}
+    {{- printf "\n\nIn Kubecost 3.0, `.Values.prometheus.server.global.external_labels.cluster_id` is no longer required.\nWhen it is set, it is used for backwards compatibility. \nSee TODO for more information.\n" -}}
+  {{- end }}
+  {{- if not .Values.global.clusterId }}
+    {{- fail "\n\nIn Kubecost 3.0, `.Values.global.clusterId` is required to be set"}}
+  {{- end }}
+  {{- if or (.Values.global.exportBucket).existingSecret ((.Values.exportBucket).secret).config }}
+    {{- if eq .Values.global.clusterId "cluster-one" }}
+      {{- printf "\n\nWarning: it is recommended to specify a unique `.Values.global.clusterId` for each cluster.\nNote this must be a globally unique identifier in multi-cluster environments.\n" -}}
     {{- end -}}
   {{- end -}}
 {{- end -}}
 
 {{- define "kubecost.clusterId" }}
-{{ default (index .Values "finops-agent").clusterId .Values.global.clusterId }}
+{{ .Values.global.clusterId }}
 {{- end }}
 
 {{/*
-Verify the federated storage config secret exists with the expected key.
+Verify the export bucket config secret exists with the expected key.
 Skip the check if CI/CD is enabled and skipSanityChecks is set. Argo CD, for
 example, does not support templating a chart which uses the lookup function.
 */}}
-{{- define "federatedStorageConfigSecretCheck" -}}
-{{- if (.Values.kubecostModel).federatedStorageConfigSecret }}
+{{- define "kubecost.exportBucket.secret.check" -}}
+{{- if (.Values.global.exportBucket).existingSecret }}
 {{- if not (and .Values.global.platforms.cicd.enabled .Values.global.platforms.cicd.skipSanityChecks) }}
 {{-  if .Capabilities.APIVersions.Has "v1/Secret" }}
-  {{- $secret := lookup "v1" "Secret" .Release.Namespace .Values.kubecostModel.federatedStorageConfigSecret }}
-  {{- if or (not $secret) (not (index $secret.data "federated-store.yaml")) }}
+  {{- $secret := lookup "v1" "Secret" .Release.Namespace ((.Values.global).exportBucket).existingSecret }}
+  {{- if or (not $secret) (not (index $secret.data (include ))) }}
     {{- fail (printf "The federated storage config secret '%s' does not exist or does not contain the expected key 'federated-store.yaml'" .Values.kubecostModel.federatedStorageConfigSecret) }}
   {{- end }}
 {{- end -}}
@@ -279,7 +285,7 @@ Groups is only used when using simple RBAC.
 Backups configured flag for nginx configmap
 */}}
 {{- define "dataBackupConfigured" -}}
-  {{- if or (.Values.kubecostModel).federatedStorageConfigSecret (.Values.kubecostModel).federatedStorageConfig -}}
+  {{- if or (.Values.kubecostModel).federatedStorageConfigSecret ((.Values.exportBucket).secret).config -}}
     {{- printf "true" -}}
   {{- else -}}
     {{- printf "false" -}}
@@ -390,3 +396,30 @@ Product key secret name with default fallback
 {{- define "cost-analyzer.productKeySecretName" -}}
 {{- default "product-key" .Values.kubecostProductConfigs.productKey.secretname -}}
 {{- end -}}
+
+{{/*
+export bucket helpers
+*/}}
+
+{{- define "kubecost.exportBucket.secretName" }}
+{{- if (.Values.global.exportBucket).existingSecret }}
+.Values.exportBucket.existingSecret
+{{- else }}
+{{ .Release.Name }}-export-bucket-config
+{{- end }}
+{{- end }}
+
+{{- define "kubecost.exportBucket.config" }}
+{{- if (.Values.exportBucket).secret.config }}
+.Values.exportBucket.secret.config
+{{ else }}
+{{/*
+Default export bucket config if no values are set
+*/}}
+type: cluster
+{{- end }}
+{{- end }}
+
+{{- define "kubecost.exportBucket.fileName" }}
+{{ default "storage-config.yaml" (.Values.global.exportBucket).fileName }}
+{{- end }}

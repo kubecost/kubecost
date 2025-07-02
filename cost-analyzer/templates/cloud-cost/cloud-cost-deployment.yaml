@@ -227,7 +227,7 @@ spec:
           volumeMounts:
             - name: persistent-configs
               mountPath: /var/configs
-          {{- if or (.Values.kubecostModel).federatedStorageConfigSecret (.Values.kubecostModel).federatedStorageConfig }}
+          {{- if or (.Values.kubecostModel).federatedStorageConfigSecret ((.Values.exportBucket).secret).config }}
             - name: federated-storage-config
               mountPath: /var/configs/etl/federated
               readOnly: true

@@ -336,7 +336,7 @@ spec:
           volumeMounts:
             - name: persistent-configs
               mountPath: /var/configs
-            {{- if or (.Values.kubecostModel).federatedStorageConfigSecret (.Values.kubecostModel).federatedStorageConfig }}
+            {{- if or (.Values.kubecostModel).federatedStorageConfigSecret ((.Values.exportBucket).secret).config }}
             - name: federated-storage-config
               mountPath: /var/configs/etl
               readOnly: true
@@ -471,17 +471,8 @@ spec:
               mountPath: /var/configs/turbonomic
             {{- end }}
           env:
-            {{- if not (((.Values.prometheus).server).clusterIDConfigmap) }}
             - name: CLUSTER_ID
-              value: {{ include "kubecost.clusterId" . }}
-            {{- end }}
-            {{- if (((.Values.prometheus).server).clusterIDConfigmap) }}
-            - name: CLUSTER_ID
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ (((.Values.prometheus).server).clusterIDConfigmap) }}
-                  key: CLUSTER_ID
-            {{- end }}
+              value: {{ .Values.global.clusterId }}
             {{- if ((.Values.kubecostProductConfigs).productKey).mountPath }}
             - name: PRODUCT_KEY_MOUNT_PATH
               value: {{ .Values.kubecostProductConfigs.productKey.mountPath }}

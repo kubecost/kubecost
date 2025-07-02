@@ -1,0 +1,10 @@
+global:
+  clusterId: helm-testing
+exportBucket:
+  secret:
+    config: |-
+      type: S3
+      config: intentionally-invalid
+      bucket: "kubecost-helm-testing-metrics"
+        endpoint: "s3.amazonaws.com"
+        region: "us-east-2"
