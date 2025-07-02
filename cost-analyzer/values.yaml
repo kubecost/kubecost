@@ -2275,6 +2275,11 @@ costEventsAudit:
 ## https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=ui-teams
 # readonly: false
 
+# Enables or disables the sending of anonymized telemetry data to help
+# improved Kubecost.
+telemetry:
+  enabled: true
+
 # # These configs can also be set from the Settings page in the Kubecost product
 # # UI. Values in this block override config changes in the Settings UI on pod
 # # restart
