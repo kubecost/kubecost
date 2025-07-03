@@ -22,7 +22,7 @@ spec:
     fsGroup: 2000
   containers:
   - name: test-kubecost
-    image: {{ (.Values.basicHealth).fullImageName | default "alpine/k8s:1.26.9" }}
+    image: {{ (.Values.basicHealth).fullImageName | default "alpine/k8s:1.33.2" }}
     securityContext:
       privileged: false
       capabilities:
@@ -36,7 +36,7 @@ spec:
       - -c
       - |
         set -x
-        svc="{{ .Release.Name }}-cost-analyzer"
+        svc="{{ .Release.Name }}-frontend"
         echo "Getting current Kubecost state."
         curl -vvv http://${svc}:9090/model/healthz
         response=$(curl -sL -w "%{http_code}" http://${svc}:9090/model/healthz)
