@@ -1203,7 +1203,7 @@ Begin Kubecost 2.0 templates
       value: "{{ template "cost-analyzer.grafanaEnabled" . }}"
     {{- end}}
     - name: TELEMETRY_ENABLED
-      value: {{ (quote .Values.telemetry.enabled) | default (quote true) }}
+      value: {{ (quote .Values.telemetry.enabled) }}
     {{- if .Values.oidc.enabled }}
     - name: OIDC_ENABLED
       value: "true"
