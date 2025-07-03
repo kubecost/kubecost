@@ -97,7 +97,10 @@ spec:
             defaultMode: 420
             secretName: {{ $etlBackupBucketSecret | default "federated-store" }}
         {{- else }}
-        {{- fail "\n\nKubecost Aggregator Enterprise Config requires either .Values.kubecostModel.federatedStorageConfigSecret or .Values.kubecostModel.federatedStorageConfig" }}
+        # TODO: replace this with a default store for 3.0
+        - name: federated-storage-config
+          secret:
+            secretName: MISSING_FEDERATED_STORE
         {{- end }}
         {{- if ((.Values.kubecostProductConfigs).productKey).enabled }}
         - name: productkey-secret
