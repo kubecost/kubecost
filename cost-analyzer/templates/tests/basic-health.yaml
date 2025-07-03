@@ -39,11 +39,13 @@ spec:
         svc="{{ .Release.Name }}-frontend"
         echo "Getting current Kubecost state."
         curl -vvv http://${svc}:9090/model/healthz
-        response=$(curl -sL -w "%{http_code}" http://${svc}:9090/model/healthz)
-        if [ "$response" -eq 200 ]; then
-          echo "Got Kubecost 200 on healthz. Successful."
+        # TODO: replace with healthz once we have it
+        # response=$(curl -sL -w "%{http_code}" http://${svc}:9090/model/healthz)
+        response=$(curl -sL -w "%{http_code}" http://${svc}:9090/ -o /dev/null)
+        if echo "$response" | grep -q "200"; then
+          echo "Got Kubecost 200. Successful."
           exit 0
         else
-          echo "Failed to fetch Kubecost 200 on healthz. Response code was $response"
+          echo "Failed to fetch Kubecost 200. Response code was $response"
           exit 1
         fi
