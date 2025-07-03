@@ -1130,10 +1130,6 @@ Begin Kubecost 2.0 templates
       value: {{ .Values.kubecostAggregator.dbTrimMemoryOnClose | quote }}
     - name: KUBECOST_NAMESPACE
       value: {{ .Release.Namespace }}
-    {{- if .Values.global.grafana }}
-    - name: GRAFANA_ENABLED
-      value: "{{ template "cost-analyzer.grafanaEnabled" . }}"
-    {{- end}}
     - name: TELEMETRY_ENABLED
       value: {{ (quote .Values.telemetry.enabled) }}
     {{- if .Values.oidc.enabled }}
