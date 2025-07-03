@@ -2276,7 +2276,7 @@ costEventsAudit:
 # readonly: false
 
 # Enables or disables the sending of anonymized telemetry data to help
-# improved Kubecost.
+# improve Kubecost.
 telemetry:
   enabled: true
 
