@@ -8,21 +8,6 @@ kubecostModel:
   federatedStorageConfigSecret: federated-store
 serviceAccount:  # this example uses AWS IRSA, which creates a service account with rights to the s3 bucket. If using keys+secrets in the federated-store, set create: true
   create: true
-global:
-  prometheus:
-    enabled: true
-    # fqdn: http://prometheus-operated.monitoring:9090
-  grafana:  # prometheus metrics will be local cluster only, disable grafana to save resources
-    enabled: false
-    proxy: false
-prometheus:
-  nodeExporter:
-    enabled: false
-  server:
-    global:
-      external_labels:
-        # cluster_id should be unique for all clusters and the same value as .kubecostProductConfigs.clusterName
-        cluster_id: CLUSTER_NAME
 networkCosts:
   # optional, see: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-network-cost
   enabled: true
@@ -32,3 +17,10 @@ networkCosts:
       amazon-web-services: true
       # google-cloud-services: true
       # azure-cloud-services: true
+kubecostAggregator:
+  resources:
+    limits:
+      memory: 10Gi
+    requests:
+      cpu: 2000m
+      memory: 10Gi

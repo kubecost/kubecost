@@ -1,11 +1,11 @@
-name: Chart build and test
+name: Chart build and test 2.x
 
 on:
   workflow_dispatch: {}
   # Normally using pull_request_target along with checking out the ref of the PR is not
   # a good idea, but this is low risk since it's a Helm chart repo.
-  pull_request_target:
-    types: [opened, synchronize, reopened, ready_for_review]
+  # pull_request_target:
+  #   types: [opened, synchronize, reopened, ready_for_review]
   # pull_request:
   #   branches:
   #     - develop
@@ -129,7 +129,11 @@ jobs:
           kubectl get pods -n kubecost -o jsonpath='{.items[*].spec.containers[*].image}'
           kubectl get pods -n kubecost -o jsonpath='{.items[*].spec.containers[*].image}'
           kubectl -n kubecost describe pods
+          echo "cost-analyzer logs"
           kubectl -n kubecost logs -l app.kubernetes.io/name=cost-analyzer
+          echo "agg logs"
+          kubectl -n kubecost logs -l app.kubernetes.io/name=aggregator
+          echo "basic-health logs"
           kubectl -n kubecost logs basic-health
 
       - name: Uninstall chart
@@ -154,8 +158,13 @@ jobs:
             kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/name=cost-analyzer --timeout=120s
             echo "### Sleeping for 60 seconds longer. ###"
             sleep 60
-            echo "### [DEBUG] Listing Pods in Kubecost Namespace. ###"
+            echo "### [DEBUG] printing debug info ###"
             kubectl -n kubecost get pods
+            kubectl get pods -n kubecost -o yaml
+            kubectl get pods -n kubecost -o jsonpath='{.items[*].spec.containers[*].image}'
+            kubectl get pods -n kubecost -o jsonpath='{.items[*].spec.containers[*].image}'
+            kubectl -n kubecost describe pods
+            kubectl -n kubecost logs -l app.kubernetes.io/name=cost-analyzer
             echo "### Performing helm tests ###"
             helm test -n kubecost $(helm ls -n kubecost --all --short)
             echo "### Performing uninstallation ###"
