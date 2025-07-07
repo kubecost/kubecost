@@ -14,11 +14,11 @@ metadata:
   {{- with .Values.global.annotations }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
-  {{- with .Values.kubecostAggregator.annotations }}
+  {{- with .Values.aggregator.annotations }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-  replicas: {{ .Values.kubecostAggregator.replicas }}
+  replicas: {{ .Values.aggregator.replicas }}
   serviceName: {{ template "aggregator.serviceName" . }}
   selector:
     matchLabels:
@@ -28,10 +28,10 @@ spec:
       name: aggregator-db-storage
     spec:
       accessModes: [ "ReadWriteOnce" ]
-      storageClassName: {{ .Values.kubecostAggregator.aggregatorDbStorage.storageClass }}
+      storageClassName: {{ .Values.aggregator.aggregatorDbStorage.storageClass }}
       resources:
         requests:
-          storage:  {{ .Values.kubecostAggregator.aggregatorDbStorage.storageRequest }}
+          storage:  {{ .Values.aggregator.aggregatorDbStorage.storageRequest }}
   - metadata:
       # In the StatefulSet config, Aggregator should not share any filesystem
       # state with the cost-model to maintain independence and improve
@@ -41,10 +41,10 @@ spec:
       name: persistent-configs
     spec:
       accessModes: [ "ReadWriteOnce" ]
-      storageClassName: {{ .Values.kubecostAggregator.persistentConfigsStorage.storageClass }}
+      storageClassName: {{ .Values.aggregator.persistentConfigsStorage.storageClass }}
       resources:
         requests:
-          storage: {{ .Values.kubecostAggregator.persistentConfigsStorage.storageRequest }}
+          storage: {{ .Values.aggregator.persistentConfigsStorage.storageRequest }}
   template:
     metadata:
       labels:
@@ -61,9 +61,9 @@ spec:
         checksum/configs: {{ include "configsChecksum" . }}
     spec:
       restartPolicy: Always
-    {{- if .Values.kubecostAggregator.securityContext }}
+    {{- if .Values.aggregator.securityContext }}
       securityContext:
-    {{- toYaml .Values.kubecostAggregator.securityContext | nindent 8 }}
+    {{- toYaml .Values.aggregator.securityContext | nindent 8 }}
     {{- else if and (.Values.global.platforms.openshift.enabled) (.Values.global.platforms.openshift.securityContext) }}
       securityContext:
     {{- toYaml .Values.global.platforms.openshift.securityContext | nindent 8 }}
@@ -75,29 +75,11 @@ spec:
       volumes:
         - name: aggregator-staging
           emptyDir:
-            sizeLimit: {{ .Values.kubecostAggregator.stagingEmptyDirSizeLimit }}
-        {{- $etlBackupBucketSecret := "" }}
-        {{- if .Values.kubecostModel.federatedStorageConfigSecret }}
-            {{- $etlBackupBucketSecret = .Values.kubecostModel.federatedStorageConfigSecret }}
-        {{- end }}
-        {{- if or $etlBackupBucketSecret .Values.kubecostModel.federatedStorageConfig }}
-        {{- if or .Values.kubecostModel.federatedStorageConfigSecret .Values.kubecostModel.federatedStorageConfig }}
-        - name: federated-storage-config
+            sizeLimit: {{ .Values.aggregator.stagingEmptyDirSizeLimit }}
+        - name: export-bucket-config
           secret:
             defaultMode: 420
-            {{- if .Values.kubecostModel.federatedStorageConfigSecret }}
-            secretName: {{ .Values.kubecostModel.federatedStorageConfigSecret }}
-            {{- else }}
-            secretName: federated-store
-            {{- end }}
-        {{- end }}
-        - name: etl-bucket-config
-          secret:
-            defaultMode: 420
-            secretName: {{ $etlBackupBucketSecret | default "federated-store" }}
-        {{- else }}
-        {{- fail "\n\nKubecost Aggregator Enterprise Config requires either .Values.kubecostModel.federatedStorageConfigSecret or .Values.kubecostModel.federatedStorageConfig" }}
-        {{- end }}
+            secretName: {{ include "kubecost.exportBucket.secretName" . }}
         {{- if ((.Values.kubecostProductConfigs).productKey).enabled }}
         - name: productkey-secret
           secret:
@@ -114,8 +96,7 @@ spec:
             - key: smtp.json
               path: smtp.json
         {{- end }}
-        {{- if .Values.saml }}
-        {{- if .Values.saml.enabled }}
+        {{- if (.Values.saml).enabled }}
         {{- if .Values.saml.secretName }}
         - name: secret-volume
           secret:
@@ -148,7 +129,6 @@ spec:
         - name: kubecost-master-api-key
           secret:
             secretName: {{ .Values.saml.apiMasterKeySecret | default "kubecost-master-api-key" }}
-        {{- end }}
         {{- end }}
         {{- end }}
         {{- if .Values.oidc }}
@@ -255,8 +235,8 @@ spec:
         {{- end }}
         {{- end }}
         {{- end }}
-        {{- if .Values.kubecostAggregator.extraVolumes }}
-        {{- toYaml .Values.kubecostAggregator.extraVolumes | nindent 8 }}
+        {{- if .Values.aggregator.extraVolumes }}
+        {{- toYaml .Values.aggregator.extraVolumes | nindent 8 }}
         {{- end }}
       initContainers:
       {{- if .Values.global.updateCaTrust.enabled }}
@@ -289,16 +269,16 @@ spec:
         {{- end}}
       containers:
         - name: aggregator
-        {{- if .Values.kubecostAggregator.containerSecurityContext }}
+        {{- if .Values.aggregator.containerSecurityContext }}
           securityContext:
-            {{- toYaml .Values.kubecostAggregator.containerSecurityContext | nindent 4 }}
+            {{- toYaml .Values.aggregator.containerSecurityContext | nindent 4 }}
         {{- else if .Values.global.containerSecurityContext }}
           securityContext:
             {{- toYaml .Values.global.containerSecurityContext | nindent 4 }}
         {{- end }}
           {{- if .Values.kubecostModel }}
-          {{- if .Values.kubecostAggregator.fullImageName }}
-          image: {{ .Values.kubecostAggregator.fullImageName }}
+          {{- if .Values.aggregator.fullImageName }}
+          image: {{ .Values.aggregator.fullImageName }}
           {{- else if .Values.imageVersion }}
           image: {{ .Values.kubecostModel.image }}:{{ .Values.imageVersion }}
           {{- else if eq "development" .Chart.AppVersion }}
@@ -309,17 +289,17 @@ spec:
           {{- else }}
           image: gcr.io/kubecost1/cost-model:prod-{{ $.Chart.AppVersion }}
           {{- end }}
-          {{- if .Values.kubecostAggregator.readinessProbe.enabled }}
+          {{- if .Values.aggregator.readinessProbe.enabled }}
           readinessProbe:
             httpGet:
               path: /healthz
               port: 9004
-            initialDelaySeconds: {{ .Values.kubecostAggregator.readinessProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.kubecostAggregator.readinessProbe.periodSeconds }}
-            failureThreshold: {{ .Values.kubecostAggregator.readinessProbe.failureThreshold }}
+            initialDelaySeconds: {{ .Values.aggregator.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.aggregator.readinessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.aggregator.readinessProbe.failureThreshold }}
           {{- end }}
-          {{- if .Values.kubecostAggregator.imagePullPolicy }}
-          imagePullPolicy: {{ .Values.kubecostAggregator.imagePullPolicy }}
+          {{- if .Values.aggregator.imagePullPolicy }}
+          imagePullPolicy: {{ .Values.aggregator.imagePullPolicy }}
           {{- else }}
           imagePullPolicy: Always
           {{- end }}
@@ -328,19 +308,17 @@ spec:
             - name: tcp-api
               containerPort: 9004
               protocol: TCP
-          {{- with.Values.kubecostAggregator.extraPorts }}
+          {{- with.Values.aggregator.extraPorts }}
             {{- toYaml . | nindent 4 }}
           {{- end }}
           resources:
-            {{- toYaml .Values.kubecostAggregator.resources | nindent 4 }}
+            {{- toYaml .Values.aggregator.resources | nindent 4 }}
           volumeMounts:
             - name: persistent-configs
               mountPath: /var/configs
-            {{- if or (.Values.kubecostModel).federatedStorageConfigSecret ((.Values.exportBucket).secret).config }}
-            - name: federated-storage-config
+            - name: export-storage-config
               mountPath: /var/configs/etl
               readOnly: true
-            {{- end }}
             - name: aggregator-db-storage
               mountPath: /var/configs/waterfowl/duckdb
             - name: aggregator-staging
@@ -353,7 +331,7 @@ spec:
               # This hasn't been observed as a problem in cost-analyzer, likely because
               # of the init container that gives everything under /var/configs 777.
               mountPath: /var/configs/waterfowl
-              {{- if (not .Values.kubecostAggregator.legacyMode ) }}
+              {{- if (not .Values.aggregator.legacyMode ) }}
               # mount the clickhouse directories on the same PV as the duckdb,
               # this way they can seamlessly share the same PV before, during, and after the upgrade
             - name: aggregator-db-storage
@@ -463,8 +441,8 @@ spec:
             {{- end }}
             {{- end }}
             {{- end }}
-            {{- if .Values.kubecostAggregator.extraVolumeMounts }}
-            {{- toYaml .Values.kubecostAggregator.extraVolumeMounts | nindent 4 }}
+            {{- if .Values.aggregator.extraVolumeMounts }}
+            {{- toYaml .Values.aggregator.extraVolumeMounts | nindent 4 }}
             {{- end }}
             {{- if .Values.global.integrations.turbonomic.enabled }}
             - name: turbonomic-credentials
@@ -485,15 +463,15 @@ spec:
             - name: SMTP_CONFIGMAP_NAME
               value: {{ .Values.smtpConfigmapName }}
             {{- end }}
-            {{- if (gt (int .Values.kubecostAggregator.numDBCopyPartitions) 0) }}
+            {{- if (gt (int .Values.aggregator.numDBCopyPartitions) 0) }}
             - name: NUM_DB_COPY_CHUNKS
-              value: {{ .Values.kubecostAggregator.numDBCopyPartitions | quote }}
+              value: {{ .Values.aggregator.numDBCopyPartitions | quote }}
             {{- end }}
-            {{- if .Values.kubecostAggregator.legacyMode }}
+            {{- if .Values.aggregator.legacyMode }}
             - name: LEGACY_MODE
               value: "true"
             {{- end }}
-            {{- if .Values.kubecostAggregator.jaeger.enabled }}
+            {{- if .Values.aggregator.jaeger.enabled }}
             - name: TRACING_URL
               value: "http://localhost:14268/api/traces"
             {{- end }}
@@ -535,8 +513,8 @@ spec:
             {{- end }}
             - name: CUSTOM_COST_ENABLED
               value: {{ .Values.kubecostModel.plugins.enabled | quote }}
-            {{- if .Values.kubecostAggregator.extraEnv -}}
-            {{- toYaml .Values.kubecostAggregator.extraEnv | nindent 4 }}
+            {{- if .Values.aggregator.extraEnv -}}
+            {{- toYaml .Values.aggregator.extraEnv | nindent 4 }}
             {{- end }}
             {{- if (.Values.kubecostProductConfigs).standardDiscount }}
             {{- if .Values.ingestionConfigmapName }}
@@ -545,29 +523,29 @@ spec:
             {{- end }}
             {{- end }}
             - name: LOG_LEVEL
-              value: {{ .Values.kubecostAggregator.logLevel }}
+              value: {{ .Values.aggregator.logLevel }}
             - name: DB_READ_THREADS
-              value: {{ .Values.kubecostAggregator.dbReadThreads | quote }}
+              value: {{ .Values.aggregator.dbReadThreads | quote }}
             - name: DB_WRITE_THREADS
-              value: {{ .Values.kubecostAggregator.dbWriteThreads | quote }}
+              value: {{ .Values.aggregator.dbWriteThreads | quote }}
             - name: DB_CONCURRENT_INGESTION_COUNT
-              value: {{ .Values.kubecostAggregator.dbConcurrentIngestionCount | quote }}
-            {{- if ne .Values.kubecostAggregator.dbMemoryLimit "0GB" }}
+              value: {{ .Values.aggregator.dbConcurrentIngestionCount | quote }}
+            {{- if ne .Values.aggregator.dbMemoryLimit "0GB" }}
             - name: DB_MEMORY_LIMIT
-              value: {{ .Values.kubecostAggregator.dbMemoryLimit | quote }}
+              value: {{ .Values.aggregator.dbMemoryLimit | quote }}
             {{- end }}
-            {{- if ne .Values.kubecostAggregator.dbWriteMemoryLimit "0GB" }}
+            {{- if ne .Values.aggregator.dbWriteMemoryLimit "0GB" }}
             - name: DB_WRITE_MEMORY_LIMIT
-              value: {{ .Values.kubecostAggregator.dbWriteMemoryLimit | quote }}
+              value: {{ .Values.aggregator.dbWriteMemoryLimit | quote }}
             {{- end }}
             - name: ETL_DAILY_STORE_DURATION_DAYS
-              value: {{ .Values.kubecostAggregator.etlDailyStoreDurationDays | quote }}
+              value: {{ .Values.aggregator.etlDailyStoreDurationDays | quote }}
             - name: ETL_HOURLY_STORE_DURATION_HOURS
-              value: {{ .Values.kubecostAggregator.etlHourlyStoreDurationHours | quote }}
+              value: {{ .Values.aggregator.etlHourlyStoreDurationHours | quote }}
             - name: CONTAINER_RESOURCE_USAGE_RETENTION_DAYS
-              value: {{ .Values.kubecostAggregator.containerResourceUsageRetentionDays | quote }}
+              value: {{ .Values.aggregator.containerResourceUsageRetentionDays | quote }}
             - name: DB_TRIM_MEMORY_ON_CLOSE
-              value: {{ .Values.kubecostAggregator.dbTrimMemoryOnClose | quote }}
+              value: {{ .Values.aggregator.dbTrimMemoryOnClose | quote }}
             - name: KUBECOST_NAMESPACE
               value: {{ .Release.Namespace }}
             {{- if .Values.oidc.enabled }}
@@ -594,9 +572,9 @@ spec:
             - name: RBAC_TEAMS_HELM_CONFIG_PATH
               value: "/var/configs/rbac-teams-configs/rbac-teams-configs.json"
             {{- end }}
-            {{- if (((.Values.kubecostAggregator).collections).cache) }}
+            {{- if (((.Values.aggregator).collections).cache) }}
             - name: COLLECTIONS_MEMORY_CACHE_ENABLED
-              value: {{ (quote .Values.kubecostAggregator.collections.cache.enabled) | default (quote true) }}
+              value: {{ (quote .Values.aggregator.collections.cache.enabled) | default (quote true) }}
             {{- end }}
             {{- if ((.Values.global.integrations).turbonomic).enabled }}
             - name: TURBONOMIC_ENABLED
@@ -656,7 +634,7 @@ spec:
             - name: ACTIONS_BUCKET_CONFIG
               value: /var/configs/actions/storage/actions-store.yaml
             {{- end }}
-        {{- if .Values.kubecostAggregator.jaeger.enabled }}
+        {{- if .Values.aggregator.jaeger.enabled }}
         - name: embedded-jaeger
           env:
             - name: SPAN_STORAGE_TYPE
@@ -668,8 +646,8 @@ spec:
             - name: BADGER_DIRECTORY_KEY
               value: /tmp/badger/key
           securityContext:
-            {{- toYaml .Values.kubecostAggregator.jaeger.containerSecurityContext | nindent 4 }}
-          image: {{ .Values.kubecostAggregator.jaeger.image }}:{{ .Values.kubecostAggregator.jaeger.imageVersion }}
+            {{- toYaml .Values.aggregator.jaeger.containerSecurityContext | nindent 4 }}
+          image: {{ .Values.aggregator.jaeger.image }}:{{ .Values.aggregator.jaeger.imageVersion }}
         {{- end }}
 
     {{- if .Values.imagePullSecrets }}
@@ -678,24 +656,24 @@ spec:
         - name: {{ .name }}
       {{- end }}
     {{- end }}
-      {{- if .Values.kubecostAggregator.priority }}
-      {{- if .Values.kubecostAggregator.priority.enabled }}
-      {{- if .Values.kubecostAggregator.priority.name }}
-      priorityClassName: {{ .Values.kubecostAggregator.priority.name }}
+      {{- if .Values.aggregator.priority }}
+      {{- if .Values.aggregator.priority.enabled }}
+      {{- if .Values.aggregator.priority.name }}
+      priorityClassName: {{ .Values.aggregator.priority.name }}
       {{- else }}
       priorityClassName: {{ template "cost-analyzer.fullname" . }}-aggregator-priority
       {{- end }}
       {{- end }}
       {{- end }}
-      {{- with .Values.kubecostAggregator.nodeSelector }}
+      {{- with .Values.aggregator.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.kubecostAggregator.tolerations }}
+      {{- with .Values.aggregator.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.kubecostAggregator.affinity }}
+      {{- with .Values.aggregator.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}

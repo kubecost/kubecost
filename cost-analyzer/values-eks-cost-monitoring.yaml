@@ -1,4 +1,4 @@
-kubecostFrontend:
+frontend:
   image: public.ecr.aws/kubecost/frontend
 
 kubecostModel:

@@ -36,7 +36,7 @@ Kubecost 2.0 preconditions
   {{- end -}}
 
   {{/* Aggregator config reconciliation and common config */}}
-  {{- if (not (.Values.kubecostAggregator).aggregatorDbStorage) -}}
+  {{- if (not (.Values.aggregator).aggregatorDbStorage) -}}
     {{- fail "In Enterprise configuration, Aggregator DB storage is required" -}}
   {{- end -}}
 
@@ -125,8 +125,9 @@ example, does not support templating a chart which uses the lookup function.
 {{- if not (and .Values.global.platforms.cicd.enabled .Values.global.platforms.cicd.skipSanityChecks) }}
 {{-  if .Capabilities.APIVersions.Has "v1/Secret" }}
   {{- $secret := lookup "v1" "Secret" .Release.Namespace ((.Values.global).exportBucket).existingSecret }}
-  {{- if or (not $secret) (not (index $secret.data (include ))) }}
-    {{- fail (printf "The federated storage config secret '%s' does not exist or does not contain the expected key 'federated-store.yaml'" .Values.kubecostModel.federatedStorageConfigSecret) }}
+  {{- $fileName := (include "kubecost.exportBucket.fileName" .) }}
+  {{- if or (not $secret) (not (index $secret.data )) }}
+    {{- fail (printf "The export bucket storage config secret '%s' does not exist or does not contain the expected key '%s'" (.Values.global.exportBucket).existingSecret $fileName ) }}
   {{- end }}
 {{- end -}}
 {{- end -}}
@@ -282,17 +283,6 @@ Groups is only used when using simple RBAC.
 {{- end -}}
 
 {{/*
-Backups configured flag for nginx configmap
-*/}}
-{{- define "dataBackupConfigured" -}}
-  {{- if or (.Values.kubecostModel).federatedStorageConfigSecret ((.Values.exportBucket).secret).config -}}
-    {{- printf "true" -}}
-  {{- else -}}
-    {{- printf "false" -}}
-  {{- end -}}
-{{- end -}}
-
-{{/*
 costEventsAuditEnabled flag for nginx configmap
 */}}
 {{- define "costEventsAuditEnabled" -}}
@@ -410,8 +400,8 @@ export bucket helpers
 {{- end }}
 
 {{- define "kubecost.exportBucket.config" }}
-{{- if (.Values.exportBucket).secret.config }}
-.Values.exportBucket.secret.config
+{{- if (.Values.exportBucket).configYAML }}
+(.Values.exportBucket).configYAML
 {{ else }}
 {{/*
 Default export bucket config if no values are set

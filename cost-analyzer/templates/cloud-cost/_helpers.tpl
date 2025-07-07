@@ -2,9 +2,9 @@
 Cloud integration source contents check. Either the Secret must be specified or the JSON, not both.
 Additionally, for upgrade protection,  Users are asked to select one of the two presently-available sources for cloud integration information.
 */}}
-{{- define "cloud-cost.secret-config-check" -}}
-  {{- if and (.Values.kubecostProductConfigs).cloudIntegrationSecret (.Values.kubecostProductConfigs).cloudIntegrationJSON -}}
-    {{- fail "\nkubecostProductConfigs.cloudIntegrationSecret and kubecostProductConfigs.cloudIntegrationJSON are mutually exclusive. Please specify only one." -}}
+{{- define "kubecost.cloudCost.secret-config-check" -}}
+  {{- if and (.Values.cloudCost).cloudIntegrationSecret (.Values.cloudCost).cloudIntegrationJSON -}}
+    {{- fail "\ncloudCost.cloudIntegrationSecret and cloudCost.cloudIntegrationJSON are mutually exclusive. Please specify only one." -}}
   {{- end -}}
 {{- end -}}
 
@@ -14,13 +14,13 @@ Verify the cloud integration secret exists with the expected key when cloud inte
 Skip the check if CI/CD is enabled and skipSanityChecks is set. Argo CD, for example, does not
 support templating a chart which uses the lookup function.
 */}}
-{{- define "cloud-cost.secret-valid-check" -}}
-{{- if (.Values.kubecostProductConfigs).cloudIntegrationSecret }}
+{{- define "kubecost.cloudCost.secret-valid-check" -}}
+{{- if (.Values.cloudCost).cloudIntegrationSecret }}
 {{- if not (and .Values.global.platforms.cicd.enabled .Values.global.platforms.cicd.skipSanityChecks) }}
 {{-  if .Capabilities.APIVersions.Has "v1/Secret" }}
-  {{- $secret := lookup "v1" "Secret" .Release.Namespace .Values.kubecostProductConfigs.cloudIntegrationSecret }}
+  {{- $secret := lookup "v1" "Secret" .Release.Namespace .Values.cloudCost.cloudIntegrationSecret }}
   {{- if or (not $secret) (not (index $secret.data "cloud-integration.json")) }}
-    {{- fail (printf "The cloud integration secret '%s' does not exist or does not contain the expected key 'cloud-integration.json'\nIf you are using `--dry-run`, please add `--dry-run=server`. This requires Helm 3.13+." .Values.kubecostProductConfigs.cloudIntegrationSecret) }}
+    {{- fail (printf "The cloud integration secret '%s' does not exist or does not contain the expected key 'cloud-integration.json'\nIf you are using `--dry-run`, please add `--dry-run=server`. This requires Helm 3.13+." .Values.cloudCost.cloudIntegrationSecret) }}
   {{- end }}
 {{- end -}}
 {{- end -}}
@@ -41,8 +41,8 @@ support templating a chart which uses the lookup function.
 {{- end -}}
 
 {{- define "cloudCost.serviceAccountName" -}}
-{{- if .Values.kubecostAggregator.cloudCost.serviceAccountName -}}
-    {{ .Values.kubecostAggregator.cloudCost.serviceAccountName }}
+{{- if (.Values.cloudCost).serviceAccountName -}}
+    {{ (.Values.cloudCost).serviceAccountName }}
 {{- else -}}
     {{ template "cost-analyzer.serviceAccountName" . }}
 {{- end -}}
@@ -57,6 +57,14 @@ support templating a chart which uses the lookup function.
 app.kubernetes.io/name: {{ include "cloudCost.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app: {{ include "cloudCost.name" . }}
+{{- end }}
+
+{{- define "kubecost.cloudCost.secretName" }}
+{{- if (.Values.cloudCost).cloudIntegrationSecret }}
+(.Values.cloudCost).cloudIntegrationSecret
+{{- else }}
+{{ .Release.Name }}-cloud-cost-integration
+{{- end }}
 {{- end }}
 
 

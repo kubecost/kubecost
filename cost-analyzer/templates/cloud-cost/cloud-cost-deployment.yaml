@@ -1,11 +1,12 @@
 {{- if (.Values.cloudCost).enabled }}
 
 {{/*
+  TODO I don't think this is actually true but we could just force this
   A cloud integration secret is required for cloud cost to function as a dedicated pod.
   UI based configuration is not supported for cloud cost with aggregator.
 */}}
-{{- if ((.Values.kubecostAggregator).cloudCost).enabled }}
-{{- if not ( or (.Values.kubecostProductConfigs).cloudIntegrationSecret (.Values.kubecostProductConfigs).cloudIntegrationJSON ((.Values.kubecostProductConfigs).athenaBucketName)) }}
+{{- if (.Values.cloudCost).enabled }}
+{{- if not ( or (.Values.cloudCost).cloudIntegrationSecret (.Values.cloudCost).cloudIntegrationJSON ) }}
 {{- fail "\n\nA cloud-integration secret is required when using the aggregator statefulset and cloudCost is enabled." }}
 {{- end }}
 {{- end }}
@@ -23,7 +24,7 @@ metadata:
   {{- with .Values.global.annotations }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
-  {{- with .Values.kubecostAggregator.annotations }}
+  {{- with .Values.aggregator.annotations }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
@@ -63,27 +64,14 @@ spec:
       restartPolicy: Always
       serviceAccountName: {{ template "cloudCost.serviceAccountName" . }}
       volumes:
-        {{- if or .Values.kubecostModel.federatedStorageConfigSecret .Values.kubecostModel.federatedStorageConfig }}
-        - name: federated-storage-config
+        - name: export-bucket-config
           secret:
             defaultMode: 420
-            {{- if .Values.kubecostModel.federatedStorageConfigSecret }}
-            secretName: {{ .Values.kubecostModel.federatedStorageConfigSecret }}
-            {{- else }}
-            secretName: federated-store
-            {{- end }}
-        {{- end }}
-        {{- if (.Values.kubecostProductConfigs).cloudIntegrationSecret }}
+            secretName: {{ include "kubecost.exportBucket.secretName" . }}
+        {{- if or (.Values.cloudCost).cloudIntegrationSecret (.Values.cloudCost).cloudIntegrationJSON }}
         - name: cloud-integration
           secret:
-            secretName: {{ .Values.kubecostProductConfigs.cloudIntegrationSecret }}
-            items:
-              - key: cloud-integration.json
-                path: cloud-integration.json
-        {{- else if or (.Values.kubecostProductConfigs).cloudIntegrationJSON ((.Values.kubecostProductConfigs).athenaProjectID) }}
-        - name: cloud-integration
-          secret:
-            secretName: cloud-integration
+            secretName: {{ include "kubecost.cloudCost.secretName" . }}
             items:
               - key: cloud-integration.json
                 path: cloud-integration.json
@@ -137,8 +125,8 @@ spec:
         - name: ssl-path
           emptyDir: {}
         {{- end }}
-        {{- if .Values.kubecostAggregator.cloudCost.extraVolumes }}
-        {{- toYaml .Values.kubecostAggregator.cloudCost.extraVolumes | nindent 8 }}
+        {{- if (.Values.cloudCost).extraVolumes }}
+        {{- toYaml (.Values.cloudCost).extraVolumes | nindent 8 }}
         {{- end }}
       initContainers:
       {{- if (and .Values.kubecostModel.plugins.enabled .Values.kubecostModel.plugins.install.enabled )}}
@@ -185,8 +173,8 @@ spec:
       containers:
         - name: cloud-cost
           {{- if .Values.kubecostModel }}
-          {{- if .Values.kubecostAggregator.fullImageName }}
-          image: {{ .Values.kubecostAggregator.fullImageName }}
+          {{- if .Values.aggregator.fullImageName }}
+          image: {{ .Values.aggregator.fullImageName }}
           {{- else if .Values.kubecostModel.fullImageName }}
           image: {{ .Values.kubecostModel.fullImageName }}
           {{- else if .Values.imageVersion }}
@@ -199,17 +187,17 @@ spec:
           {{- else }}
           image: gcr.io/kubecost1/cost-model:prod-{{ $.Chart.AppVersion }}
           {{ end }}
-          {{- if .Values.kubecostAggregator.cloudCost.readinessProbe.enabled }}
+          {{- if (.Values.cloudCost).readinessProbe.enabled }}
           readinessProbe:
             httpGet:
               path: /healthz
               port: 9005
-            initialDelaySeconds: {{ .Values.kubecostAggregator.cloudCost.readinessProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.kubecostAggregator.cloudCost.readinessProbe.periodSeconds }}
-            failureThreshold: {{ .Values.kubecostAggregator.cloudCost.readinessProbe.failureThreshold }}
+            initialDelaySeconds: {{ (.Values.cloudCost).readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ (.Values.cloudCost).readinessProbe.periodSeconds }}
+            failureThreshold: {{ (.Values.cloudCost).readinessProbe.failureThreshold }}
           {{- end }}
-          {{- if .Values.kubecostAggregator.imagePullPolicy }}
-          imagePullPolicy: {{ .Values.kubecostAggregator.imagePullPolicy }}
+          {{- if .Values.aggregator.imagePullPolicy }}
+          imagePullPolicy: {{ .Values.aggregator.imagePullPolicy }}
           {{- else }}
           imagePullPolicy: Always
           {{- end }}
@@ -219,7 +207,7 @@ spec:
               containerPort: 9005
               protocol: TCP
           resources:
-            {{- toYaml .Values.kubecostAggregator.cloudCost.resources | nindent 4 }}
+            {{- toYaml (.Values.cloudCost).resources | nindent 4 }}
           securityContext:
             {{- if .Values.global.containerSecurityContext }}
             {{- toYaml .Values.global.containerSecurityContext | nindent 4 }}
@@ -227,12 +215,10 @@ spec:
           volumeMounts:
             - name: persistent-configs
               mountPath: /var/configs
-          {{- if or (.Values.kubecostModel).federatedStorageConfigSecret ((.Values.exportBucket).secret).config }}
-            - name: federated-storage-config
-              mountPath: /var/configs/etl/federated
+            - name: export-bucket-config
+              mountPath: /var/configs/export
               readOnly: true
-          {{- end }}
-          {{- if or (.Values.kubecostProductConfigs).cloudIntegrationSecret (.Values.kubecostProductConfigs).cloudIntegrationJSON ((.Values.kubecostProductConfigs).athenaBucketName) }}
+          {{- if or (.Values.cloudCost).cloudIntegrationSecret (.Values.cloudCost).cloudIntegrationJSON }}
             - name: cloud-integration
               mountPath: /var/configs/cloud-integration
           {{- end }}
@@ -253,30 +239,25 @@ spec:
               mountPath: "/etc/pki/ca-trust/extracted"
               readOnly: false
             {{- end }}
-          {{- /* Only adds extraVolumeMounts when cloudcosts is running as its own pod */}}
-          {{- if .Values.kubecostAggregator.cloudCost.extraVolumeMounts }}
-            {{- toYaml .Values.kubecostAggregator.cloudCost.extraVolumeMounts | nindent 4 }}
+          {{- if (.Values.cloudCost).extraVolumeMounts }}
+            {{- toYaml (.Values.cloudCost).extraVolumeMounts | nindent 4 }}
           {{- end }}
           env:
             - name: CONFIG_PATH
               value: /var/configs/
-            {{- if or .Values.kubecostModel.federatedStorageConfigSecret .Values.kubecostModel.federatedStorageConfig }}
-            - name: FEDERATED_STORE_CONFIG
-              value: /var/configs/etl/federated/federated-store.yaml
-            - name: FEDERATED_CLUSTER
-              value: "true"
-            {{- end}}
+            - name: EXPORT_BUCKET_CONFIG_FILE
+              value: /var/configs/export/{{- include "kubecost.exportBucket.fileName" .}}
             - name: ETL_DAILY_STORE_DURATION_DAYS
               value: {{ (quote .Values.kubecostModel.etlDailyStoreDurationDays) }}
             - name: CLOUD_COST_REFRESH_RATE_HOURS
-              value: {{ .Values.kubecostAggregator.cloudCost.refreshRateHours | default 6 | quote }}
+              value: {{ (.Values.cloudCost).refreshRateHours | default 6 | quote }}
             - name: CLOUD_COST_QUERY_WINDOW_DAYS
-              value: {{ .Values.kubecostAggregator.cloudCost.queryWindowDays | default 7 | quote }}
+              value: {{ (.Values.cloudCost).queryWindowDays | default 7 | quote }}
             - name: CLOUD_COST_RUN_WINDOW_DAYS
-              value: {{ .Values.kubecostAggregator.cloudCost.runWindowDays | default 3 | quote }}
+              value: {{ (.Values.cloudCost).runWindowDays | default 3 | quote }}
             - name: CUSTOM_COST_ENABLED
               value: {{ .Values.kubecostModel.plugins.enabled | quote }}
-            {{- range $key, $value := .Values.kubecostAggregator.cloudCost.env }}
+            {{- range $key, $value := (.Values.cloudCost).env }}
             - name: {{ $key | quote }}
               value: {{ $value | quote }}
             {{- end }}
@@ -300,24 +281,23 @@ spec:
         - name: {{ .name }}
       {{- end }}
     {{- end }}
-      {{- if .Values.kubecostAggregator.priority }}
-      {{- if .Values.kubecostAggregator.priority.enabled }}
-      {{- if .Values.kubecostAggregator.priority.name }}
-      priorityClassName: {{ .Values.kubecostAggregator.priority.name }}
+      {{- if ((.Values.aggregator).priority).enabled }}
+      {{- if .Values.aggregator.priority.name }}
+      priorityClassName: {{ .Values.aggregator.priority.name }}
       {{- else }}
       priorityClassName: {{ template "cost-analyzer.fullname" . }}-aggregator-priority
       {{- end }}
       {{- end }}
-      {{- end }}
-      {{- with .Values.kubecostAggregator.cloudCost.nodeSelector }}
+
+      {{- with (.Values.cloudCost).nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.kubecostAggregator.cloudCost.tolerations }}
+      {{- with (.Values.cloudCost).tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.kubecostAggregator.cloudCost.affinity }}
+      {{- with (.Values.cloudCost).affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}

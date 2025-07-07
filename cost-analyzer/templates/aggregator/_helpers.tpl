@@ -11,8 +11,8 @@
 {{- end -}}
 
 {{- define "aggregator.serviceAccountName" -}}
-{{- if .Values.kubecostAggregator.serviceAccountName -}}
-    {{ .Values.kubecostAggregator.serviceAccountName }}
+{{- if .Values.aggregator.serviceAccountName -}}
+    {{ .Values.aggregator.serviceAccountName }}
 {{- else -}}
     {{ template "cost-analyzer.serviceAccountName" . }}
 {{- end -}}

@@ -6,8 +6,8 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "aggregator.commonLabels" . | nindent 4 }}
-    {{- if .Values.kubecostAggregator.service.labels }}
-    {{- toYaml .Values.kubecostAggregator.service.labels | nindent 4 }}
+    {{- if .Values.aggregator.service.labels }}
+    {{- toYaml .Values.aggregator.service.labels | nindent 4 }}
     {{- end }}
 spec:
   selector:
@@ -22,7 +22,7 @@ spec:
       port: 9008
       targetPort: 9008
     {{- end }}
-  {{- with .Values.kubecostAggregator.extraPorts }}
+  {{- with .Values.aggregator.extraPorts }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
 {{- end }}

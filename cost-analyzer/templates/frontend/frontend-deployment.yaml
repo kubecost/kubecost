@@ -1,4 +1,4 @@
-{{- if (.Values.kubecostFrontend).enabled }}
+{{- if (.Values.frontend).enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -9,23 +9,17 @@ metadata:
     {{- with .Values.global.additionalLabels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-    {{- if and .Values.kubecostDeployment .Values.kubecostDeployment.labels }}
-    {{- toYaml .Values.kubecostDeployment.labels | nindent 4 }}
-    {{- end }}
   annotations:
   {{- with .Values.global.annotations }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
-  {{- if and .Values.kubecostDeployment .Values.kubecostDeployment.annotations }}
-    {{- toYaml .Values.kubecostDeployment.annotations | nindent 4 }}
-  {{- end }}
 spec:
-  replicas: {{ .Values.kubecostFrontend.haReplicas | default 2 }}
+  replicas: {{ .Values.frontend.replicas | default 1 }}
   selector:
     matchLabels:
       {{- include "frontend.selectorLabels" . | nindent 6 }}
-  {{- if .Values.kubecostFrontend.deploymentStrategy }}
-  {{- with .Values.kubecostFrontend.deploymentStrategy }}
+  {{- if .Values.frontend.deploymentStrategy }}
+  {{- with .Values.frontend.deploymentStrategy }}
   strategy: {{ toYaml . | nindent 4 }}
   {{- end }}
   {{- else }}
@@ -41,9 +35,6 @@ spec:
         {{- include "frontend.selectorLabels" . | nindent 8 }}
         {{- if .Values.global.additionalLabels }}
         {{- toYaml .Values.global.additionalLabels | nindent 8 }}
-        {{- end }}
-        {{- if and .Values.kubecostDeployment .Values.kubecostDeployment.labels }}
-        {{- toYaml .Values.kubecostDeployment.labels | nindent 8 }}
         {{- end }}
       annotations:
         {{- with .Values.global.podAnnotations}}
@@ -82,11 +73,11 @@ spec:
         - name: cache
           emptyDir: {}
         {{- end }}
-        {{- if .Values.kubecostFrontend.tls }}
-        {{- if .Values.kubecostFrontend.tls.enabled }}
+        {{- if .Values.frontend.tls }}
+        {{- if .Values.frontend.tls.enabled }}
         - name: tls
           secret:
-            secretName : {{ .Values.kubecostFrontend.tls.secretName }}
+            secretName : {{ .Values.frontend.tls.secretName }}
             items:
             - key: tls.crt
               path: kc.crt
@@ -109,15 +100,15 @@ spec:
         {{- end }}
         {{- end }}
       containers:
-        {{- if .Values.kubecostFrontend }}
-        {{- if .Values.kubecostFrontend.fullImageName }}
-        - image: {{ .Values.kubecostFrontend.fullImageName }}
+        {{- if .Values.frontend }}
+        {{- if .Values.frontend.fullImageName }}
+        - image: {{ .Values.frontend.fullImageName }}
         {{- else if .Values.imageVersion }}
-        - image: {{ .Values.kubecostFrontend.image }}:{{ .Values.imageVersion }}
+        - image: {{ .Values.frontend.image }}:{{ .Values.imageVersion }}
         {{- else if eq "development" .Chart.AppVersion }}
         - image: gcr.io/kubecost1/frontend-nightly:latest
         {{- else }}
-        - image: {{ .Values.kubecostFrontend.image }}:prod-{{ $.Chart.AppVersion }}
+        - image: {{ .Values.frontend.image }}:prod-{{ $.Chart.AppVersion }}
         {{- end }}
         {{- else }}
         - image: gcr.io/kubecost1/frontend:prod-{{ $.Chart.AppVersion }}
@@ -130,12 +121,12 @@ spec:
           env:
             - name: GET_HOSTS_FROM
               value: dns
-            {{- if .Values.kubecostFrontend.extraEnv -}}
-            {{ toYaml .Values.kubecostFrontend.extraEnv | nindent 12 }}
+            {{- if .Values.frontend.extraEnv -}}
+            {{ toYaml .Values.frontend.extraEnv | nindent 12 }}
             {{- end }}
-        {{- if .Values.kubecostFrontend.securityContext }}
+        {{- if .Values.frontend.securityContext }}
           securityContext:
-            {{- toYaml .Values.kubecostFrontend.securityContext | nindent 12 }}
+            {{- toYaml .Values.frontend.securityContext | nindent 12 }}
           {{- else  }}
           securityContext:
             {{- toYaml .Values.global.containerSecurityContext | nindent 12 }}
@@ -157,36 +148,36 @@ spec:
             - mountPath: /var/run
               name: var-run
             {{- end }}
-            {{- if .Values.kubecostFrontend.tls }}
-            {{- if .Values.kubecostFrontend.tls.enabled }}
+            {{- if .Values.frontend.tls }}
+            {{- if .Values.frontend.tls.enabled }}
             - name: tls
               mountPath: /etc/ssl/certs
             {{- end }}
             {{- end }}
           resources:
-          {{- toYaml .Values.kubecostFrontend.resources | nindent 12 }}
-        {{- if .Values.kubecostFrontend.imagePullPolicy }}
-          imagePullPolicy: {{ .Values.kubecostFrontend.imagePullPolicy }}
+          {{- toYaml .Values.frontend.resources | nindent 12 }}
+        {{- if .Values.frontend.imagePullPolicy }}
+          imagePullPolicy: {{ .Values.frontend.imagePullPolicy }}
         {{- else }}
           imagePullPolicy: Always
         {{- end }}
-          {{- if .Values.kubecostFrontend.readinessProbe.enabled }}
+          {{- if .Values.frontend.readinessProbe.enabled }}
           readinessProbe:
             httpGet:
               path: /healthz
               port: 9090
-            initialDelaySeconds: {{ .Values.kubecostFrontend.readinessProbe.initialDelaySeconds  }}
-            periodSeconds: {{ .Values.kubecostFrontend.readinessProbe.periodSeconds  }}
-            failureThreshold: {{ .Values.kubecostFrontend.readinessProbe.failureThreshold  }}
+            initialDelaySeconds: {{ .Values.frontend.readinessProbe.initialDelaySeconds  }}
+            periodSeconds: {{ .Values.frontend.readinessProbe.periodSeconds  }}
+            failureThreshold: {{ .Values.frontend.readinessProbe.failureThreshold  }}
           {{- end }}
-          {{- if .Values.kubecostFrontend.livenessProbe.enabled }}
+          {{- if .Values.frontend.livenessProbe.enabled }}
           livenessProbe:
             httpGet:
               path: /healthz
               port: 9090
-            initialDelaySeconds: {{ .Values.kubecostFrontend.livenessProbe.initialDelaySeconds  }}
-            periodSeconds: {{ .Values.kubecostFrontend.livenessProbe.periodSeconds  }}
-            failureThreshold: {{ .Values.kubecostFrontend.livenessProbe.failureThreshold  }}
+            initialDelaySeconds: {{ .Values.frontend.livenessProbe.initialDelaySeconds  }}
+            periodSeconds: {{ .Values.frontend.livenessProbe.periodSeconds  }}
+            failureThreshold: {{ .Values.frontend.livenessProbe.failureThreshold  }}
           {{- end }}
           {{- if .Values.global.containerSecuritycontext }}
           securityContext:

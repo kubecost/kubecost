@@ -18,8 +18,3 @@ app: {{ template "cost-analyzer.networkCostsName" . }}
 {{- define "networkcosts.selectorLabels" -}}
 app: {{ template "cost-analyzer.networkCostsName" . }}
 {{- end }}
-{{- define "diagnostics.selectorLabels" -}}
-app.kubernetes.io/name: diagnostics
-app.kubernetes.io/instance: {{ .Release.Name }}
-app: diagnostics
-{{- end }}

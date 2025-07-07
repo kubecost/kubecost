@@ -1,24 +1,23 @@
 ### This test is to verify that Kubecost aggregator is deployed as a StatefulSet,
 ### cluster controller is installed
 global:
+  clusterId: CLUSTER_ID
+  exportBucket:
+    existingSecret: export-bucket-config
   podAnnotations:
     kubecost.io/test1: value1
     kubecost.io/test2: value2
   additionalLabels:
     kubecosttest1: value1
     kubecosttest2: value2
-  kubecostProductConfigs:
-  clusterName: CLUSTER_NAME
-kubecostAggregator:
-  deployMethod: statefulset
+
+aggregator:
   resources:
     limits:
       memory: 10Gi
     requests:
       cpu: 2000m
       memory: 10Gi
-kubecostModel:
-  federatedStorageConfigSecret: federated-store
 clusterController:
   enabled: true
   actionConfigs:

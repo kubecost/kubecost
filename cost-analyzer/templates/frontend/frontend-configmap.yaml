@@ -1,4 +1,4 @@
-{{- if (.Values.kubecostFrontend).enabled }}
+{{- if (.Values.frontend).enabled }}
 {{- if .Values.saml.enabled }}
 {{- if .Values.oidc.enabled }}
 {{- fail "SAML and OIDC cannot both be enabled" }}
@@ -51,10 +51,10 @@ data:
         text/x-cross-domain-policy;
 
     upstream aggregator {
-        {{- if .Values.kubecostFrontend.useDefaultFqdn }}
+        {{- if .Values.frontend.useDefaultFqdn }}
         server {{ .Release.Name }}-aggregator.{{ .Release.Namespace }}.svc.cluster.local:9004;
-        {{- else if (.Values.kubecostFrontend.aggregator).fqdn }}
-        server {{ .Values.kubecostFrontend.aggregator.fqdn }};
+        {{- else if (.Values.frontend.aggregator).fqdn }}
+        server {{ .Values.frontend.aggregator.fqdn }};
         {{- else }}
         server {{ .Release.Name }}-aggregator.{{ .Release.Namespace }}:9004;
         {{- end }}
@@ -62,11 +62,11 @@ data:
 
 {{- if and .Values.clusterController .Values.clusterController.enabled }}
     upstream clustercontroller {
-{{- if .Values.kubecostFrontend.useDefaultFqdn }}
+{{- if .Values.frontend.useDefaultFqdn }}
         server {{ include "kubecost.clusterControllerName" . }}-service.{{ .Release.Namespace }}.svc.cluster.local:9731;
 {{- else }}
-{{- if (.Values.kubecostFrontend.clusterController).fqdn }}
-        server {{ .Values.kubecostFrontend.clusterController.fqdn }};
+{{- if (.Values.frontend.clusterController).fqdn }}
+        server {{ .Values.frontend.clusterController.fqdn }};
 {{- else }}
         server {{ include "kubecost.clusterControllerName" . }}-service.{{ .Release.Namespace }}:9731;
 {{- end }}
@@ -76,11 +76,11 @@ data:
 
   {{- if .Values.forecasting.enabled }}
     upstream forecasting {
-        {{- if .Values.kubecostFrontend.useDefaultFqdn }}
+        {{- if .Values.frontend.useDefaultFqdn }}
         server {{ .Release.Name }}-forecasting.{{ .Release.Namespace }}.svc.cluster.local:5000;
         {{- else }}
-        {{- if (.Values.kubecostFrontend.forcasting).fqdn }}
-        server {{ .Values.kubecostFrontend.forcasting.fqdn }};
+        {{- if (.Values.frontend.forcasting).fqdn }}
+        server {{ .Values.frontend.forcasting.fqdn }};
         {{- else }}
         server {{ .Release.Name }}-forecasting.{{ .Release.Namespace }}:5000;
         {{- end }}
@@ -89,11 +89,11 @@ data:
   {{- end }}
 
     upstream cloudCost {
-        {{- if .Values.kubecostFrontend.useDefaultFqdn }}
+        {{- if .Values.frontend.useDefaultFqdn }}
         server {{ include "cloudCost.serviceName" . }}.{{ .Release.Namespace }}.svc.cluster.local:9005;
         {{- else }}
-        {{- if (.Values.kubecostFrontend.cloudCost).fqdn }}
-        server {{ .Values.kubecostFrontend.cloudCost.fqdn }};
+        {{- if (.Values.frontend.cloudCost).fqdn }}
+        server {{ .Values.frontend.cloudCost.fqdn }};
         {{- else }}
         server {{ include "cloudCost.serviceName" . }}.{{ .Release.Namespace }}:9005;
         {{- end }}
@@ -107,12 +107,12 @@ data:
 
         proxy_hide_header Access-Control-Allow-Origin;
         proxy_hide_header Access-Control-Allow-Methods;
-        {{- range .Values.kubecostFrontend.nginxHeaders.server }}
+        {{- range .Values.frontend.nginxHeaders.server }}
         add_header {{ . }}
         {{- end }}
 
-        {{- if .Values.kubecostFrontend.extraServerConfig }}
-        {{- .Values.kubecostFrontend.extraServerConfig | toString | nindent 8 -}}
+        {{- if .Values.frontend.extraServerConfig }}
+        {{- .Values.frontend.extraServerConfig | toString | nindent 8 -}}
         {{- else }}
         large_client_header_buffers 4 32k;
         {{- end }}
@@ -155,42 +155,42 @@ data:
 {{- else }}
         add_header ETag "{{ $.Chart.Version }}";
 {{- end }}
-{{- if .Values.kubecostFrontend.tls }}
-{{- if .Values.kubecostFrontend.tls.enabled }}
-{{- if .Values.kubecostFrontend.tls.specifyProtocols }}
-        ssl_protocols       {{ $.Values.kubecostFrontend.tls.protocols }};
+{{- if .Values.frontend.tls }}
+{{- if .Values.frontend.tls.enabled }}
+{{- if .Values.frontend.tls.specifyProtocols }}
+        ssl_protocols       {{ $.Values.frontend.tls.protocols }};
 {{- end }}
         ssl_certificate     /etc/ssl/certs/kc.crt;
         ssl_certificate_key /etc/ssl/certs/kc.key;
         listen {{ .Values.service.targetPort }} ssl;
-{{- if .Values.kubecostFrontend.ipv6.enabled }}
+{{- if .Values.frontend.ipv6.enabled }}
         listen [::]:{{ .Values.service.targetPort }} ssl;
 {{- end }}
 {{- else }}
         listen {{ .Values.service.targetPort }};
-{{- if .Values.kubecostFrontend.ipv6.enabled }}
+{{- if .Values.frontend.ipv6.enabled }}
         listen [::]:{{ .Values.service.targetPort }};
 {{- end }}
 {{- end }}
 {{- else }}
         listen {{ .Values.service.targetPort }};
-{{- if .Values.kubecostFrontend.ipv6.enabled }}
+{{- if .Values.frontend.ipv6.enabled }}
         listen [::]:{{ .Values.service.targetPort }};
 {{- end }}
 {{- end }}
         
         location /model/ {
-            proxy_connect_timeout       {{ .Values.kubecostFrontend.timeoutSeconds | default 300 }};
-            proxy_send_timeout          {{ .Values.kubecostFrontend.timeoutSeconds | default 300 }};
-            proxy_read_timeout          {{ .Values.kubecostFrontend.timeoutSeconds | default 300 }};
+            proxy_connect_timeout       {{ .Values.frontend.timeoutSeconds | default 300 }};
+            proxy_send_timeout          {{ .Values.frontend.timeoutSeconds | default 300 }};
+            proxy_read_timeout          {{ .Values.frontend.timeoutSeconds | default 300 }};
             proxy_pass http://aggregator/;
             proxy_redirect off;
             proxy_http_version 1.1;
             proxy_set_header Connection "";
             proxy_set_header  X-Real-IP  $remote_addr;
             proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
-            {{- if .Values.kubecostFrontend.extraModelConfigs }}
-            {{- .Values.kubecostFrontend.extraModelConfigs | toString | nindent 12 -}}
+            {{- if .Values.frontend.extraModelConfigs }}
+            {{- .Values.frontend.extraModelConfigs | toString | nindent 12 -}}
             {{- end }}
         }
 
@@ -356,7 +356,7 @@ data:
 
         #Cloud Cost Endpoints
         location = /model/cloudCost/status {
-            proxy_read_timeout          {{ .Values.kubecostFrontend.timeoutSeconds | default 300 }};
+            proxy_read_timeout          {{ .Values.frontend.timeoutSeconds | default 300 }};
             proxy_pass http://cloudCost/cloudCost/status;
             proxy_redirect off;
             proxy_set_header Connection "";
@@ -364,7 +364,7 @@ data:
             proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
         }
         location = /model/cloudCost/rebuild {
-            proxy_read_timeout          {{ .Values.kubecostFrontend.timeoutSeconds | default 300 }};
+            proxy_read_timeout          {{ .Values.frontend.timeoutSeconds | default 300 }};
             proxy_pass http://cloudCost/cloudCost/rebuild;
             proxy_redirect off;
             proxy_set_header Connection "";
@@ -372,7 +372,7 @@ data:
             proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
         }
         location = /model/cloudCost/repair {
-            proxy_read_timeout          {{ .Values.kubecostFrontend.timeoutSeconds | default 300 }};
+            proxy_read_timeout          {{ .Values.frontend.timeoutSeconds | default 300 }};
             proxy_pass http://cloudCost/cloudCost/repair;
             proxy_redirect off;
             proxy_set_header Connection "";
@@ -380,7 +380,7 @@ data:
             proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
         }
         location = /model/cloud/config {
-            proxy_read_timeout          {{ .Values.kubecostFrontend.timeoutSeconds | default 300 }};
+            proxy_read_timeout          {{ .Values.frontend.timeoutSeconds | default 300 }};
             proxy_pass http://cloudCost/cloud/config;
             proxy_redirect off;
             proxy_set_header Connection "";
@@ -388,7 +388,7 @@ data:
             proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
         }
         location = /model/cloud/config/export {
-            proxy_read_timeout          {{ .Values.kubecostFrontend.timeoutSeconds | default 300 }};
+            proxy_read_timeout          {{ .Values.frontend.timeoutSeconds | default 300 }};
             proxy_pass http://cloudCost/cloud/config/export;
             proxy_redirect off;
             proxy_set_header Connection "";
@@ -396,7 +396,7 @@ data:
             proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
         }
         location = /model/cloud/config/enable {
-            proxy_read_timeout          {{ .Values.kubecostFrontend.timeoutSeconds | default 300 }};
+            proxy_read_timeout          {{ .Values.frontend.timeoutSeconds | default 300 }};
             proxy_pass http://cloudCost/cloud/config/enable;
             proxy_redirect off;
             proxy_set_header Connection "";
@@ -404,7 +404,7 @@ data:
             proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
         }
         location = /model/cloud/config/disable {
-            proxy_read_timeout          {{ .Values.kubecostFrontend.timeoutSeconds | default 300 }};
+            proxy_read_timeout          {{ .Values.frontend.timeoutSeconds | default 300 }};
             proxy_pass http://cloudCost/cloud/config/disable;
             proxy_redirect off;
             proxy_set_header Connection "";
@@ -412,7 +412,7 @@ data:
             proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
         }
         location = /model/cloudCost/integration/validate {
-            proxy_read_timeout          {{ .Values.kubecostFrontend.timeoutSeconds | default 300 }};
+            proxy_read_timeout          {{ .Values.frontend.timeoutSeconds | default 300 }};
             proxy_pass http://cloudCost/cloudCost/integration/validate;
             proxy_redirect off;
             proxy_set_header Connection "";
@@ -438,7 +438,7 @@ data:
 
         location = /model/hideOrphanedResources {
             default_type 'application/json';
-            {{- if .Values.kubecostFrontend.hideOrphanedResources }}
+            {{- if .Values.frontend.hideOrphanedResources }}
             return 200 '{"hideOrphanedResources": "true"}';
             {{- else }}
             return 200 '{"hideOrphanedResources": "false"}';
@@ -447,14 +447,14 @@ data:
 
         location = /model/hideDiagnostics {
             default_type 'application/json';
-            {{- if .Values.kubecostFrontend.hideDiagnostics }}
+            {{- if .Values.frontend.hideDiagnostics }}
             return 200 '{"hideDiagnostics": "true"}';
             {{- else }}
             return 200 '{"hideDiagnostics": "false"}';
             {{- end }}
         }
 
-        {{- if .Values.kubecostFrontend.trendsDisabled }}
+        {{- if .Values.frontend.trendsDisabled }}
         location /model/allocation/trends {
             return 204 'endpoint disabled';
         }
@@ -493,15 +493,14 @@ data:
                 {
                 "ssoConfigured": "{{ include "ssoEnabled" . }}",
                 "rbacTeamsEnabled": "{{ include "rbacTeamsEnabled" . }}",
-                "dataBackupConfigured": "{{ include "dataBackupConfigured" . }}",
                 "costEventsAuditEnabled": "{{ include "costEventsAuditEnabled" . }}",
                 "pluginsEnabled": "{{ include "pluginsEnabled" . }}",
                 "carbonEstimatesEnabled": "{{ include "carbonEstimatesEnabled" . }}",
                 "clusterControllerEnabled": "{{ include "clusterControllerEnabled" . }}",
                 "forecastingEnabled": "{{ include "forecastingEnabled" . }}",
                 "chartVersion": "DEVELOP_BRANCH",
-                "hourlyDataRetention": "{{ (.Values.kubecostAggregator.etlHourlyStoreDurationHours) }}",
-                "dailyDataRetention": "{{ (.Values.kubecostAggregator.etlDailyStoreDurationDays) }}",
+                "hourlyDataRetention": "{{ (.Values.aggregator.etlHourlyStoreDurationHours) }}",
+                "dailyDataRetention": "{{ (.Values.aggregator.etlDailyStoreDurationDays) }}",
                 "hideDiagnostics": "{{ default false ((.Values.kubecostProductConfigs).hideDiagnostics) }}",
                 "hideOrphanedResources": "{{ default false ((.Values.kubecostProductConfigs).hideOrphanedResources) }}",
                 "hideKubecostActions": "{{ default false ((.Values.kubecostProductConfigs).hideKubecostActions) }}",
@@ -511,7 +510,7 @@ data:
                 "hideCloudIntegrationsUI": "{{ default false ((.Values.kubecostProductConfigs).hideCloudIntegrationsUI) }}",
                 "hideBellIcon": "{{ default true ((.Values.kubecostProductConfigs).hideBellIcon) }}",
                 "hideTeams": "{{ default false ((.Values.kubecostProductConfigs).hideTeams) }}",
-                "legacyModeEnabled": "{{ .Values.kubecostAggregator.legacyMode }}"
+                "legacyModeEnabled": "{{ .Values.aggregator.legacyMode }}"
                 }
             ';
         }
