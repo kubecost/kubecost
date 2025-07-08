@@ -11,7 +11,7 @@ global:
   ## The name of the Secret containing a bucket config for export bucket storage.
   ## The contents should be stored under a key named storage-config.yaml by default.
   ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-long-term-storage-configuration
-#  exportBucket:
+#  storageConfig:
 #    existingSecret: export-bucket
 #    fileName: storage-config.yaml # set this value to change what the file name for the yaml config is
 
@@ -511,7 +511,7 @@ sigV4Proxy:
 finops-agent:
   # export bucket for the finops-agent will be managed by this chart
   # TODO write better explaination
-  exportBucket: {}
+  storageConfig: {}
 
   agent:
     collectorDataSource:
@@ -527,7 +527,7 @@ finops-agent:
       enabled: false
 
 
-exportBucket:
+storageConfig:
   ## export bucket storage config can be supplied via a secret or the yaml block
   ## below when using the block below, only a single provider is supported,
   ## others are for example purposes.
@@ -902,6 +902,8 @@ aggregator:
 
   # Log level for the aggregator container. Options are "trace", "debug", "info", "warn", "error", "fatal", "panic"
   logLevel: info
+
+  #   standardDiscount: "" # custom negotiated cloud provider discount, applied to all ingested asset compute costs. Overrides negotiatedDiscount on any cluster being aggregated.
 
   # stagingEmptyDirSizeLimit changes how large the "staging"
   # /var/configs/waterfowl emptyDir is. It only takes effect in StatefulSet
@@ -1435,7 +1437,6 @@ kubecostProductConfigs:
 #   azureOfferDurableID: "MS-AZR-0003p"
 #   discount: "" # percentage discount applied to compute
   negotiatedDiscount: ""   # custom negotiated cloud provider discount
-#   standardDiscount: "" # custom negotiated cloud provider discount, applied to all incoming asset compute costs in a federated environment. Overrides negotiatedDiscount on any cluster in the federated environment.
   defaultIdle: false
 #   serviceKeySecretName: "" # Use an existing AWS or Azure secret with format as in aws-service-key-secret.yaml or azure-service-key-secret.yaml. Leave blank if using createServiceKeySecret
 #   createServiceKeySecret: true # Creates a secret representing your cloud service key based on data in values.yaml. If you are storing unencrypted values, add a secret manually
@@ -1504,7 +1505,7 @@ kubecostProductConfigs:
 #      enabled: true
 #
 #      # The Actions feature requires an external storage config.
-#      # By default, will use the same bucket config as set in kubecostModel.federatedStorageConfig (or federatedStorageConfigSecret)
+#      # By default, will use the same bucket config as set in storageConfig.configYAML (or global.storageConfig.existingSecret)
 #
 #      # A separate bucket config specific to action storage can alternatively be supplied via a Secret or a yaml block
 #      # The name of the Secret containing the bucket config. The contents should be stored under a key named actions-store.yaml

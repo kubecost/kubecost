@@ -59,9 +59,9 @@ RBAC exclusivity check: make sure either simple RBAC or RBAC Teams is configured
 {{/*
 export bucket source check. Either the Secret must be specified or the JSON, not both.
 */}}
-{{- define "kubecost.exportBucket.source.check" -}}
-  {{- if and ((.Values.global).exportBucket).existingSecret ((.Values.exportBucket).secret).config -}}
-    {{- fail "\n.Values.global.exportBucket.existingSecret and .Values.exportBucket.secret.config both set, please specify only one." -}}
+{{- define "kubecost.storageConfig.source.check" -}}
+  {{- if and ((.Values.global).storageConfig).existingSecret ((.Values.storageConfig).secret).config -}}
+    {{- fail "\n.Values.global.storageConfig.existingSecret and .Values.storageConfig.secret.config both set, please specify only one." -}}
   {{- end -}}
 {{- end -}}
 
@@ -104,7 +104,7 @@ Verify that the global cluster id is set
   {{- if not .Values.global.clusterId }}
     {{- fail "\n\nIn Kubecost 3.0, `.Values.global.clusterId` is required to be set"}}
   {{- end }}
-  {{- if or (.Values.global.exportBucket).existingSecret ((.Values.exportBucket).secret).config }}
+  {{- if or (.Values.global.storageConfig).existingSecret ((.Values.storageConfig).secret).config }}
     {{- if eq .Values.global.clusterId "cluster-one" }}
       {{- printf "\n\nWarning: it is recommended to specify a unique `.Values.global.clusterId` for each cluster.\nNote this must be a globally unique identifier in multi-cluster environments.\n" -}}
     {{- end -}}
@@ -120,14 +120,14 @@ Verify the export bucket config secret exists with the expected key.
 Skip the check if CI/CD is enabled and skipSanityChecks is set. Argo CD, for
 example, does not support templating a chart which uses the lookup function.
 */}}
-{{- define "kubecost.exportBucket.secret.check" -}}
-{{- if (.Values.global.exportBucket).existingSecret }}
+{{- define "kubecost.storageConfig.secret.check" -}}
+{{- if (.Values.global.storageConfig).existingSecret }}
 {{- if not (and .Values.global.platforms.cicd.enabled .Values.global.platforms.cicd.skipSanityChecks) }}
 {{-  if .Capabilities.APIVersions.Has "v1/Secret" }}
-  {{- $secret := lookup "v1" "Secret" .Release.Namespace ((.Values.global).exportBucket).existingSecret }}
-  {{- $fileName := (include "kubecost.exportBucket.fileName" .) }}
+  {{- $secret := lookup "v1" "Secret" .Release.Namespace ((.Values.global).storageConfig).existingSecret }}
+  {{- $fileName := (include "kubecost.storageConfig.fileName" .) }}
   {{- if or (not $secret) (not (index $secret.data )) }}
-    {{- fail (printf "The export bucket storage config secret '%s' does not exist or does not contain the expected key '%s'" (.Values.global.exportBucket).existingSecret $fileName ) }}
+    {{- fail (printf "The export bucket storage config secret '%s' does not exist or does not contain the expected key '%s'" (.Values.global.storageConfig).existingSecret $fileName ) }}
   {{- end }}
 {{- end -}}
 {{- end -}}
@@ -388,20 +388,20 @@ Product key secret name with default fallback
 {{- end -}}
 
 {{/*
-export bucket helpers
+storage config helpers
 */}}
 
-{{- define "kubecost.exportBucket.secretName" }}
-{{- if (.Values.global.exportBucket).existingSecret }}
-.Values.exportBucket.existingSecret
+{{- define "kubecost.storageConfig.secretName" }}
+{{- if (.Values.global.storageConfig).existingSecret }}
+(.Values.global.storageConfig).existingSecret
 {{- else }}
-{{ .Release.Name }}-export-bucket-config
+{{ .Release.Name }}-storage-config
 {{- end }}
 {{- end }}
 
-{{- define "kubecost.exportBucket.config" }}
-{{- if (.Values.exportBucket).configYAML }}
-(.Values.exportBucket).configYAML
+{{- define "kubecost.storageConfig.config" }}
+{{- if (.Values.storageConfig).configYAML }}
+(.Values.storageConfig).configYAML
 {{ else }}
 {{/*
 Default export bucket config if no values are set
@@ -410,6 +410,6 @@ type: cluster
 {{- end }}
 {{- end }}
 
-{{- define "kubecost.exportBucket.fileName" }}
-{{ default "storage-config.yaml" (.Values.global.exportBucket).fileName }}
+{{- define "kubecost.storageConfig.fileName" }}
+{{ default "storage-config.yaml" (.Values.global.storageConfig).fileName }}
 {{- end }}

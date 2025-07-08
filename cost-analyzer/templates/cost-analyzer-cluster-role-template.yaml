@@ -1,5 +1,4 @@
-{{- if not .Values.kubecostModel.etlReadOnlyMode -}}
-{{- if and .Values.reporting .Values.reporting.logCollection -}}
+{{- if (.Values.reporting).logCollection -}}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -112,4 +111,3 @@ rules:
       - get
       - list
       - watch
-{{- end }}

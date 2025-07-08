@@ -1,6 +1,6 @@
 global:
-  exportBucket:
-    existingSecret: export-bucket-config
+  storageConfig:
+    existingSecret: storage-config
 aggregator:
   enabled: true
   aggregatorDbStorage:

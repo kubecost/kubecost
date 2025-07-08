@@ -1,15 +1,7 @@
 {{- if (.Values.cloudCost).enabled }}
-
-{{/*
-  TODO I don't think this is actually true but we could just force this
-  A cloud integration secret is required for cloud cost to function as a dedicated pod.
-  UI based configuration is not supported for cloud cost with aggregator.
+{{- /*
+  TODO add a pvc for persistent configs and maybe a warning if both the pv and secret are not enabled
 */}}
-{{- if (.Values.cloudCost).enabled }}
-{{- if not ( or (.Values.cloudCost).cloudIntegrationSecret (.Values.cloudCost).cloudIntegrationJSON ) }}
-{{- fail "\n\nA cloud-integration secret is required when using the aggregator statefulset and cloudCost is enabled." }}
-{{- end }}
-{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -24,7 +16,7 @@ metadata:
   {{- with .Values.global.annotations }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
-  {{- with .Values.aggregator.annotations }}
+  {{- with .Values.cloudCost.annotations }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
@@ -62,21 +54,21 @@ spec:
         fsGroup: 1001
       {{- end }}
       restartPolicy: Always
-      serviceAccountName: {{ template "cloudCost.serviceAccountName" . }}
+      serviceAccountName: {{ include "cloudCost.serviceAccountName" . }}
       volumes:
-        - name: export-bucket-config
+        - name: storage-config
           secret:
             defaultMode: 420
-            secretName: {{ include "kubecost.exportBucket.secretName" . }}
+            secretName: {{ include "kubecost.storageConfig.secretName" . | trim }}
         {{- if or (.Values.cloudCost).cloudIntegrationSecret (.Values.cloudCost).cloudIntegrationJSON }}
         - name: cloud-integration
           secret:
-            secretName: {{ include "kubecost.cloudCost.secretName" . }}
+            secretName: {{ include "kubecost.cloudCost.secretName" . | trim }}
             items:
               - key: cloud-integration.json
                 path: cloud-integration.json
         {{- end }}
-        {{/* Despite the name, this is not persistent-configs.
+        {{- /* Despite the name, this is not persistent-configs.
             The name is for compatibility with single-pod install.
             All data stored here is ephemeral, and does not require persistence. */}}
         - name: persistent-configs
@@ -206,16 +198,18 @@ spec:
             - name: tcp-api
               containerPort: 9005
               protocol: TCP
+          {{- with (.Values.cloudCost).resources }}
           resources:
-            {{- toYaml (.Values.cloudCost).resources | nindent 4 }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.global.containerSecurityContext }}
           securityContext:
-            {{- if .Values.global.containerSecurityContext }}
-            {{- toYaml .Values.global.containerSecurityContext | nindent 4 }}
-            {{- end }}
+            {{- toYaml .Values.global.containerSecurityContext | nindent 12 }}
+          {{- end }}
           volumeMounts:
             - name: persistent-configs
               mountPath: /var/configs
-            - name: export-bucket-config
+            - name: storage-config
               mountPath: /var/configs/export
               readOnly: true
           {{- if or (.Values.cloudCost).cloudIntegrationSecret (.Values.cloudCost).cloudIntegrationJSON }}
@@ -246,7 +240,7 @@ spec:
             - name: CONFIG_PATH
               value: /var/configs/
             - name: EXPORT_BUCKET_CONFIG_FILE
-              value: /var/configs/export/{{- include "kubecost.exportBucket.fileName" .}}
+              value: /var/configs/export/{{ include "kubecost.storageConfig.fileName" . | trim }}
             - name: ETL_DAILY_STORE_DURATION_DAYS
               value: {{ (quote .Values.kubecostModel.etlDailyStoreDurationDays) }}
             - name: CLOUD_COST_REFRESH_RATE_HOURS

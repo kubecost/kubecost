@@ -28,3 +28,11 @@ app.kubernetes.io/name: {{ include "aggregator.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app: aggregator
 {{- end }}
+
+{{- define "kubecost.actions.secretName" -}}
+{{- if ((.Values.kubecostProductConfigs).actions).storageConfigSecret }}
+{{- ((.Values.kubecostProductConfigs).actions).storageConfigSecret }}
+{{- else }}
+{{ .Release.Name }}-actions-storage-config
+{{- end }}
+{{- end }}

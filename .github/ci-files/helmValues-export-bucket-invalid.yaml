@@ -1,6 +1,6 @@
 global:
   clusterId: helm-testing
-exportBucket:
+storageConfig:
   secret:
     config: |-
       type: S3

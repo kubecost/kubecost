@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: actions-config
+  name: {{ .Release.Name }}-actions-config
   labels:
     {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
 data:

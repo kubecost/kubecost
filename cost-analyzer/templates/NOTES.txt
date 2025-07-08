@@ -3,8 +3,8 @@
 {{- include "eksCheck" . -}}
 {{- include "gcpCloudIntegrationCheck" . -}}
 {{- include "azureCloudIntegrationCheck" . -}}
-{{- include "kubecost.exportBucket.secret.check" . -}}
-{{- include "kubecost.exportBucket.source.check . -}}
+{{- include "kubecost.storageConfig.secret.check" . -}}
+{{- include "kubecost.storageConfig.source.check" . -}}
 {{- include "clusterIDCheck" . -}}
 {{- include "caCertsSecretConfigCheck" . -}}
 {{- include "actionsStorageSourceCheck" . -}}

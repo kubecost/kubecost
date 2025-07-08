@@ -76,10 +76,10 @@ spec:
         - name: aggregator-staging
           emptyDir:
             sizeLimit: {{ .Values.aggregator.stagingEmptyDirSizeLimit }}
-        - name: export-bucket-config
+        - name: storage-config
           secret:
             defaultMode: 420
-            secretName: {{ include "kubecost.exportBucket.secretName" . }}
+            secretName: {{ include "kubecost.storageConfig.secretName" . }}
         {{- if ((.Values.kubecostProductConfigs).productKey).enabled }}
         - name: productkey-secret
           secret:
@@ -213,26 +213,11 @@ spec:
             name: actions-config
         {{- end }}
         {{- if ((.Values.kubecostProductConfigs).actions).enabled }}
-        {{- if and (not (((.Values.kubecostProductConfigs).actions).storageConfigSecret)) (not (((.Values.kubecostProductConfigs).actions).storageConfig)) }}
-        - name: actions-storage
-          emptyDir: {}
-        {{- end }}
-        {{- if ((.Values.kubecostProductConfigs).actions).storageConfig }}
+        {{- if or ((.Values.kubecostProductConfigs).actions).storageConfig ((.Values.kubecostProductConfigs).actions).storageConfigSecret }}
         - name: actions-storage-config
           secret:
             defaultMode: 420
-            secretName: {{ ((.Values.kubecostProductConfigs).actions).storageConfigSecret | default "actions-store" }}
-        {{- end }}
-        {{- if ((.Values.kubecostProductConfigs).actions).storageConfigSecret }}
-        {{- if eq ((.Values.kubecostProductConfigs).actions).storageConfigSecret (.Values.kubecostModel).federatedStorageConfigSecret }}
-        - name: actions-storage
-          emptyDir: { }
-        {{- else }}
-        - name: actions-storage-config
-          secret:
-            defaultMode: 420
-            secretName: {{ ((.Values.kubecostProductConfigs).actions).storageConfigSecret | default "actions-store" }}
-        {{- end }}
+            secretName: {{ include "kubecost.actions.secretName" . }}
         {{- end }}
         {{- end }}
         {{- if .Values.aggregator.extraVolumes }}
@@ -316,8 +301,9 @@ spec:
           volumeMounts:
             - name: persistent-configs
               mountPath: /var/configs
-            - name: export-storage-config
-              mountPath: /var/configs/etl
+            - name: storage-config
+              mountPath: /var/configs/storage-config.yaml
+              subPath: {{ include "kubecost.storageConfig.fileName" .}}
               readOnly: true
             - name: aggregator-db-storage
               mountPath: /var/configs/waterfowl/duckdb
@@ -415,30 +401,11 @@ spec:
               mountPath: /var/configs/actions
             {{- end }}
             {{- if ((.Values.kubecostProductConfigs).actions).enabled }}
-            {{- if and (not (((.Values.kubecostProductConfigs).actions).storageConfigSecret)) (not (((.Values.kubecostProductConfigs).actions).storageConfig)) }}
-            - name: actions-storage
-              mountPath: /var/configs/actions/storage
-            - name: federated-storage-config
-              mountPath: /var/configs/actions/storage/actions-store.yaml
-              subPath: federated-store.yaml
-              readOnly: true
-            {{- end }}
-            {{- if ((.Values.kubecostProductConfigs).actions).storageConfig }}
+            {{- if or ((.Values.kubecostProductConfigs).actions).storageConfig ((.Values.kubecostProductConfigs).actions).storageConfigSecret }}
             - name: actions-storage-config
-              mountPath: /var/configs/actions/storage
-            {{- end }}
-            {{- if ((.Values.kubecostProductConfigs).actions).storageConfigSecret }}
-            {{- if eq ((.Values.kubecostProductConfigs).actions).storageConfigSecret (.Values.kubecostModel).federatedStorageConfigSecret }}
-            - name: actions-storage
-              mountPath: /var/configs/actions/storage
-            - name: federated-storage-config
-              mountPath: /var/configs/actions/storage/actions-store.yaml
-              subPath: federated-store.yaml
+              mountPath: /var/configs/actions/actions-storage-config.yaml
+              subPath: actions-store.yaml
               readOnly: true
-            {{- else }}
-            - name: actions-storage-config
-              mountPath: /var/configs/actions/storage
-            {{- end }}
             {{- end }}
             {{- end }}
             {{- if .Values.aggregator.extraVolumeMounts }}
@@ -516,7 +483,7 @@ spec:
             {{- if .Values.aggregator.extraEnv -}}
             {{- toYaml .Values.aggregator.extraEnv | nindent 4 }}
             {{- end }}
-            {{- if (.Values.kubecostProductConfigs).standardDiscount }}
+            {{- if (.Values.aggregator).standardDiscount }}
             {{- if .Values.ingestionConfigmapName }}
             - name: INGESTION_CONFIGMAP_NAME
               value: {{ .Values.ingestionConfigmapName }}
@@ -630,9 +597,11 @@ spec:
             - name: CUSTOM_TYPE_INSTANCES_URI
               value: {{ (quote .Values.instanceTypes.custom.location.URI) }}
             {{- end }}
-            {{- if or ((.Values.kubecostProductConfigs).actions).enabled }}
+           {{- if ((.Values.kubecostProductConfigs).actions).enabled }}
+           {{- if or ((.Values.kubecostProductConfigs).actions).storageConfig ((.Values.kubecostProductConfigs).actions).storageConfigSecret }}
             - name: ACTIONS_BUCKET_CONFIG
-              value: /var/configs/actions/storage/actions-store.yaml
+              value: /var/configs/actions/actions-storage-config.yaml
+            {{- end }}
             {{- end }}
         {{- if .Values.aggregator.jaeger.enabled }}
         - name: embedded-jaeger

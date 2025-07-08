@@ -1,4 +1,4 @@
-{{- if (.Values.kubecostProductConfigs).standardDiscount }}
+{{- if (.Values.aggregator).standardDiscount }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -7,6 +7,6 @@ metadata:
   labels:
     {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
 data:
-  standardDiscount: "{{ .Values.kubecostProductConfigs.standardDiscount }}"
+  standardDiscount: "{{ .Values.aggregator.standardDiscount }}"
   helmConfig: "true"
 {{- end -}}
