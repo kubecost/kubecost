@@ -223,10 +223,18 @@ spec:
           configMap:
             name: {{ .Values.enterpriseCustomPricing.configMapName }}
         {{- end }}
-        {{- if (.Values.instanceTypes).enabled }}
+        {{- if ((.Values.instanceTypes).custom).configMapName }}
         - name: custom-instance-types
           configMap:
             name: {{ .Values.instanceTypes.custom.configMapName }}
+        {{- end }}
+        {{- if ((.Values.instanceTypes).gcp).instancesCredentials}}
+        - name: gcp-instance-types
+          secret: 
+            secretName: {{.Values.instanceTypes.gcp.instancesCredentials}}
+            items:
+            - key: secret.json
+              path: secret.json
         {{- end }}
         {{- if ((.Values.kubecostProductConfigs).actions).config }}
         - name: actions-config

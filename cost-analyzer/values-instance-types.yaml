@@ -1,5 +1,7 @@
 instanceTypes:
-  enabled: true
+  # kubectl create secret generic instances-gcp-secret -n kubecost --from-file=secret.json=secret.json
+  gcp:
+    instancesCredential: instances-gcp-secret
   #  kubectl create configmap -n kubecost custom-instance-types --from-file custom.json
   custom:
     configMapName: custom-instance-types

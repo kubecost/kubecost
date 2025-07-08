@@ -967,9 +967,14 @@ Begin Kubecost 2.0 templates
     - name: kubecost-enterprise-pricing
       mountPath: /var/configs/enterprise-pricing
     {{- end }}
-    {{- if and (.Values.instanceTypes.enabled) (.Values.instanceTypes.custom) }}
+    {{- if (.Values.instanceTypes).custom }}
     - name: custom-instance-types
-      mountPath: /var/configs/instance-types
+      mountPath: /var/configs/instance-types/custom
+    {{- end }}
+    {{- if (.Values.instanceTypes).gcp }}
+    - name: gcp-instance-types
+      mountPath: /var/configs/instance-types/gcp
+      readOnly: true
     {{- end }}
     {{- if ((.Values.kubecostProductConfigs).actions).config }}
     - name: actions-config
@@ -1216,9 +1221,13 @@ Begin Kubecost 2.0 templates
     - name: ENTERPRISE_CUSTOM_PRICING_APPLY_RETROACTIVELY
       value: "true"
     {{- end }}
-    {{- if (.Values.instanceTypes).enabled }}
+    {{- if (((.Values.instanceTypes).custom).location).URI }}
     - name: CUSTOM_TYPE_INSTANCES_URI
       value: {{ (quote .Values.instanceTypes.custom.location.URI) }}
+    {{- end }}
+    {{- if ((.Values.instanceTypes).gcp).instancesCredentials }}
+    - name: INSTANCES_GCP_SECRET
+      value: "/var/configs/instance-types/gcp/secret.json"
     {{- end }}
     {{- if or ((.Values.kubecostProductConfigs).actions).enabled }}
     - name: ACTIONS_BUCKET_CONFIG
