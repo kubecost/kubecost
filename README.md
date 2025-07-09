@@ -24,7 +24,7 @@ To install via Helm, run the following command.
 
 ```sh
 helm upgrade --install kubecost -n kubecost --create-namespace \
-  --repo https://kubecost.github.io/cost-analyzer/ cost-analyzer \
+  --repo https://kubecost.github.io/cost-analyzer/ kubecost \
   --set kubecostToken="aGVsbUBrdWJlY29zdC5jb20=xm343yadf98"
 ```
 
