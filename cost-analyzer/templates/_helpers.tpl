@@ -1130,6 +1130,8 @@ Begin Kubecost 2.0 templates
       value: {{ .Values.kubecostAggregator.dbTrimMemoryOnClose | quote }}
     - name: KUBECOST_NAMESPACE
       value: {{ .Release.Namespace }}
+    - name: TELEMETRY_ENABLED
+      value: {{ (quote .Values.telemetry.enabled) }}
     {{- if .Values.oidc.enabled }}
     - name: OIDC_ENABLED
       value: "true"
