@@ -93,7 +93,7 @@ Adjusting the log level increases or decreases the level of verbosity written to
 For example, to set the log level to `debug`, add the following flag to the Helm command:
 
 ```sh
---set 'kubecostModel.logLevel=debug'
+--set 'kubecost.logLevel=debug'
 ```
 
 ### Adjusting Log Format

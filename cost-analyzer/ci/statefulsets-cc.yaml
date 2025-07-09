@@ -2,8 +2,8 @@
 ### cluster controller is installed
 global:
   clusterId: CLUSTER_ID
-  storageConfig:
-    existingSecret: storage-config
+  exportBucket:
+    existingSecret: export-bucket-config
   podAnnotations:
     kubecost.io/test1: value1
     kubecost.io/test2: value2

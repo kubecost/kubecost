@@ -1,12 +1,12 @@
-{{- if and (not .Values.kubecostModel.plugins.existingCustomSecret.enabled) .Values.kubecostModel.plugins.enabled }}
+{{- if and (not .Values.kubecost.plugins.existingCustomSecret.enabled) .Values.kubecost.plugins.enabled }}
 apiVersion: v1
 kind: Secret
 metadata:
-  name: {{ .Values.kubecostModel.plugins.secretName }}
+  name: {{ .Values.kubecost.plugins.secretName }}
   labels:
     {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
 data:
-  {{- range $key, $config := .Values.kubecostModel.plugins.configs }}
+  {{- range $key, $config := .Values.kubecost.plugins.configs }}
   {{ $key }}_config.json:
     {{ $config | b64enc | indent 4}}
   {{- end }}

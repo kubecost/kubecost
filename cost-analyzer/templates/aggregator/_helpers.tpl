@@ -30,9 +30,9 @@ app: aggregator
 {{- end }}
 
 {{- define "kubecost.actions.secretName" -}}
-{{- if ((.Values.kubecostProductConfigs).actions).storageConfigSecret }}
-{{- ((.Values.kubecostProductConfigs).actions).storageConfigSecret }}
+{{- if ((.Values.kubecostProductConfigs).actions).exportBucketSecret }}
+{{- ((.Values.kubecostProductConfigs).actions).exportBucketSecret }}
 {{- else }}
-{{ .Release.Name }}-actions-storage-config
+{{ .Release.Name }}-actions-export-bucket-config
 {{- end }}
 {{- end }}

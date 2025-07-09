@@ -1,7 +1,7 @@
 frontend:
   image: public.ecr.aws/kubecost/frontend
 
-kubecostModel:
+kubecost:
   image: public.ecr.aws/kubecost/cost-model
 
 forecasting:

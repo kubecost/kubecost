@@ -59,9 +59,9 @@ RBAC exclusivity check: make sure either simple RBAC or RBAC Teams is configured
 {{/*
 export bucket source check. Either the Secret must be specified or the JSON, not both.
 */}}
-{{- define "kubecost.storageConfig.source.check" -}}
-  {{- if and ((.Values.global).storageConfig).existingSecret ((.Values.storageConfig).secret).config -}}
-    {{- fail "\n.Values.global.storageConfig.existingSecret and .Values.storageConfig.secret.config both set, please specify only one." -}}
+{{- define "kubecost.exportBucket.source.check" -}}
+  {{- if and ((.Values.global).exportBucket).existingSecret ((.Values.exportBucket).secret).config -}}
+    {{- fail "\n.Values.global.exportBucket.existingSecret and .Values.exportBucket.secret.config both set, please specify only one." -}}
   {{- end -}}
 {{- end -}}
 
@@ -70,8 +70,8 @@ Actions Storage source contents check. Either the Secret must be specified or th
 */}}
 {{- define "actionsStorageSourceCheck" -}}
   {{- if ((.Values.kubecostProductConfigs).actions).enabled -}}
-  {{- if and ((.Values.kubecostProductConfigs).actions).storageConfigSecret ((.Values.kubecostProductConfigs).actions).storageConfig -}}
-    {{- fail "\nkubecostProductConfigs.actions.storageConfigSecret and kubecostProductConfigs.actions.storageConfig are mutually exclusive. Please specify only one." -}}
+  {{- if and ((.Values.kubecostProductConfigs).actions).exportBucketSecret ((.Values.kubecostProductConfigs).actions).exportBucket -}}
+    {{- fail "\nkubecostProductConfigs.actions.exportBucketSecret and kubecostProductConfigs.actions.exportBucket are mutually exclusive. Please specify only one." -}}
   {{- end -}}
   {{- end -}}
 {{- end -}}
@@ -104,7 +104,7 @@ Verify that the global cluster id is set
   {{- if not .Values.global.clusterId }}
     {{- fail "\n\nIn Kubecost 3.0, `.Values.global.clusterId` is required to be set"}}
   {{- end }}
-  {{- if or (.Values.global.storageConfig).existingSecret ((.Values.storageConfig).secret).config }}
+  {{- if or (.Values.global.exportBucket).existingSecret ((.Values.exportBucket).secret).config }}
     {{- if eq .Values.global.clusterId "cluster-one" }}
       {{- printf "\n\nWarning: it is recommended to specify a unique `.Values.global.clusterId` for each cluster.\nNote this must be a globally unique identifier in multi-cluster environments.\n" -}}
     {{- end -}}
@@ -120,14 +120,14 @@ Verify the export bucket config secret exists with the expected key.
 Skip the check if CI/CD is enabled and skipSanityChecks is set. Argo CD, for
 example, does not support templating a chart which uses the lookup function.
 */}}
-{{- define "kubecost.storageConfig.secret.check" -}}
-{{- if (.Values.global.storageConfig).existingSecret }}
+{{- define "kubecost.exportBucket.secret.check" -}}
+{{- if (.Values.global.exportBucket).existingSecret }}
 {{- if not (and .Values.global.platforms.cicd.enabled .Values.global.platforms.cicd.skipSanityChecks) }}
 {{-  if .Capabilities.APIVersions.Has "v1/Secret" }}
-  {{- $secret := lookup "v1" "Secret" .Release.Namespace ((.Values.global).storageConfig).existingSecret }}
-  {{- $fileName := (include "kubecost.storageConfig.fileName" .) }}
+  {{- $secret := lookup "v1" "Secret" .Release.Namespace ((.Values.global).exportBucket).existingSecret }}
+  {{- $fileName := (include "kubecost.exportBucket.fileName" .) }}
   {{- if or (not $secret) (not (index $secret.data )) }}
-    {{- fail (printf "The export bucket storage config secret '%s' does not exist or does not contain the expected key '%s'" (.Values.global.storageConfig).existingSecret $fileName ) }}
+    {{- fail (printf "The export bucket storage config secret '%s' does not exist or does not contain the expected key '%s'" (.Values.global.exportBucket).existingSecret $fileName ) }}
   {{- end }}
 {{- end -}}
 {{- end -}}
@@ -304,7 +304,7 @@ costEventsAuditEnabled flag for nginx configmap
 {{- end }}
 
 {{- define "pluginsEnabled" }}
-{{- if (.Values.kubecostModel.plugins).enabled }}
+{{- if (.Values.kubecost.plugins).enabled }}
 {{- printf "true" -}}
 {{- else -}}
 {{- printf "false" -}}
@@ -337,7 +337,7 @@ costEventsAuditEnabled flag for nginx configmap
   "cost-analyzer-oidc-config-map-template.yaml"
   "cost-analyzer-pkey-secret.yaml"
   "aggregator/saml-configmap.yaml"
-  "cost-analyzer-saved-reports-configmap.yaml"
+  "aggregator/cost-analyzer-saved-reports-configmap.yaml"
   "aggregator/cost-analyzer-smtp-configmap.yaml"
   "install-plugins.yaml"
   "integrations-postgres-queries-configmap.yaml"
@@ -358,15 +358,15 @@ costEventsAuditEnabled flag for nginx configmap
 {{- end -}}
 
 {{- define "cost-model.image" }}
-{{- if .Values.kubecostModel }}
-  {{- if .Values.kubecostModel.fullImageName }}
-    {{ .Values.kubecostModel.fullImageName }}
+{{- if .Values.kubecost }}
+  {{- if .Values.kubecost.fullImageName }}
+    {{ .Values.kubecost.fullImageName }}
   {{- else if .Values.imageVersion }}
-    {{ .Values.kubecostModel.image }}:{{ .Values.imageVersion }}
+    {{ .Values.kubecost.image }}:{{ .Values.imageVersion }}
   {{- else if eq "development" .Chart.AppVersion }}
     gcr.io/guestbook-227502/agent:latest
   {{- else }}
-    {{ .Values.kubecostModel.image }}:prod-{{ $.Chart.AppVersion }}
+    {{ .Values.kubecost.image }}:prod-{{ $.Chart.AppVersion }}
   {{- end }}
 {{- else }}
   gcr.io/kubecost1/cost-model:prod-{{ $.Chart.AppVersion }}
@@ -391,17 +391,17 @@ Product key secret name with default fallback
 storage config helpers
 */}}
 
-{{- define "kubecost.storageConfig.secretName" }}
-{{- if (.Values.global.storageConfig).existingSecret }}
-(.Values.global.storageConfig).existingSecret
+{{- define "kubecost.exportBucket.secretName" }}
+{{- if (.Values.global.exportBucket).existingSecret }}
+(.Values.global.exportBucket).existingSecret
 {{- else }}
-{{ .Release.Name }}-storage-config
+{{ .Release.Name }}-export-bucket-config
 {{- end }}
 {{- end }}
 
-{{- define "kubecost.storageConfig.config" }}
-{{- if (.Values.storageConfig).configYAML }}
-(.Values.storageConfig).configYAML
+{{- define "kubecost.exportBucket.config" }}
+{{- if (.Values.exportBucket).configYAML }}
+(.Values.exportBucket).configYAML
 {{ else }}
 {{/*
 Default export bucket config if no values are set
@@ -410,6 +410,6 @@ type: cluster
 {{- end }}
 {{- end }}
 
-{{- define "kubecost.storageConfig.fileName" }}
-{{ default "storage-config.yaml" (.Values.global.storageConfig).fileName }}
+{{- define "kubecost.exportBucket.fileName" }}
+{{ default "export-bucket-config.yaml" (.Values.global.exportBucket).fileName }}
 {{- end }}

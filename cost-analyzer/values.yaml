@@ -9,11 +9,11 @@ global:
   clusterId: cluster-one # globally unique cluster name
 
   ## The name of the Secret containing a bucket config for export bucket storage.
-  ## The contents should be stored under a key named storage-config.yaml by default.
-  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-long-term-storage-configuration
-#  storageConfig:
+  ## The contents should be stored under a key named export-bucket-config.yaml by default.
+  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-long-term-export-bucket-configuration
+#  exportBucket:
 #    existingSecret: export-bucket
-#    fileName: storage-config.yaml # set this value to change what the file name for the yaml config is
+#    fileName: export-bucket-config.yaml # set this value to change what the file name for the yaml config is
 
 
 
@@ -511,7 +511,7 @@ sigV4Proxy:
 finops-agent:
   # export bucket for the finops-agent will be managed by this chart
   # TODO write better explaination
-  storageConfig: {}
+  exportBucket: {}
 
   agent:
     collectorDataSource:
@@ -527,12 +527,12 @@ finops-agent:
       enabled: false
 
 
-storageConfig:
+exportBucket:
   ## export bucket storage config can be supplied via a secret or the yaml block
   ## below when using the block below, only a single provider is supported,
   ## others are for example purposes.
   ## TODO update doc
-  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-long-term-storage-configuration
+  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-long-term-export-bucket-configuration
   # configYAML: |-
   #   # AWS EXAMPLE
   #   type: S3
@@ -569,7 +569,7 @@ storageConfig:
   #       }
 
 
-kubecostModel:
+kubecost:
   image: "gcr.io/kubecost1/cost-model"
   imagePullPolicy: IfNotPresent
   # fullImageName overrides the default image construction logic. The exact
@@ -582,14 +582,10 @@ kubecostModel:
   # securityContext:
   #   readOnlyRootFilesystem: true
 
-  # The total number of days the ETL pipelines will build
-  # Set to 0 to disable daily ETL (not recommended)
-  etlDailyStoreDurationDays: 91
-  # The total number of hours the ETL pipelines will build
-  # Set to 0 to disable hourly ETL (recommended for large environments)
-  # Must be < prometheus server retention, otherwise empty data may overwrite
-  # known-good data
-  etlHourlyStoreDurationHours: 49
+  # Retention values determine for what duration into the past data will be retained, ingested and in some cases built
+  retention1d: 91
+  retention1h: 49
+  retention10m: 36
 
   # Installs Kubecost/OpenCost plugins
   plugins:
@@ -632,45 +628,6 @@ kubecostModel:
       #   "datadog_app_key": "<INSERT_DATADOG_APP_KEY>"
       #   }
 
-  allocation:
-    # Enables or disables adding node labels to allocation data (i.e. workloads).
-    # Defaults to "true". If nodeLabels is set to true, all workloads will inherit
-    # the node labels of the nodes they are running on.
-    # nodeLabels:
-    #   enabled: true
-
-  resources:
-    requests:
-      cpu: "200m"
-      memory: "55Mi"
-    # limits:
-    #   cpu: "800m"
-    #   memory: "256Mi"
-
-  readinessProbe:
-    enabled: true
-    initialDelaySeconds: 10
-    periodSeconds: 10
-    failureThreshold: 200
-  livenessProbe:
-    enabled: true
-    initialDelaySeconds: 10
-    periodSeconds: 10
-    failureThreshold: 200
-  extraArgs: []
-
-  # Optional. A list of extra environment variables to be added to the cost-model container.
-  # extraEnv:
-  #   - name: LOG_FORMAT
-  #     value: json
-  #   # When false, Kubecost will not show Asset costs for local disks physically
-  #   # attached to nodes (e.g. ephemeral storage). This needs to be applied to
-  #   # each cluster monitored.
-  #   - name: ASSET_INCLUDE_LOCAL_DISK_COST
-  #     value: "true"
-
-  extraPorts: []
-
 # Basic Kubecost ingress, more examples available at https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=installation-ingress-examples
 ingress:
   enabled: false
@@ -698,15 +655,6 @@ priority:
   name: ""
 extraVolumes: []
 extraVolumeMounts: []
-
-# Define persistent volume for cost-analyzer, more information at https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=installation-next-steps-kubecost
-persistentVolume:
-  size: 32Gi
-  enabled: true  # Note that setting this to false means configurations will be wiped out on pod restart.
-  # storageClass: "-" #
-  # existingClaim: kubecost-cost-analyzer # a claim in the same namespace as kubecost
-  labels: {}
-  annotations: {}
 
 service:
   type: ClusterIP
@@ -954,26 +902,6 @@ aggregator:
   # May require data re-ingestion
   # default: false
   legacyMode: false
-
-  # How much data to ingest from the export bucket store, and how much data
-  # to keep in the DB before rolling the data off.
-  #
-  # Note: If increasing this value to backfill historical data, it will take
-  # time to gradually ingest and process those historical ETL files. Consider
-  # also increasing the resources available to the aggregator as well as the
-  # refresh and concurrency env vars.
-  #
-  # default: 91
-  etlDailyStoreDurationDays: 91
-
-  # How much hourly data to ingest from the export bucket, and how much
-  # to keep in the DB before rolling the data off.
-  #
-  # In high scale environments setting this to `0` can improve performance if hourly
-  # resolution is not a requirement.
-  #
-  # default: 49
-  etlHourlyStoreDurationHours: 49
 
   # How much container resource usage data to retain in the DB, in terms of days.
   #
@@ -1343,41 +1271,6 @@ costEventsAudit:
 # # UI. Values in this block override config changes in the Settings UI on pod
 # # restart
 kubecostProductConfigs:
-#   clusters:
-#     - name: "Cluster A"
-#       address: http://cluster-a.kubecost.com:9090
-#       # Optional authentication credentials - only basic auth is currently supported.
-#       auth:
-#         type: basic
-#         # Secret name should be a secret formatted based on: https://github.com/kubecost/poc-common-configurations/tree/main/ingress-examples
-#         secretName: cluster-a-auth
-#         # Or pass auth directly as base64 encoded user:pass
-#         data: YWRtaW46YWRtaW4=
-#         # Or user and pass directly
-#         user: admin
-#         pass: admin
-#     - name: "Cluster B"
-#       address: http://cluster-b.kubecost.com:9090
-#   # Enabling customPricesEnabled and defaultModelPricing instructs Kubecost to
-#   # use these custom monthly resource prices when reporting node costs. Note,
-#   # that the below configuration is for the monthly cost of the resource.
-#   # Kubecost considers there to be 730 hours in a month. Also note, that these
-#   # configurations will have no effect on metrics emitted such as
-#   # `node_ram_hourly_cost` or `node_cpu_hourly_cost`.
-#   # Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=installations-installing-in-air-gapped-environments
-#   customPricesEnabled: false
-#   defaultModelPricing:
-#     enabled: true
-#     CPU: "28.0"
-#     spotCPU: "4.86"
-#     RAM: "3.09"
-#     spotRAM: "0.65"
-#     GPU: "693.50"
-#     spotGPU: "225.0"
-#     storage: "0.04"
-#     zoneNetworkEgress: "0.01"
-#     regionNetworkEgress: "0.01"
-#     internetNetworkEgress: "0.12"
 #   # The cluster profile represents a predefined set of parameters to use when calculating savings.
 #   # Possible values are: [ development, production, high-availability ]
 #   clusterProfile: production
@@ -1429,12 +1322,6 @@ kubecostProductConfigs:
 #     EXAMPLE_ACCOUNT_ID: EXAMPLE_ACCOUNT_NAME
 #   clusterAccountID: "" # Manually set Account property for assets
   currencyCode: "USD"   # official support for USD, AUD, BRL, CAD, CHF, CNY, DKK, EUR, GBP, IDR, INR, JPY, NOK, PLN, SEK
-#   azureBillingRegion: US # Represents 2-letter region code, e.g. West Europe = NL, Canada = CA. ref: https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes
-#   azureSubscriptionID: 0bd50fdf-c923-4e1e-850c-196dd3dcc5d3
-#   azureClientID: f2ef6f7d-71fb-47c8-b766-8d63a19db017
-#   azureTenantID: 72faf3ff-7a3f-4597-b0d9-7b0b201bb23a
-#   azureClientPassword: fake key # Only use if your values.yaml are stored encrypted. Otherwise provide an existing secret via serviceKeySecretName
-#   azureOfferDurableID: "MS-AZR-0003p"
 #   discount: "" # percentage discount applied to compute
   negotiatedDiscount: ""   # custom negotiated cloud provider discount
   defaultIdle: false
@@ -1505,14 +1392,14 @@ kubecostProductConfigs:
 #      enabled: true
 #
 #      # The Actions feature requires an external storage config.
-#      # By default, will use the same bucket config as set in storageConfig.configYAML (or global.storageConfig.existingSecret)
+#      # By default, will use the same bucket config as set in exportBucket.configYAML (or global.exportBucket.existingSecret)
 #
 #      # A separate bucket config specific to action storage can alternatively be supplied via a Secret or a yaml block
 #      # The name of the Secret containing the bucket config. The contents should be stored under a key named actions-store.yaml
-#      storageConfigSecret: actions-store
+#      exportBucketSecret: actions-store
 #
 #      # (If not using Secret) Define storage config directly in yaml, as below:
-#      storageConfig: |-
+#      exportBucket: |-
 #      # AWS EXAMPLE
 #        type: S3
 #        config:
