@@ -1132,6 +1132,10 @@ Begin Kubecost 2.0 templates
       value: {{ .Release.Namespace }}
     - name: TELEMETRY_ENABLED
       value: {{ (quote .Values.telemetry.enabled) }}
+    {{- if .Values.kubecostProductConfigs.currencyCode }}
+    - name: DISPLAY_CURRENCY
+      value: "{{ .Values.kubecostProductConfigs.currencyCode }}"
+    {{- end -}}
     {{- if .Values.oidc.enabled }}
     - name: OIDC_ENABLED
       value: "true"
