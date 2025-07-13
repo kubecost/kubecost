@@ -51,6 +51,9 @@ spec:
         fsGroup: 1001
       {{- end }}
       restartPolicy: Always
+      {{- if .Values.forecasting.serviceAccountName }}
+      serviceAccountName: {{ .Values.forecasting.serviceAccountName }}
+      {{- end }}
       containers:
         - name: forecasting
           {{- if .Values.forecasting.fullImageName }}
