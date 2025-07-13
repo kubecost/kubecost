@@ -848,7 +848,10 @@ forecasting:
     repository: gcr.io/kubecost1/kubecost-modeling
     tag: v0.1.27
   imagePullPolicy: IfNotPresent
-
+  
+  # Set Service Account For Forecast # optional 
+  # serviceAccountName: ""
+  
   # Resource specification block for the forecasting container.
   resources:
     requests:
