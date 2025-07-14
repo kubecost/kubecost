@@ -1220,7 +1220,9 @@ Begin Kubecost 2.0 templates
     - name: CUSTOM_TYPE_INSTANCES_URI
       value: {{ (quote .Values.instanceTypes.custom.location.URI) }}
     {{- end }}
-    {{- if or ((.Values.kubecostProductConfigs).actions).enabled }}
+    {{- if ((.Values.kubecostProductConfigs).actions).enabled }}
+    - name: ACTIONS_ENABLED
+      value: "true"
     - name: ACTIONS_BUCKET_CONFIG
       value: /var/configs/actions/storage/actions-store.yaml
     {{- end }}
