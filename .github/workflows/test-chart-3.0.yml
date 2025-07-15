@@ -101,8 +101,7 @@ jobs:
       # Install the chart with default values and check results.
       - name: Install Kubecost chart
         working-directory: ./cost-analyzer
-        run: helm install --wait --wait-for-jobs kubecost . -n kubecost -f .github/ci-files/helmValues-federated-store.yaml
-        # run: ct install --namespace kubecost --chart-dirs=cost-analyzer/ --charts cost-analyzer/
+        run: helm install --wait --wait-for-jobs kubecost . -n kubecost -f .github/ci-helmValues/helmValues-federated-store.yaml
 
       - name: Wait for ready 
         run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/name=cost-analyzer --timeout=120s
