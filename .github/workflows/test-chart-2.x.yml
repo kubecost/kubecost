@@ -1,14 +1,9 @@
 name: Chart build and test 2.x
 
+# NOTE: This workflow is no longer automatically triggered by PRs. It has been
+# replaced by test-chart-3.0.yml.
 on:
   workflow_dispatch: {}
-  # Normally using pull_request_target along with checking out the ref of the PR is not
-  # a good idea, but this is low risk since it's a Helm chart repo.
-  # pull_request_target:
-  #   types: [opened, synchronize, reopened, ready_for_review]
-  # pull_request:
-  #   branches:
-  #     - develop
 
 # Prevents multiple runs of the same workflow on the same branch from executing 
 # simultaneously. Saves resources.
