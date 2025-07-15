@@ -1079,6 +1079,12 @@ Begin Kubecost 2.0 templates
     {{- end }}
     - name: CUSTOM_COST_ENABLED
       value: {{ .Values.kubecostModel.plugins.enabled | quote }}
+    {{- if .Values.diagnostics.enabled }}
+    - name: DIAGNOSTICS_ENABLED
+      value: "true"
+    - name: DIAGNOSTICS_RETENTION
+      value: {{ .Values.diagnostics.retention | quote }}
+    {{- end }}
     {{- if .Values.kubecostAggregator.extraEnv -}}
     {{- toYaml .Values.kubecostAggregator.extraEnv | nindent 4 }}
     {{- end }}

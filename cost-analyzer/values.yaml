@@ -1117,45 +1117,10 @@ kubecostAggregator:
 ## A single view into the health of all agent clusters. Each agent cluster sends
 ## its diagnostic data to a storage bucket.
 ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-multi-diagnostics
-##
+## retention: deletes data beyond specified retention period
 diagnostics:
   enabled: true
-
-  ## The primary must be enabled to query diagnostic data. It aggregates all
-  ## diagnostic data, handles API requests, and deletes data beyond retention.
-  ## In readonly mode, it does not push its own diagnostic data to the bucket.
-  primary:
-    enabled: true
-    retention: "7d"
-    readonly: false
-
-  ## How frequently to run & push diagnostics. Defaults to 5 minutes.
-  pollingInterval: "300s"
-
-  ## Creates a new Diagnostic file in the bucket for every run.
-  keepDiagnosticHistory: false
-
-  ## Pushes the cluster's Kubecost Helm Values to the bucket once upon startup.
-  ## This may contain sensitive information and is roughly 30kb per cluster.
-  collectHelmValues: false
-
-  ## By default, the Multi-cluster Diagnostics service runs within the
-  ## cost-model container in the cost-analyzer pod. For higher availability, it
-  ## can be run as a separate deployment.
-  deployment:
-    enabled: false
-    resources:
-      requests:
-        cpu: "10m"
-        memory: "20Mi"
-    env: {}
-    labels: {}
-    securityContext: {}
-    containerSecurityContext: {}
-    nodeSelector: {}
-    tolerations: []
-    annotations: {}
-    affinity: {}
+  retention: 90d 
 
 # Kubecost Cluster Controller for Right Sizing and Cluster Turndown
 clusterController:

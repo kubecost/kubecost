@@ -464,10 +464,10 @@ data:
             return 204 'endpoint disabled';
         }
         {{ end }}
-        # TODO: Is this always enabled?
+
         location /model/multi-cluster-diagnostics-enabled {
             default_type 'application/json';
-            return 200 '{"multiClusterDiagnosticsEnabled": "true"}';
+            return 200 '{"multiClusterDiagnosticsEnabled": {{ .Values.diagnostics.enabled | quote }} }';
         }
 
         location /model/aggregatorEnabled {
