@@ -9,9 +9,6 @@ on:
   # pull_request:
   #   branches:
   #     - develop
-#   pull_request:
-#     branches:
-#       - develop
 
 # Prevents multiple runs of the same workflow on the same branch from executing 
 # simultaneously. Saves resources.
@@ -40,18 +37,17 @@ jobs:
       # Run `helm template` on the main values file plus all those in the ci directory.
       - name: Helm template
         run: |
-          echo "TODO: comprehensive tests"
-          # helm template cost-analyzer/ -f cost-analyzer/values.yaml > full.yaml
-          # directory="cost-analyzer/ci"
-          # for file in "$directory"/*; do
-          # if [ -f "$file" ]; then
-          #     helm template cost-analyzer/ -f "$file" >> full.yaml
-          # fi
-          # done
+          helm template cost-analyzer/ -f cost-analyzer/values.yaml > full.yaml
+          directory="cost-analyzer/ci"
+          for file in "$directory"/*; do
+          if [ -f "$file" ]; then
+              helm template cost-analyzer/ -f "$file" >> full.yaml
+          fi
+          done
 
+      # TODO: Reintroduce Kubeconform
       # Run Kubeconform on the combined, templatized output across all tested values stored in `full.yaml`.
       # Ensure all the rendered resources are valid.
-      # TODO: add kubeconform
       # - name: Kubeconform
       #   uses: docker://ghcr.io/yannh/kubeconform:latest
       #   with:
@@ -140,4 +136,3 @@ jobs:
           kubectl -n kubecost logs -l app.kubernetes.io/name=aggregator
           echo "basic-health logs"
           kubectl -n kubecost logs basic-health
-
