@@ -509,6 +509,8 @@ spec:
               value: {{ .Values.kubecost.retention1d | quote }}
             - name: RESOLUTION_1H_RETENTION
               value: {{ .Values.kubecost.retention1h | quote }}
+            - name: RESOLUTION_10M_RETENTION
+              value: {{ .Values.kubecost.retention10m | quote }}
             - name: CONTAINER_RESOURCE_USAGE_RETENTION_DAYS
               value: {{ .Values.aggregator.containerResourceUsageRetentionDays | quote }}
             - name: DB_TRIM_MEMORY_ON_CLOSE
