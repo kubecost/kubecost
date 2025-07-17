@@ -1278,6 +1278,10 @@ Begin Kubecost 2.0 templates
     - name: ENTERPRISE_CUSTOM_PRICING_APPLY_RETROACTIVELY
       value: "true"
     {{- end }}
+    {{- if and .Values.kubecostProductConfigs .Values.kubecostProductConfigs.currencyCode }}
+    - name: DISPLAY_CURRENCY
+      value: {{ .Values.kubecostProductConfigs.currencyCode }}
+    {{- end }}
 {{- end }}
 
 
