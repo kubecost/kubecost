@@ -1224,6 +1224,10 @@ Begin Kubecost 2.0 templates
     - name: ACTIONS_BUCKET_CONFIG
       value: /var/configs/actions/storage/actions-store.yaml
     {{- end }}
+    {{- if and .Values.kubecostProductConfigs .Values.kubecostProductConfigs.currencyCode }}
+    - name: DISPLAY_CURRENCY
+      value: {{ .Values.kubecostProductConfigs.currencyCode }}
+    {{- end }}
 {{- end }}
 
 
