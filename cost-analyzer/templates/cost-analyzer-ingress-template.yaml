@@ -1,0 +1,56 @@
+{{- if .Values.ingress -}}
+{{- if .Values.ingress.enabled -}}
+{{- $fullName := include "cost-analyzer.fullname" . -}}
+{{- $serviceName := "" -}}
+{{- if eq (include "frontend.deployMethod" .) "haMode" }}
+{{- $serviceName = include  "frontend.serviceName" . }}
+{{- else }}
+{{- $serviceName = include "cost-analyzer.serviceName" . -}}
+{{- end }}
+{{- $ingressPaths := .Values.ingress.paths -}}
+{{- $ingressPathType := .Values.ingress.pathType -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $fullName }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- with .Values.ingress.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+{{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+{{- end }}
+{{- if .Values.ingress.tls }}
+  tls:
+  {{- range .Values.ingress.tls }}
+    - hosts:
+      {{- range .hosts }}
+        - {{ . | quote }}
+      {{- end }}
+      secretName: {{ .secretName }}
+  {{- end }}
+{{- end }}
+  rules:
+  {{- range .Values.ingress.hosts }}
+    - host: {{ . | quote }}
+      http:
+        paths:
+        {{- range $ingressPaths }}
+          - path: {{ . }}
+            pathType: {{ $ingressPathType }}
+            backend:
+              service:
+                name: {{ $serviceName }}
+                port:
+                  name: tcp-frontend
+        {{- end }}
+  {{- end }}
+{{- end }}
+{{- end }}

@@ -1,8 +1,8 @@
-{{- if and .Values.kubecostFrontend.enabled (not .Values.federatedETL.agentOnly) }}
+{{- if eq (include "frontend.deployMethod" .) "haMode" }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "frontend.fullname" . }}
+  name: {{ template "frontend.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
@@ -64,7 +64,7 @@ spec:
         fsGroup: 1001
       {{- end }}
       restartPolicy: Always
-      serviceAccountName: {{ include "cost-analyzer.serviceAccountName" . }}
+      serviceAccountName: {{ template "cost-analyzer.serviceAccountName" . }}
       volumes:
         - name: tmp
           emptyDir: {}
@@ -203,7 +203,7 @@ spec:
       {{- if gt (len .Values.priority.name) 0 }}
       priorityClassName: {{ .Values.priority.name }}
       {{- else }}
-      priorityClassName: {{ include "cost-analyzer.fullname" . }}-priority
+      priorityClassName: {{ template "cost-analyzer.fullname" . }}-priority
       {{- end }}
       {{- end }}
       {{- end }}

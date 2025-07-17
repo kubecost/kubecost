@@ -1,0 +1,24 @@
+{{- if (eq (include "cost-analyzer.grafanaEnabled" .) "true")  }}
+{{- if .Values.grafana.dashboards }}
+  {{- range $provider, $dashboards := .Values.grafana.dashboards }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "grafana.fullname" $ }}-dashboards-{{ $provider }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    app: {{ template "grafana.name" $ }}
+    release: {{ $.Release.Name }}
+    heritage: {{ $.Release.Service }}
+    dashboard-provider: {{ $provider }}
+data:
+  {{- range $key, $value := $dashboards }}
+    {{- if hasKey $value "json" }}
+  {{ $key }}.json: |
+{{ $value.json | indent 4 }}
+    {{- end }}
+  {{- end }}
+  {{- end }}
+{{- end }}
+{{- end }}

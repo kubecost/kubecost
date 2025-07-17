@@ -1,8 +1,8 @@
-{{- if and .Values.kubecostFrontend.enabled (not .Values.federatedETL.agentOnly) }}
+{{- if eq (include "frontend.deployMethod" .) "haMode" }}
 kind: Service
 apiVersion: v1
 metadata:
-  name: {{ include "frontend.serviceName" . }}
+  name: {{ template "frontend.serviceName" . }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
@@ -28,7 +28,7 @@ spec:
 {{- if (eq .Values.service.type "LoadBalancer") }}
   {{- if .Values.service.loadBalancerSourceRanges }}
   loadBalancerSourceRanges:
-    {{- toYaml .Values.service.loadBalancerSourceRanges | nindent 4 -}}
+{{ toYaml .Values.service.loadBalancerSourceRanges | indent 4 }}
   {{- end -}}
 {{- end }}
   ports:

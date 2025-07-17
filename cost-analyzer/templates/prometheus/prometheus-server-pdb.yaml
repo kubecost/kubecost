@@ -1,0 +1,15 @@
+{{ if .Values.global.prometheus.enabled }}
+{{- if .Values.prometheus.server.podDisruptionBudget.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ template "prometheus.server.fullname" . }}
+  labels:
+    {{- include "prometheus.server.labels" . | nindent 4 }}
+spec:
+  maxUnavailable: {{ .Values.prometheus.server.podDisruptionBudget.maxUnavailable }}
+  selector:
+    matchLabels:
+      {{- include "prometheus.server.labels" . | nindent 6 }}
+{{- end }}
+{{ end }}

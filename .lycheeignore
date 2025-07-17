@@ -6,6 +6,7 @@ aps-workspaces
 prometheus.monitor.azure.com
 
 # Prometheus
+cost-analyzer-prometheus-server
 prometheus-k8s
 kubecost-prometheus-server
 kubecost-cost-analyzer-mimir-proxy
@@ -18,9 +19,13 @@ http://cloudcost/
 http://forecasting/
 http://clustercontroller/
 http://multi-cluster-diagnostics/
+http://grafana/
 http://model/
 http://api/
 kubecost-aggregator.kubecost:9004
+kubecost-cost-analyzer.kubecost:9001
+kubecost-cost-analyzer.kubecost:9003
+kubecost-grafana.kubecost
 kubecost-forecasting.kubecost:5000
 kubecost-cloud-cost.kubecost:9005
 
@@ -28,6 +33,7 @@ kubecost-cloud-cost.kubecost:9005
 http://kubecost-aggregator:9004
 github.com/opencost/opencost-plugins/releases/download/
 ingest.sentry.io
+https://grafana.com/api/dashboards/
 https://oauth2.googleapis.com/token
 cluster-a.kubecost.com
 cluster-b.kubecost.com

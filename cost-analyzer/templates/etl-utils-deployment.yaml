@@ -1,0 +1,129 @@
+{{- if .Values.etlUtils.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "etlUtils.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "etlUtils.commonLabels" . | nindent 4 }}
+    {{- with .Values.global.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  annotations:
+  {{- with .Values.global.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.etlUtils.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "etlUtils.selectorLabels" . | nindent 6 }}
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ template "etlUtils.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app: {{ template "etlUtils.name" . }}
+        {{- with .Values.global.additionalLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      annotations:
+        {{- with .Values.global.podAnnotations}}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      restartPolicy: Always
+      volumes:
+        {{- if .Values.etlUtils.thanosSourceBucketSecret }}
+        - name: etl-bucket-config
+          secret:
+            defaultMode: 420
+            secretName: {{ .Values.etlUtils.thanosSourceBucketSecret }}
+        {{- end }}
+        {{- if or .Values.kubecostModel.federatedStorageConfigSecret .Values.kubecostModel.federatedStorageConfig}}
+        - name: federated-storage-config
+          secret:
+            defaultMode: 420
+            secretName: {{ .Values.kubecostModel.federatedStorageConfigSecret | default "federated-store" }}
+        {{- end }}
+      serviceAccountName: {{ template "cost-analyzer.serviceAccountName" . }}
+      containers:
+        - name: {{ template "etlUtils.name" . }}
+          {{- if .Values.kubecostModel }}
+          {{- if .Values.etlUtils.fullImageName }}
+          image: {{ .Values.etlUtils.fullImageName }}
+          {{- else if .Values.kubecostModel.fullImageName }}
+          image: {{ .Values.kubecostModel.fullImageName }}
+          {{- else if .Values.imageVersion }}
+          image: {{ .Values.kubecostModel.image }}:{{ .Values.imageVersion }}
+          {{- else if eq "development" .Chart.AppVersion }}
+          image: gcr.io/kubecost1/cost-model-nightly:latest
+          {{- else }}
+          image: {{ .Values.kubecostModel.image }}:prod-{{ $.Chart.AppVersion }}
+          {{ end }}
+          {{- else }}
+          image: gcr.io/kubecost1/cost-model:prod-{{ $.Chart.AppVersion }}
+          {{ end }}
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 9006
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 200
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 9006
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          imagePullPolicy: Always
+          args: ["etl-utils"]
+          ports:
+            - name: api
+              containerPort: 9006
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.etlUtils.resources | nindent 12 }}
+          volumeMounts:
+          {{- if .Values.etlUtils.thanosSourceBucketSecret }}
+            - name: etl-bucket-config
+              mountPath: /var/configs/etl
+              readOnly: true
+          {{- end }}
+          env:
+            - name: CONFIG_PATH
+              value: /var/configs/
+            {{- if .Values.etlUtils.thanosSourceBucketSecret }}
+            - name: ETL_BUCKET_CONFIG
+              value: "/var/configs/etl/object-store.yaml"
+            {{- end}}
+            {{- range $key, $value := .Values.etlUtils.env }}
+            - name: {{ $key | quote }}
+              value: {{ $value | quote }}
+            {{- end }}
+
+    {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+      {{- range $.Values.imagePullSecrets }}
+        - name: {{ .name }}
+      {{- end }}
+    {{- end }}
+      {{- with .Values.etlUtils.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.etlUtils.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.etlUtils.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

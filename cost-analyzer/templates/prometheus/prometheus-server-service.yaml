@@ -1,0 +1,62 @@
+{{ if .Values.global.prometheus.enabled }}
+{{- if .Values.prometheus.server.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+{{- if .Values.prometheus.server.service.annotations }}
+  annotations:
+{{ toYaml .Values.prometheus.server.service.annotations | indent 4 }}
+{{- end }}
+  labels:
+    {{- include "prometheus.server.labels" . | nindent 4 }}
+{{- if .Values.prometheus.server.service.labels }}
+{{ toYaml .Values.prometheus.server.service.labels | indent 4 }}
+{{- end }}
+  name: {{ template "prometheus.server.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+spec:
+{{- if .Values.prometheus.server.service.clusterIP }}
+  clusterIP: {{ .Values.prometheus.server.service.clusterIP }}
+{{- end }}
+{{- if .Values.prometheus.server.service.externalIPs }}
+  externalIPs:
+{{ toYaml .Values.prometheus.server.service.externalIPs | indent 4 }}
+{{- end }}
+{{- if .Values.prometheus.server.service.loadBalancerIP }}
+  loadBalancerIP: {{ .Values.prometheus.server.service.loadBalancerIP }}
+{{- end }}
+{{- if .Values.prometheus.server.service.loadBalancerSourceRanges }}
+  loadBalancerSourceRanges:
+  {{- range $cidr := .Values.prometheus.server.service.loadBalancerSourceRanges }}
+    - {{ $cidr }}
+  {{- end }}
+{{- end }}
+  ports:
+    - name: http
+      port: {{ .Values.prometheus.server.service.servicePort }}
+      protocol: TCP
+      targetPort: 9090
+    {{- if .Values.prometheus.server.service.nodePort }}
+      nodePort: {{ .Values.prometheus.server.service.nodePort }}
+    {{- end }}
+    {{- if .Values.prometheus.server.service.gRPC.enabled }}
+    - name: grpc
+      port: {{ .Values.prometheus.server.service.gRPC.servicePort }}
+      protocol: TCP
+      targetPort: 10901
+    {{- if .Values.prometheus.server.service.gRPC.nodePort }}
+      nodePort: {{ .Values.prometheus.server.service.gRPC.nodePort }}
+    {{- end }}
+    {{- end }}
+  selector:
+  {{- if and .Values.prometheus.server.statefulSet.enabled .Values.prometheus.server.service.statefulsetReplica.enabled }}
+    statefulset.kubernetes.io/pod-name: {{ .Release.Name }}-{{ .Values.prometheus.server.name }}-{{ .Values.prometheus.server.service.statefulsetReplica.replica }}
+  {{- else -}}
+    {{- include "prometheus.server.matchLabels" . | nindent 4 }}
+{{- if .Values.prometheus.server.service.sessionAffinity }}
+  sessionAffinity: {{ .Values.prometheus.server.service.sessionAffinity }}
+{{- end }}
+  {{- end }}
+  type: "{{ .Values.prometheus.server.service.type }}"
+{{- end -}}
+{{ end }}

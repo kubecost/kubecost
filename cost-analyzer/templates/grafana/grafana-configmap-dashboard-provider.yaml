@@ -1,0 +1,28 @@
+{{- if (eq (include "cost-analyzer.grafanaEnabled" .) "true") }}
+{{- if .Values.grafana.sidecar.dashboards.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app: {{ template "grafana.name" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+{{- with .Values.grafana.annotations }}
+  annotations:
+{{ toYaml . | indent 4 }}
+{{- end }}
+  name: {{ template "grafana.fullname" . }}-config-dashboards
+  namespace: {{ .Release.Namespace }}
+data:
+  provider.yaml: |-
+    apiVersion: 1
+    providers:
+    - name: 'default'
+      orgId: 1
+      folder: ''
+      type: file
+      disableDeletion: false
+      options:
+        path: {{ .Values.grafana.sidecar.dashboards.folder }}
+{{- end}}
+{{ end }}

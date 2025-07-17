@@ -1,0 +1,66 @@
+{{- if and (not .Values.agent) (not .Values.cloudAgent) }}
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ template "cost-analyzer.serviceName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+{{- if .Values.service.labels }}
+{{ toYaml .Values.service.labels | indent 4 }}
+{{- end }}
+{{- if .Values.service.annotations }}
+  annotations:
+{{ toYaml .Values.service.annotations | indent 4 }}
+{{- end }}
+spec:
+  selector:
+    {{- include "cost-analyzer.selectorLabels" . | nindent 4 }}
+{{- if .Values.service -}}
+{{- if .Values.service.type }}
+  type: "{{ .Values.service.type }}"
+{{- else }}
+  type: ClusterIP
+{{- end }}
+{{- else }}
+  type: ClusterIP
+{{- end }}
+{{- if (eq .Values.service.type "LoadBalancer") }}
+  {{- if .Values.service.loadBalancerSourceRanges }}
+  loadBalancerSourceRanges:
+{{ toYaml .Values.service.loadBalancerSourceRanges | indent 4 }}
+  {{- end -}}
+{{- end }}
+  ports:
+    - name: tcp-model
+      port: 9003
+      targetPort: 9003
+  {{- with .Values.kubecostModel.extraPorts }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+    {{- if and (.Values.kubecostFrontend.enabled) (not (eq (include "frontend.deployMethod" .) "haMode")) }}
+    - name: tcp-frontend
+      {{- if (eq .Values.service.type "NodePort") }}
+      {{- if .Values.service.nodePort }}
+      nodePort: {{ .Values.service.nodePort }}
+      {{- end }}
+      {{- end }}
+      port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.targetPort }}
+    {{- end }}
+    {{- if or .Values.saml.enabled .Values.oidc.enabled}}
+    - name: apiserver
+      port: 9007
+      targetPort: 9007
+    {{- end }}
+{{- if .Values.service.sessionAffinity.enabled }}
+  sessionAffinity: ClientIP
+  {{- if .Values.service.sessionAffinity.timeoutSeconds }}
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: {{ .Values.service.sessionAffinity.timeoutSeconds }}
+  {{- end }}
+{{- else }}
+  sessionAffinity: None
+{{- end }}
+{{- end }}

@@ -6,7 +6,7 @@ To install via Helm, run the following command.
 
 ```sh
 helm upgrade --install kubecost -n kubecost --create-namespace \
-  --repo https://kubecost.github.io/cost-analyzer/ kubecost \
+  --repo https://kubecost.github.io/cost-analyzer/ cost-analyzer \
   --set kubecostToken="aGVsbUBrdWJlY29zdC5jb20=xm343yadf98"
 ```
 
@@ -58,6 +58,12 @@ The following table lists commonly used configuration parameters for the Kubecos
 | `serviceMonitor.additionalLabels`                                                  | Additional labels that can be used so ServiceMonitor will be discovered by Prometheus                                                                        | `{}`                                                  |
 | `serviceMonitor.relabelings`                                                       | Sets Prometheus metric_relabel_configs on the scrape job                                                                                                     | `[]`                                                  |
 | `serviceMonitor.metricRelabelings`                                                 | Sets Prometheus relabel_configs on the scrape job                                                                                                            | `[]`                                                  |
+| `prometheusRule.enabled`                                                           | Set this to `true` to create PrometheusRule for Prometheus operator                                                                                          | `false`                                               |
+| `prometheusRule.additionalLabels`                                                  | Additional labels that can be used so PrometheusRule will be discovered by Prometheus                                                                        | `{}`                                                  |
+| `grafana.resources`                                                                | Grafana resource requests and limits.                                                                                                                        | `{}`                                                  |
+| `grafana.serviceAccount.create`                                                    | If true, create a Service Account for Grafana.                                                                                                               | `true`                                                |
+| `grafana.serviceAccount.name`                                                      | Grafana Service Account name.                                                                                                                                | `{}`                                                  |
+| `grafana.sidecar.datasources.defaultDatasourceEnabled`                             | Set this to `false` to disable creation of Prometheus datasource in Grafana                                                                                  | `true`                                                |
 | `serviceAccount.create`                                                            | Set this to `false` if you want to create the service account `kubecost-cost-analyzer` on your own                                                           | `true`                                                |
 | `tolerations`                                                                      | node taints to tolerate                                                                                                                                      | `[]`                                                  |
 | `affinity`                                                                         | pod affinity                                                                                                                                                 | `{}`                                                  |
@@ -65,6 +71,7 @@ The following table lists commonly used configuration parameters for the Kubecos
 | `kubecostFrontend.api.fqdn`                                                        | Customize the upstream api FQDN                                                                                                                              | `computed in terms of the service name and namespace` |
 | `kubecostFrontend.model.fqdn`                                                      | Customize the upstream model FQDN                                                                                                                            | `computed in terms of the service name and namespace` |
 | `clusterController.fqdn`                                                           | Customize the upstream cluster controller FQDN                                                                                                               | `computed in terms of the service name and namespace` |
+| `global.grafana.fqdn`                                                              | Customize the upstream grafana FQDN                                                                                                                          | `computed in terms of the release name and namespace` |
 
 ## Adjusting Log Output
 

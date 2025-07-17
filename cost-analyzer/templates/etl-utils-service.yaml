@@ -1,0 +1,17 @@
+{{- if .Values.etlUtils.enabled }}
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ template "etlUtils.serviceName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "etlUtils.commonLabels" . | nindent 4 }}
+spec:
+  selector:
+    {{- include "etlUtils.selectorLabels" . | nindent 4 }}
+  type: "ClusterIP"
+  ports:
+    - name: api
+      port: 9006
+      targetPort: 9006
+{{- end }}

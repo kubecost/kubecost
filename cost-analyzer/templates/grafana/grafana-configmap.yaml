@@ -1,0 +1,90 @@
+{{- if (eq (include "cost-analyzer.grafanaEnabled" .) "true") }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "grafana.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ template "grafana.name" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+{{- if .Values.grafana.plugins }}
+  plugins: {{ join "," .Values.grafana.plugins }}
+{{- end }}
+  grafana.ini: |
+{{- range $key, $value := index .Values.grafana "grafana.ini" }}
+    [{{ $key }}]
+    {{- range $elem, $elemVal := $value }}
+    {{ $elem }} = {{ $elemVal }}
+    {{- end }}
+{{- end }}
+
+{{- if .Values.grafana.datasources }}
+  {{- range $key, $value := .Values.grafana.datasources }}
+  {{ $key }}: |
+{{ toYaml $value | trim | indent 4 }}
+  {{- end -}}
+{{- end }}
+{{- if not .Values.grafana.datasources }}
+  datasources.yaml: |
+    apiVersion: 1
+    datasources:
+{{- if .Values.global.prometheus.enabled }}
+    - access: proxy
+      isDefault: true
+      name: Prometheus
+      type: prometheus
+      url: http://{{ template "cost-analyzer.prometheus.server.name" . }}.{{ .Release.Namespace }}.svc
+      jsonData:
+        httpMethod: POST
+        prometheusType: Prometheus
+        prometheusVersion: 2.35.0
+        timeInterval: 1m
+{{- else }}
+    - access: proxy
+      isDefault: true
+      name: Prometheus
+      type: prometheus
+      url: {{ .Values.global.prometheus.fqdn }}
+      jsonData:
+        httpMethod: POST
+        prometheusType: Prometheus
+        prometheusVersion: 2.35.0
+        timeInterval: 1m
+{{- end -}}
+{{- end }}
+{{- if .Values.grafana.dashboardProviders }}
+  {{- range $key, $value := .Values.grafana.dashboardProviders }}
+  {{ $key }}: |
+{{ toYaml $value | indent 4 }}
+  {{- end -}}
+{{- end -}}
+
+{{- if .Values.grafana.dashboards  }}
+  download_dashboards.sh: |
+    #!/usr/bin/env sh
+    set -euf
+    {{- if .Values.grafana.dashboardProviders }}
+      {{- range $key, $value := .Values.grafana.dashboardProviders }}
+        {{- range $value.providers }}
+    mkdir -p {{ .options.path }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+
+  {{- range $provider, $dashboards := .Values.grafana.dashboards }}
+    {{- range $key, $value := $dashboards }}
+      {{- if (or (hasKey $value "gnetId") (hasKey $value "url")) }}
+    curl -sk \
+    --connect-timeout 60 \
+    --max-time 60 \
+    -H "Accept: application/json" \
+    -H "Content-Type: application/json;charset=UTF-8" \
+    {{- if $value.url -}}{{ $value.url }}{{- else -}} https://grafana.com/api/dashboards/{{ $value.gnetId }}/revisions/{{- if $value.revision -}}{{ $value.revision }}{{- else -}}1{{- end -}}/download{{- end -}}{{ if $value.datasource }}| sed 's|\"datasource\":[^,]*|\"datasource\": \"{{ $value.datasource }}\"|g'{{ end }} \
+    > /var/lib/grafana/dashboards/{{ $provider }}/{{ $key }}.json
+      {{- end }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{ end }}

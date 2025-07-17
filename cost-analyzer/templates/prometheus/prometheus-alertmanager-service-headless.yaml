@@ -1,0 +1,33 @@
+{{ if .Values.global.prometheus.enabled }}
+{{- if and .Values.prometheus.alertmanager.enabled .Values.prometheus.alertmanager.statefulSet.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+{{- if .Values.prometheus.alertmanager.statefulSet.headless.annotations }}
+  annotations:
+{{ toYaml .Values.prometheus.alertmanager.statefulSet.headless.annotations | indent 4 }}
+{{- end }}
+  labels:
+    {{- include "prometheus.alertmanager.labels" . | nindent 4 }}
+{{- if .Values.prometheus.alertmanager.statefulSet.headless.labels }}
+{{ toYaml .Values.prometheus.alertmanager.statefulSet.headless.labels | indent 4 }}
+{{- end }}
+  name: {{ template "prometheus.alertmanager.fullname" . }}-headless
+  namespace: {{ .Release.Namespace }}
+spec:
+  clusterIP: None
+  ports:
+    - name: http
+      port: {{ .Values.prometheus.alertmanager.statefulSet.headless.servicePort }}
+      protocol: TCP
+      targetPort: 9093
+{{- if .Values.prometheus.alertmanager.statefulSet.headless.enableMeshPeer }}
+    - name: meshpeer
+      port: 6783
+      protocol: TCP
+      targetPort: 6783
+{{- end }}
+  selector:
+    {{- include "prometheus.alertmanager.matchLabels" . | nindent 4 }}
+{{- end }}
+{{ end }}

@@ -1,5 +1,5 @@
 {{- if .Values.kubecostProductConfigs }}
-{{- if or .Values.kubecostProductConfigs.labelMappingConfigs .Values.kubecostProductConfigs.cloudAccountMapping}}
+{{- if or .Values.kubecostProductConfigs.grafanaURL .Values.kubecostProductConfigs.labelMappingConfigs .Values.kubecostProductConfigs.cloudAccountMapping}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -66,5 +66,8 @@ data:
   {{- end -}}
 {{- end -}}
 {{- end -}}
+  {{- if .Values.kubecostProductConfigs.grafanaURL }}
+  grafanaURL: "{{  .Values.kubecostProductConfigs.grafanaURL }}"
+  {{- end -}}
 {{- end -}}
 {{- end -}}

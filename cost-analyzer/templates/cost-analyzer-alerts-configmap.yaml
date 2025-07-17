@@ -1,4 +1,4 @@
-{{- if (.Values.global.notifications).alertConfigs }}
+{{- if .Values.global.notifications.alertConfigs }}
 apiVersion: v1
 kind: ConfigMap
 metadata:

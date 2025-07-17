@@ -1,0 +1,29 @@
+{{- if and (.Capabilities.APIVersions.Has "security.openshift.io/v1/SecurityContextConstraints") (.Values.global.platforms.openshift.scc.nodeExporter) (.Values.prometheus.nodeExporter.enabled) }}
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: {{ template "prometheus.nodeExporter.fullname" . }}
+priority: 10
+allowPrivilegedContainer: true
+allowHostDirVolumePlugin: true
+allowHostNetwork: true
+allowHostPorts: true
+allowHostPID: true
+allowHostIPC: false
+readOnlyRootFilesystem: false
+runAsUser:
+  type: RunAsAny
+fsGroup:
+  type: RunAsAny
+seLinuxContext:
+  type: RunAsAny
+supplementalGroups:
+  type: RunAsAny
+seccompProfiles:
+- runtime/default
+volumes:
+  - hostPath
+  - projected
+users:
+  - system:serviceaccount:{{ .Release.Namespace }}:{{ template "prometheus.serviceAccountName.nodeExporter" . }}
+{{- end }}

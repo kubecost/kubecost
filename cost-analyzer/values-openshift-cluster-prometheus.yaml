@@ -1,5 +1,15 @@
 # This Helm values file is a modified version of `values-openshift.yaml`.
+# The primary difference is that this file is configured to disable the Kubecost-bundled Prometheus, and instead leverage the Prometheus instance that is typically pre-installed in OpenShift clusters.
 global:
+  prometheus:
+    enabled: false  # Kubecost depends on Prometheus data, it is not optional. When enabled: false, Prometheus will not be installed and you must configure your in-cluster Prometheus to scrape kubecost as well as provide the fqdn below. -- Warning: Before changing using this setting, please read to understand the risks https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-prometheus-guide
+    fqdn: https://prometheus-k8s.openshift-monitoring.svc.cluster.local:9091  # example address of a Prometheus to connect to. Include protocol (http:// or https://) Ignored if enabled: true
+    kubeRBACProxy: true # If true, kubecost will use kube-rbac-proxy to authenticate with in cluster Prometheus for openshift
+  grafana:
+    enabled: false  # If false, Grafana will not be installed
+    domainName: grafana.grafana
+    proxy: false
+
   platforms:
     # Deploying to OpenShift (OCP) requires enabling this option.
     openshift:
@@ -14,20 +24,5 @@ serviceMonitor:
   aggregatorMetrics:
     enabled: false
 
-kubecostProductConfigs:
-  metricsConfigs:
-    disabledMetrics:
-      - cluster:hyperthread_enabled_nodes
-      - deployment_match_labels
-      - kube_job_status_failed
-      - kube_namespace_labels
-      - kube_node_labels
-      - kube_node_status_allocatable
-      - kube_node_status_capacity
-      - kube_persistentvolume_capacity_bytes
-      - kube_persistentvolumeclaim_info
-      - kube_persistentvolumeclaim_resource_requests_storage_bytes
-      - kube_pod_container_resource_requests
-      - kube_pod_container_status_terminated_reason
-      - kube_pod_labels
-      - kube_pod_owner
+prometheusRule:
+  enabled: true

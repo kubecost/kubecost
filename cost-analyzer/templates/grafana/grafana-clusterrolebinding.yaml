@@ -1,0 +1,24 @@
+{{- if (eq (include "cost-analyzer.grafanaEnabled" .) "true") }}
+{{- if .Values.grafana.rbac.create }}
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ template "grafana.fullname" . }}-clusterrolebinding
+  labels:
+    app: {{ template "grafana.name" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+{{- with .Values.grafana.annotations }}
+  annotations:
+{{ toYaml . | indent 4 }}
+{{- end }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ template "grafana.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name: {{ template "grafana.fullname" . }}-clusterrole
+  apiGroup: rbac.authorization.k8s.io
+{{- end}}
+{{ end }}

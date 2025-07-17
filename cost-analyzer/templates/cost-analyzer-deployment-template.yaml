@@ -1,0 +1,1257 @@
+{{- if and (not .Values.agent) (not .Values.cloudAgent) }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "cost-analyzer.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- with .Values.global.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- if and .Values.kubecostDeployment .Values.kubecostDeployment.labels }}
+    {{- toYaml .Values.kubecostDeployment.labels | nindent 4 }}
+    {{- end }}
+  annotations:
+  {{- with .Values.global.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- if and .Values.kubecostDeployment .Values.kubecostDeployment.annotations }}
+    {{- toYaml .Values.kubecostDeployment.annotations | nindent 4 }}
+  {{- end }}
+spec:
+{{- if .Values.kubecostDeployment }}
+  replicas: {{ .Values.kubecostDeployment.replicas | default 1 }}
+{{- end }}
+  selector:
+    matchLabels:
+      {{- include "cost-analyzer.selectorLabels" . | nindent 8}}
+{{- if .Values.kubecostDeployment }}
+{{- if .Values.kubecostDeployment.deploymentStrategy }}
+{{- with .Values.kubecostDeployment.deploymentStrategy }}
+  strategy: {{ toYaml . | nindent 4 }}
+{{- end }}
+{{- else }}
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+{{- end }}
+{{- end }}
+  template:
+    metadata:
+      labels:
+        {{- include "cost-analyzer.selectorLabels" . | nindent 8 }}
+        {{- if .Values.global.additionalLabels }}
+        {{ toYaml .Values.global.additionalLabels | nindent 8 }}
+        {{- end }}
+        {{- if and .Values.kubecostDeployment .Values.kubecostDeployment.labels }}
+        {{- toYaml .Values.kubecostDeployment.labels | nindent 8 }}
+        {{- end }}
+      annotations:
+        {{- with .Values.global.podAnnotations}}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        checksum/configs: {{ include "configsChecksum" . }}
+    spec:
+      {{- if .Values.global.platforms.openshift.enabled }}
+      securityContext:
+      {{- toYaml .Values.global.platforms.openshift.securityContext | nindent 8 }}
+      {{- else if .Values.global.securityContext }}
+      securityContext:
+      {{- toYaml .Values.global.securityContext | nindent 8 }}
+      {{- else }}
+      securityContext:
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+      {{- end }}
+      restartPolicy: Always
+      serviceAccountName: {{ template "cost-analyzer.serviceAccountName" . }}
+      volumes:
+        {{- if .Values.kubecostModel.plugins.enabled }}
+        - name: plugins-dir
+          emptyDir: {}
+        {{- if and (not .Values.kubecostModel.plugins.existingCustomSecret.enabled) .Values.kubecostModel.plugins.secretName }}
+        - name: plugins-config
+          secret:
+            secretName: {{ .Values.kubecostModel.plugins.secretName }}
+            items:
+              {{- range $key, $config := .Values.kubecostModel.plugins.enabledPlugins}}
+              - key: {{ $config }}_config.json
+                path: {{ $config }}_config.json
+            {{- end }}
+        {{- end }}
+        {{- if .Values.kubecostModel.plugins.existingCustomSecret.enabled }}
+        - name: plugins-config
+          secret:
+            secretName: {{ .Values.kubecostModel.plugins.existingCustomSecret.name }}
+            items:
+            {{- range $key, $config := .Values.kubecostModel.plugins.enabledPlugins }}
+              - key: {{ $config }}_config.json
+                path: {{ $config }}_config.json
+            {{- end }}
+        {{- end }}
+        {{- if .Values.kubecostModel.plugins.install.enabled}}
+        - name: install-script
+          configMap:
+            name: {{ template "cost-analyzer.fullname" . }}-install-plugins
+        {{- end }}
+        {{- end }}
+        - name: tmp
+          emptyDir: {}
+        - name: log
+          emptyDir: {}
+        {{- if and .Values.kubecostFrontend.enabled (not .Values.federatedETL.agentOnly) (not (eq (include "frontend.deployMethod" .) "haMode")) }}
+        - name: nginx-conf
+          configMap:
+            name: nginx-conf
+            items:
+              - key: nginx.conf
+                path: default.conf
+        {{- end }}
+        {{- if .Values.global.containerSecuritycontext }}
+        - name: var-run
+          emptyDir: { }
+        - name: cache
+          emptyDir: { }
+        {{- end }}
+        {{- if or .Values.kubecostModel.federatedStorageConfigSecret .Values.kubecostModel.federatedStorageConfig }}
+        - name: federated-storage-config
+          secret:
+           defaultMode: 420
+           secretName: {{ .Values.kubecostModel.federatedStorageConfigSecret | default "federated-store" }}
+        {{- end }}
+        {{- if .Values.global.updateCaTrust.enabled }}
+        - name: ca-certs-secret
+          {{- if .Values.global.updateCaTrust.caCertsSecret }}
+          secret:
+            defaultMode: 420
+            secretName: {{ .Values.global.updateCaTrust.caCertsSecret }}
+          {{- else }}
+          configMap:
+            name: {{ .Values.global.updateCaTrust.caCertsConfig }}
+          {{- end }}
+        - name: ssl-path
+          emptyDir: {}
+        {{- end }}
+        {{- if .Values.kubecostProductConfigs }}
+        {{- if and ((.Values.kubecostProductConfigs).productKey).enabled ((.Values.kubecostProductConfigs).productKey).secretname }}
+        - name: productkey-secret
+          secret:
+            secretName: {{ .Values.kubecostProductConfigs.productKey.secretname }}
+            items:
+            - key: productkey.json
+              path: productkey.json
+        {{- end }}
+        {{- if ((.Values.kubecostProductConfigs).smtp).secretname }}
+        - name: smtp-secret
+          secret:
+            secretName: {{ .Values.kubecostProductConfigs.smtp.secretname }}
+            items:
+            - key: smtp.json
+              path: smtp.json
+        {{- end }}
+        {{- if .Values.kubecostProductConfigs }}
+        {{- if .Values.kubecostProductConfigs.gcpSecretName }}
+        - name: gcp-key-secret
+          secret:
+            secretName: {{ .Values.kubecostProductConfigs.gcpSecretName }}
+            items:
+            - key: {{ .Values.kubecostProductConfigs.gcpSecretKeyName | default "compute-viewer-kubecost-key.json" }}
+              path: service-key.json
+        {{- end }}
+        {{- end -}}
+        {{- if .Values.kubecostProductConfigs.serviceKeySecretName }}
+        - name: service-key-secret
+          secret:
+            secretName: {{ .Values.kubecostProductConfigs.serviceKeySecretName }}
+        {{- else if .Values.kubecostProductConfigs.createServiceKeySecret }}
+        - name: service-key-secret
+          secret:
+            secretName: cloud-service-key
+        {{- end }}
+        {{- if .Values.kubecostProductConfigs.cloudIntegrationSecret }}
+        - name: cloud-integration
+          secret:
+            secretName: {{ .Values.kubecostProductConfigs.cloudIntegrationSecret }}
+            items:
+              - key: cloud-integration.json
+                path: cloud-integration.json
+        {{- else if or .Values.kubecostProductConfigs.cloudIntegrationJSON ((.Values.kubecostProductConfigs).athenaBucketName) }}
+        - name: cloud-integration
+          secret:
+            secretName: cloud-integration
+            items:
+              - key: cloud-integration.json
+                path: cloud-integration.json
+        {{- end }}
+        {{- if .Values.kubecostProductConfigs.clusters }}
+        - name: kubecost-clusters
+          configMap:
+            name: kubecost-clusters
+        {{- range .Values.kubecostProductConfigs.clusters }}
+        {{- if .auth }}
+        {{- if .auth.secretName }}
+        - name: {{ .auth.secretName }}
+          secret:
+            secretName: {{ .auth.secretName }}
+        {{- end }}
+        {{- end }}
+        {{- end }}
+        {{- end }}
+        {{- end }}
+        {{- if .Values.kubecostFrontend.tls }}
+        {{- if .Values.kubecostFrontend.tls.enabled }}
+        - name: tls
+          secret:
+            secretName : {{ .Values.kubecostFrontend.tls.secretName }}
+            items:
+            - key: tls.crt
+              path: kc.crt
+            - key: tls.key
+              path: kc.key
+        {{- end }}
+        {{- end }}
+        {{- if .Values.kubecostAdmissionController }}
+        {{- if .Values.kubecostAdmissionController.enabled }}
+        {{- if .Values.kubecostAdmissionController.secretName }}
+        - name: webhook-server-tls
+          secret:
+            secretName: {{ .Values.kubecostAdmissionController.secretName }}
+            items:
+            - key: tls.crt
+              path: tls.crt
+            - key: tls.key
+              path: tls.key
+        {{- end }}
+        {{- end }}
+        {{- end }}
+        {{- if .Values.saml }}
+        {{- if .Values.saml.enabled }}
+        {{- if .Values.saml.secretName }}
+        - name: secret-volume
+          secret:
+            secretName: {{ .Values.saml.secretName }}
+        {{- end }}
+        {{- if .Values.saml.encryptionCertSecret }}
+        - name: saml-encryption-cert
+          secret:
+            secretName: {{ .Values.saml.encryptionCertSecret }}
+        {{- end }}
+        {{- if .Values.saml.decryptionKeySecret }}
+        - name: saml-decryption-key
+          secret:
+            secretName: {{ .Values.saml.decryptionKeySecret }}
+        {{- end }}
+        {{- if .Values.saml.metadataSecretName }}
+        - name: metadata-secret-volume
+          secret:
+            secretName: {{ .Values.saml.metadataSecretName }}
+        {{- end }}
+        - name: saml-auth-secret
+          secret:
+            secretName: {{ .Values.saml.authSecretName | default "kubecost-saml-secret" }}
+        {{- if .Values.saml.rbac.enabled }}
+        - name: saml-roles
+          configMap:
+            name: {{ template "cost-analyzer.fullname" . }}-saml
+        {{- end }}
+        {{- if eq (include "authMasterKeyEnabled" .) "true" }}
+        - name: kubecost-master-api-key
+          secret:
+            secretName: {{ .Values.saml.apiMasterKeySecret | default "kubecost-master-api-key" }}
+        {{- end }}
+        {{- end }}
+        {{- end }}
+        {{- if .Values.oidc }}
+        {{- if .Values.oidc.enabled }}
+        - name: oidc-config
+          configMap:
+            name: {{ template "cost-analyzer.fullname" . }}-oidc
+        {{- if and (not .Values.oidc.existingCustomSecret.enabled) .Values.oidc.secretName }}
+        - name: oidc-client-secret
+          secret:
+            secretName: {{ .Values.oidc.secretName }}
+        {{- end }}
+        {{- if .Values.oidc.existingCustomSecret.enabled }}
+        - name: oidc-client-secret
+          secret:
+            secretName: {{ .Values.oidc.existingCustomSecret.name }}
+        {{- end }}
+        {{- if eq (include "authMasterKeyEnabled" .) "true" }}
+        - name: kubecost-master-api-key
+          secret:
+            secretName: {{ .Values.oidc.apiMasterKeySecret | default "kubecost-master-api-key" }}
+        {{- end }}
+        {{- end }}
+        {{- end }}
+        {{- if eq (include "rbacTeamsEnabled" .) "true" }}
+        - name: kubecost-rbac-secret
+          secret:
+            secretName: kubecost-rbac-secret
+        {{- end }}
+        {{- if eq (include "rbacTeamsConfigEnabled" .) "true" }}
+        - name: kubecost-rbac-teams-config
+          configMap:
+        {{- if .Values.teams.teamsConfigMapName }}
+            name: {{ .Values.teams.teamsConfigMapName }}
+        {{- else }}
+            name: kubecost-rbac-teams-config
+        {{- end }}
+        {{- end }}
+        {{- if .Values.extraVolumes }}
+        # Extra volume(s)
+        {{- toYaml .Values.extraVolumes | nindent 8 }}
+        {{- end }}
+        {{- if (.Values.enterpriseCustomPricing).enabled }}
+        - name: kubecost-enterprise-pricing
+          configMap:
+            name: {{ .Values.enterpriseCustomPricing.configMapName }}
+        {{- end }}
+        - name: persistent-configs
+{{- if .Values.persistentVolume }}
+{{- if .Values.persistentVolume.enabled }}
+          persistentVolumeClaim:
+{{- if .Values.persistentVolume.existingClaim }}
+            claimName: {{ .Values.persistentVolume.existingClaim }}
+{{- else }}
+            claimName: {{ template "cost-analyzer.fullname" . }}
+{{- end -}}
+{{- else }}
+          emptyDir: {}
+{{- end -}}
+{{- else }}
+          persistentVolumeClaim:
+            claimName: {{ template "cost-analyzer.fullname" . }}
+{{- end }}
+{{- if .Values.persistentVolume.dbPVEnabled }}
+        - name: persistent-db
+{{- if .Values.persistentVolume }}
+{{- if .Values.persistentVolume.enabled }}
+          persistentVolumeClaim:
+{{- if .Values.persistentVolume.dbExistingClaim }}
+            claimName: {{ .Values.persistentVolume.dbExistingClaim }}
+{{- else }}
+            claimName: {{ template "cost-analyzer.fullname" . }}-db
+{{- end -}}
+{{- else }}
+          emptyDir: {}
+{{- end -}}
+{{- else }}
+          persistentVolumeClaim:
+            claimName: {{ template "cost-analyzer.fullname" . }}-db
+{{- end }}
+{{- end }}
+      initContainers:
+        {{- if and .Values.kubecostModel.plugins.enabled (not (eq (include "aggregator.deployMethod" .) "statefulset")) }}
+        - name: plugin-installer
+          image: {{ .Values.kubecostModel.plugins.install.fullImageName }}
+          command: ["sh", "/install/install_plugins.sh"]
+          {{- with .Values.kubecostModel.plugins.install.securityContext }}
+          securityContext: {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: install-script
+              mountPath: /install
+            - name: plugins-dir
+              mountPath: {{ .Values.kubecostModel.plugins.folder }}
+        {{- end }}
+        {{- if .Values.supportNFS }}
+        - name: config-db-perms-fix
+        {{- if .Values.initChownDataImage }}
+          image: {{ .Values.initChownDataImage }}
+        {{- else }}
+          image: busybox
+        {{- end }}
+          {{- with .Values.initChownData.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.persistentVolume.dbPVEnabled }}
+          command: ["sh", "-c", "/bin/chmod -R 777 /var/configs && /bin/chmod -R 777 /var/db"]
+          {{- else }}
+          command: ["sh", "-c", "/bin/chmod -R 777 /var/configs"]
+          {{- end }}
+          volumeMounts:
+            - name: persistent-configs
+              mountPath: /var/configs
+            {{- if .Values.persistentVolume.dbPVEnabled }}
+            - name: persistent-db
+              mountPath: /var/db
+            {{- end }}
+          securityContext:
+            runAsUser: 0
+{{ end }}
+        {{- if .Values.global.updateCaTrust.enabled }}
+        - name: update-ca-trust
+          image: {{ include "cost-model.image" . | trim | quote}}
+          {{- if .Values.kubecostModel.imagePullPolicy }}
+          imagePullPolicy: {{ .Values.kubecostModel.imagePullPolicy }}
+          {{- else }}
+          imagePullPolicy: Always
+          {{- end }}
+          {{- with .Values.global.updateCaTrust.securityContext }}
+          securityContext: {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.global.updateCaTrust.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          command:
+            - 'sh'
+            - '-c'
+            - >
+              mkdir -p /etc/pki/ca-trust/extracted/{edk2,java,openssl,pem};
+              /usr/bin/update-ca-trust extract;
+          volumeMounts:
+            - name: ca-certs-secret
+              mountPath: {{ .Values.global.updateCaTrust.caCertsMountPath | quote }}
+            - name: ssl-path
+              mountPath: "/etc/pki/ca-trust/extracted"
+              readOnly: false
+        {{- end}}
+      containers:
+        {{- if .Values.global.gmp.enabled }}
+        - name: {{ .Values.global.gmp.gmpProxy.name }}
+          image: {{ .Values.global.gmp.gmpProxy.image }}
+          {{- if .Values.global.gmp.gmpProxy.imagePullPolicy }}
+          imagePullPolicy: {{ .Values.global.gmp.gmpProxy.imagePullPolicy }}
+          {{- else }}
+          imagePullPolicy: Always
+          {{- end }}
+          args:
+          - "--web.listen-address=:{{ .Values.global.gmp.gmpProxy.port }}"
+          - "--query.project-id={{ .Values.global.gmp.gmpProxy.projectId }}"
+          {{- if .Values.systemProxy.enabled }}
+          env:
+          - name: HTTP_PROXY
+            value: "{{ .Values.systemProxy.httpProxyUrl }}"
+          - name: http_proxy
+            value: "{{ .Values.systemProxy.httpProxyUrl }}"
+          - name: HTTPS_PROXY
+            value: "{{ .Values.systemProxy.httpsProxyUrl }}"
+          - name: https_proxy
+            value: "{{ .Values.systemProxy.httpsProxyUrl }}"
+          - name: NO_PROXY
+            value: "{{ .Values.systemProxy.noProxy }}"
+          - name: no_proxy
+            value: "{{ .Values.systemProxy.noProxy }}"
+          {{- end }}
+          ports:
+          - name: web
+            containerPort: {{ .Values.global.gmp.gmpProxy.port | int }}
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: web
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: web
+        {{- end }}
+        {{- if .Values.global.amp.enabled }}
+        - name: sigv4proxy
+          image: {{ .Values.sigV4Proxy.image }}
+          {{- if .Values.sigV4Proxy.imagePullPolicy }}
+          imagePullPolicy: {{ .Values.sigV4Proxy.imagePullPolicy }}
+          {{- else }}
+          imagePullPolicy: Always
+          {{- end }}
+          {{- if .Values.global.containerSecurityContext }}
+          securityContext:
+            {{- toYaml .Values.global.containerSecurityContext | nindent 12 -}}
+          {{- end }}
+          {{- with .Values.sigV4Proxy.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          args:
+          - --name
+          - {{ .Values.sigV4Proxy.name }}
+          - --region
+          - {{ .Values.sigV4Proxy.region }}
+          - --host
+          - {{ .Values.sigV4Proxy.host }}
+          {{- if .Values.sigV4Proxy.role_arn }}
+          - --role-arn
+          - {{ .Values.sigV4Proxy.role_arn }}
+          {{- end }}
+          - --port
+          - :{{ .Values.sigV4Proxy.port }}
+          ports:
+          - name: aws-sigv4-proxy
+            containerPort: {{ .Values.sigV4Proxy.port | int }}
+          env:
+          - name: AGENT_LOCAL_PORT
+            value: "{{ .Values.sigV4Proxy.port | int }}"
+          {{- if .Values.systemProxy.enabled }}
+          - name: HTTP_PROXY
+            value: "{{ .Values.systemProxy.httpProxyUrl }}"
+          - name: http_proxy
+            value: "{{ .Values.systemProxy.httpProxyUrl }}"
+          - name: HTTPS_PROXY
+            value: "{{ .Values.systemProxy.httpsProxyUrl }}"
+          - name: https_proxy
+            value: "{{ .Values.systemProxy.httpsProxyUrl }}"
+          - name: NO_PROXY
+            value: "{{ .Values.systemProxy.noProxy }}"
+          - name: no_proxy
+            value: "{{ .Values.systemProxy.noProxy }}"
+          {{- end }}
+          {{- if .Values.sigV4Proxy.extraEnv }}
+          {{- toYaml .Values.sigV4Proxy.extraEnv | nindent 10 }}
+          {{- end }}
+        {{- end }}
+        {{- if .Values.global.ammsp.enabled }}
+        # This section of the chart borrows liberally from
+        # https://github.com/Azure/aad-auth-proxy/blob/main/deploy/chart/aad-auth-proxy/templates/deployment.yaml
+        - name: {{ .Values.global.ammsp.aadAuthProxy.name }}
+          image: {{ .Values.global.ammsp.aadAuthProxy.image }}
+          {{- if .Values.global.ammsp.aadAuthProxy.imagePullPolicy }}
+          imagePullPolicy: {{ .Values.global.ammsp.aadAuthProxy.imagePullPolicy }}
+          {{- else }}
+          imagePullPolicy: Always
+          {{- end }}
+          env:
+          - name: AUDIENCE
+            value: {{ .Values.global.ammsp.aadAuthProxy.audience }}
+          - name: TARGET_HOST
+            value: {{ .Values.global.ammsp.queryEndpoint }}
+          - name: LISTENING_PORT
+            value: {{ .Values.global.ammsp.aadAuthProxy.port | quote }}
+          - name: IDENTITY_TYPE
+            value: {{ .Values.global.ammsp.aadAuthProxy.identityType }}
+          {{- if eq .Values.global.ammsp.aadAuthProxy.identityType "userAssigned" }}
+          - name: AAD_CLIENT_ID
+            value: {{ required "aadClientId is required for userAssigned identity types" .Values.global.ammsp.aadAuthProxy.aadClientId | toString | trim | quote }}
+          {{- else if eq .Values.global.ammsp.aadAuthProxy.identityType "aadApplication" }}
+          - name: AAD_CLIENT_ID
+            value: {{ required "aadClientId is required for aadApplication identity types" .Values.global.ammsp.aadAuthProxy.aadClientId | toString | trim | quote }}
+          - name: AAD_TENANT_ID
+            value: {{ required "aadTenantId is required for aadApplication identity type" .Values.global.ammsp.aadAuthProxy.aadTenantId | toString | trim | quote }}
+          - name: AAD_CLIENT_CERTIFICATE_PATH
+            value: {{ required "aadClientCertificatePath is required for aadApplication identity type" .Values.global.ammsp.aadAuthProxy.aadClientCertificatePath | toString | trim | quote }}
+          {{- end }}
+          - name: AAD_TOKEN_REFRESH_INTERVAL_IN_PERCENTAGE
+            value: "10"
+          - name: OTEL_SERVICE_NAME
+            value: {{ .Values.global.ammsp.aadAuthProxy.name | replace "-" "_" }}
+          {{- if .Values.systemProxy.enabled }}
+          - name: HTTP_PROXY
+            value: "{{ .Values.systemProxy.httpProxyUrl }}"
+          - name: http_proxy
+            value: "{{ .Values.systemProxy.httpProxyUrl }}"
+          - name: HTTPS_PROXY
+            value: "{{ .Values.systemProxy.httpsProxyUrl }}"
+          - name: https_proxy
+            value: "{{ .Values.systemProxy.httpsProxyUrl }}"
+          - name: NO_PROXY
+            value: "{{ .Values.systemProxy.noProxy }}"
+          - name: no_proxy
+            value: "{{ .Values.systemProxy.noProxy }}"
+          {{- end }}
+          ports:
+          - name: http
+            containerPort: {{ .Values.global.ammsp.aadAuthProxy.port | int }}
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /ready
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+        {{- end }}
+        - image: {{ include "cost-model.image" . | trim | quote}}
+          name: cost-model
+        {{- if .Values.kubecostModel.extraArgs }}
+          args:
+          {{- toYaml .Values.kubecostModel.extraArgs | nindent 12 }}
+        {{- end }}
+          securityContext:
+        {{- if .Values.kubecostModel.securityContext }}
+            {{- toYaml .Values.kubecostModel.securityContext | nindent 12 -}}
+        {{- else if .Values.global.containerSecurityContext }}
+            {{- toYaml .Values.global.containerSecurityContext | nindent 12 -}}
+        {{- end }}
+        {{- if .Values.kubecostModel.imagePullPolicy }}
+          imagePullPolicy: {{ .Values.kubecostModel.imagePullPolicy }}
+        {{- else }}
+          imagePullPolicy: Always
+        {{- end }}
+          ports:
+          - name: tcp-model
+            containerPort: 9003
+            protocol: TCP
+          {{- if and .Values.kubecostFrontend.enabled (not .Values.federatedETL.agentOnly) (not (eq (include "frontend.deployMethod" .) "haMode")) }}
+          - name: tcp-frontend
+            containerPort: 9090
+            protocol: TCP
+          {{- end }}
+        {{- with .Values.kubecostModel.extraPorts }}
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+          resources:
+{{ toYaml .Values.kubecostModel.resources | indent 12 }}
+          {{- if .Values.kubecostModel.readinessProbe.enabled }}
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 9003
+            initialDelaySeconds: {{ .Values.kubecostModel.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.kubecostModel.readinessProbe.periodSeconds}}
+            failureThreshold: {{ .Values.kubecostModel.readinessProbe.failureThreshold}}
+          {{- end }}
+          {{- if .Values.kubecostModel.livenessProbe.enabled }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 9003
+            initialDelaySeconds: {{ .Values.kubecostModel.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.kubecostModel.livenessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.kubecostModel.livenessProbe.failureThreshold }}
+          {{- end }}
+          {{- if .Values.global.containerSecuritycontext }}
+          securityContext:
+          {{- toYaml .Values.global.containerSecuritycontext | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: persistent-configs
+              mountPath: /var/configs
+            {{- if .Values.extraVolumeMounts }}
+            # Extra volume mount(s)
+            {{- toYaml .Values.extraVolumeMounts | nindent 12 }}
+            {{- end }}
+            {{- if .Values.persistentVolume.dbPVEnabled }}
+            - name: persistent-db
+              mountPath: /var/db
+            {{- end }}
+            {{- if or .Values.kubecostModel.federatedStorageConfigSecret .Values.kubecostModel.federatedStorageConfig }}
+            - name: federated-storage-config
+              mountPath: /var/configs/etl/federated
+              readOnly: true
+            {{- end }}
+            {{- if .Values.global.updateCaTrust.enabled }}
+            - name: ca-certs-secret
+              mountPath: {{ .Values.global.updateCaTrust.caCertsMountPath | quote }}
+            - name: ssl-path
+              mountPath: "/etc/pki/ca-trust/extracted"
+              readOnly: false
+            {{- end }}
+            {{- if .Values.kubecostAdmissionController }}
+            {{- if .Values.kubecostAdmissionController.enabled }}
+            {{- if .Values.kubecostAdmissionController.secretName }}
+            - name: {{ .Values.kubecostAdmissionController.secretName }}
+              mountPath: /certs
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            {{- if .Values.kubecostProductConfigs }}
+            {{- if and ((.Values.kubecostProductConfigs).productKey).enabled ((.Values.kubecostProductConfigs).productKey).secretname }}
+            - name: productkey-secret
+              mountPath: /var/configs/productkey
+            {{- end }}
+            {{- if ((.Values.kubecostProductConfigs).smtp).secretname }}
+            - name: smtp-secret
+              mountPath: /var/configs/smtp
+            {{- end }}
+            {{- if .Values.kubecostProductConfigs.gcpSecretName }}
+            - name: gcp-key-secret
+              mountPath: /var/secrets
+            {{- end }}
+            {{- if or .Values.kubecostProductConfigs.serviceKeySecretName .Values.kubecostProductConfigs.createServiceKeySecret }}
+            - name: service-key-secret
+              mountPath: /var/secrets
+            {{- end }}
+            {{- if .Values.kubecostProductConfigs.clusters }}
+            - name: kubecost-clusters
+              mountPath: /var/configs/clusters
+            {{- range .Values.kubecostProductConfigs.clusters }}
+            {{- if .auth }}
+            {{- if .auth.secretName }}
+            - name: {{ .auth.secretName }}
+              mountPath: /var/secrets/{{ .auth.secretName }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            {{- if .Values.saml }}
+            {{- if .Values.saml.enabled }}
+            {{- if .Values.saml.secretName }}
+            - name: secret-volume
+              mountPath: /var/configs/secret-volume
+            {{- end }}
+            {{- if .Values.saml.encryptionCertSecret }}
+            - name: saml-encryption-cert
+              mountPath: /var/configs/saml-encryption-cert
+            {{- end }}
+            {{- if .Values.saml.decryptionKeySecret }}
+            - name: saml-decryption-key
+              mountPath: /var/configs/saml-decryption-key
+            {{- end }}
+            {{- if .Values.saml.metadataSecretName }}
+            - name: metadata-secret-volume
+              mountPath: /var/configs/metadata-secret-volume
+            {{- end }}
+            - name: saml-auth-secret
+              mountPath: /var/configs/saml-auth-secret
+            {{- if .Values.saml.rbac.enabled }}
+            - name: saml-roles
+              mountPath: /var/configs/saml
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            {{- if .Values.oidc }}
+            {{- if .Values.oidc.enabled }}
+            - name: oidc-config
+              mountPath: /var/configs/oidc
+            {{- if or .Values.oidc.existingCustomSecret.name .Values.oidc.secretName }}
+            - name: oidc-client-secret
+              mountPath: /var/configs/oidc-client-secret
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            {{- if eq (include "rbacTeamsEnabled" .) "true" }}
+            - name: kubecost-rbac-secret
+              mountPath: /var/configs/kubecost-rbac-secret
+            {{- end }}
+            {{- if eq (include "authMasterKeyEnabled" .) "true" }}
+            - name: kubecost-master-api-key
+              mountPath: /var/configs/auth
+            {{- end }}
+          env:
+            - name: CONTAINER_IMAGE_TAG
+              value: {{ include "cost-model.imagetag" . }}
+            {{- if .Values.global.grafana }}
+            - name: GRAFANA_ENABLED
+              value: "{{ template "cost-analyzer.grafanaEnabled" . }}"
+            {{- end}}
+            - name: LOG_LEVEL
+              value: {{ .Values.kubecostModel.logLevel }}
+            {{- if .Values.kubecostModel.extraEnv -}}
+            {{ toYaml .Values.kubecostModel.extraEnv | nindent 12 }}
+            {{- end }}
+            {{- if .Values.reporting }}
+            {{- if .Values.reporting.valuesReporting }}
+            - name: HELM_VALUES
+              value: {{ template "cost-analyzer.filterEnabled" .Values }}
+            {{- end }}
+            {{- end }}
+            {{- if .Values.alertConfigmapName }}
+            - name: ALERT_CONFIGMAP_NAME
+              value: {{ .Values.alertConfigmapName }}
+            {{- end }}
+            {{- if .Values.productConfigmapName }}
+            - name: PRODUCT_CONFIGMAP_NAME
+              value: {{ .Values.productConfigmapName }}
+            {{- end }}
+            {{- if .Values.smtpConfigmapName }}
+            - name: SMTP_CONFIGMAP_NAME
+              value: {{ .Values.smtpConfigmapName }}
+            {{- end }}
+            {{- if .Values.appConfigmapName }}
+            - name: APP_CONFIGMAP_NAME
+              value: {{ .Values.appConfigmapName }}
+            {{- end }}
+            {{- if .Values.kubecostModel.softMemoryLimit }}
+            - name: GOMEMLIMIT
+              value: {{ .Values.kubecostModel.softMemoryLimit }}
+            {{- end }}
+            {{- if .Values.assetReportConfigmapName }}
+            - name: ASSET_REPORT_CONFIGMAP_NAME
+              value: {{ .Values.assetReportConfigmapName }}
+            {{- end }}
+            {{- if .Values.cloudCostReportConfigmapName }}
+            - name: CLOUD_COST_REPORT_CONFIGMAP_NAME
+              value: {{ .Values.cloudCostReportConfigmapName }}
+            {{- end }}
+            {{- if .Values.savedReportConfigmapName }}
+            - name: SAVED_REPORT_CONFIGMAP_NAME
+              value: {{ .Values.savedReportConfigmapName }}
+            {{- end }}
+            {{- if .Values.groupFiltersConfigmapName }}
+            - name: GROUP_FILTERS_CONFIGMAP_NAME
+              value: {{ .Values.groupFiltersConfigmapName }}
+            {{- end }}
+            {{- if .Values.pricingConfigmapName }}
+            - name: PRICING_CONFIGMAP_NAME
+              value: {{ .Values.pricingConfigmapName }}
+            {{- end }}
+            {{- if .Values.metricsConfigmapName }}
+            - name: METRICS_CONFIGMAP_NAME
+              value: {{ .Values.metricsConfigmapName }}
+            {{- end }}
+            - name: READ_ONLY
+              value: {{ (quote .Values.readonly) | default (quote false) }}
+            - name: PROMETHEUS_SERVER_ENDPOINT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ template "cost-analyzer.fullname" . }}
+                  key: prometheus-server-endpoint
+            - name: CLOUD_PROVIDER_API_KEY
+              value: "AIzaSyDXQPG_MHUEy9neR7stolq6l0ujXmjJlvk" # The GCP Pricing API key.This GCP api key is expected to be here and is limited to accessing google's billing API.
+            {{- if .Values.kubecostProductConfigs }}
+            {{- if .Values.kubecostProductConfigs.gcpSecretName }}
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: /var/configs/key.json
+            {{- end }}
+            {{- end }}
+            - name: CONFIG_PATH
+              value: /var/configs/
+            - name: DB_PATH
+              value: /var/db/
+            - name: CLUSTER_PROFILE
+            {{- if .Values.kubecostProductConfigs }}
+              value: {{ .Values.kubecostProductConfigs.clusterProfile | default "production" }}
+            {{- else }}
+              value: production
+            {{- end }}
+            {{- if .Values.kubecostProductConfigs }}
+            {{- if ((.Values.kubecostProductConfigs).productKey).mountPath }}
+            - name: PRODUCT_KEY_MOUNT_PATH
+              value: {{ .Values.kubecostProductConfigs.productKey.mountPath }}
+            {{- end }}
+            {{- if ((.Values.kubecostProductConfigs).smtp).mountPath }}
+            - name: SMTP_CONFIG_MOUNT_PATH
+              value: {{ .Values.kubecostProductConfigs.smtp.mountPath }}
+            {{- end }}
+            {{- if .Values.kubecostProductConfigs.ingestPodUID }}
+            - name: INGEST_POD_UID
+              value: {{ (quote .Values.kubecostProductConfigs.ingestPodUID) }}
+            {{- end }}
+            {{- if .Values.kubecostProductConfigs.regionOverrides }}
+            - name: REGION_OVERRIDE_LIST
+              value: {{ (quote .Values.kubecostProductConfigs.regionOverrides) }}
+            {{- end }}
+            {{- end }}
+            {{- if .Values.global.prometheus.queryServiceBasicAuthSecretName}}
+            - name: DB_BASIC_AUTH_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.prometheus.queryServiceBasicAuthSecretName }}
+                  key: USERNAME
+            - name: DB_BASIC_AUTH_PW
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.prometheus.queryServiceBasicAuthSecretName }}
+                  key: PASSWORD
+            {{- end }}
+            {{- if .Values.global.prometheus.queryServiceBearerTokenSecretName }}
+            - name: DB_BEARER_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.prometheus.queryServiceBearerTokenSecretName }}
+                  key: TOKEN
+            {{- end }}
+            {{- if .Values.global.prometheus.insecureSkipVerify }}
+            - name: INSECURE_SKIP_VERIFY
+              value: {{ (quote .Values.global.prometheus.insecureSkipVerify) }}
+            {{- end }}
+            {{- if .Values.global.prometheus.kubeRBACProxy }}
+            - name: KUBE_RBAC_PROXY_ENABLED
+              value: {{ (quote .Values.global.prometheus.kubeRBACProxy) }}
+            {{- end }}
+            {{- if .Values.pricingCsv }}
+            {{- if .Values.pricingCsv.enabled }}
+            - name: USE_CSV_PROVIDER
+              value: "true"
+            - name: CSV_PATH
+              value: {{ .Values.pricingCsv.location.URI }}
+            - name: CSV_REGION
+              value: {{ .Values.pricingCsv.location.region }}
+            {{- if eq .Values.pricingCsv.location.provider "AWS"}}
+            {{- if .Values.pricingCsv.location.csvAccessCredentials }}
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.pricingCsv.location.csvAccessCredentials }}
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.pricingCsv.location.csvAccessCredentials }}
+                  key: AWS_SECRET_ACCESS_KEY
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            {{- if .Values.kubecostMetrics }}
+            - name: EMIT_POD_ANNOTATIONS_METRIC
+              value: {{ (quote .Values.kubecostMetrics.emitPodAnnotations) | default (quote false) }}
+            - name: EMIT_NAMESPACE_ANNOTATIONS_METRIC
+              value: {{ (quote .Values.kubecostMetrics.emitNamespaceAnnotations) | default (quote false) }}
+            {{- end }}
+            {{- if .Values.kubecostMetrics }}
+            - name: EMIT_KSM_V1_METRICS
+              value: {{ (quote .Values.kubecostMetrics.emitKsmV1Metrics) | default (quote true) }}
+            {{- end }}
+            {{- if .Values.kubecostMetrics }}
+            - name: EMIT_KSM_V1_METRICS_ONLY # ONLY emit KSM v1 metrics that do not exist in KSM 2 by default
+              value: {{ (quote .Values.kubecostMetrics.emitKsmV1MetricsOnly) | default (quote false) }}
+            {{- end }}
+            {{- if .Values.reporting }}
+            - name: LOG_COLLECTION_ENABLED
+              value: {{ (quote .Values.reporting.logCollection) | default (quote true) }}
+            - name: PRODUCT_ANALYTICS_ENABLED
+              value: {{ (quote .Values.reporting.productAnalytics) | default (quote true) }}
+            - name: ERROR_REPORTING_ENABLED
+              value: {{ (quote .Values.reporting.errorReporting ) | default (quote true) }}
+            - name: VALUES_REPORTING_ENABLED
+              value: {{ (quote .Values.reporting.valuesReporting) | default (quote true) }}
+            {{- if .Values.reporting.errorReporting }}
+            - name: SENTRY_DSN
+              value: "https://71964476292e4087af8d5072afe43abd@o394722.ingest.sentry.io/5245431"
+            {{- end }}
+            {{- end }}
+            {{- if or .Values.kubecostModel.federatedStorageConfigSecret .Values.kubecostModel.federatedStorageConfig }}
+            - name: FEDERATED_STORE_CONFIG
+              value: "/var/configs/etl/federated/federated-store.yaml"
+            {{- end }}
+            {{- if or .Values.federatedETL.federatedCluster .Values.kubecostModel.federatedStorageConfigSecret .Values.kubecostModel.federatedStorageConfig }}
+            - name: FEDERATED_CLUSTER
+              {{- if eq .Values.federatedETL.readOnlyPrimary true }}
+              value: "false"
+              {{- else }}
+              value: "true"
+              {{- end }}
+            {{- end }}
+            {{- if .Values.federatedETL.redirectS3Backup }}
+            - name: FEDERATED_REDIRECT_BACKUP
+              value: "true"
+            {{- end }}
+            {{- if .Values.federatedETL.useMultiClusterDB }}
+            - name: CURRENT_CLUSTER_ID_FILTER_ENABLED
+              value: "true"
+            {{- end }}
+            {{- if .Values.persistentVolume.dbPVEnabled }}
+            - name: ETL_PATH_PREFIX
+              value: "/var/db"
+            {{- end }}
+            - name: ETL_RESOLUTION_SECONDS
+              value: {{ (quote .Values.kubecostModel.etlResolutionSeconds) | default (quote 300) }}
+            - name: ETL_MAX_PROMETHEUS_QUERY_DURATION_MINUTES
+              value: {{ (quote .Values.kubecostModel.maxPrometheusQueryDurationMinutes) | default (quote 1440) }}
+            - name: ETL_DAILY_STORE_DURATION_DAYS
+              value: {{ (quote .Values.kubecostModel.etlDailyStoreDurationDays) }}
+            - name: ETL_HOURLY_STORE_DURATION_HOURS
+              value: {{ (quote .Values.kubecostModel.etlHourlyStoreDurationHours) | default (quote 49) }}
+            {{- if .Values.kubecostModel }}
+            {{- if .Values.kubecostModel.allocation }}
+            {{- if .Values.kubecostModel.allocation.nodeLabels }}
+            {{- with .Values.kubecostModel.allocation.nodeLabels }}
+            - name: ALLOCATION_NODE_LABELS_ENABLED
+              value: {{ (quote .enabled) | default (quote true) }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            {{- if .Values.systemProxy.enabled }}
+            - name: HTTP_PROXY
+              value: {{ .Values.systemProxy.httpProxyUrl }}
+            - name: http_proxy
+              value: {{ .Values.systemProxy.httpProxyUrl }}
+            - name: HTTPS_PROXY
+              value:  {{ .Values.systemProxy.httpsProxyUrl }}
+            - name: https_proxy
+              value:  {{ .Values.systemProxy.httpsProxyUrl }}
+            - name: NO_PROXY
+              value:  {{ .Values.systemProxy.noProxy }}
+            - name: no_proxy
+              value:  {{ .Values.systemProxy.noProxy }}
+            {{- end }}
+            - name: PV_ENABLED
+              value: {{ (quote .Values.persistentVolume.enabled) | default (quote true) }}
+            - name: MAX_QUERY_CONCURRENCY
+              value: {{ (quote .Values.kubecostModel.maxQueryConcurrency) | default (quote 5) }}
+            {{- if .Values.networkCosts }}
+            {{- if .Values.networkCosts.enabled }}
+            - name: NETWORK_COSTS_PORT
+              value: {{ quote .Values.networkCosts.port | default (quote 3001) }}
+            # ADVANCED_NETWORK_STATS is a feature offered by Kubecost that gives you network
+            # insights of your Kubernetes resources with cloud services. The feature is
+            # enabled when network cost is enabled and one of the service tagging is enabled
+            {{- if .Values.networkCosts.config.services }}
+            {{- $services := .Values.networkCosts.config.services -}}
+            {{- if or (index $services "google-cloud-services") (index $services "amazon-web-services") (index $services "azure-cloud-services")}}
+            - name: ADVANCED_NETWORK_STATS
+              value: "true"
+            {{- else}}
+            - name: ADVANCED_NETWORK_STATS
+              value: "false"
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            {{- if eq (include "authMasterKeyEnabled" .) "true" }}
+            - name: AUTH_MASTER_API_KEY_ENABLED
+              value: "true"
+            {{- end }}
+            {{- if .Values.oidc.enabled }}
+            - name: OIDC_ENABLED
+              value: "true"
+            - name: OIDC_SKIP_ONLINE_VALIDATION
+              value: {{ (quote .Values.oidc.skipOnlineTokenValidation) | default (quote false) }}
+            {{- end }}
+            {{- if .Values.saml }}
+            {{- if .Values.saml.enabled }}
+            - name: SAML_ENABLED
+              value: "true"
+            - name: IDP_URL
+              value: {{ .Values.saml.idpMetadataURL }}
+            - name: SP_HOST
+              value: {{ .Values.saml.appRootURL }}
+            {{- if .Values.saml.audienceURI }}
+            - name: AUDIENCE_URI
+              value: {{ .Values.saml.audienceURI }}
+            {{- end }}
+            {{- if .Values.saml.isGLUUProvider }}
+            - name: GLUU_SAML_PROVIDER
+              value: {{ (quote .Values.saml.isGLUUProvider) }}
+            {{- end }}
+            {{- if .Values.saml.nameIDFormat }}
+            - name: NAME_ID_FORMAT
+              value: {{ .Values.saml.nameIDFormat }}
+            {{- end}}
+            {{- if .Values.saml.authTimeout }}
+            - name: AUTH_TOKEN_TIMEOUT
+              value: {{ (quote .Values.saml.authTimeout) }}
+            {{- end}}
+            {{- if .Values.saml.redirectURL }}
+            - name: LOGOUT_REDIRECT_URL
+              value: {{ .Values.saml.redirectURL }}
+            {{- end}}
+            {{- if .Values.saml.rbac.enabled }}
+            {{- if eq (include "rbacTeamsEnabled" .) "false" }}
+            - name: SAML_RBAC_ENABLED
+              value: "true"
+            {{- end }}
+            {{- end }}
+            {{- if and .Values.saml.encryptionCertSecret .Values.saml.decryptionKeySecret }}
+            - name: SAML_RESPONSE_ENCRYPTED
+              value: "true"
+            {{- end}}
+            {{- end }}
+            {{- end }}
+            {{- if eq (include "rbacTeamsEnabled" .) "true" }}
+            {{- if .Values.oidc.enabled }}
+            - name: OIDC_RBAC_TEAMS_ENABLED
+              value: "true"
+            {{- end }}
+            {{- if .Values.saml.enabled }}
+            - name: SAML_RBAC_TEAMS_ENABLED
+              value: "true"
+            {{- end }}
+            {{- end }}
+            {{- if and (.Values.prometheus.server.global.external_labels.cluster_id) (not .Values.prometheus.server.clusterIDConfigmap) }}
+            - name: CLUSTER_ID
+              value: {{ .Values.prometheus.server.global.external_labels.cluster_id }}
+            {{- end }}
+            {{- if .Values.prometheus.server.clusterIDConfigmap }}
+            - name: CLUSTER_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.prometheus.server.clusterIDConfigmap }}
+                  key: CLUSTER_ID
+            {{- end }}
+            {{- if .Values.kubecostModel.promClusterIDLabel }}
+            - name: PROM_CLUSTER_ID_LABEL
+              value: {{ .Values.kubecostModel.promClusterIDLabel }}
+            {{- end }}
+            {{- if .Values.reporting.googleAnalyticsTag }}
+            - name: GOOGLE_ANALYTICS_TAG
+              value: {{ .Values.reporting.googleAnalyticsTag }}
+            {{- end }}
+            {{- if .Values.costEventsAudit }}
+            - name: COST_EVENTS_AUDIT_ENABLED
+              value: {{ (quote .Values.costEventsAudit.enabled) | default (quote false) }}
+            {{- end }}
+            - name: RELEASE_NAME
+              value: {{ .Release.Name }}
+            - name: KUBECOST_NAMESPACE
+              value: {{ .Release.Namespace }}
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.name
+            - name: KUBECOST_TOKEN
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ template "cost-analyzer.fullname" . }}
+                  key: kubecost-token
+            - name: WATERFOWL_ENABLED
+              value: "true"
+            {{- if not (.Values.diagnostics.enabled) }}
+            - name: DIAGNOSTICS_RUN_IN_COST_MODEL
+              value: "false"
+            {{- /* Cannot run MultiClusterDiagnostics in the cost-model container without federated-store config */}}
+            {{- else if and (empty .Values.kubecostModel.federatedStorageConfigSecret) (not .Values.kubecostModel.federatedStorageConfig) }}
+            - name: DIAGNOSTICS_RUN_IN_COST_MODEL
+              value: "false"
+            {{- else if .Values.diagnostics.deployment.enabled }}
+            - name: DIAGNOSTICS_RUN_IN_COST_MODEL
+              value: "false"
+            {{- else }}
+            - name: DIAGNOSTICS_RUN_IN_COST_MODEL
+              value: "true"
+            - name: DIAGNOSTICS_KUBECOST_FQDN
+              value: "localhost"
+            - name: DIAGNOSTICS_KUBECOST_NAMESPACE
+              value: {{ .Release.Namespace }}
+            {{- /* When Kubecost is run on a secondary cluster as an agent the Diagnostics service should never be the primary */}}
+            {{- if .Values.federatedETL.agentOnly }}
+            - name: DIAGNOSTICS_PRIMARY
+              value: "false"
+            {{- else }}
+            - name: DIAGNOSTICS_PRIMARY
+              value: {{ quote .Values.diagnostics.primary.enabled }}
+            {{- end }}
+            - name: DIAGNOSTICS_RETENTION
+              value: {{ .Values.diagnostics.primary.retention }}
+            - name: DIAGNOSTICS_PRIMARY_READONLY
+              value: {{ quote .Values.diagnostics.primary.readonly }}
+            - name: DIAGNOSTICS_POLLING_INTERVAL
+              value: {{ .Values.diagnostics.pollingInterval }}
+            - name: DIAGNOSTICS_KEEP_HISTORY
+              value: {{ quote .Values.diagnostics.keepDiagnosticHistory }}
+            - name: DIAGNOSTICS_COLLECT_HELM_VALUES
+              value: {{ quote .Values.diagnostics.collectHelmValues }}
+            {{- end }}
+        {{- if and .Values.kubecostFrontend.enabled (not .Values.federatedETL.agentOnly) (not (eq (include "frontend.deployMethod" .) "haMode")) }}
+        {{- if .Values.kubecostFrontend }}
+        {{- if .Values.kubecostFrontend.fullImageName }}
+        - image: {{ .Values.kubecostFrontend.fullImageName }}
+        {{- else if .Values.imageVersion }}
+        - image: {{ .Values.kubecostFrontend.image }}:{{ .Values.imageVersion }}
+        {{- else if eq "development" .Chart.AppVersion }}
+        - image: gcr.io/kubecost1/frontend-nightly:latest
+        {{- else }}
+        - image: {{ .Values.kubecostFrontend.image }}:prod-{{ $.Chart.AppVersion }}
+        {{- end }}
+        {{- else }}
+        - image: gcr.io/kubecost1/frontend:prod-{{ $.Chart.AppVersion }}
+        {{- end }}
+          env:
+            - name: GET_HOSTS_FROM
+              value: dns
+            {{- if .Values.kubecostFrontend.extraEnv -}}
+            {{ toYaml .Values.kubecostFrontend.extraEnv | nindent 12 }}
+            {{- end }}
+          name: cost-analyzer-frontend
+        {{- if .Values.kubecostFrontend.securityContext }}
+          securityContext:
+            {{- toYaml .Values.kubecostFrontend.securityContext | nindent 12 }}
+          {{- else  }}
+          securityContext:
+            {{- toYaml .Values.global.containerSecurityContext | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: tmp
+              mountPath: /var/lib/nginx/tmp
+            - name: tmp
+              mountPath: /var/run
+            - name: log
+              mountPath: /var/log/nginx
+            - name: nginx-conf
+              mountPath: /etc/nginx/conf.d/
+            {{- if .Values.global.containerSecuritycontext }}
+            - mountPath: /var/cache/nginx
+              name: cache
+            - mountPath: /var/run
+              name: var-run
+            {{- end }}
+            {{- if .Values.kubecostFrontend.tls }}
+            {{- if .Values.kubecostFrontend.tls.enabled }}
+            - name: tls
+              mountPath: /etc/ssl/certs
+            {{- end }}
+            {{- end }}
+          resources:
+{{ toYaml .Values.kubecostFrontend.resources | indent 12 }}
+        {{- if .Values.kubecostFrontend.imagePullPolicy }}
+          imagePullPolicy: {{ .Values.kubecostFrontend.imagePullPolicy }}
+        {{- else }}
+          imagePullPolicy: Always
+        {{- end }}
+          {{- if .Values.kubecostFrontend.readinessProbe.enabled }}
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 9003
+            initialDelaySeconds: {{ .Values.kubecostFrontend.readinessProbe.initialDelaySeconds  }}
+            periodSeconds: {{ .Values.kubecostFrontend.readinessProbe.periodSeconds  }}
+            failureThreshold: {{ .Values.kubecostFrontend.readinessProbe.failureThreshold  }}
+            {{- end }}
+          {{- if .Values.kubecostFrontend.livenessProbe.enabled }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 9003
+            initialDelaySeconds: {{ .Values.kubecostFrontend.livenessProbe.initialDelaySeconds  }}
+            periodSeconds: {{ .Values.kubecostFrontend.livenessProbe.periodSeconds  }}
+            failureThreshold: {{ .Values.kubecostFrontend.livenessProbe.failureThreshold  }}
+          {{- end }}
+          {{- if .Values.global.containerSecuritycontext }}
+          securityContext:
+          {{- toYaml .Values.global.containerSecuritycontext | nindent 12 }}
+          {{- end }}
+        {{ end }}
+
+        {{- if and (eq (include "aggregator.deployMethod" .) "singlepod") (not .Values.federatedETL.agentOnly) }}
+        {{- include "aggregator.containerTemplate" . | nindent 8 }}
+        {{- if .Values.kubecostAggregator.jaeger.enabled }}
+        {{- include "aggregator.jaeger.sidecarContainerTemplate" . | nindent 8 }}
+        {{- end }}
+        {{- include "aggregator.cloudCost.containerTemplate" . | nindent 8 }}
+        {{- end }}
+
+    {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+      {{- range $.Values.imagePullSecrets }}
+        - name: {{ .name }}
+      {{- end }}
+    {{- end }}
+      {{- if .Values.priority }}
+      {{- if .Values.priority.enabled }}
+      {{- if gt (len .Values.priority.name) 0 }}
+      priorityClassName: {{ .Values.priority.name }}
+      {{- else }}
+      priorityClassName: {{ template "cost-analyzer.fullname" . }}-priority
+      {{- end }}
+      {{- end }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

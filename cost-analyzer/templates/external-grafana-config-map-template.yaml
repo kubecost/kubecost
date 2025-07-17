@@ -1,0 +1,11 @@
+{{- if eq .Values.global.grafana.proxy false -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: external-grafana-config-map
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+data:
+  grafanaURL: {{ .Values.global.grafana.scheme | default "http" }}://{{- .Values.global.grafana.domainName }}
+{{- end -}}

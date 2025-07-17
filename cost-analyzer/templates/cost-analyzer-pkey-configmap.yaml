@@ -1,0 +1,23 @@
+{{- if .Values.kubecostProductConfigs }}
+{{- if .Values.kubecostProductConfigs.productKey }}
+{{- if .Values.kubecostProductConfigs.productKey.enabled }}
+# If the productKey.key is not specified, the configmap will not be created
+{{- if .Values.kubecostProductConfigs.productKey.key }}
+# If the secretname is specified, the configmap will not be created
+{{- if not .Values.kubecostProductConfigs.productKey.secretname }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ default "product-configs" .Values.productConfigmapName }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+data:
+  {{- if .Values.kubecostProductConfigs.productKey.key }}
+    key: {{  .Values.kubecostProductConfigs.productKey.key | quote }}
+  {{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}

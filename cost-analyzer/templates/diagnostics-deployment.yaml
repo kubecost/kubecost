@@ -1,0 +1,187 @@
+{{- if and .Values.diagnostics.enabled .Values.diagnostics.deployment.enabled }}
+{{- if or .Values.kubecostModel.federatedStorageConfigSecret .Values.kubecostModel.federatedStorageConfig -}}
+
+{{- if eq .Values.prometheus.server.global.external_labels.cluster_id "cluster-one" }}
+{{- fail "Error: The 'cluster_id' is set to default 'cluster-one'. Please update so that the diagnostics service can uniquely identify data coming from this cluster." }}
+{{- end }}
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "diagnostics.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "diagnostics.selectorLabels" . | nindent 4 }}
+    {{- with .Values.global.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- if .Values.diagnostics.deployment.labels }}
+    {{- toYaml .Values.diagnostics.deployment.labels | nindent 4 }}
+    {{- end }}
+  annotations:
+  {{- with .Values.global.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.diagnostics.deployment.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "diagnostics.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "diagnostics.selectorLabels" . | nindent 8 }}
+        {{- with .Values.global.additionalLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      annotations:
+        {{- with .Values.global.podAnnotations}}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        checksum/configs: {{ include "configsChecksum" . }}
+    spec:
+      restartPolicy: Always
+      {{- if .Values.diagnostics.deployment.securityContext }}
+      securityContext:
+        {{- toYaml .Values.diagnostics.deployment.securityContext | nindent 8 }}
+      {{- else if .Values.global.securityContext }}
+      securityContext:
+        {{- toYaml .Values.global.securityContext | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ template "cost-analyzer.serviceAccountName" . }}
+      volumes:
+        {{- if or .Values.kubecostModel.federatedStorageConfigSecret .Values.kubecostModel.federatedStorageConfig }}
+        - name: federated-storage-config
+          secret:
+            defaultMode: 420
+            secretName: {{ .Values.kubecostModel.federatedStorageConfigSecret | default "federated-store" }}
+        {{- end }}
+        - name: config-db
+          emptyDir: {}
+      containers:
+        - name: diagnostics
+          args: ["diagnostics"]
+          {{- if .Values.kubecostModel }}
+          {{- if .Values.kubecostModel.fullImageName }}
+          image: {{ .Values.kubecostModel.fullImageName }}
+          {{- else if .Values.imageVersion }}
+          image: {{ .Values.kubecostModel.image }}:{{ .Values.imageVersion }}
+          {{- else if eq "development" .Chart.AppVersion }}
+          image: gcr.io/kubecost1/cost-model-nightly:latest
+          {{- else }}
+          image: {{ .Values.kubecostModel.image }}:prod-{{ $.Chart.AppVersion }}
+          {{- end }}
+          {{- else }}
+          image: gcr.io/kubecost1/cost-model:prod-{{ $.Chart.AppVersion }}
+          {{- end }}
+          {{- if .Values.kubecostModel.imagePullPolicy }}
+          imagePullPolicy: {{ .Values.kubecostModel.imagePullPolicy }}
+          {{- else }}
+          imagePullPolicy: Always
+          {{- end }}
+          {{- if .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- range $.Values.imagePullSecrets }}
+            - name: {{ .name }}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.diagnostics.deployment.containerSecurityContext }}
+          securityContext:
+            {{- toYaml .Values.diagnostics.deployment.containerSecurityContext | nindent 12 }}
+          {{- else if .Values.global.containerSecurityContext }}
+          securityContext:
+            {{- toYaml .Values.global.containerSecurityContext | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: config-db
+              mountPath: /var/configs/db
+              readOnly: false
+            - name: federated-storage-config
+              mountPath: /var/configs/etl
+              readOnly: true
+          env:
+            {{- if and (.Values.prometheus.server.global.external_labels.cluster_id) (not .Values.prometheus.server.clusterIDConfigmap) }}
+            - name: CLUSTER_ID
+              value: {{ .Values.prometheus.server.global.external_labels.cluster_id }}
+            {{- end }}
+            {{- if .Values.prometheus.server.clusterIDConfigmap }}
+            - name: CLUSTER_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.prometheus.server.clusterIDConfigmap }}
+                  key: CLUSTER_ID
+            {{- end }}
+            - name: FEDERATED_STORE_CONFIG
+              value: /var/configs/etl/federated-store.yaml
+            - name: DIAGNOSTICS_RUN_IN_COST_MODEL
+              value: "false"
+            - name: DIAGNOSTICS_KUBECOST_FQDN
+              value: {{ template "cost-analyzer.serviceName" . }}
+            - name: DIAGNOSTICS_KUBECOST_NAMESPACE
+              value: {{ .Release.Namespace }}
+            {{- /* When Kubecost is run on a secondary cluster as an agent the Diagnostics service should never be the primary */}}
+            {{- if .Values.federatedETL.agentOnly }}
+            - name: DIAGNOSTICS_PRIMARY
+              value: "false"
+            {{- else }}
+            - name: DIAGNOSTICS_PRIMARY
+              value: {{ quote .Values.diagnostics.primary.enabled }}
+            {{- end }}
+            - name: DIAGNOSTICS_RETENTION
+              value: {{ .Values.diagnostics.primary.retention }}
+            - name: DIAGNOSTICS_PRIMARY_READONLY
+              value: {{ quote .Values.diagnostics.primary.readonly }}
+            - name: DIAGNOSTICS_POLLING_INTERVAL
+              value: {{ .Values.diagnostics.pollingInterval }}
+            - name: DIAGNOSTICS_KEEP_HISTORY
+              value: {{ quote .Values.diagnostics.keepDiagnosticHistory }}
+            - name: DIAGNOSTICS_COLLECT_HELM_VALUES
+              value: {{ quote .Values.diagnostics.collectHelmValues }}
+            {{- if .Values.systemProxy.enabled }}
+            - name: HTTP_PROXY
+              value: {{ .Values.systemProxy.httpProxyUrl }}
+            - name: http_proxy
+              value: {{ .Values.systemProxy.httpProxyUrl }}
+            - name: HTTPS_PROXY
+              value:  {{ .Values.systemProxy.httpsProxyUrl }}
+            - name: https_proxy
+              value:  {{ .Values.systemProxy.httpsProxyUrl }}
+            - name: NO_PROXY
+              value:  {{ .Values.systemProxy.noProxy }}
+            - name: no_proxy
+              value:  {{ .Values.systemProxy.noProxy }}
+            {{- end }}
+            {{- range $key, $value := .Values.diagnostics.deployment.env }}
+            - name: {{ $key | quote }}
+              value: {{ $value | quote }}
+            {{- end }}
+          {{- if .Values.diagnostics.primary.enabled}}
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 9007
+          ports:
+            - name: diagnostics-api
+              containerPort: 9007
+              protocol: TCP
+          {{- end }}
+          resources:
+            {{- toYaml .Values.diagnostics.deployment.resources | nindent 12 }}
+      {{- with .Values.diagnostics.deployment.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.diagnostics.deployment.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.diagnostics.deployment.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+{{- end }}
+{{- end }}

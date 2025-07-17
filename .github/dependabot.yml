@@ -9,3 +9,11 @@ updates:
     directory: /cost-analyzer
     schedule:
       interval: weekly
+  - package-ecosystem: docker
+    directory: /cost-analyzer/charts/grafana
+    schedule:
+      interval: weekly
+  - package-ecosystem: docker
+    directory: /cost-analyzer/charts/prometheus
+    schedule:
+      interval: weekly

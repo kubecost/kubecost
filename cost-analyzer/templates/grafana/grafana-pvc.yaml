@@ -1,0 +1,26 @@
+{{- if (eq (include "cost-analyzer.grafanaEnabled" .) "true") }}
+{{- if and .Values.grafana.persistence.enabled (not .Values.grafana.persistence.existingClaim) }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ template "grafana.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ template "grafana.name" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  {{- with .Values.grafana.persistence.annotations  }}
+  annotations:
+{{ toYaml . | indent 4 }}
+  {{- end }}
+spec:
+  accessModes:
+    {{- range .Values.grafana.persistence.accessModes }}
+    - {{ . | quote }}
+    {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.grafana.persistence.size | quote }}
+  storageClassName: {{ .Values.grafana.persistence.storageClassName }}
+{{- end -}}
+{{ end }}

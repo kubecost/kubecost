@@ -32,6 +32,15 @@ Set important variables before starting main templates
 {{- end -}}
 
 {{/*
+Kubecost 2.3 notices
+*/}}
+{{- define "kubecostV2-3-notices" -}}
+  {{- if (.Values.kubecostAggregator).env -}}
+    {{- printf "\n\n\nNotice: Issue in values detected.\nKubecost 2.3 has updated the aggregator's environment variables. Please update your Helm values to use the new key pairs.\nFor more information, see: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=federation-kubecost-aggregator\nIn Kubecost 2.3, kubecostAggregator.env is no longer used in favor of the new key pairs. This was done to prevent unexpected behavior and to simplify the aggregator's configuration." -}}
+  {{- end -}}
+{{- end -}}
+
+{{/*
 Kubecost 2.0 preconditions
 */}}
 {{- define "kubecostV2-preconditions" -}}
@@ -64,10 +73,9 @@ Kubecost 2.0 preconditions
     {{- fail "\n\nYou are attempting to upgrade to Kubecost 2.x.\nKubecost no longer includes Thanos by default. \nPlease see https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=installation-kubecost-v2-installupgrade for more information.\nIf you have any questions or concerns, please reach out to us at product@kubecost.com" -}}
   {{- end -}}
 
-  {{/* TODO: update comments and rules for v3 */}}
   {{- if or ((.Values.saml).rbac).enabled ((.Values.oidc).rbac).enabled -}}
-    {{- if (not (.Values.upgrade).tov3) -}}
-      {{- printf "\n\nSSO with RBAC is enabled.\nNote that Kubecost 3.x has significant architectural changes that need to be TODO...\n\nWhen ready to upgrade, add `--set upgrade.tov3=true`." -}}
+    {{- if (not (.Values.upgrade).toV2) -}}
+      {{- fail "\n\nSSO with RBAC is enabled.\nNote that Kubecost 2.x has significant architectural changes that may impact RBAC.\nThis should be tested before giving end-users access to the UI.\nKubecost has tested various configurations and believe that 2.x will be 100% compatible with existing configurations.\nRefer to the following documentation for more information: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=installation-kubecost-v2-installupgrade\n\nWhen ready to upgrade, add `--set upgrade.toV2=true`." -}}
     {{- end -}}
   {{- end -}}
 
@@ -163,18 +171,7 @@ Federated Storage source contents check. Either the Secret must be specified or 
 */}}
 {{- define "federatedStorageSourceCheck" -}}
   {{- if and (.Values.kubecostModel).federatedStorageConfigSecret (.Values.kubecostModel).federatedStorageConfig -}}
-    {{- fail "\nkubecostModel.federatedStorageConfigSecret and kubecostModel.federatedStorageConfig are mutually exclusive. Please specify only one." -}}
-  {{- end -}}
-{{- end -}}
-
-{{/*
-Actions Storage source contents check. Either the Secret must be specified or the YAML, not both.
-*/}}
-{{- define "actionsStorageSourceCheck" -}}
-  {{- if ((.Values.kubecostProductConfigs).actions).enabled -}}
-  {{- if and ((.Values.kubecostProductConfigs).actions).storageConfigSecret ((.Values.kubecostProductConfigs).actions).storageConfig -}}
-    {{- fail "\nkubecostProductConfigs.actions.storageConfigSecret and kubecostProductConfigs.actions.storageConfig are mutually exclusive. Please specify only one." -}}
-  {{- end -}}
+    {{- fail "\nkubecostkubecostModel.federatedStorageConfigSecret and kubecostModel.federatedStorageConfig are mutually exclusive. Please specify only one." -}}
   {{- end -}}
 {{- end -}}
 
@@ -197,26 +194,24 @@ ERROR: MISSING EBS-CSI DRIVER WHICH IS REQUIRED ON EKS v1.23+ TO MANAGE PERSISTE
 Verify a cluster_id is set in the Prometheus global config
 */}}
 {{- define "clusterIDCheck" -}}
-  {{- if ((((.Values.prometheus).server).global).external_labels).cluster_id }}
-    {{- printf "\n\nIn Kubecost 3.0, `.Values.prometheus.server.global.external_labels.cluster_id` is no longer required.\nWhen it is set, it is used for backwards compatibility. \nPlease replace this value with `.Values.kubecostProductConfigs.clusterName`\nSee TODO for more information.\n" -}}
-  {{- end -}}
   {{- if or (.Values.kubecostModel).federatedStorageConfigSecret (.Values.kubecostModel).federatedStorageConfig }}
-    {{- if eq .Values.kubecostProductConfigs.clusterName "cluster-one" }}
-      {{- printf "\n\nWarning: it is recommended to specify a unique `.Values.kubecostProductConfigs.clusterName` for each cluster.\nNote this must be a globally unique identifier in multi-cluster environments.\n" -}}
+    {{- if not .Values.prometheus.server.clusterIDConfigmap }}
+      {{- if eq .Values.prometheus.server.global.external_labels.cluster_id "cluster-one" }}
+        {{- fail "\n\nWhen using multi-cluster Kubecost, you must specify a unique `.Values.prometheus.server.global.external_labels.cluster_id` for each cluster.\nNote this must be set even if you are using your own Prometheus or another identifier.\n" -}}
+      {{- end -}}
     {{- end -}}
   {{- end -}}
 {{- end -}}
-{{- define "kubecost.clusterName" -}}
-  {{- if.Values.kubecostProductConfigs.clusterName }}
-    {{- printf "%s" .Values.kubecostProductConfigs.clusterName }}
-  {{- else }}
-    {{- if(((((.Values.prometheus).server).global).external_labels).cluster_id) }}
-      {{- printf "%s" (((((.Values.prometheus).server).global).external_labels).cluster_id) }}
-    {{- else }}
-      {{- fail "\n\nWhen using multi-cluster Prometheus, you must specify a unique `(((((.Values.prometheus).server).global).external_labels).cluster_id)` for each cluster.\nNote this must be a globally unique identifier.\n" -}}
-    {{- end -}}
-  {{- end -}}
+
+{{/*
+  Verify if both kube-rbac-proxy and bearer token are set
+*/}}
+{{- define "kubeRBACProxyBearerTokenCheck" -}}
+{{- if and (.Values.global.prometheus.kubeRBACProxy) (.Values.global.prometheus.queryServiceBearerTokenSecretName) }}
+  {{- fail "\n\nBoth kubeRBACProxy and queryServiceBearerTokenSecretName are set. Please specify only one." -}}
 {{- end -}}
+{{- end -}}
+
 
 {{/*
 Verify the cloud integration secret exists with the expected key when cloud integration is enabled.
@@ -298,6 +293,9 @@ Expand the name of the chart.
 {{- define "cloudCost.name" -}}
 {{- default "cloud-cost" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
+{{- define "etlUtils.name" -}}
+{{- default "etl-utils" | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
 {{- define "forecasting.name" -}}
 {{- default "forecasting" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
@@ -309,8 +307,6 @@ Expand the name of the chart.
 Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
-Before changing this, please see:
-https://github.com/kubecost/cost-analyzer-helm-chart/blob/0f27b723cc395910b4b9667925d43001304e877d/cost-analyzer/templates/ingress-template.yaml#L7-L9
 */}}
 {{- define "cost-analyzer.fullname" -}}
 {{- if .Values.fullnameOverride -}}
@@ -325,6 +321,14 @@ https://github.com/kubecost/cost-analyzer-helm-chart/blob/0f27b723cc395910b4b966
 {{- end -}}
 {{- end -}}
 
+{{- define "diagnostics.fullname" -}}
+{{- if .Values.diagnosticsFullnameOverride -}}
+{{- .Values.diagnosticsFullnameOverride | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- printf "%s-%s" .Release.Name "diagnostics" | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
+
 {{- define "aggregator.fullname" -}}
 {{- printf "%s-%s" .Release.Name "aggregator" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
@@ -333,6 +337,9 @@ https://github.com/kubecost/cost-analyzer-helm-chart/blob/0f27b723cc395910b4b966
 {{- printf "%s-%s" .Release.Name (include "cloudCost.name" .) | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
+{{- define "etlUtils.fullname" -}}
+{{- printf "%s-%s" .Release.Name (include "etlUtils.name" .) | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
 {{- define "forecasting.fullname" -}}
 {{- printf "%s-%s" .Release.Name (include "forecasting.name" .) | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
@@ -378,15 +385,34 @@ Create the fully qualified name for Prometheus alertmanager service.
 {{- end -}}
 {{- end -}}
 
-{{- define "frontend.serviceName" -}}
-{{- printf "%s-%s" .Release.Name "frontend" | trunc 63 | trimSuffix "-" -}}
+{{- define "cost-analyzer.serviceName" -}}
+{{- if .Values.fullnameOverride -}}
+{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- $name := default .Chart.Name .Values.nameOverride -}}
+{{- if contains $name .Release.Name -}}
+{{- .Release.Name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
 {{- end -}}
 
+{{- define "frontend.serviceName" -}}
+{{ include "frontend.fullname" . }}
+{{- end -}}
+
+{{- define "diagnostics.serviceName" -}}
+{{- printf "%s-%s" .Release.Name "diagnostics" | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
 {{- define "aggregator.serviceName" -}}
 {{- printf "%s-%s" .Release.Name "aggregator" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 {{- define "cloudCost.serviceName" -}}
 {{ include "cloudCost.fullname" . }}
+{{- end -}}
+{{- define "etlUtils.serviceName" -}}
+{{ include "etlUtils.fullname" . }}
 {{- end -}}
 {{- define "forecasting.serviceName" -}}
 {{ include "forecasting.fullname" . }}
@@ -472,11 +498,20 @@ app: cost-analyzer
 app: aggregator
 {{- end -}}
 
+{{- define "diagnostics.commonLabels" -}}
+{{ include "cost-analyzer.chartLabels" . }}
+app: diagnostics
+{{- end -}}
+
 {{- define "cloudCost.commonLabels" -}}
 {{ include "cost-analyzer.chartLabels" . }}
 {{ include "cloudCost.selectorLabels" . }}
 {{- end -}}
 
+{{- define "etlUtils.commonLabels" -}}
+{{ include "cost-analyzer.chartLabels" . }}
+{{ include "etlUtils.selectorLabels" . }}
+{{- end -}}
 {{- define "forecasting.commonLabels" -}}
 {{ include "cost-analyzer.chartLabels" . }}
 {{ include "forecasting.selectorLabels" . }}
@@ -494,6 +529,11 @@ app: {{ template "cost-analyzer.networkCostsName" . }}
 {{- end -}}
 {{- define "networkcosts.selectorLabels" -}}
 app: {{ template "cost-analyzer.networkCostsName" . }}
+{{- end }}
+{{- define "diagnostics.selectorLabels" -}}
+app.kubernetes.io/name: diagnostics
+app.kubernetes.io/instance: {{ .Release.Name }}
+app: diagnostics
 {{- end }}
 
 {{/*
@@ -540,6 +580,11 @@ app: {{ include "cloudCost.name" . }}
 app.kubernetes.io/name: {{ include "forecasting.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app: {{ include "forecasting.name" . }}
+{{- end -}}
+{{- define "etlUtils.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "etlUtils.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+app: {{ include "etlUtils.name" . }}
 {{- end -}}
 
 {{/*
@@ -806,6 +851,47 @@ Create the name of the service account to use for the server component
 
 {{/*
 ==============================================================
+Begin Grafana templates
+==============================================================
+*/}}
+{{/*
+Expand the name of the chart.
+*/}}
+{{- define "grafana.name" -}}
+{{- "grafana" -}}
+{{- end -}}
+
+{{/*
+Create a default fully qualified app name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+If release name contains chart name it will be used as a full name.
+*/}}
+{{- define "grafana.fullname" -}}
+{{- if .Values.grafana.fullnameOverride -}}
+{{- .Values.grafana.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- $name := default "grafana" .Values.grafana.nameOverride -}}
+{{- if contains $name .Release.Name -}}
+{{- .Release.Name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Create the name of the service account
+*/}}
+{{- define "grafana.serviceAccountName" -}}
+{{- if .Values.grafana.serviceAccount.create -}}
+    {{ default (include "grafana.fullname" .) .Values.grafana.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.grafana.serviceAccount.name }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+==============================================================
 Begin Kubecost 2.0 templates
 ==============================================================
 */}}
@@ -883,18 +969,18 @@ Begin Kubecost 2.0 templates
       # This hasn't been observed as a problem in cost-analyzer, likely because
       # of the init container that gives everything under /var/configs 777.
       mountPath: /var/configs/waterfowl
-      {{- if (not .Values.kubecostAggregator.legacyMode ) }}
+      {{- if .Values.kubecostAggregator.useDBv3 }}
       # mount the clickhouse directories on the same PV as the duckdb, 
       # this way they can seamlessly share the same PV before, during, and after the upgrade
     - name: aggregator-db-storage
       mountPath: /var/lib/clickhouse
       {{- end }}
     {{- end }}
-    {{- if and (not .Values.kubecostAggregator.legacyMode) (eq (include "aggregator.deployMethod" .) "singlepod") }}
+    {{- if and .Values.kubecostAggregator.useDBv3 (eq (include "aggregator.deployMethod" .) "singlepod") }}
     - name: persistent-configs
       mountPath: /var/lib/clickhouse
     {{- end }}
-    {{- if ((.Values.kubecostProductConfigs).productKey).enabled }}
+    {{- if and ((.Values.kubecostProductConfigs).productKey).enabled ((.Values.kubecostProductConfigs).productKey).secretname (eq (include "aggregator.deployMethod" .) "statefulset") }}
     - name: productkey-secret
       mountPath: /var/configs/productkey
     {{- end }}
@@ -967,41 +1053,6 @@ Begin Kubecost 2.0 templates
     - name: kubecost-enterprise-pricing
       mountPath: /var/configs/enterprise-pricing
     {{- end }}
-    {{- if and (.Values.instanceTypes.enabled) (.Values.instanceTypes.custom) }}
-    - name: custom-instance-types
-      mountPath: /var/configs/instance-types
-    {{- end }}
-    {{- if ((.Values.kubecostProductConfigs).actions).config }}
-    - name: actions-config
-      mountPath: /var/configs/actions
-    {{- end }}
-    {{- if ((.Values.kubecostProductConfigs).actions).enabled }}
-    {{- if and (not (((.Values.kubecostProductConfigs).actions).storageConfigSecret)) (not (((.Values.kubecostProductConfigs).actions).storageConfig)) }}
-    - name: actions-storage
-      mountPath: /var/configs/actions/storage
-    - name: federated-storage-config
-      mountPath: /var/configs/actions/storage/actions-store.yaml
-      subPath: federated-store.yaml
-      readOnly: true
-    {{- end }}
-    {{- if ((.Values.kubecostProductConfigs).actions).storageConfig }}
-    - name: actions-storage-config
-      mountPath: /var/configs/actions/storage
-    {{- end }}
-    {{- if ((.Values.kubecostProductConfigs).actions).storageConfigSecret }}
-    {{- if eq ((.Values.kubecostProductConfigs).actions).storageConfigSecret (.Values.kubecostModel).federatedStorageConfigSecret }}
-    - name: actions-storage
-      mountPath: /var/configs/actions/storage
-    - name: federated-storage-config
-      mountPath: /var/configs/actions/storage/actions-store.yaml
-      subPath: federated-store.yaml
-      readOnly: true
-    {{- else }}
-    - name: actions-storage-config
-      mountPath: /var/configs/actions/storage
-    {{- end }}
-    {{- end }}
-    {{- end }}
     {{- /* Only adds extraVolumeMounts if aggregator is running as its own pod */}}
     {{- if and .Values.kubecostAggregator.extraVolumeMounts (eq (include "aggregator.deployMethod" .) "statefulset") }}
     {{- toYaml .Values.kubecostAggregator.extraVolumeMounts | nindent 4 }}
@@ -1011,8 +1062,17 @@ Begin Kubecost 2.0 templates
       mountPath: /var/configs/turbonomic
     {{- end }}
   env:
+    {{- if and (.Values.prometheus.server.global.external_labels.cluster_id) (not .Values.prometheus.server.clusterIDConfigmap) }}
     - name: CLUSTER_ID
-      value: {{ include "kubecost.clusterName" . }}
+      value: {{ .Values.prometheus.server.global.external_labels.cluster_id }}
+    {{- end }}
+    {{- if .Values.prometheus.server.clusterIDConfigmap }}
+    - name: CLUSTER_ID
+      valueFrom:
+        configMapKeyRef:
+          name: {{ .Values.prometheus.server.clusterIDConfigmap }}
+          key: CLUSTER_ID
+    {{- end }}
     {{- if and ((.Values.kubecostProductConfigs).productKey).mountPath (eq (include "aggregator.deployMethod" .) "statefulset") }}
     - name: PRODUCT_KEY_MOUNT_PATH
       value: {{ .Values.kubecostProductConfigs.productKey.mountPath }}
@@ -1029,8 +1089,8 @@ Begin Kubecost 2.0 templates
     - name: NUM_DB_COPY_CHUNKS
       value: {{ .Values.kubecostAggregator.numDBCopyPartitions | quote }}
     {{- end }}
-    {{- if .Values.kubecostAggregator.legacyMode }}
-    - name: LEGACY_MODE
+    {{- if .Values.kubecostAggregator.useDBv3 }}
+    - name: CLICKHOUSE_ENABLED
       value: "true"
     {{- end }}
     {{- if .Values.kubecostAggregator.jaeger.enabled }}
@@ -1130,8 +1190,10 @@ Begin Kubecost 2.0 templates
       value: {{ .Values.kubecostAggregator.dbTrimMemoryOnClose | quote }}
     - name: KUBECOST_NAMESPACE
       value: {{ .Release.Namespace }}
-    - name: TELEMETRY_ENABLED
-      value: {{ (quote .Values.telemetry.enabled) }}
+    {{- if .Values.global.grafana }}
+    - name: GRAFANA_ENABLED
+      value: "{{ template "cost-analyzer.grafanaEnabled" . }}"
+    {{- end}}
     {{- if .Values.oidc.enabled }}
     - name: OIDC_ENABLED
       value: "true"
@@ -1215,14 +1277,6 @@ Begin Kubecost 2.0 templates
       value: {{ (quote .Values.enterpriseCustomPricing.location.URI) }}
     - name: ENTERPRISE_CUSTOM_PRICING_APPLY_RETROACTIVELY
       value: "true"
-    {{- end }}
-    {{- if (.Values.instanceTypes).enabled }}
-    - name: CUSTOM_TYPE_INSTANCES_URI
-      value: {{ (quote .Values.instanceTypes.custom.location.URI) }}
-    {{- end }}
-    {{- if or ((.Values.kubecostProductConfigs).actions).enabled }}
-    - name: ACTIONS_BUCKET_CONFIG
-      value: /var/configs/actions/storage/actions-store.yaml
     {{- end }}
 {{- end }}
 
@@ -1439,6 +1493,28 @@ costEventsAuditEnabled flag for nginx configmap
   {{- end -}}
 {{- end -}}
 
+{{- define "cost-analyzer.grafanaEnabled" -}}
+  {{- if and (.Values.global.grafana.enabled) (not .Values.federatedETL.agentOnly)  -}}
+    {{- printf "true" -}}
+  {{- else -}}
+    {{- printf "false" -}}
+  {{- end -}}
+{{- end -}}
+
+{{/*
+Multi-Cluster Diagnostics is only fully functional when its agent and primary
+are both running, and when the federated storage config is present.
+*/}}
+{{- define "multiClusterDiagnosticsPrimaryEnabled" -}}
+{{- if and .Values.diagnostics.enabled .Values.diagnostics.primary.enabled -}}
+  {{- if or .Values.kubecostModel.federatedStorageConfigSecret .Values.kubecostModel.federatedStorageConfig -}}
+    {{- printf "true" -}}
+  {{- else -}}
+    {{- printf "false" -}}
+  {{- end -}}
+{{- end -}}
+{{- end -}}
+
 {{- define "gcpCloudIntegrationJSON" }}
 Kubecost 2.x requires a change to the method that cloud-provider billing integrations are configured.
 Please use this output to create a cloud-integration.json config. See:
@@ -1540,8 +1616,6 @@ for more information
 */ -}}
 {{- define "configsChecksum" -}}
 {{- $files := list
-  "actions-config-configmap-template.yaml"
-  "actions-store-secret.yaml"
   "alibaba-service-key-secret.yaml"
   "aws-service-key-secret.yaml"
   "azure-service-key-secret.yaml"
@@ -1550,25 +1624,29 @@ for more information
   "cost-analyzer-alerts-configmap.yaml"
   "cost-analyzer-asset-reports-configmap.yaml"
   "cost-analyzer-cloud-cost-reports-configmap.yaml"
+  "cost-analyzer-config-map-template.yaml"
+  "cost-analyzer-frontend-config-map-template.yaml"
   "cost-analyzer-metrics-config-map-template.yaml"
   "cost-analyzer-network-costs-config-map-template.yaml"
   "cost-analyzer-oidc-config-map-template.yaml"
-  "cost-analyzer-pkey-secret.yaml"
+  "cost-analyzer-pkey-configmap.yaml"
   "cost-analyzer-pricing-configmap.yaml"
   "cost-analyzer-saml-config-map-template.yaml"
   "cost-analyzer-saved-reports-configmap.yaml"
   "cost-analyzer-server-configmap.yaml"
   "cost-analyzer-smtp-configmap.yaml"
-  "frontend-configmap-template.yaml"
+  "external-grafana-config-map-template.yaml"
+  "grafana/grafana-secret.yaml"
   "install-plugins.yaml"
   "integrations-postgres-queries-configmap.yaml"
   "integrations-postgres-secret.yaml"
+  "kubecost-cluster-context-switcher.yaml"
   "kubecost-cluster-controller-actions-config.yaml"
-  "kubecost-cluster-controller-secret-template.yaml"
   "kubecost-oidc-secret-template.yaml"
   "kubecost-saml-secret-template.yaml"
+  "mimir-proxy-configmap-template.yaml"
   "savings-recommendations-allowlists-config-map-template.yaml"
-  "savings-recommendations-nodegroup-config-map-template.yaml"
+  "kubecost-cluster-controller-secret-template.yaml"
 -}}
 {{- $checksum := "" -}}
 {{- range $files -}}
@@ -1585,7 +1663,7 @@ for more information
   {{- else if .Values.imageVersion }}
     {{ .Values.kubecostModel.image }}:{{ .Values.imageVersion }}
   {{- else if eq "development" .Chart.AppVersion }}
-    gcr.io/guestbook-227502/agent:latest
+    gcr.io/kubecost1/cost-model-nightly:latest
   {{- else }}
     {{ .Values.kubecostModel.image }}:prod-{{ $.Chart.AppVersion }}
   {{- end }}
@@ -1600,10 +1678,3 @@ for more information
 {{- $tag := last $parts }}
 {{- $tag }}
 {{- end }}
-
-{{/*
-Product key secret name with default fallback
-*/}}
-{{- define "cost-analyzer.productKeySecretName" -}}
-{{- default "product-key" .Values.kubecostProductConfigs.productKey.secretname -}}
-{{- end -}}

@@ -1,0 +1,37 @@
+{{ if .Values.global.prometheus.enabled }}
+{{- if .Values.prometheus.server.enabled -}}
+{{- if not .Values.prometheus.server.statefulSet.enabled -}}
+{{- if .Values.prometheus.server.persistentVolume.enabled -}}
+{{- if not .Values.prometheus.server.persistentVolume.existingClaim -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  {{- if .Values.prometheus.server.persistentVolume.annotations }}
+  annotations:
+{{ toYaml .Values.prometheus.server.persistentVolume.annotations | indent 4 }}
+  {{- end }}
+  labels:
+    {{- include "prometheus.server.labels" . | nindent 4 }}
+  name: {{ template "prometheus.server.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  accessModes:
+{{ toYaml .Values.prometheus.server.persistentVolume.accessModes | indent 4 }}
+{{- if .Values.prometheus.server.persistentVolume.storageClass }}
+{{- if (eq "-" .Values.prometheus.server.persistentVolume.storageClass) }}
+  storageClassName: ""
+{{- else }}
+  storageClassName: "{{ .Values.prometheus.server.persistentVolume.storageClass }}"
+{{- end }}
+{{- end }}
+{{- if .Values.prometheus.server.persistentVolume.volumeBindingMode }}
+  volumeBindingModeName: "{{ .Values.prometheus.server.persistentVolume.volumeBindingMode }}"
+{{- end }}
+  resources:
+    requests:
+      storage: "{{ .Values.prometheus.server.persistentVolume.size }}"
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{ end }}

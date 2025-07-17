@@ -4,12 +4,6 @@ kubecostAggregator:
     enabled: true
   aggregatorDbStorage:
     storageRequest: 10Gi
-  resources:
-    limits:
-      memory: 10Gi
-    requests:
-      cpu: 2000m
-      memory: 10Gi
 kubecostModel:
   federatedStorageConfigSecret: federated-store
 kubecostProductConfigs:
@@ -20,4 +14,4 @@ prometheus:
     global:
       external_labels:
         # cluster_id should be unique for all clusters and the same value as .kubecostProductConfigs.clusterName
-        cluster_id: CLUSTER_NAME  # keeping for backward compatibility testing
+        cluster_id: CLUSTER_NAME

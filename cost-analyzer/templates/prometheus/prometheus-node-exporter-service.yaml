@@ -1,0 +1,47 @@
+{{ if .Values.global.prometheus.enabled }}
+{{- if .Values.prometheus.nodeExporter.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+{{- if .Values.prometheus.nodeExporter.service.annotations }}
+  annotations:
+{{ toYaml .Values.prometheus.nodeExporter.service.annotations | indent 4 }}
+{{- end }}
+  labels:
+    {{- include "prometheus.nodeExporter.labels" . | nindent 4 }}
+{{- if .Values.prometheus.nodeExporter.service.labels }}
+{{ toYaml .Values.prometheus.nodeExporter.service.labels | indent 4 }}
+{{- end }}
+  name: {{ template "prometheus.nodeExporter.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+spec:
+{{- if .Values.prometheus.nodeExporter.service.clusterIP }}
+  clusterIP: {{ .Values.prometheus.nodeExporter.service.clusterIP }}
+{{- end }}
+{{- if .Values.prometheus.nodeExporter.service.externalIPs }}
+  externalIPs:
+{{ toYaml .Values.prometheus.nodeExporter.service.externalIPs | indent 4 }}
+{{- end }}
+{{- if .Values.prometheus.nodeExporter.service.loadBalancerIP }}
+  loadBalancerIP: {{ .Values.prometheus.nodeExporter.service.loadBalancerIP }}
+{{- end }}
+{{- if .Values.prometheus.nodeExporter.service.loadBalancerSourceRanges }}
+  loadBalancerSourceRanges:
+  {{- range $cidr := .Values.prometheus.nodeExporter.service.loadBalancerSourceRanges }}
+    - {{ $cidr }}
+  {{- end }}
+{{- end }}
+  ports:
+    - name: tcp-metrics
+      port: {{ .Values.prometheus.nodeExporter.service.servicePort }}
+      protocol: TCP
+      {{- if .Values.prometheus.nodeExporter.hostNetwork }}
+      targetPort: {{ .Values.prometheus.nodeExporter.service.hostPort }}
+      {{- else }}
+      targetPort: 9100
+      {{- end }}
+  selector:
+    {{- include "prometheus.nodeExporter.matchLabels" . | nindent 4 }}
+  type: "{{ .Values.prometheus.nodeExporter.service.type }}"
+{{- end -}}
+{{ end }}

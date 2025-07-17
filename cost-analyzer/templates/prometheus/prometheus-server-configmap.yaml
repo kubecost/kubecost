@@ -1,0 +1,100 @@
+{{ if .Values.global.prometheus.enabled }}
+{{- if .Values.prometheus.server.enabled -}}
+{{- if (empty .Values.prometheus.server.configMapOverrideName) -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    {{- include "prometheus.server.labels" . | nindent 4 }}
+  name: {{ template "prometheus.server.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+data:
+{{- $root := . -}}
+{{- range $key, $value := .Values.prometheus.serverFiles }}
+  {{ $key }}: |
+{{- if eq $key "prometheus.yml" }}
+    global:
+{{ $root.Values.prometheus.server.global | toYaml | trimSuffix "\n" | indent 6 }}
+{{- if $root.Values.global.amp.enabled }}
+    remote_write:
+    - url: {{ $root.Values.global.amp.remoteWriteService }}
+      sigv4:
+{{ $root.Values.global.amp.sigv4 | toYaml | indent 8 }}
+{{- end }}
+{{- if $root.Values.global.ammsp.enabled }}
+    # See https://prometheus.io/docs/prometheus/latest/configuration/configuration/#remote_write
+    # for guidance on this configuration option
+    remote_write:
+      - url: {{ $root.Values.global.ammsp.remoteWriteService }}
+        azuread:
+          cloud: 'AzurePublic'
+          managed_identity:
+            client_id: {{ $root.Values.global.ammsp.aadAuthProxy.aadClientId }}
+{{- end }}
+{{- if $root.Values.prometheus.server.remoteWrite }}
+    remote_write:
+{{ $root.Values.prometheus.server.remoteWrite | toYaml | indent 4 }}
+{{- end }}
+{{- if $root.Values.prometheus.server.remoteRead }}
+    remote_read:
+{{ $root.Values.prometheus.server.remoteRead | toYaml | indent 4 }}
+{{- end }}
+{{- end }}
+{{- if eq $key "alerts" }}
+{{- if and (not (empty $value)) (empty $value.groups) }}
+    groups:
+{{- range $ruleKey, $ruleValue := $value }}
+    - name: {{ $ruleKey -}}.rules
+      rules:
+{{ $ruleValue | toYaml | trimSuffix "\n" | indent 6 }}
+{{- end }}
+{{- else }}
+{{ toYaml $value | indent 4 }}
+{{- end }}
+{{- else }}
+{{ toYaml $value | default "{}" | indent 4 }}
+{{- end }}
+{{- if eq $key "prometheus.yml" -}}
+{{- if $root.Values.prometheus.extraScrapeConfigs }}
+{{ tpl $root.Values.prometheus.extraScrapeConfigs $root | indent 4 }}
+{{- end -}}
+{{- if or ($root.Values.prometheus.alertmanager.enabled) ($root.Values.prometheus.server.alertmanagers) }}
+    alerting:
+{{- if $root.Values.prometheus.alertRelabelConfigs }}
+{{ $root.Values.prometheus.alertRelabelConfigs | toYaml  | trimSuffix "\n" | indent 6 }}
+{{- end }}
+      alertmanagers:
+{{- if $root.Values.prometheus.server.alertmanagers }}
+{{ toYaml $root.Values.prometheus.server.alertmanagers | indent 8 }}
+{{- else }}
+      - kubernetes_sd_configs:
+          - role: pod
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        {{- if $root.Values.prometheus.alertmanager.prefixURL }}
+        path_prefix: {{ $root.Values.prometheus.alertmanager.prefixURL }}
+        {{- end }}
+        relabel_configs:
+        - source_labels: [__meta_kubernetes_namespace]
+          regex: {{ $root.Release.Namespace }}
+          action: keep
+        - source_labels: [__meta_kubernetes_pod_label_app]
+          regex: {{ template "prometheus.name" $root }}
+          action: keep
+        - source_labels: [__meta_kubernetes_pod_label_component]
+          regex: alertmanager
+          action: keep
+        - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_probe]
+          regex: {{ index $root.Values.prometheus.alertmanager.podAnnotations "prometheus.io/probe" | default ".*" }}
+          action: keep
+        - source_labels: [__meta_kubernetes_pod_container_port_number]
+          regex:
+          action: drop
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{ end }}

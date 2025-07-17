@@ -1,0 +1,22 @@
+{{ if .Values.global.prometheus.enabled }}
+{{- if and .Values.prometheus.alertmanager.enabled .Values.prometheus.networkPolicy.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ template "prometheus.alertmanager.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "prometheus.alertmanager.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "prometheus.alertmanager.matchLabels" . | nindent 6 }}
+  ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            {{- include "prometheus.server.matchLabels" . | nindent 12 }}
+    - ports:
+      - port: 9093
+{{- end -}}
+{{ end }}

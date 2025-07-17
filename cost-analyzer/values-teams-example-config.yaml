@@ -14,7 +14,7 @@ saml:
   rbac:
     enabled: true # RBAC must be enabled
 upgrade:
-  tov3: true
+  toV2: true
 teams:
   teamsConfig:
     - id: ''
