@@ -1486,6 +1486,8 @@ are both running, and when the federated storage config is present.
   {{- else -}}
     {{- printf "false" -}}
   {{- end -}}
+{{- else -}}
+  {{- printf "false" -}}
 {{- end -}}
 {{- end -}}
 
