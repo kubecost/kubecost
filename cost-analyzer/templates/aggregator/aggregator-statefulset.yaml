@@ -505,6 +505,8 @@ spec:
               value: {{ .Values.aggregator.dbTrimMemoryOnClose | quote }}
             - name: KUBECOST_NAMESPACE
               value: {{ .Release.Namespace }}
+            - name: TELEMETRY_ENABLED
+              value: {{ (quote .Values.telemetry.enabled) }}
             {{- if .Values.oidc.enabled }}
             - name: OIDC_ENABLED
               value: "true"
@@ -591,6 +593,10 @@ spec:
            {{- if or ((.Values.kubecostProductConfigs).actions).exportBucket ((.Values.kubecostProductConfigs).actions).exportBucketSecret }}
             - name: ACTIONS_BUCKET_CONFIG
               value: /var/configs/actions/actions-export-bucket-config.yaml
+            {{- end }}
+            {{- if (.Values.kubecostProductConfigs).currencyCode }}
+            - name: DISPLAY_CURRENCY
+              value: {{ (.Values.kubecostProductConfigs).currencyCode }}
             {{- end }}
             {{- end }}
         {{- if .Values.aggregator.jaeger.enabled }}
