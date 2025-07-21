@@ -3,7 +3,7 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: {{ include "aggregator.fullname" . }}
+  name: {{ include "kubecost.aggregator.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "aggregator.commonLabels" . | nindent 4 }}
@@ -19,7 +19,7 @@ metadata:
   {{- end }}
 spec:
   replicas: {{ .Values.aggregator.replicas }}
-  serviceName: {{ template "aggregator.serviceName" . }}
+  serviceName: {{ template "kubecost.aggregator.serviceName" . }}
   selector:
     matchLabels:
     {{- include "aggregator.selectorLabels" . | nindent 6 }}
@@ -221,12 +221,12 @@ spec:
         {{- end }}
         {{- end }}
         {{- if .Values.aggregator.extraVolumes }}
-        {{- toYaml .Values.aggregator.extraVolumes | nindent 8 }}
+        {{- toYaml .Values.aggregator.extraVolumes | nindent 12 }}
         {{- end }}
       initContainers:
       {{- if .Values.global.updateCaTrust.enabled }}
         - name: update-ca-trust
-          image: {{ include "cost-model.image" . | trim | quote}}
+          image: {{ include "kubecost.aggregator.image" . }}
           {{- if .Values.kubecost.imagePullPolicy }}
           imagePullPolicy: {{ .Values.kubecost.imagePullPolicy }}
           {{- else }}
@@ -256,24 +256,12 @@ spec:
         - name: aggregator
         {{- if .Values.aggregator.containerSecurityContext }}
           securityContext:
-            {{- toYaml .Values.aggregator.containerSecurityContext | nindent 4 }}
+            {{- toYaml .Values.aggregator.containerSecurityContext | nindent 12 }}
         {{- else if .Values.global.containerSecurityContext }}
           securityContext:
-            {{- toYaml .Values.global.containerSecurityContext | nindent 4 }}
+            {{- toYaml .Values.global.containerSecurityContext | nindent 12 }}
         {{- end }}
-          {{- if .Values.kubecost }}
-          {{- if .Values.aggregator.fullImageName }}
-          image: {{ .Values.aggregator.fullImageName }}
-          {{- else if .Values.imageVersion }}
-          image: {{ .Values.kubecost.image }}:{{ .Values.imageVersion }}
-          {{- else if eq "development" .Chart.AppVersion }}
-          image: gcr.io/kubecost1/cost-model-nightly:latest
-          {{- else }}
-          image: {{ .Values.kubecost.image }}:prod-{{ $.Chart.AppVersion }}
-          {{- end }}
-          {{- else }}
-          image: gcr.io/kubecost1/cost-model:prod-{{ $.Chart.AppVersion }}
-          {{- end }}
+          image: {{ include "kubecost.image" . }}
           {{- if .Values.aggregator.readinessProbe.enabled }}
           readinessProbe:
             httpGet:
@@ -297,13 +285,13 @@ spec:
             {{- toYaml . | nindent 4 }}
           {{- end }}
           resources:
-            {{- toYaml .Values.aggregator.resources | nindent 4 }}
+            {{- toYaml .Values.aggregator.resources | nindent 12 }}
           volumeMounts:
             - name: persistent-configs
               mountPath: /var/configs
             - name: export-bucket-config
-              mountPath: /var/configs/export-bucket-config.yaml
-              subPath: {{ include "kubecost.exportBucket.fileName" . | trim }}
+              mountPath: /var/configs/storage-config.yaml
+              subPath: {{ include "kubecost.exportBucket.fileName" . }}
               readOnly: true
             - name: aggregator-db-storage
               mountPath: /var/configs/waterfowl/duckdb
@@ -409,7 +397,7 @@ spec:
             {{- end }}
             {{- end }}
             {{- if .Values.aggregator.extraVolumeMounts }}
-            {{- toYaml .Values.aggregator.extraVolumeMounts | nindent 4 }}
+            {{- toYaml .Values.aggregator.extraVolumeMounts | nindent 12 }}
             {{- end }}
             {{- if .Values.global.integrations.turbonomic.enabled }}
             - name: turbonomic-credentials
@@ -481,7 +469,7 @@ spec:
             - name: CUSTOM_COST_ENABLED
               value: {{ .Values.kubecost.plugins.enabled | quote }}
             {{- if .Values.aggregator.extraEnv -}}
-            {{- toYaml .Values.aggregator.extraEnv | nindent 4 }}
+            {{- toYaml .Values.aggregator.extraEnv | nindent 12 }}
             {{- end }}
             {{- if (.Values.aggregator).standardDiscount }}
             {{- if .Values.ingestionConfigmapName }}
@@ -617,7 +605,7 @@ spec:
             - name: BADGER_DIRECTORY_KEY
               value: /tmp/badger/key
           securityContext:
-            {{- toYaml .Values.aggregator.jaeger.containerSecurityContext | nindent 4 }}
+            {{- toYaml .Values.aggregator.jaeger.containerSecurityContext | nindent 12 }}
           image: {{ .Values.aggregator.jaeger.image }}:{{ .Values.aggregator.jaeger.imageVersion }}
         {{- end }}
 
@@ -638,14 +626,14 @@ spec:
       {{- end }}
       {{- with .Values.aggregator.nodeSelector }}
       nodeSelector:
-        {{- toYaml . | nindent 8 }}
+        {{- toYaml . | nindent 16 }}
       {{- end }}
       {{- with .Values.aggregator.tolerations }}
       tolerations:
-        {{- toYaml . | nindent 8 }}
+        {{- toYaml . | nindent 16 }}
       {{- end }}
       {{- with .Values.aggregator.affinity }}
       affinity:
-        {{- toYaml . | nindent 8 }}
+        {{- toYaml . | nindent 16 }}
       {{- end }}
 {{- end }}

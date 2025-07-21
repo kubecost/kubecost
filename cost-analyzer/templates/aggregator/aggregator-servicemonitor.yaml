@@ -2,7 +2,7 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: {{ include "aggregator.fullname" . }}
+  name: {{ include "kubecost.aggregator.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "aggregator.commonLabels" . | nindent 4 }}

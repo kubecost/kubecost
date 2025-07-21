@@ -80,11 +80,11 @@ Actions Storage source contents check. Either the Secret must be specified or th
 Print a warning if PV is enabled AND EKS is detected AND the EBS-CSI driver is not installed
 */}}
 {{- define "eksCheck" }}
+{{- $PVsEnabled := (or (.Values.persistentVolume).enabled) }}
 {{- $isEKS := (regexMatch ".*eks.*" (.Capabilities.KubeVersion | quote) )}}
 {{- $isGT22 := (semverCompare ">=1.23-0" .Capabilities.KubeVersion.GitVersion) }}
-{{- $PVNotExists := (empty (lookup "v1" "PersistentVolume" "" "")) }}
 {{- $EBSCSINotExists := (empty (lookup "apps/v1" "Deployment" "kube-system" "ebs-csi-controller")) }}
-{{- if (and $isEKS $isGT22 .Values.persistentVolume.enabled $EBSCSINotExists) -}}
+{{- if (and $isEKS $isGT22 $PVsEnabled $EBSCSINotExists) -}}
 
 ERROR: MISSING EBS-CSI DRIVER WHICH IS REQUIRED ON EKS v1.23+ TO MANAGE PERSISTENT VOLUMES. LEARN MORE HERE: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=installations-amazon-eks-integration
 
@@ -357,28 +357,6 @@ costEventsAuditEnabled flag for nginx configmap
 {{- $checksum | sha256sum -}}
 {{- end -}}
 
-{{- define "cost-model.image" }}
-{{- if .Values.kubecost }}
-  {{- if .Values.kubecost.fullImageName }}
-    {{ .Values.kubecost.fullImageName }}
-  {{- else if .Values.imageVersion }}
-    {{ .Values.kubecost.image }}:{{ .Values.imageVersion }}
-  {{- else if eq "development" .Chart.AppVersion }}
-    gcr.io/guestbook-227502/agent:latest
-  {{- else }}
-    {{ .Values.kubecost.image }}:prod-{{ $.Chart.AppVersion }}
-  {{- end }}
-{{- else }}
-  gcr.io/kubecost1/cost-model:prod-{{ $.Chart.AppVersion }}
-{{- end }}
-{{- end }}
-
-{{- define "cost-model.imagetag" }}
-{{- $image := include "cost-model.image" . }}
-{{- $parts := splitList ":" $image }}
-{{- $tag := last $parts }}
-{{- $tag }}
-{{- end }}
 
 {{/*
 Product key secret name with default fallback
@@ -388,20 +366,27 @@ Product key secret name with default fallback
 {{- end -}}
 
 {{/*
+Kubecost image to be used by all apps which run, can be overridden in each apps specific configs
+*/}}
+{{- define "kubecost.image" }}
+{{- .Values.kubecost.image.registry }}/{{ .Values.kubecost.image.repository }}:{{ .Values.kubecost.image.tag }}
+{{- end }}
+
+{{/*
 storage config helpers
 */}}
 
 {{- define "kubecost.exportBucket.secretName" }}
-{{- if (.Values.global.exportBucket).existingSecret }}
+{{- if (.Values.global.exportBucket).existingSecret -}}
 (.Values.global.exportBucket).existingSecret
-{{- else }}
+{{- else -}}
 {{ .Release.Name }}-export-bucket-config
 {{- end }}
-{{- end }}
+{{- end -}}
 
 {{- define "kubecost.exportBucket.config" }}
 {{- if (.Values.exportBucket).configYAML }}
-(.Values.exportBucket).configYAML
+{{ (.Values.exportBucket).configYAML }}
 {{ else }}
 {{/*
 Default export bucket config if no values are set
@@ -410,6 +395,6 @@ type: cluster
 {{- end }}
 {{- end }}
 
-{{- define "kubecost.exportBucket.fileName" }}
-{{ default "export-bucket-config.yaml" (.Values.global.exportBucket).fileName }}
-{{- end }}
+{{- define "kubecost.exportBucket.fileName" -}}
+{{ default "storage-config.yaml" (.Values.global.exportBucket).fileName }}
+{{- end -}}

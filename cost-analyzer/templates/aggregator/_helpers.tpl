@@ -1,12 +1,12 @@
-{{- define "aggregator.name" -}}
+{{- define "kubecost.aggregator.name" -}}
 {{- default "aggregator" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
-{{- define "aggregator.fullname" -}}
+{{- define "kubecost.aggregator.fullname" -}}
 {{- printf "%s-%s" .Release.Name "aggregator" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
-{{- define "aggregator.serviceName" -}}
+{{- define "kubecost.aggregator.serviceName" -}}
 {{- printf "%s-%s" .Release.Name "aggregator" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
@@ -24,10 +24,16 @@ app: aggregator
 {{- end -}}
 
 {{- define "aggregator.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "aggregator.name" . }}
+app.kubernetes.io/name: {{ include "kubecost.aggregator.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app: aggregator
 {{- end }}
+
+{{- define "kubecost.aggregator.image" -}}
+{{ include "kubecost.image" . }}
+{{- end }}
+
+
 
 {{- define "kubecost.actions.secretName" -}}
 {{- if ((.Values.kubecostProductConfigs).actions).exportBucketSecret }}
@@ -35,4 +41,4 @@ app: aggregator
 {{- else }}
 {{ .Release.Name }}-actions-export-bucket-config
 {{- end }}
-{{- end }}
+{{- end -}}

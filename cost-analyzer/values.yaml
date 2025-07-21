@@ -9,11 +9,11 @@ global:
   clusterId: cluster-one # globally unique cluster name
 
   ## The name of the Secret containing a bucket config for export bucket storage.
-  ## The contents should be stored under a key named export-bucket-config.yaml by default.
+  ## The contents should be stored under a key named storage-config.yaml by default.
   ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-long-term-export-bucket-configuration
 #  exportBucket:
 #    existingSecret: export-bucket
-#    fileName: export-bucket-config.yaml # set this value to change what the file name for the yaml config is
+#    fileName: storage-config.yaml # set this value to change what the file name for the yaml config is
 
 
 
@@ -509,6 +509,7 @@ sigV4Proxy:
 
 ## Values for the finops-agent subchart
 finops-agent:
+  enabled: true
   # export bucket for the finops-agent will be managed by this chart
   # TODO write better explaination
   exportBucket: {}
@@ -570,7 +571,11 @@ exportBucket:
 
 
 kubecost:
-  image: "gcr.io/kubecost1/cost-model"
+  image:
+    registry: gcr.io
+    repository: kubecost1/cost-model-nightly
+    tag: latesx
+
   imagePullPolicy: IfNotPresent
   # fullImageName overrides the default image construction logic. The exact
   # image provided (registry, image, tag) will be used for cost-model.
@@ -838,12 +843,11 @@ forecasting:
 ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=federation-kubecost-aggregator
 ##
 aggregator:
-  # fullImageName overrides the default image construction logic. The exact
-  # image provided (registry, image, tag) will be used for aggregator.
-  # fullImageName:
-  imagePullPolicy: IfNotPresent
+  # image overrides the values provided in kubecost.image
+  # image:
+  #   registry:
 
-  enabled: false
+  enabled: true
 
   # Replicas sets the number of Aggregator replicas.
   replicas: 1

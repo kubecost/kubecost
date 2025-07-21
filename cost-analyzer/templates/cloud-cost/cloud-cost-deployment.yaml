@@ -59,11 +59,11 @@ spec:
         - name: export-bucket-config
           secret:
             defaultMode: 420
-            secretName: {{ include "kubecost.exportBucket.secretName" . | trim }}
+            secretName: {{ include "kubecost.exportBucket.secretName" . }}
         {{- if or (.Values.cloudCost).cloudIntegrationSecret (.Values.cloudCost).cloudIntegrationJSON }}
         - name: cloud-integration
           secret:
-            secretName: {{ include "kubecost.cloudCost.secretName" . | trim }}
+            secretName: {{ include "kubecost.cloudCost.secretName" . }}
             items:
               - key: cloud-integration.json
                 path: cloud-integration.json
@@ -136,7 +136,7 @@ spec:
       {{- end }}
       {{- if .Values.global.updateCaTrust.enabled }}
       - name: update-ca-trust
-        image: {{ include "cost-model.image" . | trim | quote}}
+        image: {{ include "kubecost.cloudCost.image" . }}
         {{- if .Values.kubecost.imagePullPolicy }}
         imagePullPolicy: {{ .Values.kubecost.imagePullPolicy }}
         {{- else }}
@@ -164,21 +164,7 @@ spec:
       {{- end}}
       containers:
         - name: cloud-cost
-          {{- if .Values.kubecost }}
-          {{- if .Values.aggregator.fullImageName }}
-          image: {{ .Values.aggregator.fullImageName }}
-          {{- else if .Values.kubecost.fullImageName }}
-          image: {{ .Values.kubecost.fullImageName }}
-          {{- else if .Values.imageVersion }}
-          image: {{ .Values.kubecost.image }}:{{ .Values.imageVersion }}
-          {{- else if eq "development" .Chart.AppVersion }}
-          image: gcr.io/kubecost1/cost-model-nightly:latest
-          {{- else }}
-          image: {{ .Values.kubecost.image }}:prod-{{ $.Chart.AppVersion }}
-          {{ end }}
-          {{- else }}
-          image: gcr.io/kubecost1/cost-model:prod-{{ $.Chart.AppVersion }}
-          {{ end }}
+          image: {{ include "kubecost.cloudCost.image" . }}
           {{- if (.Values.cloudCost).readinessProbe.enabled }}
           readinessProbe:
             httpGet:
@@ -210,8 +196,8 @@ spec:
             - name: persistent-configs
               mountPath: /var/configs
             - name: export-bucket-config
-              mountPath: /var/configs/export-bucket-config.yaml
-              subPath: {{ include "kubecost.exportBucket.fileName" . | trim }}
+              mountPath: /var/configs/storage-config.yaml
+              subPath: {{ include "kubecost.exportBucket.fileName" . }}
               readOnly: true
           {{- if or (.Values.cloudCost).cloudIntegrationSecret (.Values.cloudCost).cloudIntegrationJSON }}
             - name: cloud-integration

@@ -59,7 +59,11 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 app: {{ include "cloudCost.name" . }}
 {{- end }}
 
-{{- define "kubecost.cloudCost.secretName" }}
+{{- define "kubecost.cloudCost.image" -}}
+{{ include "kubecost.image" . }}
+{{- end }}
+
+{{- define "kubecost.cloudCost.secretName" -}}
 {{- if (.Values.cloudCost).cloudIntegrationSecret }}
 (.Values.cloudCost).cloudIntegrationSecret
 {{- else }}
