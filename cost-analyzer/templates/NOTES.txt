@@ -1,8 +1,9 @@
 --------------------------------------------------
 {{- include "kubecostV2-preconditions" . -}}
 {{- include "eksCheck" . -}}
-{{- include "gcpCloudIntegrationCheck" . -}}
-{{- include "azureCloudIntegrationCheck" . -}}
+{{- include "kubecost.cloudCost.awsAthena.CloudIntegrationCheck" . -}}
+{{- include "kubecost.cloudCost.gcpBigQuery.CloudIntegrationJSON" . -}}
+{{- include "kubecost.cloudCost.azureStorage.CloudIntegrationCheck" . -}}
 {{- include "kubecost.exportBucket.secret.check" . -}}
 {{- include "kubecost.exportBucket.source.check" . -}}
 {{- include "clusterIDCheck" . -}}

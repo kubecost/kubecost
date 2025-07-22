@@ -63,12 +63,12 @@ data:
 {{- if and .Values.clusterController .Values.clusterController.enabled }}
     upstream clustercontroller {
 {{- if .Values.frontend.useDefaultFqdn }}
-        server {{ include "kubecost.clusterControllerName" . }}-service.{{ .Release.Namespace }}.svc.cluster.local:9731;
+        server {{ include "kubecost.clusterController.name" . }}-service.{{ .Release.Namespace }}.svc.cluster.local:9731;
 {{- else }}
 {{- if (.Values.frontend.clusterController).fqdn }}
         server {{ .Values.frontend.clusterController.fqdn }};
 {{- else }}
-        server {{ include "kubecost.clusterControllerName" . }}-service.{{ .Release.Namespace }}:9731;
+        server {{ include "kubecost.clusterController.name" . }}-service.{{ .Release.Namespace }}:9731;
 {{- end }}
 {{- end }}
     }
@@ -90,12 +90,12 @@ data:
 
     upstream cloudCost {
         {{- if .Values.frontend.useDefaultFqdn }}
-        server {{ include "cloudCost.serviceName" . }}.{{ .Release.Namespace }}.svc.cluster.local:9005;
+        server {{ include "kubecost.cloudCost.serviceName" . }}.{{ .Release.Namespace }}.svc.cluster.local:9005;
         {{- else }}
         {{- if (.Values.frontend.cloudCost).fqdn }}
         server {{ .Values.frontend.cloudCost.fqdn }};
         {{- else }}
-        server {{ include "cloudCost.serviceName" . }}.{{ .Release.Namespace }}:9005;
+        server {{ include "kubecost.cloudCost.serviceName" . }}.{{ .Release.Namespace }}:9005;
         {{- end }}
         {{- end }}
     }

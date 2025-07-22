@@ -6,7 +6,7 @@ metadata:
   name: {{ include "kubecost.aggregator.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "aggregator.commonLabels" . | nindent 4 }}
+    {{- include "kubecost.aggregator.commonLabels" . | nindent 4 }}
     {{- with .Values.global.additionalLabels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
@@ -22,7 +22,7 @@ spec:
   serviceName: {{ template "kubecost.aggregator.serviceName" . }}
   selector:
     matchLabels:
-    {{- include "aggregator.selectorLabels" . | nindent 6 }}
+    {{- include "kubecost.aggregator.selectorLabels" . | nindent 6 }}
   volumeClaimTemplates:
   - metadata:
       name: aggregator-db-storage
@@ -71,7 +71,7 @@ spec:
       securityContext:
     {{- toYaml .Values.global.securityContext | nindent 8 }}
     {{- end }}
-      serviceAccountName: {{ template "aggregator.serviceAccountName" . }}
+      serviceAccountName: {{ template "kubecost.aggregator.serviceAccountName" . }}
       volumes:
         - name: aggregator-staging
           emptyDir:

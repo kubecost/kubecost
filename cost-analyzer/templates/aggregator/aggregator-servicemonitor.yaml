@@ -5,7 +5,7 @@ metadata:
   name: {{ include "kubecost.aggregator.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "aggregator.commonLabels" . | nindent 4 }}
+    {{- include "kubecost.aggregator.commonLabels" . | nindent 4 }}
     {{- if .Values.aggregator.serviceMonitor.additionalLabels }}
     {{ toYaml .Values.aggregator.serviceMonitor.additionalLabels | nindent 4 }}
     {{- end }}
@@ -27,5 +27,5 @@ spec:
       - {{ .Release.Namespace }}
   selector:
     matchLabels:
-    {{- include "aggregator.commonLabels" . | nindent 6 }}
+    {{- include "kubecost.aggregator.commonLabels" . | nindent 6 }}
 {{- end }}

@@ -7,7 +7,7 @@
 {{- end -}}
 {{- end -}}
 
-{{- define "kubecost.clusterControllerName" -}}
+{{- define "kubecost.clusterController.name" -}}
 {{- printf "%s-%s" .Release.Name "cluster-controller" -}}
 {{- end -}}
 

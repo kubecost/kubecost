@@ -2,7 +2,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "kubecost.clusterControllerName" . }}
+  name: {{ include "kubecost.clusterController.name" . }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
@@ -28,11 +28,11 @@ spec:
     type: RollingUpdate
   selector:
     matchLabels:
-      app: {{ include "kubecost.clusterControllerName" . }}
+      app: {{ include "kubecost.clusterController.name" . }}
   template:
     metadata:
       labels:
-        app: {{ include "kubecost.clusterControllerName" . }}
+        app: {{ include "kubecost.clusterController.name" . }}
         {{- if .Values.global.additionalLabels }}
         {{- toYaml .Values.global.additionalLabels | nindent 8 }}
         {{- end }}
@@ -60,7 +60,7 @@ spec:
       priorityClassName: "{{ .Values.clusterController.priorityClassName }}"
       {{- end }}
       containers:
-      - name: {{ include "kubecost.clusterControllerName" . }}
+      - name: {{ include "kubecost.clusterController.name" . }}
         {{- if eq (typeOf .Values.clusterController.image) "string" }}
         image: {{ .Values.clusterController.image }}
         {{- else }}
@@ -94,7 +94,7 @@ spec:
         - name: TURNDOWN_NAMESPACE
           value: {{ .Release.Namespace }}
         - name: TURNDOWN_DEPLOYMENT
-          value: {{ include "kubecost.clusterControllerName" . }}
+          value: {{ include "kubecost.clusterController.name" . }}
         - name: GOOGLE_APPLICATION_CREDENTIALS
           value: /var/keys/service-key.json
         - name: CC_LOG_LEVEL
@@ -136,8 +136,8 @@ spec:
         - name: {{ .name }}
         {{- end }}
       {{- end }}
-      serviceAccount: {{ include "kubecost.clusterControllerName" . }}
-      serviceAccountName: {{ include "kubecost.clusterControllerName" . }}
+      serviceAccount: {{ include "kubecost.clusterController.name" . }}
+      serviceAccountName: {{ include "kubecost.clusterController.name" . }}
       {{- with .Values.clusterController.tolerations }}
       tolerations:
       {{- toYaml . | nindent 8 }}

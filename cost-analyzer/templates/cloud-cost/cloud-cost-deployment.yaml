@@ -5,10 +5,10 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "cloudCost.fullname" . }}
+  name: {{ include "kubecost.cloudCost.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "cloudCost.commonLabels" . | nindent 4 }}
+    {{- include "kubecost.cloudCost.commonLabels" . | nindent 4 }}
     {{- with .Values.global.additionalLabels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
@@ -23,7 +23,7 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      {{- include "cloudCost.selectorLabels" . | nindent 6 }}
+      {{- include "kubecost.cloudCost.selectorLabels" . | nindent 6 }}
   strategy:
     type: Recreate
   template:
@@ -54,7 +54,7 @@ spec:
         fsGroup: 1001
       {{- end }}
       restartPolicy: Always
-      serviceAccountName: {{ include "cloudCost.serviceAccountName" . }}
+      serviceAccountName: {{ include "kubecost.cloudCost.serviceAccountName" . }}
       volumes:
         - name: export-bucket-config
           secret:

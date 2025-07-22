@@ -10,20 +10,20 @@
 {{- printf "%s-%s" .Release.Name "aggregator" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
-{{- define "aggregator.serviceAccountName" -}}
-{{- if .Values.aggregator.serviceAccountName -}}
-    {{ .Values.aggregator.serviceAccountName }}
+{{- define "kubecost.aggregator.serviceAccountName" -}}
+{{- if .Values.kubecost.aggregator.serviceAccountName -}}
+    {{ .Values.kubecost.aggregator.serviceAccountName }}
 {{- else -}}
     {{ template "cost-analyzer.serviceAccountName" . }}
 {{- end -}}
 {{- end -}}
 
-{{- define "aggregator.commonLabels" -}}
+{{- define "kubecost.aggregator.commonLabels" -}}
 {{ include "cost-analyzer.chartLabels" . }}
 app: aggregator
 {{- end -}}
 
-{{- define "aggregator.selectorLabels" -}}
+{{- define "kubecost.aggregator.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "kubecost.aggregator.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app: aggregator
