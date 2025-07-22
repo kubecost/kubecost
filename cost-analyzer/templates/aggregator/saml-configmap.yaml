@@ -3,7 +3,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ template "cost-analyzer.fullname" . }}-saml
+  name: {{ template "kubecost.fullname" . }}-saml
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "cost-analyzer.commonLabels" . | nindent 4 }}

@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ template "cost-analyzer.fullname" . }}-install-plugins
+  name: {{ template "kubecost.fullname" . }}-install-plugins
   labels:
     {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
 data:

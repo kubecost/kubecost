@@ -1,5 +1,5 @@
 
-{{- define "clusterControllerEnabled" }}
+{{- define "kubecost.clusterController.enabled" }}
 {{- if (.Values.clusterController).enabled }}
 {{- printf "true" -}}
 {{- else -}}

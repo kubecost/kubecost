@@ -4,7 +4,7 @@
 apiVersion: scheduling.k8s.io/v1
 kind: PriorityClass
 metadata:
-  name: {{ template "cost-analyzer.fullname" . }}-priority
+  name: {{ template "kubecost.fullname" . }}-priority
   labels:
     {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
 value: {{ .Values.priority.value | default "1000000" }}

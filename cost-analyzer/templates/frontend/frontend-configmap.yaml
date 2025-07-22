@@ -483,7 +483,7 @@ data:
         {{- else }}
         location /forecasting {
             default_type 'application/json';
-            return 405 '{"forecastingEnabled": "false"}';
+            return 405 '{"kubecost.forecasting.enabled": "false"}';
         }
         {{- end }}
 
@@ -496,8 +496,8 @@ data:
                 "costEventsAuditEnabled": "{{ include "costEventsAuditEnabled" . }}",
                 "pluginsEnabled": "{{ include "pluginsEnabled" . }}",
                 "carbonEstimatesEnabled": "{{ include "carbonEstimatesEnabled" . }}",
-                "clusterControllerEnabled": "{{ include "clusterControllerEnabled" . }}",
-                "forecastingEnabled": "{{ include "forecastingEnabled" . }}",
+                "kubecost.clusterController.enabled": "{{ include "kubecost.clusterController.enabled" . }}",
+                "kubecost.forecasting.enabled": "{{ include "kubecost.forecasting.enabled" . }}",
                 "chartVersion": "DEVELOP_BRANCH",
                 "hourlyDataRetention": "{{ (.Values.kubecost.retention1h) }}",
                 "dailyDataRetention": "{{ (.Values.kubecost.retention1d) }}",

@@ -2,10 +2,10 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ template "forecasting.fullname" . }}
+  name: {{ template "kubecost.forecasting.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "forecasting.commonLabels" . | nindent 4 }}
+    {{- include "kubecost.forecasting.commonLabels" . | nindent 4 }}
     {{- with .Values.global.additionalLabels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
@@ -20,7 +20,7 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      {{- include "forecasting.selectorLabels" . | nindent 6 }}
+      {{- include "kubecost.forecasting.selectorLabels" . | nindent 6 }}
   strategy:
     type: RollingUpdate
   template:
@@ -126,7 +126,7 @@ spec:
       {{- if .Values.forecasting.priority.name }}
       priorityClassName: {{ .Values.forecasting.priority.name }}
       {{- else }}
-      priorityClassName: {{ template "forecasting.fullname" . }}-priority
+      priorityClassName: {{ template "kubecost.forecasting.fullname" . }}-priority
       {{- end }}
       {{- end }}
       {{- end }}

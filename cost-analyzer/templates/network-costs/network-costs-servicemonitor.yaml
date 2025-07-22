@@ -2,7 +2,7 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: {{ include "cost-analyzer.networkCostsName" . }}
+  name: {{ include "kubecost.networkCosts.name" . }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
@@ -28,5 +28,5 @@ spec:
       - {{ .Release.Namespace }}
   selector:
     matchLabels:
-      app: {{ include "cost-analyzer.networkCostsName" . }}
+      app: {{ include "kubecost.networkCosts.name" . }}
 {{- end }}

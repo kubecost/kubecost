@@ -2,7 +2,7 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: {{ include "frontend.serviceName" . }}
+  name: {{ include "kubecost.frontend.serviceName" . }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
@@ -15,7 +15,7 @@ metadata:
 {{- end }}
 spec:
   selector:
-    {{- include "frontend.selectorLabels" . | nindent 4 }}
+    {{- include "kubecost.frontend.selectorLabels" . | nindent 4 }}
 {{- if .Values.service -}}
 {{- if .Values.service.type }}
   type: "{{ .Values.service.type }}"

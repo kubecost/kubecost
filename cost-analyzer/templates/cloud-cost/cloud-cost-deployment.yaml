@@ -77,7 +77,7 @@ spec:
         {{- if .Values.kubecost.plugins.install.enabled}}
         - name: install-script
           configMap:
-            name: {{ template "cost-analyzer.fullname" . }}-install-plugins
+            name: {{ template "kubecost.fullname" . }}-install-plugins
         {{- end }}
         - name: plugins-dir
           emptyDir: {}
@@ -264,7 +264,7 @@ spec:
       {{- if .Values.aggregator.priority.name }}
       priorityClassName: {{ .Values.aggregator.priority.name }}
       {{- else }}
-      priorityClassName: {{ template "cost-analyzer.fullname" . }}-aggregator-priority
+      priorityClassName: {{ template "kubecost.fullname" . }}-aggregator-priority
       {{- end }}
       {{- end }}
 

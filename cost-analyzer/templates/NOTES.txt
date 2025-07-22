@@ -1,14 +1,14 @@
 --------------------------------------------------
-{{- include "kubecostV2-preconditions" . -}}
-{{- include "eksCheck" . -}}
+{{- include "kubecost.v2-preconditions" . -}}
+{{- include "kubecost.eksStorage.check" . -}}
 {{- include "kubecost.cloudCost.awsAthena.CloudIntegrationCheck" . -}}
 {{- include "kubecost.cloudCost.gcpBigQuery.CloudIntegrationJSON" . -}}
 {{- include "kubecost.cloudCost.azureStorage.CloudIntegrationCheck" . -}}
-{{- include "kubecost.exportBucket.secret.check" . -}}
+{{- include "kubecost.federatedStorage.secret.check" . -}}
 {{- include "kubecost.exportBucket.source.check" . -}}
-{{- include "clusterIDCheck" . -}}
+{{- include "kubecost.clusterId.check" . -}}
 {{- include "caCertsSecretConfigCheck" . -}}
-{{- include "actionsStorageSourceCheck" . -}}
+{{- include "kubecost.actionsStorage.source.check" . -}}
 
 Kubecost {{ .Chart.Version }} has been successfully installed.
 
@@ -16,7 +16,7 @@ Kubecost 3.x is a major upgrade from previous versions and includes major new fe
 
 When pods are Ready, you can enable port-forwarding with the following command:
 
-    kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ include "frontend.serviceName" . }} {{ .Values.service.targetPort }}
+    kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ include "kubecost.frontend.serviceName" . }} {{ .Values.service.targetPort }}
 
 Then, navigate to http://localhost:{{ .Values.service.targetPort }} in a web browser.
 

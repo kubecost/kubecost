@@ -3,7 +3,7 @@
 {{/*
 Kubecost 2.0 preconditions
 */}}
-{{- define "kubecostV2-preconditions" -}}
+{{- define "kubecost.v2-preconditions" -}}
   {{/* Iterate through all StatefulSets in the namespace and check if any of them have a label indicating they are from
   a pre-2.0 Helm Chart (e.g. "helm.sh/chart: cost-analyzer-1.108.1"). If so, return an error message with details and
   documentation for how to properly upgrade to Kubecost 2.0 */}}
@@ -50,36 +50,20 @@ Kubecost 2.0 preconditions
 {{/*
 RBAC exclusivity check: make sure either simple RBAC or RBAC Teams is configured, not both
 */}}
-{{- define "rbacCheck" -}}
+{{- define "kubecost.rbac.check" -}}
   {{- if and (or (.Values.saml).groups (.Values.oidc).groups) (.Values.teams).teamsConfig  -}}
     {{- fail "\nSimple RBAC and RBAC Teams are mutually exclusive. Please specify only one." -}}
   {{- end -}}
 {{- end -}}
 
-{{/*
-export bucket source check. Either the Secret must be specified or the JSON, not both.
-*/}}
-{{- define "kubecost.exportBucket.source.check" -}}
-  {{- if and ((.Values.global).exportBucket).existingSecret ((.Values.exportBucket).secret).config -}}
-    {{- fail "\n.Values.global.exportBucket.existingSecret and .Values.exportBucket.secret.config both set, please specify only one." -}}
-  {{- end -}}
-{{- end -}}
 
-{{/*
-Actions Storage source contents check. Either the Secret must be specified or the YAML, not both.
-*/}}
-{{- define "actionsStorageSourceCheck" -}}
-  {{- if ((.Values.kubecostProductConfigs).actions).enabled -}}
-  {{- if and ((.Values.kubecostProductConfigs).actions).exportBucketSecret ((.Values.kubecostProductConfigs).actions).exportBucket -}}
-    {{- fail "\nkubecostProductConfigs.actions.exportBucketSecret and kubecostProductConfigs.actions.exportBucket are mutually exclusive. Please specify only one." -}}
-  {{- end -}}
-  {{- end -}}
-{{- end -}}
+
+
 
 {{/*
 Print a warning if PV is enabled AND EKS is detected AND the EBS-CSI driver is not installed
 */}}
-{{- define "eksCheck" }}
+{{- define "kubecost.eksStorage.check" }}
 {{- $PVsEnabled := (or (.Values.persistentVolume).enabled) }}
 {{- $isEKS := (regexMatch ".*eks.*" (.Capabilities.KubeVersion | quote) )}}
 {{- $isGT22 := (semverCompare ">=1.23-0" .Capabilities.KubeVersion.GitVersion) }}
@@ -94,7 +78,7 @@ ERROR: MISSING EBS-CSI DRIVER WHICH IS REQUIRED ON EKS v1.23+ TO MANAGE PERSISTE
 {{/*
 Verify that the global cluster id is set
 */}}
-{{- define "clusterIDCheck" -}}
+{{- define "kubecost.clusterId.check" -}}
   {{- if ((((.Values.prometheus).server).global).external_labels).cluster_id }}
     {{- printf "\n\nIn Kubecost 3.0, `.Values.prometheus.server.global.external_labels.cluster_id` is no longer required.\nWhen it is set, it is used for backwards compatibility. \nSee TODO for more information.\n" -}}
   {{- end }}
@@ -111,23 +95,19 @@ Verify that the global cluster id is set
   {{- end -}}
 {{- end -}}
 
-{{- define "kubecost.clusterId" }}
-{{ .Values.global.clusterId }}
-{{- end }}
-
 {{/*
-Verify the export bucket config secret exists with the expected key.
+Verify the federated stoerage config secret exists with the expected key.
 Skip the check if CI/CD is enabled and skipSanityChecks is set. Argo CD, for
 example, does not support templating a chart which uses the lookup function.
 */}}
-{{- define "kubecost.exportBucket.secret.check" -}}
-{{- if (.Values.global.exportBucket).existingSecret }}
+{{- define "kubecost.federatedStorage.secret.check" -}}
+{{- if (.Values.global.federatedStorage).existingSecret }}
 {{- if not (and .Values.global.platforms.cicd.enabled .Values.global.platforms.cicd.skipSanityChecks) }}
 {{-  if .Capabilities.APIVersions.Has "v1/Secret" }}
-  {{- $secret := lookup "v1" "Secret" .Release.Namespace ((.Values.global).exportBucket).existingSecret }}
-  {{- $fileName := (include "kubecost.exportBucket.fileName" .) }}
+  {{- $secret := lookup "v1" "Secret" .Release.Namespace ((.Values.global).federatedStorage).existingSecret }}
+  {{- $fileName := (include "kubecost.federatedStorage.fileName" .) }}
   {{- if or (not $secret) (not (index $secret.data )) }}
-    {{- fail (printf "The export bucket storage config secret '%s' does not exist or does not contain the expected key '%s'" (.Values.global.exportBucket).existingSecret $fileName ) }}
+    {{- fail (printf "The export bucket storage config secret '%s' does not exist or does not contain the expected key '%s'" (.Values.global.federatedStorage).existingSecret $fileName ) }}
   {{- end }}
 {{- end -}}
 {{- end -}}
@@ -135,9 +115,33 @@ example, does not support templating a chart which uses the lookup function.
 {{- end -}}
 
 {{/*
+export bucket source check. Either the Secret must be specified or the JSON, not both.
+*/}}
+{{- define "kubecost.federatedStorage.source.check" -}}
+  {{- if and ((.Values.global).federatedStorage).existingSecret ((.Values.federatedStorage).secret).config -}}
+    {{- fail "\n.Values.global.federatedStorage.existingSecret and .Values.federatedStorage.secret.config both set, please specify only one." -}}
+  {{- end -}}
+{{- end -}}
+
+{{/*
+Actions Storage source contents check. Either the Secret must be specified or the YAML, not both.
+*/}}
+{{- define "kubecost.actionsStorage.source.check" -}}
+  {{- if ((.Values.kubecostProductConfigs).actions).enabled -}}
+  {{- if and ((.Values.kubecostProductConfigs).actions).storageConfigSecret ((.Values.kubecostProductConfigs).actions).storageConfig -}}
+    {{- fail "\nkubecostProductConfigs.actions.storageConfigSecret and kubecostProductConfigs.actions.storageConfig are mutually exclusive. Please specify only one." -}}
+  {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+{{- define "kubecost.clusterId" }}
+{{ .Values.global.clusterId }}
+{{- end }}
+
+{{/*
 Expand the name of the chart.
 */}}
-{{- define "cost-analyzer.name" -}}
+{{- define "kubecost.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
@@ -148,7 +152,7 @@ If release name contains chart name it will be used as a full name.
 Before changing this, please see:
 https://github.com/kubecost/cost-analyzer-helm-chart/blob/0f27b723cc395910b4b9667925d43001304e877d/cost-analyzer/templates/ingress-template.yaml#L7-L9
 */}}
-{{- define "cost-analyzer.fullname" -}}
+{{- define "kubecost.fullname" -}}
 {{- if .Values.fullnameOverride -}}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
@@ -179,7 +183,7 @@ Create the name of the service account
 */}}
 {{- define "cost-analyzer.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create -}}
-    {{ default (include "cost-analyzer.fullname" .) .Values.serviceAccount.name }}
+    {{ default (include "kubecost.fullname" .) .Values.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.serviceAccount.name }}
 {{- end -}}
@@ -207,7 +211,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 Create the common labels.
 */}}
 {{- define "cost-analyzer.commonLabels" -}}
-app.kubernetes.io/name: {{ include "cost-analyzer.name" . }}
+app.kubernetes.io/name: {{ include "kubecost.name" . }}
 helm.sh/chart: {{ include "cost-analyzer.chart" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
@@ -218,7 +222,7 @@ app: cost-analyzer
 Create the selector labels.
 */}}
 {{- define "cost-analyzer.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "cost-analyzer.name" . }}
+app.kubernetes.io/name: {{ include "kubecost.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app: cost-analyzer
 {{- end -}}

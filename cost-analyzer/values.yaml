@@ -6,7 +6,7 @@ global:
   ##
   zone: ""  # cluster.local
 
-  clusterId: cluster-one # globally unique cluster name
+  clusterId: cluster-one  # globally unique cluster name
 
   ## The name of the Secret containing a bucket config for export bucket storage.
   ## The contents should be stored under a key named storage-config.yaml by default.
@@ -693,9 +693,9 @@ networkCosts:
     enabled: false
     interval: 1m
     scrapeTimeout: 10s
-    additionalLabels: { }
-    metricRelabelings: [ ]
-    relabelings: [ ]
+    additionalLabels: {}
+    metricRelabelings: []
+    relabelings: []
 
   # Traffic Logging will enable logging the top 5 destinations for each source
   # every 30 minutes.
@@ -997,8 +997,8 @@ aggregator:
     enabled: false
     interval: 1m
     scrapeTimeout: 10s
-    additionalLabels: { }
-    metricRelabelings: [ ]
+    additionalLabels: {}
+    metricRelabelings: []
     relabelings:
       - action: replace
         sourceLabels:

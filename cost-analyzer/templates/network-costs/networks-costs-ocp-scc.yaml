@@ -2,7 +2,7 @@
 apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
 metadata:
-  name: {{ template "cost-analyzer.networkCostsName" . }}
+  name: {{ template "kubecost.networkCosts.name" . }}
 priority: 10
 allowPrivilegedContainer: true
 allowHostDirVolumePlugin: true

@@ -2,7 +2,7 @@
 apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
-  name: {{ include "cost-analyzer.fullname" . }}-route
+  name: {{ include "kubecost.fullname" . }}-route
   labels:
     {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
   {{- with .Values.global.platforms.openshift.route.annotations }}
@@ -19,7 +19,7 @@ spec:
     termination: edge
   to:
     kind: Service
-    name: {{ include "frontend.serviceName" . }}
+    name: {{ include "kubecost.frontend.serviceName" . }}
     weight: 100
   wildcardPolicy: None
 {{- end }}

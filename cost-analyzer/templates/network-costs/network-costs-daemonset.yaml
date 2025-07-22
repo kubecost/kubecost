@@ -3,10 +3,10 @@
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: {{ template "cost-analyzer.networkCostsName" . }}
+  name: {{ template "kubecost.networkCosts.name" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "networkcosts.commonLabels" . | nindent 4 }}
+    {{- include "kubecost.networkCosts.commonLabels" . | nindent 4 }}
     {{- if .Values.networkCosts.additionalLabels }}
     {{- toYaml .Values.networkCosts.additionalLabels | nindent 4 }}
     {{- end }}
@@ -24,7 +24,7 @@ spec:
   {{- end }}
   selector:
     matchLabels:
-      {{- include "networkcosts.selectorLabels" . | nindent 6 }}
+      {{- include "kubecost.networkCosts.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       annotations:
@@ -35,7 +35,7 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       labels:
-        {{- include "networkcosts.commonLabels" . | nindent 8 }}
+        {{- include "kubecost.networkCosts.commonLabels" . | nindent 8 }}
         {{- if .Values.networkCosts.additionalLabels }}
         {{- toYaml .Values.networkCosts.additionalLabels | nindent 8 }}
         {{- end }}
@@ -49,7 +49,7 @@ spec:
       hostNetwork: true
       serviceAccountName: {{ template "cost-analyzer.serviceAccountName" . }}
       containers:
-      - name: {{ template "cost-analyzer.networkCostsName" . }}
+      - name: {{ template "kubecost.networkCosts.name" . }}
         {{- if eq (typeOf .Values.networkCosts.image) "string" }}
         image: {{ .Values.networkCosts.image }}
         {{- else }}

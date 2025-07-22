@@ -123,7 +123,7 @@ spec:
         {{- if .Values.saml.rbac.enabled }}
         - name: saml-roles
           configMap:
-            name: {{ template "cost-analyzer.fullname" . }}-saml
+            name: {{ template "kubecost.fullname" . }}-saml
         {{- end }}
         {{- if eq (include "authMasterKeyEnabled" .) "true" }}
         - name: kubecost-master-api-key
@@ -135,7 +135,7 @@ spec:
         {{- if .Values.oidc.enabled }}
         - name: oidc-config
           configMap:
-            name: {{ template "cost-analyzer.fullname" . }}-oidc
+            name: {{ template "kubecost.fullname" . }}-oidc
         {{- if and (not .Values.oidc.existingCustomSecret.enabled) .Values.oidc.secretName }}
         - name: oidc-client-secret
           secret:
@@ -626,7 +626,7 @@ spec:
       {{- if .Values.aggregator.priority.name }}
       priorityClassName: {{ .Values.aggregator.priority.name }}
       {{- else }}
-      priorityClassName: {{ template "cost-analyzer.fullname" . }}-aggregator-priority
+      priorityClassName: {{ template "kubecost.fullname" . }}-aggregator-priority
       {{- end }}
       {{- end }}
       {{- end }}

@@ -2,7 +2,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "frontend.fullname" . }}
+  name: {{ include "kubecost.frontend.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
@@ -17,7 +17,7 @@ spec:
   replicas: {{ .Values.frontend.replicas | default 1 }}
   selector:
     matchLabels:
-      {{- include "frontend.selectorLabels" . | nindent 6 }}
+      {{- include "kubecost.frontend.selectorLabels" . | nindent 6 }}
   {{- if .Values.frontend.deploymentStrategy }}
   {{- with .Values.frontend.deploymentStrategy }}
   strategy: {{ toYaml . | nindent 4 }}
@@ -32,7 +32,7 @@ spec:
   template:
     metadata:
       labels:
-        {{- include "frontend.selectorLabels" . | nindent 8 }}
+        {{- include "kubecost.frontend.selectorLabels" . | nindent 8 }}
         {{- if .Values.global.additionalLabels }}
         {{- toYaml .Values.global.additionalLabels | nindent 8 }}
         {{- end }}
@@ -194,7 +194,7 @@ spec:
       {{- if gt (len .Values.priority.name) 0 }}
       priorityClassName: {{ .Values.priority.name }}
       {{- else }}
-      priorityClassName: {{ include "cost-analyzer.fullname" . }}-priority
+      priorityClassName: {{ include "kubecost.fullname" . }}-priority
       {{- end }}
       {{- end }}
       {{- end }}
