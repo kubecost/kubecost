@@ -165,7 +165,7 @@ https://github.com/kubecost/cost-analyzer-helm-chart/blob/0f27b723cc395910b4b966
 {{- end -}}
 {{- end -}}
 
-{{- define "cost-analyzer.serviceName" -}}
+{{- define "kubecost.serviceName" -}}
 {{- if .Values.fullnameOverride -}}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
@@ -181,7 +181,7 @@ https://github.com/kubecost/cost-analyzer-helm-chart/blob/0f27b723cc395910b4b966
 {{/*
 Create the name of the service account
 */}}
-{{- define "cost-analyzer.serviceAccountName" -}}
+{{- define "kubecost.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create -}}
     {{ default (include "kubecost.fullname" .) .Values.serviceAccount.name }}
 {{- else -}}
@@ -192,15 +192,15 @@ Create the name of the service account
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "cost-analyzer.chart" -}}
+{{- define "kubecost.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{/*
 Create the chart labels.
 */}}
-{{- define "cost-analyzer.chartLabels" -}}
-helm.sh/chart: {{ include "cost-analyzer.chart" . }}
+{{- define "kubecost.chartLabels" -}}
+helm.sh/chart: {{ include "kubecost.chart" . }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- if .Values.chartLabels }}
 {{ toYaml .Values.chartLabels }}
@@ -210,9 +210,9 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{/*
 Create the common labels.
 */}}
-{{- define "cost-analyzer.commonLabels" -}}
+{{- define "kubecost.commonLabels" -}}
 app.kubernetes.io/name: {{ include "kubecost.name" . }}
-helm.sh/chart: {{ include "cost-analyzer.chart" . }}
+helm.sh/chart: {{ include "kubecost.chart" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 app: cost-analyzer
@@ -221,7 +221,7 @@ app: cost-analyzer
 {{/*
 Create the selector labels.
 */}}
-{{- define "cost-analyzer.selectorLabels" -}}
+{{- define "kubecost.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "kubecost.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app: cost-analyzer
@@ -230,7 +230,7 @@ app: cost-analyzer
 {{/*
 SSO enabled flag for nginx configmap
 */}}
-{{- define "ssoEnabled" -}}
+{{- define "kubecost.sso.enabled" -}}
   {{- if or (.Values.saml).enabled (.Values.oidc).enabled -}}
     {{- printf "true" -}}
   {{- else -}}
@@ -242,7 +242,7 @@ SSO enabled flag for nginx configmap
 To use the Kubecost built-in RBAC Teams UI, you must enable SSO and RBAC and not specify any groups.
 Groups is only used when using simple RBAC.
 */}}
-{{- define "rbacTeamsEnabled" -}}
+{{- define "kubecost.rbacTeams.enabled" -}}
   {{- if or (.Values.saml).enabled (.Values.oidc).enabled -}}
     {{- if or ((.Values.saml).rbac).enabled ((.Values.oidc).rbac).enabled -}}
       {{- if not (or ((.Values.saml).rbac).groups ((.Values.oidc).rbac).groups) -}}
@@ -258,8 +258,8 @@ Groups is only used when using simple RBAC.
   {{- end -}}
 {{- end -}}
 
-{{- define "rbacTeamsConfigEnabled" -}}
-    {{- if  eq (include "rbacTeamsEnabled" .) "true" -}}
+{{- define "kubecost.rbacTeams.config.enabled" -}}
+    {{- if  eq (include "kubecost.rbacTeams.enabled" .) "true" -}}
         {{- if or (.Values.teams).teamsConfig  (.Values.teams).teamsConfigMapName -}}
             {{- printf "true" -}}
         {{- else -}}
@@ -270,7 +270,7 @@ Groups is only used when using simple RBAC.
     {{- end }}
 {{- end }}
 
-{{- define "authMasterKeyEnabled" -}}
+{{- define "kubecost.authMasterKey.enabled" -}}
   {{- if or (.Values.saml).enabled (.Values.oidc).enabled -}}
     {{- if or (.Values.saml).apiMasterKey (.Values.oidc).apiMasterKey -}}
       {{- printf "true" -}}
@@ -287,9 +287,9 @@ Groups is only used when using simple RBAC.
 {{- end -}}
 
 {{/*
-costEventsAuditEnabled flag for nginx configmap
+kubecost.costEventsAudit.enabled flag for nginx configmap
 */}}
-{{- define "costEventsAuditEnabled" -}}
+{{- define "kubecost.costEventsAudit.enabled" -}}
   {{- if or (.Values.costEventsAudit).enabled -}}
     {{- printf "true" -}}
   {{- else -}}
@@ -297,7 +297,7 @@ costEventsAuditEnabled flag for nginx configmap
   {{- end -}}
 {{- end -}}
 
-{{- define "caCertsSecretConfigCheck" }}
+{{- define "kubecost.caCertsSecretConfig.check" }}
   {{- if .Values.global.updateCaTrust.enabled }}
     {{- if and .Values.global.updateCaTrust.caCertsSecret .Values.global.updateCaTrust.caCertsConfig }}
       {{- fail "Both caCertsSecret and caCertsConfig are defined. Please specify only one." }}
@@ -307,7 +307,7 @@ costEventsAuditEnabled flag for nginx configmap
   {{- end }}
 {{- end }}
 
-{{- define "pluginsEnabled" }}
+{{- define "kubecost.plugins.enabled" }}
 {{- if (.Values.kubecost.plugins).enabled }}
 {{- printf "true" -}}
 {{- else -}}
@@ -315,7 +315,7 @@ costEventsAuditEnabled flag for nginx configmap
 {{- end -}}
 {{- end -}}
 
-{{- define "carbonEstimatesEnabled" }}
+{{- define "kubecost.carbonEstimates.enabled" }}
 {{- if ((.Values.kubecostProductConfigs).carbonEstimates) }}
 {{- printf "true" -}}
 {{- else -}}
@@ -326,7 +326,7 @@ costEventsAuditEnabled flag for nginx configmap
 {{- /*
   Compute a checksum based on the rendered content of specific ConfigMaps and Secrets.
 */ -}}
-{{- define "configsChecksum" -}}
+{{- define "kubecost.configsChecksum" -}}
 {{- $files := list
   "aggregator/actions-config-configmap.yaml"
   "aggregator/actions-store-secret.yaml"

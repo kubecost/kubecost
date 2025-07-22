@@ -5,7 +5,7 @@ metadata:
   name: {{ include "kubecost.clusterController.name" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
     {{- if .Values.global.additionalLabels }}
     {{- toYaml .Values.global.additionalLabels | nindent 4 }}
     {{- end }}
@@ -19,7 +19,7 @@ metadata:
   {{- with .Values.clusterController.annotations }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
-    checksum/configs: {{ include "configsChecksum" . }}
+    checksum/configs: {{ include "kubecost.configsChecksum" . }}
 spec:
   strategy:
     rollingUpdate:

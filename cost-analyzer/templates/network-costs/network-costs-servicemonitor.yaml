@@ -5,7 +5,7 @@ metadata:
   name: {{ include "kubecost.networkCosts.name" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
     {{- if .Values.networkCosts.serviceMonitor.additionalLabels }}
     {{ toYaml .Values.networkCosts.serviceMonitor.additionalLabels | nindent 4 }}
     {{- end }}

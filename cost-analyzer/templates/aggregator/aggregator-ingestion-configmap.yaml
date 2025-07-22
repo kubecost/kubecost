@@ -5,7 +5,7 @@ metadata:
   name: {{ default "ingestion-configs" .Values.ingestionConfigmapName }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
 data:
   standardDiscount: "{{ .Values.aggregator.standardDiscount }}"
   helmConfig: "true"

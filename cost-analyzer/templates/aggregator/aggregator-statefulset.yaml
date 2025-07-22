@@ -58,7 +58,7 @@ spec:
         {{- with .Values.global.podAnnotations}}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-        checksum/configs: {{ include "configsChecksum" . }}
+        checksum/configs: {{ include "kubecost.configsChecksum" . }}
     spec:
       restartPolicy: Always
     {{- if .Values.aggregator.securityContext }}
@@ -125,7 +125,7 @@ spec:
           configMap:
             name: {{ template "kubecost.fullname" . }}-saml
         {{- end }}
-        {{- if eq (include "authMasterKeyEnabled" .) "true" }}
+        {{- if eq (include "kubecost.authMasterKey.enabled" .) "true" }}
         - name: kubecost-master-api-key
           secret:
             secretName: {{ .Values.saml.apiMasterKeySecret | default "kubecost-master-api-key" }}
@@ -146,19 +146,19 @@ spec:
           secret:
             secretName: {{ .Values.oidc.existingCustomSecret.name }}
         {{- end }}
-        {{- if eq (include "authMasterKeyEnabled" .) "true" }}
+        {{- if eq (include "kubecost.authMasterKey.enabled" .) "true" }}
         - name: kubecost-master-api-key
           secret:
             secretName: {{ .Values.oidc.apiMasterKeySecret | default "kubecost-master-api-key" }}
         {{- end }}
         {{- end }}
         {{- end }}
-        {{- if eq (include "rbacTeamsEnabled" .) "true" }}
+        {{- if eq (include "kubecost.rbacTeams.enabled" .) "true" }}
         - name: kubecost-rbac-secret
           secret:
             secretName: kubecost-rbac-secret
         {{- end }}
-        {{- if eq (include "rbacTeamsConfigEnabled" .) "true" }}
+        {{- if eq (include "kubecost.rbacTeams.config.enabled" .) "true" }}
         - name: kubecost-rbac-teams-config
           configMap:
         {{- if .Values.teams.teamsConfigMapName }}
@@ -351,15 +351,15 @@ spec:
               mountPath: /var/configs/oidc-client-secret
             {{- end }}
             {{- end }}
-            {{- if eq (include "rbacTeamsEnabled" .) "true" }}
+            {{- if eq (include "kubecost.rbacTeams.enabled" .) "true" }}
             - name: kubecost-rbac-secret
               mountPath: /var/configs/kubecost-rbac-secret
             {{- end }}
-            {{- if eq (include "authMasterKeyEnabled" .) "true" }}
+            {{- if eq (include "kubecost.authMasterKey.enabled" .) "true" }}
             - name: kubecost-master-api-key
               mountPath: /var/configs/auth
             {{- end }}
-            {{- if eq (include "rbacTeamsConfigEnabled" .) "true" }}
+            {{- if eq (include "kubecost.rbacTeams.config.enabled" .) "true" }}
             - name: kubecost-rbac-teams-config
               mountPath: /var/configs/rbac-teams-configs
             {{- end }}
@@ -513,7 +513,7 @@ spec:
             - name: OIDC_SKIP_ONLINE_VALIDATION
               value: {{ (quote .Values.oidc.skipOnlineTokenValidation) | default (quote false) }}
             {{- end}}
-            {{- if eq (include "rbacTeamsEnabled" .) "true" }}
+            {{- if eq (include "kubecost.rbacTeams.enabled" .) "true" }}
             {{- if .Values.oidc.enabled }}
             - name: OIDC_RBAC_TEAMS_ENABLED
               value: "true"
@@ -523,11 +523,11 @@ spec:
               value: "true"
             {{- end }}
             {{- end }}
-            {{- if eq (include "authMasterKeyEnabled" .) "true" }}
+            {{- if eq (include "kubecost.authMasterKey.enabled" .) "true" }}
             - name: AUTH_MASTER_API_KEY_ENABLED
               value: "true"
             {{- end }}
-            {{- if eq (include "rbacTeamsConfigEnabled" .) "true" }}
+            {{- if eq (include "kubecost.rbacTeams.config.enabled" .) "true" }}
             - name: RBAC_TEAMS_HELM_CONFIG_PATH
               value: "/var/configs/rbac-teams-configs/rbac-teams-configs.json"
             {{- end }}
@@ -567,7 +567,7 @@ spec:
               value: {{ .Values.saml.redirectURL }}
             {{- end}}
             {{- if .Values.saml.rbac.enabled }}
-            {{- if eq (include "rbacTeamsEnabled" .) "false" }}
+            {{- if eq (include "kubecost.rbacTeams.enabled" .) "false" }}
             - name: SAML_RBAC_ENABLED
               value: "true"
             {{- end }}

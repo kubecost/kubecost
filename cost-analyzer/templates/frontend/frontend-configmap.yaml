@@ -10,7 +10,7 @@ metadata:
   name: nginx-conf
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
 data:
   nginx.conf: |
     server_tokens off;
@@ -491,11 +491,11 @@ data:
             default_type 'application/json';
             return 200 '\n
                 {
-                "ssoConfigured": "{{ include "ssoEnabled" . }}",
-                "rbacTeamsEnabled": "{{ include "rbacTeamsEnabled" . }}",
-                "costEventsAuditEnabled": "{{ include "costEventsAuditEnabled" . }}",
-                "pluginsEnabled": "{{ include "pluginsEnabled" . }}",
-                "carbonEstimatesEnabled": "{{ include "carbonEstimatesEnabled" . }}",
+                "ssoConfigured": "{{ include "kubecost.sso.enabled" . }}",
+                "kubecost.rbacTeams.enabled": "{{ include "kubecost.rbacTeams.enabled" . }}",
+                "kubecost.costEventsAudit.enabled": "{{ include "kubecost.costEventsAudit.enabled" . }}",
+                "kubecost.plugins.enabled": "{{ include "kubecost.plugins.enabled" . }}",
+                "kubecost.carbonEstimates.enabled": "{{ include "kubecost.carbonEstimates.enabled" . }}",
                 "kubecost.clusterController.enabled": "{{ include "kubecost.clusterController.enabled" . }}",
                 "kubecost.forecasting.enabled": "{{ include "kubecost.forecasting.enabled" . }}",
                 "chartVersion": "DEVELOP_BRANCH",

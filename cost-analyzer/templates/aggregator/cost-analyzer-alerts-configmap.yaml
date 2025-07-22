@@ -5,7 +5,7 @@ metadata:
   name: {{ default "alert-configs" .Values.alertConfigmapName }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
 data:
   alerts.json: '{{ toJson .Values.global.notifications.alertConfigs }}'
 {{- end -}}

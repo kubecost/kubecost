@@ -6,7 +6,7 @@ kind: PriorityClass
 metadata:
   name: {{ template "kubecost.fullname" . }}-priority
   labels:
-    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
 value: {{ .Values.priority.value | default "1000000" }}
 globalDefault: false
 description: "Priority class for scheduling the frontend pod"

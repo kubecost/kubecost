@@ -6,7 +6,7 @@ metadata:
   name: {{ template "kubecost.fullname" . }}-saml
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
 data:
 {{- $root := . }}
     saml.json: '{{ toJson .Values.saml }}'

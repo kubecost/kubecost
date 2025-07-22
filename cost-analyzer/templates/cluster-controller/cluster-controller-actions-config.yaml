@@ -5,7 +5,7 @@ metadata:
   name:  cluster-controller-continuous-cluster-sizing
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
 {{- if .Values.clusterController.actionConfigs.clusterRightsize }}
 binaryData:
   config: |
@@ -19,7 +19,7 @@ metadata:
   name:  cluster-controller-nsturndown-config
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
 {{- if .Values.clusterController.actionConfigs.namespaceTurndown }}
 binaryData:
 {{- range .Values.clusterController.actionConfigs.namespaceTurndown }}
@@ -34,7 +34,7 @@ metadata:
   name:  cluster-controller-container-rightsizing-config
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
 {{- if .Values.clusterController.actionConfigs.containerRightsize }}
 binaryData:
   config: |

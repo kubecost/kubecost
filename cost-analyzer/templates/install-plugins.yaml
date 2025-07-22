@@ -4,7 +4,7 @@ kind: ConfigMap
 metadata:
   name: {{ template "kubecost.fullname" . }}-install-plugins
   labels:
-    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
 data:
   install_plugins.sh: |-
     {{- if .Values.kubecost.plugins.install.enabled }}

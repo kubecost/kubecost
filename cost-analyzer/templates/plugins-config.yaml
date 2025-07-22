@@ -4,7 +4,7 @@ kind: Secret
 metadata:
   name: {{ .Values.kubecost.plugins.secretName }}
   labels:
-    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
 data:
   {{- range $key, $config := .Values.kubecost.plugins.configs }}
   {{ $key }}_config.json:

@@ -11,7 +11,7 @@ Create the networkcosts common labels. Note that because this is a daemonset, we
 {{- define "kubecost.networkCosts.commonLabels" -}}
 app.kubernetes.io/instance: kubecost
 app.kubernetes.io/name: network-costs
-helm.sh/chart: {{ include "cost-analyzer.chart" . }}
+helm.sh/chart: {{ include "kubecost.chart" . }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 app: {{ template "kubecost.networkCosts.name" . }}
 {{- end -}}

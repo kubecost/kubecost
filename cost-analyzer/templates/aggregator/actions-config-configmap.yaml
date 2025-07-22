@@ -4,7 +4,7 @@ kind: ConfigMap
 metadata:
   name: {{ .Release.Name }}-actions-config
   labels:
-    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
 data:
   config.yaml: |-
 {{- toYaml ((.Values.kubecostProductConfigs).actions).config | nindent 4 }}

@@ -9,7 +9,7 @@ kind: ClusterRole
 metadata:
   name: {{ include "kubecost.clusterController.name" . }}
   labels:
-      {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+      {{- include "kubecost.commonLabels" . | nindent 4 }}
 rules:
   - apiGroups:
       - kubecost.com

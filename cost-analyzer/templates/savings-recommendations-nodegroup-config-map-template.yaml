@@ -6,7 +6,7 @@ metadata:
   name: "savings-recommendations-nodegroup-custom-labels"
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
 data:
   nodegroup-custom-labels.json: '{{ toJson .Values.kubecostProductConfigs.savingsRecommendationsNodegroupCustomLabels }}'
 {{- end -}}

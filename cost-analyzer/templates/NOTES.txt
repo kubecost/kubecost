@@ -7,7 +7,7 @@
 {{- include "kubecost.federatedStorage.secret.check" . -}}
 {{- include "kubecost.exportBucket.source.check" . -}}
 {{- include "kubecost.clusterId.check" . -}}
-{{- include "caCertsSecretConfigCheck" . -}}
+{{- include "kubecost.caCertsSecretConfig.check" . -}}
 {{- include "kubecost.actionsStorage.source.check" . -}}
 
 Kubecost {{ .Chart.Version }} has been successfully installed.

@@ -44,12 +44,12 @@ support templating a chart which uses the lookup function.
 {{- if (.Values.cloudCost).serviceAccountName -}}
     {{ (.Values.cloudCost).serviceAccountName }}
 {{- else -}}
-    {{ template "cost-analyzer.serviceAccountName" . }}
+    {{ template "kubecost.serviceAccountName" . }}
 {{- end -}}
 {{- end -}}
 
 {{- define "kubecost.cloudCost.commonLabels" -}}
-{{ include "cost-analyzer.chartLabels" . }}
+{{ include "kubecost.chartLabels" . }}
 {{ include "kubecost.cloudCost.selectorLabels" . }}
 {{- end -}}
 

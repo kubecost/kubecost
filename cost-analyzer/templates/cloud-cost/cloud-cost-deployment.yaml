@@ -39,7 +39,7 @@ spec:
         {{- with .Values.global.podAnnotations}}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-        checksum/configs: {{ include "configsChecksum" . }}
+        checksum/configs: {{ include "kubecost.configsChecksum" . }}
     spec:
       {{- if .Values.global.platforms.openshift.enabled }}
       securityContext:

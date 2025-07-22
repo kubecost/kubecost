@@ -14,12 +14,12 @@
 {{- if .Values.kubecost.aggregator.serviceAccountName -}}
     {{ .Values.kubecost.aggregator.serviceAccountName }}
 {{- else -}}
-    {{ template "cost-analyzer.serviceAccountName" . }}
+    {{ template "kubecost.serviceAccountName" . }}
 {{- end -}}
 {{- end -}}
 
 {{- define "kubecost.aggregator.commonLabels" -}}
-{{ include "cost-analyzer.chartLabels" . }}
+{{ include "kubecost.chartLabels" . }}
 app: aggregator
 {{- end -}}
 

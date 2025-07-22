@@ -5,7 +5,7 @@ metadata:
   name: {{ template "kubecost.clusterController.name" . }}-service
   namespace: {{ .Release.Namespace }}
   labels:
-      {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+      {{- include "kubecost.commonLabels" . | nindent 4 }}
 spec:
   type: ClusterIP
   ports:

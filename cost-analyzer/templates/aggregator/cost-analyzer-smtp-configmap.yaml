@@ -5,7 +5,7 @@ metadata:
   name: {{ default "smtp-configs" .Values.smtpConfigmapName }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
 {{- if (((.Values.kubecostProductConfigs).smtp).config) }}
 data:
   config: {{  .Values.kubecostProductConfigs.smtp.config | quote }}

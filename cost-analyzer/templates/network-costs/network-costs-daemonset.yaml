@@ -47,7 +47,7 @@ spec:
       {{- end }}
     {{- end }}
       hostNetwork: true
-      serviceAccountName: {{ template "cost-analyzer.serviceAccountName" . }}
+      serviceAccountName: {{ template "kubecost.serviceAccountName" . }}
       containers:
       - name: {{ template "kubecost.networkCosts.name" . }}
         {{- if eq (typeOf .Values.networkCosts.image) "string" }}

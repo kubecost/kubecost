@@ -19,7 +19,7 @@
 {{- end -}}
 
 {{- define "kubecost.forecasting.commonLabels" -}}
-{{ include "cost-analyzer.chartLabels" . }}
+{{ include "kubecost.chartLabels" . }}
 {{ include "kubecost.forecasting.selectorLabels" . }}
 {{- end -}}
 

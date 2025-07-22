@@ -3,9 +3,9 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   namespace: {{ .Release.Namespace }}
-  name: {{ template "cost-analyzer.serviceAccountName" . }}
+  name: {{ template "kubecost.serviceAccountName" . }}
   labels:
-    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
 rules:
 - apiGroups: 
     - ''
@@ -29,9 +29,9 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ template "cost-analyzer.serviceAccountName" . }}
+  name: {{ template "kubecost.serviceAccountName" . }}
   labels:
-    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
 rules:
   - apiGroups:
       - ''
