@@ -88,7 +88,7 @@ Verify that the global cluster id is set
   {{- if not .Values.global.clusterId }}
     {{- fail "\n\nIn Kubecost 3.0, `.Values.global.clusterId` is required to be set"}}
   {{- end }}
-  {{- if or (.Values.global.exportBucket).existingSecret ((.Values.exportBucket).secret).config }}
+  {{- if or (.Values.global.federatedStorage).existingSecret ((.Values.federatedStorage).secret).config }}
     {{- if eq .Values.global.clusterId "cluster-one" }}
       {{- printf "\n\nWarning: it is recommended to specify a unique `.Values.global.clusterId` for each cluster.\nNote this must be a globally unique identifier in multi-cluster environments.\n" -}}
     {{- end -}}
@@ -107,7 +107,7 @@ example, does not support templating a chart which uses the lookup function.
   {{- $secret := lookup "v1" "Secret" .Release.Namespace ((.Values.global).federatedStorage).existingSecret }}
   {{- $fileName := (include "kubecost.federatedStorage.fileName" .) }}
   {{- if or (not $secret) (not (index $secret.data )) }}
-    {{- fail (printf "The export bucket storage config secret '%s' does not exist or does not contain the expected key '%s'" (.Values.global.federatedStorage).existingSecret $fileName ) }}
+    {{- fail (printf "The federated storage config secret '%s' does not exist or does not contain the expected key '%s'" (.Values.global.federatedStorage).existingSecret $fileName ) }}
   {{- end }}
 {{- end -}}
 {{- end -}}
@@ -115,7 +115,7 @@ example, does not support templating a chart which uses the lookup function.
 {{- end -}}
 
 {{/*
-export bucket source check. Either the Secret must be specified or the JSON, not both.
+federated storage source check. Either the Secret must be specified or the JSON, not both.
 */}}
 {{- define "kubecost.federatedStorage.source.check" -}}
   {{- if and ((.Values.global).federatedStorage).existingSecret ((.Values.federatedStorage).secret).config -}}
@@ -365,7 +365,7 @@ kubecost.costEventsAudit.enabled flag for nginx configmap
 {{/*
 Product key secret name with default fallback
 */}}
-{{- define "cost-analyzer.productKeySecretName" -}}
+{{- define "kubecost.productKey.secretName" -}}
 {{- default "product-key" .Values.kubecostProductConfigs.productKey.secretname -}}
 {{- end -}}
 
@@ -377,28 +377,28 @@ Kubecost image to be used by all apps which run, can be overridden in each apps 
 {{- end }}
 
 {{/*
-storage config helpers
+federated storage config helpers
 */}}
 
-{{- define "kubecost.exportBucket.secretName" }}
-{{- if (.Values.global.exportBucket).existingSecret -}}
-(.Values.global.exportBucket).existingSecret
+{{- define "kubecost.federatedStorage.secretName" }}
+{{- if (.Values.global.federatedStorage).existingSecret -}}
+(.Values.global.federatedStorage).existingSecret
 {{- else -}}
-{{ .Release.Name }}-export-bucket-config
+{{ .Release.Name }}-federated-storage-config
 {{- end }}
 {{- end -}}
 
-{{- define "kubecost.exportBucket.config" }}
-{{- if (.Values.exportBucket).configYAML }}
-{{ (.Values.exportBucket).configYAML }}
+{{- define "kubecost.federatedStorage.config" }}
+{{- if (.Values.federatedStorage).configYAML }}
+{{ (.Values.federatedStorage).configYAML }}
 {{ else }}
 {{/*
-Default export bucket config if no values are set
+Default federate storage config if no values are set
 */}}
 type: cluster
 {{- end }}
 {{- end }}
 
-{{- define "kubecost.exportBucket.fileName" -}}
-{{ default "storage-config.yaml" (.Values.global.exportBucket).fileName }}
+{{- define "kubecost.federatedStorage.fileName" -}}
+{{ default "federated-store.yaml" (.Values.global.federatedStorage).fileName }}
 {{- end -}}

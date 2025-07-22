@@ -56,10 +56,10 @@ spec:
       restartPolicy: Always
       serviceAccountName: {{ include "kubecost.cloudCost.serviceAccountName" . }}
       volumes:
-        - name: export-bucket-config
+        - name: federated-storage-config
           secret:
             defaultMode: 420
-            secretName: {{ include "kubecost.exportBucket.secretName" . }}
+            secretName: {{ include "kubecost.federatedStorage.secretName" . }}
         {{- if or (.Values.cloudCost).cloudIntegrationSecret (.Values.cloudCost).cloudIntegrationJSON }}
         - name: cloud-integration
           secret:
@@ -195,9 +195,9 @@ spec:
           volumeMounts:
             - name: persistent-configs
               mountPath: /var/configs
-            - name: export-bucket-config
-              mountPath: /var/configs/storage-config.yaml
-              subPath: {{ include "kubecost.exportBucket.fileName" . }}
+            - name: federated-storage-config
+              mountPath: /var/configs/federated-store.yaml
+              subPath: {{ include "kubecost.federatedStorage.fileName" . }}
               readOnly: true
           {{- if or (.Values.cloudCost).cloudIntegrationSecret (.Values.cloudCost).cloudIntegrationJSON }}
             - name: cloud-integration

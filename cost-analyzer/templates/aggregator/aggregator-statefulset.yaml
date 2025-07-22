@@ -76,14 +76,14 @@ spec:
         - name: aggregator-staging
           emptyDir:
             sizeLimit: {{ .Values.aggregator.stagingEmptyDirSizeLimit }}
-        - name: export-bucket-config
+        - name: federated-storage-config
           secret:
             defaultMode: 420
-            secretName: {{ include "kubecost.exportBucket.secretName" . }}
+            secretName: {{ include "kubecost.federatedStorage.secretName" . }}
         {{- if ((.Values.kubecostProductConfigs).productKey).enabled }}
         - name: productkey-secret
           secret:
-            secretName: {{ include "cost-analyzer.productKeySecretName" . }}
+            secretName: {{ include "kubecost.productKey.secretName" . }}
             items:
             - key: productkey.json
               path: productkey.json
@@ -213,8 +213,8 @@ spec:
             name: actions-config
         {{- end }}
         {{- if ((.Values.kubecostProductConfigs).actions).enabled }}
-        {{- if or ((.Values.kubecostProductConfigs).actions).exportBucket ((.Values.kubecostProductConfigs).actions).exportBucketSecret }}
-        - name: actions-export-bucket-config
+        {{- if or ((.Values.kubecostProductConfigs).actions).federatedStorage ((.Values.kubecostProductConfigs).actions).federatedStorageSecret }}
+        - name: actions-federated-storage-config
           secret:
             defaultMode: 420
             secretName: {{ include "kubecost.actions.secretName" . }}
@@ -289,9 +289,9 @@ spec:
           volumeMounts:
             - name: persistent-configs
               mountPath: /var/configs
-            - name: export-bucket-config
-              mountPath: /var/configs/storage-config.yaml
-              subPath: {{ include "kubecost.exportBucket.fileName" . }}
+            - name: federated-storage-config
+              mountPath: /var/configs/federated-store.yaml
+              subPath: {{ include "kubecost.federatedStorage.fileName" . }}
               readOnly: true
             - name: aggregator-db-storage
               mountPath: /var/configs/waterfowl/duckdb
@@ -389,9 +389,9 @@ spec:
               mountPath: /var/configs/actions
             {{- end }}
             {{- if ((.Values.kubecostProductConfigs).actions).enabled }}
-            {{- if or ((.Values.kubecostProductConfigs).actions).exportBucket ((.Values.kubecostProductConfigs).actions).exportBucketSecret }}
-            - name: actions-export-bucket-config
-              mountPath: /var/configs/actions/actions-export-bucket-config.yaml
+            {{- if or ((.Values.kubecostProductConfigs).actions).storageConfig ((.Values.kubecostProductConfigs).actions).storageConfig.secret }}
+            - name: actions-storage-config
+              mountPath: /var/configs/actions/actions-store.yaml
               subPath: actions-store.yaml
               readOnly: true
             {{- end }}
@@ -590,9 +590,9 @@ spec:
               value: {{ (quote .Values.instanceTypes.custom.location.URI) }}
             {{- end }}
            {{- if ((.Values.kubecostProductConfigs).actions).enabled }}
-           {{- if or ((.Values.kubecostProductConfigs).actions).exportBucket ((.Values.kubecostProductConfigs).actions).exportBucketSecret }}
+           {{- if or ((.Values.kubecostProductConfigs).actions).storageConfig ((.Values.kubecostProductConfigs).actions).storageConfigSecret }}
             - name: ACTIONS_BUCKET_CONFIG
-              value: /var/configs/actions/actions-export-bucket-config.yaml
+              value: /var/configs/actions/actions-store.yaml
             {{- end }}
             {{- if (.Values.kubecostProductConfigs).currencyCode }}
             - name: DISPLAY_CURRENCY

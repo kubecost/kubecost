@@ -1,11 +1,11 @@
 global:
-  exportBucket:
-    existingSecret: export-bucket-config
+  federatedStorage:
+    existingSecret: federated-storage-config
 kubecostProductConfigs:
   clusterName: CLUSTER_NAME
 #cloudCost:
 #  cloudIntegrationSecret: cloud-integration
-serviceAccount:  # this example uses AWS IRSA, which creates a service account with rights to the s3 bucket. If using keys+secrets in the export bucket, set create: true
+serviceAccount:  # this example uses AWS IRSA, which creates a service account with rights to the s3 bucket. If using keys+secrets in the federated storage, set create: true
   create: true
 networkCosts:
   # optional, see: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-network-cost

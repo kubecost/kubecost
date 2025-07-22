@@ -33,12 +33,10 @@ app: aggregator
 {{ include "kubecost.image" . }}
 {{- end }}
 
-
-
 {{- define "kubecost.actions.secretName" -}}
-{{- if ((.Values.kubecostProductConfigs).actions).exportBucketSecret }}
-{{- ((.Values.kubecostProductConfigs).actions).exportBucketSecret }}
+{{- if ((.Values.kubecostProductConfigs).actions).storageConfig.secret }}
+{{- ((.Values.kubecostProductConfigs).actions).storageConfig.secret }}
 {{- else }}
-{{ .Release.Name }}-actions-export-bucket-config
+{{ .Release.Name }}-actions-storage-config
 {{- end }}
 {{- end -}}

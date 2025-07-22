@@ -8,12 +8,12 @@ global:
 
   clusterId: cluster-one  # globally unique cluster name
 
-  ## The name of the Secret containing a bucket config for export bucket storage.
+  ## The name of the Secret containing a bucket config for federated storage.
   ## The contents should be stored under a key named storage-config.yaml by default.
-  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-long-term-export-bucket-configuration
-#  exportBucket:
-#    existingSecret: export-bucket
-#    fileName: storage-config.yaml # set this value to change what the file name for the yaml config is
+  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-long-term-federated-storage-configuration
+#  federatedStorage:
+#    existingSecret: federated-storage-config
+#    fileName: federated-store.yaml # set this value to change what the file name for the yaml config is
 
 
 
@@ -510,9 +510,9 @@ sigV4Proxy:
 ## Values for the finops-agent subchart
 finops-agent:
   enabled: true
-  # export bucket for the finops-agent will be managed by this chart
+  # federated storage for the finops-agent will be managed by this chart
   # TODO write better explaination
-  exportBucket: {}
+  federatedStorage: {}
 
   agent:
     collectorDataSource:
@@ -528,12 +528,12 @@ finops-agent:
       enabled: false
 
 
-exportBucket:
-  ## export bucket storage config can be supplied via a secret or the yaml block
+federatedStorage:
+  ## federated storage config can be supplied via a secret or the yaml block
   ## below when using the block below, only a single provider is supported,
   ## others are for example purposes.
   ## TODO update doc
-  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-long-term-export-bucket-configuration
+  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-long-term-federated-storage-configuration
   # configYAML: |-
   #   # AWS EXAMPLE
   #   type: S3
@@ -888,7 +888,7 @@ aggregator:
   dbWriteThreads: 1
 
   # How many threads to use when ingesting Asset/Allocation/CloudCost data
-  # from the export bucket. In most cases the default is sufficient,
+  # from the federated storage bucket. In most cases the default is sufficient,
   # but can be increased if trying to backfill historical data.
   # default: 1
   dbConcurrentIngestionCount: 1
@@ -1400,14 +1400,14 @@ kubecostProductConfigs:
 #      enabled: true
 #
 #      # The Actions feature requires an external storage config.
-#      # By default, will use the same bucket config as set in exportBucket.configYAML (or global.exportBucket.existingSecret)
+#      # By default, will use the same bucket config as set in federatedStorage.configYAML (or global.federatedStorage.existingSecret)
 #
 #      # A separate bucket config specific to action storage can alternatively be supplied via a Secret or a yaml block
 #      # The name of the Secret containing the bucket config. The contents should be stored under a key named actions-store.yaml
-#      exportBucketSecret: actions-store
+#      storageConfigSecret: actions-store
 #
 #      # (If not using Secret) Define storage config directly in yaml, as below:
-#      exportBucket: |-
+#      storageConfig: |-
 #      # AWS EXAMPLE
 #        type: S3
 #        config:
