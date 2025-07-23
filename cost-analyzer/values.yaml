@@ -1120,7 +1120,7 @@ kubecostAggregator:
 ## retention: deletes data beyond specified retention period
 diagnostics:
   enabled: true
-  retention: 90d 
+  retention: 90d
 
 # Kubecost Cluster Controller for Right Sizing and Cluster Turndown
 clusterController:
