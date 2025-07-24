@@ -389,8 +389,8 @@ federated storage config helpers
 {{- end -}}
 
 {{- define "kubecost.federatedStorage.config" }}
-{{- if (.Values.federatedStorage).configYAML }}
-{{ (.Values.federatedStorage).configYAML }}
+{{- if (.Values.federatedStorage).config }}
+{{ (.Values.federatedStorage).config }}
 {{ else }}
 {{/*
 Default federate storage config if no values are set

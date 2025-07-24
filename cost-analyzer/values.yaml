@@ -534,7 +534,7 @@ federatedStorage:
   ## others are for example purposes.
   ## TODO update doc
   ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-long-term-federated-storage-configuration
-  # configYAML: |-
+  # config: |-
   #   # AWS EXAMPLE
   #   type: S3
   #   config:
@@ -1400,7 +1400,7 @@ kubecostProductConfigs:
 #      enabled: true
 #
 #      # The Actions feature requires an external storage config.
-#      # By default, will use the same bucket config as set in federatedStorage.configYAML (or global.federatedStorage.existingSecret)
+#      # By default, will use the same bucket config as set in federatedStorage.config (or global.federatedStorage.existingSecret)
 #
 #      # A separate bucket config specific to action storage can alternatively be supplied via a Secret or a yaml block
 #      # The name of the Secret containing the bucket config. The contents should be stored under a key named actions-store.yaml

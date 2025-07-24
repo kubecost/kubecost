@@ -11,8 +11,8 @@
 {{- end -}}
 
 {{- define "kubecost.aggregator.serviceAccountName" -}}
-{{- if .Values.kubecost.aggregator.serviceAccountName -}}
-    {{ .Values.kubecost.aggregator.serviceAccountName }}
+{{- if .Values.aggregator.serviceAccountName -}}
+    {{ .Values.aggregator.serviceAccountName }}
 {{- else -}}
     {{ template "kubecost.serviceAccountName" . }}
 {{- end -}}
