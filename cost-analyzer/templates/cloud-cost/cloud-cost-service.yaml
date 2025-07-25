@@ -1,0 +1,17 @@
+{{- if (.Values.cloudCost).enabled -}}
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ template "kubecost.cloudCost.serviceName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "kubecost.cloudCost.commonLabels" . | nindent 4 }}
+spec:
+  selector:
+    {{- include "kubecost.cloudCost.selectorLabels" . | nindent 4 }}
+  type: "ClusterIP"
+  ports:
+    - name: tcp-api
+      port: 9005
+      targetPort: 9005
+{{- end }}

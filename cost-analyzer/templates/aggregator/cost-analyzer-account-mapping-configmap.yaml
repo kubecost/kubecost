@@ -1,0 +1,11 @@
+{{- if (.Values.kubecostProductConfigs).cloudAccountMapping }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "account-mapping"
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
+data:
+  account-map.json: '{{ toJson .Values.kubecostProductConfigs.cloudAccountMapping }}'
+{{- end }}

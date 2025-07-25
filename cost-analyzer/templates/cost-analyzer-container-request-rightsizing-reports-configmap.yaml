@@ -6,7 +6,7 @@ metadata:
   name: {{ default "crrs-configs" .Values.containerRequestRightSizingReportConfigmapName }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
 data:
   crrs-reports.json: '{{ toJson .Values.global.containerRequestRightSizingReports.reports }}'
 {{- end -}}

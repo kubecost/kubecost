@@ -6,10 +6,10 @@ kind: Ingress
 metadata:
   # NOTE: In my minimal testing, the name cannot be changed.
   # Ingress webhook protections will not allow duplicate names during helm upgrades.
-  name: {{ include "cost-analyzer.fullname" . }}
+  name: {{ include "kubecost.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
     {{- with .Values.ingress.labels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
@@ -41,7 +41,7 @@ spec:
             pathType: {{ $ingressPathType }}
             backend:
               service:
-                name: {{ include "frontend.serviceName" $ }}
+                name: {{ include "kubecost.frontend.serviceName" $ }}
                 port:
                   name: tcp-frontend
   {{- end }}
