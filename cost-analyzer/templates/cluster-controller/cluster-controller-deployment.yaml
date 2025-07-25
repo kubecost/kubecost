@@ -90,7 +90,7 @@ spec:
             fieldRef:
               fieldPath: spec.nodeName
         - name: CLUSTER_ID
-          value: {{ .Values.global.clusterId }}
+          value: {{ include "kubecost.clusterId" . }}
         - name: TURNDOWN_NAMESPACE
           value: {{ .Release.Namespace }}
         - name: TURNDOWN_DEPLOYMENT

@@ -513,7 +513,7 @@ finops-agent:
   # federated storage for the finops-agent will be managed by this chart
   # TODO write better explaination
   federatedStorage: {}
-
+  
   agent:
     collectorDataSource:
       enabled: true
@@ -574,7 +574,7 @@ kubecost:
   image:
     registry: gcr.io
     repository: kubecost1/cost-model-nightly
-    tag: latesx
+    tag: latest
 
   imagePullPolicy: IfNotPresent
   # fullImageName overrides the default image construction logic. The exact
