@@ -135,8 +135,16 @@ Actions Storage source contents check. Either the Secret must be specified or th
 {{- end -}}
 
 {{- define "kubecost.clusterId" }}
-{{ .Values.global.clusterId }}
-{{- end }}
+  {{- if ((((.Values.prometheus).server).global).external_labels).cluster_id }}
+    {{- .Values.prometheus.server.global.external_labels.cluster_id }}
+  {{- else if (.Values.kubecostProductConfigs).clusterName }}
+    {{- .Values.kubecostProductConfigs.clusterName }}
+  {{- else if .Values.clusterId }}
+    {{- .Values.clusterId }}
+  {{- else -}}
+    {{- .Values.global.clusterId }}
+  {{- end -}}
+{{- end -}}
 
 {{/*
 Expand the name of the chart.
@@ -389,11 +397,14 @@ federated storage config helpers
 {{- end -}}
 
 {{- define "kubecost.federatedStorage.config" }}
-{{- if (.Values.federatedStorage).config }}
+{{- if .Values.kubecostModel.federatedStorageConfig -}}
+{{ (.Values.kubecostModel).federatedStorageConfig }}
+{{- else if (.Values.federatedStorage).config }}
 {{ (.Values.federatedStorage).config }}
 {{ else }}
 {{/*
-Default federate storage config if no values are set
+TODO:Default federated storage config 
+for single cluster environments
 */}}
 type: cluster
 {{- end }}
