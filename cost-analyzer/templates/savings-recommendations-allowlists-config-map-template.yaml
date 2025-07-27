@@ -6,7 +6,7 @@ metadata:
   name: "savings-recommendations-instance-allow-lists"
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
 data:
   allow-lists.json: '{{ toJson .Values.kubecostProductConfigs.savingsRecommendationsAllowLists }}'
 {{- end -}}

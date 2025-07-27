@@ -1,9 +1,0 @@
-kubecostModel:
-  federatedStorageConfig: |-
-    type: S3
-    config: intentionally-invalid
-    bucket: "kubecost-helm-testing-metrics"
-      endpoint: "s3.amazonaws.com"
-      region: "us-east-2"
-kubecostProductConfigs:
-  clusterName: helm-testing

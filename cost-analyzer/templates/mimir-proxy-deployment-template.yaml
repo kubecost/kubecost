@@ -3,7 +3,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ template "cost-analyzer.fullname" . }}-mimir-proxy
+  name: {{ template "kubecost.fullname" . }}-mimir-proxy
   namespace: {{ .Release.Namespace }}
   labels:
     app: mimir-proxy
@@ -55,7 +55,7 @@ spec:
       volumes:
       - name: default-conf
         configMap:
-          name: {{ template "cost-analyzer.fullname" . }}-mimir-proxy
+          name: {{ template "kubecost.fullname" . }}-mimir-proxy
           items:
             - key: default.conf
               path: default.conf

@@ -1,0 +1,32 @@
+{{- if (.Values.networkCosts).enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "kubecost.networkCosts.name" . }}
+  namespace: {{ .Release.Namespace }}
+{{- if (or .Values.networkCosts.service.annotations .Values.networkCosts.prometheusScrape) }}
+  annotations:
+{{- if .Values.networkCosts.service.annotations }}
+{{ toYaml .Values.networkCosts.service.annotations | indent 4 }}
+{{- end }}
+{{- if .Values.networkCosts.prometheusScrape }}
+    prometheus.io/scrape: "true"
+    prometheus.io/port: {{ (quote .Values.networkCosts.port) | default (quote 3001) }}
+{{- end }}
+{{- end }}
+  labels:
+    {{- include "kubecost.networkCosts.commonLabels" . | nindent 4 }}
+    {{- if .Values.networkCosts.service.labels }}
+    {{ toYaml .Values.networkCosts.service.labels | nindent 4 }}
+    {{- end }}
+spec:
+  clusterIP: None
+  ports:
+  - name: metrics
+    port: {{ .Values.networkCosts.port | default 3001 }}
+    protocol: TCP
+    targetPort: {{ .Values.networkCosts.port | default 3001 }}
+  selector:
+    {{- include "kubecost.networkCosts.selectorLabels" . | nindent 4 }}
+  type: ClusterIP
+{{- end }}

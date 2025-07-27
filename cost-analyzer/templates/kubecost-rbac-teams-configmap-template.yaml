@@ -1,4 +1,4 @@
-{{- if eq (include "rbacTeamsConfigEnabled" .) "true" }}
+{{- if eq (include "kubecost.rbacTeams.config.enabled" .) "true" }}
 {{- if not .Values.teams.teamsConfigMapName }}
 apiVersion: v1
 kind: ConfigMap
@@ -6,7 +6,7 @@ metadata:
   name: "kubecost-rbac-teams-config"
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
 data:
   rbac-teams-configs.json: '{{ toJson .Values.teams.teamsConfig }}'
 {{- end }}

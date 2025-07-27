@@ -1,0 +1,14 @@
+{{- if .Values.global.assetReports }}
+{{- if .Values.global.assetReports.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ default "asset-report-configs" .Values.assetReportConfigmapName }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
+data:
+  asset-reports.json: '{{ toJson .Values.global.assetReports.reports }}'
+{{- end -}}
+{{- end -}}
+

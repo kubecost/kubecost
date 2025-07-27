@@ -62,8 +62,8 @@ The following table lists commonly used configuration parameters for the Kubecos
 | `tolerations`                                                                      | node taints to tolerate                                                                                                                                      | `[]`                                                  |
 | `affinity`                                                                         | pod affinity                                                                                                                                                 | `{}`                                                  |
 | `kubecostProductConfigs.productKey.mountPath`                                      | Use instead of `kubecostProductConfigs.productKey.secretname` to declare the path at which the product key file is mounted (eg. by a secrets provisioner)    | `N/A`                                                 |
-| `kubecostFrontend.api.fqdn`                                                        | Customize the upstream api FQDN                                                                                                                              | `computed in terms of the service name and namespace` |
-| `kubecostFrontend.model.fqdn`                                                      | Customize the upstream model FQDN                                                                                                                            | `computed in terms of the service name and namespace` |
+| `frontend.api.fqdn`                                                        | Customize the upstream api FQDN                                                                                                                              | `computed in terms of the service name and namespace` |
+| `frontend.model.fqdn`                                                      | Customize the upstream model FQDN                                                                                                                            | `computed in terms of the service name and namespace` |
 | `clusterController.fqdn`                                                           | Customize the upstream cluster controller FQDN                                                                                                               | `computed in terms of the service name and namespace` |
 
 ## Adjusting Log Output
@@ -84,7 +84,7 @@ Adjusting the log level increases or decreases the level of verbosity written to
 For example, to set the log level to `debug`, add the following flag to the Helm command:
 
 ```sh
---set 'kubecostModel.logLevel=debug'
+--set 'kubecost.logLevel=debug'
 ```
 
 ### Adjusting Log Format

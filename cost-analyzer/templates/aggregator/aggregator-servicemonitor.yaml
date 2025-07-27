@@ -1,0 +1,31 @@
+{{- if .Values.aggregator.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "kubecost.aggregator.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "kubecost.aggregator.commonLabels" . | nindent 4 }}
+    {{- if .Values.aggregator.serviceMonitor.additionalLabels }}
+    {{ toYaml .Values.aggregator.serviceMonitor.additionalLabels | nindent 4 }}
+    {{- end }}
+spec:
+  endpoints:
+    - port: tcp-api
+      interval: {{ .Values.aggregator.serviceMonitor.interval }}
+      scrapeTimeout: {{ .Values.aggregator.serviceMonitor.scrapeTimeout }}
+      path: /metrics
+      scheme: http
+      {{- with .Values.aggregator.serviceMonitor.metricRelabelings }}
+      metricRelabelings: {{ toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.aggregator.serviceMonitor.relabelings }}
+      relabelings: {{ toYaml . | nindent 8 }}
+      {{- end }}
+  namespaceSelector:
+    matchNames:
+      - {{ .Release.Namespace }}
+  selector:
+    matchLabels:
+    {{- include "kubecost.aggregator.commonLabels" . | nindent 6 }}
+{{- end }}
