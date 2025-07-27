@@ -10,6 +10,6 @@ annotations:
       url: https://www.kubecost.com
 dependencies:
   - name: finops-agent
-    version: "v0.2.3"
+    version: "v0.2.2"
     repository: https://kubecost.github.io/finops-agent-chart
     condition: finops-agent.enabled

@@ -1,6 +1,15 @@
 {{/* vim: set filetype=mustache: */}}
 
 {{/*
+Kubecost 3.0 preconditions
+*/}}
+{{- define "kubecost.v3-preconditions" -}}
+  {{- if or .Values.kubecostAggregator .Values.kubecostFrontend -}}
+    {{- fail "\n\n--- Kubecost 3.0 requires configuration changes. Please refer to the documentation for more information. ---" -}}
+  {{- end -}}
+{{- end -}}
+
+{{/*
 Kubecost 2.0 preconditions
 */}}
 {{- define "kubecost.v2-preconditions" -}}
@@ -59,7 +68,7 @@ RBAC exclusivity check: make sure either simple RBAC or RBAC Teams is configured
 {{/*
 Actions Storage source contents check. Either the Secret must be specified or the YAML, not both.
 */}}
-{{- define "actionsStorageSourceCheck" -}}
+{{- define "kubecost.actionsStorageSourceCheck" -}}
   {{- if ((.Values.kubecostProductConfigs).actions).enabled -}}
   {{- if and ((.Values.kubecostProductConfigs).actions).storageConfigSecret ((.Values.kubecostProductConfigs).actions).storageConfig -}}
     {{- fail "\nkubecostProductConfigs.actions.storageConfigSecret and kubecostProductConfigs.actions.storageConfig are mutually exclusive. Please specify only one." -}}

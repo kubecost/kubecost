@@ -213,11 +213,26 @@ spec:
             name: actions-config
         {{- end }}
         {{- if ((.Values.kubecostProductConfigs).actions).enabled }}
-        {{- if or ((.Values.kubecostProductConfigs).actions).federatedStorage ((.Values.kubecostProductConfigs).actions).federatedStorageSecret }}
-        - name: actions-federated-storage-config
+        {{- if and (not (((.Values.kubecostProductConfigs).actions).storageConfigSecret)) (not (((.Values.kubecostProductConfigs).actions).storageConfig)) }}
+        - name: actions-storage
+          emptyDir: {}
+        {{- end }}
+        {{- if ((.Values.kubecostProductConfigs).actions).storageConfig }}
+        - name: actions-storage-config
           secret:
             defaultMode: 420
-            secretName: {{ include "kubecost.actions.secretName" . }}
+            secretName: {{ ((.Values.kubecostProductConfigs).actions).storageConfigSecret | default "actions-store" }}
+        {{- end }}
+        {{- if ((.Values.kubecostProductConfigs).actions).storageConfigSecret }}
+        {{- if eq ((.Values.kubecostProductConfigs).actions).storageConfigSecret (include "kubecost.federatedStorage.secretName" .) }}
+        - name: actions-storage
+          emptyDir: {}
+        {{- else }}
+        - name: actions-storage-config
+          secret:
+            defaultMode: 420
+            secretName: {{ ((.Values.kubecostProductConfigs).actions).storageConfigSecret | default "actions-store" }}
+        {{- end }}
         {{- end }}
         {{- end }}
         {{- if .Values.aggregator.extraVolumes }}
@@ -641,5 +656,5 @@ spec:
       {{- with .Values.aggregator.affinity }}
       affinity:
         {{- toYaml . | nindent 16 }}
-      {{- end }}
+{{- end }}
 {{- end }}
