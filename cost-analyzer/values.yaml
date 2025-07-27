@@ -1217,9 +1217,12 @@ clusterController:
     # automatically right-sized on a regular basis.
     defaultResizeAll: false
 #  fqdn: kubecost-cluster-controller.kubecost.svc.cluster.local:9731
-  namespaceTurndown:
-    rbac:
-      enabled: true
+
+  rbac:
+    containerRightsize: true
+    clusterRightsize: false
+    clusterTurndown: false
+    namespaceTurndown: false
 
 reporting:
   # Kubecost bug report feature: Logs access/collection limited to .Release.Namespace

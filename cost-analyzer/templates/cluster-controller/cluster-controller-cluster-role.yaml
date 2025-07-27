@@ -11,150 +11,66 @@ metadata:
   labels:
       {{- include "kubecost.commonLabels" . | nindent 4 }}
 rules:
-  - apiGroups:
-      - kubecost.com
-    resources:
-      - turndownschedules
-      - turndownschedules/status
-    verbs:
-      - get
-      - list
-      - watch
-      - create
-      - patch
-      - update
-      - delete
-  - apiGroups:
-      - ''
-      - events.k8s.io
-    resources:
-      - events
-    verbs:
-      - create
-      - patch
-      - update
-  - apiGroups:
-      - ''
-    resources:
-      - deployments
-      - nodes
-      - pods
-      - resourcequotas
-      - replicationcontrollers
-      - limitranges
-      - pods/eviction
-    verbs:
-      - get
-      - list
-      - watch
-      - create
-      - patch
-      - update
-      - delete
-  - apiGroups:
-      - ''
-    resources:
-      - configmaps
-    verbs:
-      - get
-      - list
-      - watch
-      - update
-      - patch
-      - delete
-  - apiGroups:
-      - ''
-    resources:
-      - configmaps
-      - namespaces
-      - persistentvolumeclaims
-      - persistentvolumes
-      - endpoints
-      - events
-      - services
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - ''
-    resources:
-      - configmaps
-    resourceNames:
-      - 'cluster-controller-nsturndown-config'
-    verbs:
-      - get
-      - create
-      - update
-  - apiGroups:
-      - apps
-    resources:
-      - statefulsets
-      - deployments
-      - daemonsets
-      - replicasets
-    verbs:
-      - get
-      - list
-      - watch
-      - create
-      - patch
-      - update
-      - delete
-  - apiGroups:
-      - batch
-    resources:
-      - cronjobs
-      - jobs
-    verbs:
-      - get
-      - list
-      - watch
-      - create
-      - patch
-      - update
-      - delete
-  - apiGroups:
-      - autoscaling
-    resources:
-      - horizontalpodautoscalers
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - policy
-    resources:
-      - poddisruptionbudgets
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - storage.k8s.io
-    resources:
-      - storageclasses
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - events.k8s.io
-    resources:
-      - events
-    verbs:
-      - get
-      - list
-      - watch
-    # Used for namespace turndown
-    # When cleaning a namespace, we need the ability to remove
-    # arbitrary resources (since we helm uninstall all releases in that NS first)
-    {{- if .Values.clusterController.namespaceTurndown.rbac.enabled }}
-  - apiGroups: [ "*" ]
-    resources: [ "*" ]
-    verbs:
-      - list
-      - get
-      - delete
-    {{- end }}
-{{- end }}
+ # Kubescaler required permissions. Cluster controller panics if kubescaler is not initialized
+  - apiGroups: ['']
+    resources: ['configmaps']
+    verbs: ['get', 'update']
+  - apiGroups: ['apps']
+    resources: ['deployments', 'daemonsets']
+    verbs: ['get','list', 'patch']
+  - apiGroups: ['batch']
+    resources: ['cronjobs', 'jobs']
+    verbs: ['get','list','patch']
+  {{- if .Values.clusterController.rbac.containerRightsize }}
+  - apiGroups: ['apps']
+    resources: ['deployments', 'daemonsets']
+    verbs: ['get', 'update']
+  - apiGroups: ['apps']
+    resources: ['statefulsets', 'replicasets']
+    verbs: ['get', 'update']
+  {{- end }}
+  {{- if .Values.clusterController.rbac.clusterRightsize }}
+  - apiGroups: ['']
+    resources: ['configmaps']
+    verbs: ['get', 'update']
+  - apiGroups: ['']
+    resources: ['nodes']
+    verbs: ['get','list','patch']
+  - apiGroups: ['']
+    resources: ['pods']
+    verbs: ['delete', 'list', 'get']
+  - apiGroups: ['policy']
+    resources: ['pods/eviction']
+    verbs: ['create']
+  {{- end }}
+  {{- if .Values.clusterController.rbac.clusterTurndown }}
+  - apiGroups: ['kubecost.com']
+    resources: ['turndownschedules']
+    verbs: ['list', 'watch', 'update', 'delete', 'create']
+  - apiGroups: ['kubecost.com']
+    resources: ['turndownschedules/status']
+    verbs: ['update']
+  - apiGroups: ['']
+    resources: ['nodes']
+    verbs: ['get','list','patch']
+  - apiGroups: ['']
+    resources: ['pods']
+    verbs: ['delete', 'list', 'get']
+  - apiGroups: ['apps']
+    resources: ['deployments', 'daemonsets']
+    verbs: ['get', 'list', 'patch']
+  - apiGroups: ['batch']
+    resources: ['cronjobs', 'jobs']
+    verbs: ['list','patch']
+  - apiGroups: ['policy']
+    resources: ['pods/eviction']
+    verbs: ['create']
+  - apiGroups: ['', 'events.k8s.io']
+    resources: ['events']
+    verbs: ['create', 'patch']
+  {{- end }}
+  {{- if .Values.clusterController.rbac.namespaceTurndown }}
+  - apiGroups: ['*']
+    resources: ['*']
+    verbs: ['list', 'get', 'delete']
+  {{- end }}
