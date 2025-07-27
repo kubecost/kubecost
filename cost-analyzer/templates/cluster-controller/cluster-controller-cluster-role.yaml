@@ -74,3 +74,4 @@ rules:
     resources: ['*']
     verbs: ['list', 'get', 'delete']
   {{- end }}
+{{- end }}
