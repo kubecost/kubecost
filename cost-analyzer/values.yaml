@@ -15,7 +15,7 @@ global:
     existingSecretName: ""
     fileName: federated-store.yaml # set this value to change what the file name for the yaml config is
 
-  ## Global image registry to use if it needs to be overridden for some specific use cases (e.g local registries, custom images, ...)
+  ## If global.imageRegistry is set, it will override all kubecost images to allow air-gapped and self-hosted registries.
   ##
   imageRegistry: ""
 
@@ -449,7 +449,6 @@ frontend:
   ## fullImageName: gcr.io/kubecost1/frontend:v3.0.0
   fullImageName: ""
   image:
-    registry: gcr.io
     repository: kubecost1/frontend
     tag: latest
   imagePullPolicy: IfNotPresent
@@ -590,8 +589,14 @@ federatedStorage:
 
 
 kubecost:
+  ## Override the image name and version for containers that use the aggregator image.
+  ## If not set, the image will be pulled from the registry and repository specified in the image block.
+  ## If set, the fullImageName will be used to pull the image.
+  ## Example:
+  ## fullImageName: gcr.io/kubecost1/aggregator:v3.0.0
+  fullImageName: ""
+  registry: gcr.io
   image:
-    registry: gcr.io
     repository: kubecost1/aggregator
     tag: latest
 
@@ -827,7 +832,6 @@ forecasting:
   enabled: true
   fullImageName: ""
   image:
-    registry: gcr.io
     repository: kubecost1/kubecost-modeling
     tag: v0.1.27
   imagePullPolicy: IfNotPresent
@@ -1270,15 +1274,6 @@ reporting:
 serviceAccount:
   create: true  # Set this to false if you're bringing your own service account.
   annotations: {}
-
-awsstore:
-  useAwsStore: false
-  imageNameAndVersion: gcr.io/kubecost1/awsstore:latest
-  createServiceAccount: false
-  priorityClassName: ""
-  nodeSelector: {}
-  annotations: {}
-
 
 ## Kubecost Admission Controller (beta feature)
 ## To use this feature, ensure you have run the `create-admission-controller.sh`
