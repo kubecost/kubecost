@@ -162,8 +162,6 @@ Expand the name of the chart.
 Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
-Before changing this, please see:
-https://github.com/kubecost/cost-analyzer-helm-chart/blob/0f27b723cc395910b4b9667925d43001304e877d/kubecost/templates/ingress-template.yaml#L7-L9
 */}}
 {{- define "kubecost.fullname" -}}
 {{- if .Values.fullnameOverride -}}

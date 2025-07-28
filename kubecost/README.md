@@ -85,16 +85,20 @@ Adjusting the log format changes the format in which the logs are output making 
 | `pretty` | `2006-01-02T15:04:05.999999999Z07:00 INF Starting cost-model (git commit "1.91.0-rc.0")`                                     |
 
 ## Testing
-To perform local testing do next:
-- install locally [kind](https://github.com/kubernetes-sigs/kind) according to documentation.
-- install locally [ct](https://github.com/helm/chart-testing) according to documentation.
-- create local cluster using `kind` \
-use image version from https://github.com/kubernetes-sigs/kind/releases e.g. `kindest/node:v1.25.11@sha256:227fa11ce74ea76a0474eeefb84cb75d8dad1b08638371ecf0e86259b35be0c8`
+
+To perform local testing:
+
+* install locally [kind](https://github.com/kubernetes-sigs/kind) according to documentation.
+* install locally [ct](https://github.com/helm/chart-testing) according to documentation.
+* create local cluster using `kind` \
+use image version from <https://github.com/kubernetes-sigs/kind/releases> e.g. `kindest/node:v1.25.11@sha256:227fa11ce74ea76a0474eeefb84cb75d8dad1b08638371ecf0e86259b35be0c8`
+
 ```shell
 kind create cluster --image kindest/node:v1.25.11@sha256:227fa11ce74ea76a0474eeefb84cb75d8dad1b08638371ecf0e86259b35be0c8
 ```
-- perform ct execution
-```shell
+
+* perform ct execution
+
+```sh
 ct install  --chart-dirs="." --charts="."
 ```
-

@@ -311,18 +311,8 @@ spec:
             - name: aggregator-db-storage
               mountPath: /var/configs/waterfowl/duckdb
             - name: aggregator-staging
-              # Aggregator uses /var/configs/waterfowl as a "staging" directory for
-              # things like intermediate-state files pre-ingestion. In order to avoid a
-              # permission problem similar to
-              # https://github.com/kubernetes/kubernetes/issues/81676, we create an
-              # emptyDir at this path.
-              #
-              # This hasn't been observed as a problem in kubecost, likely because
-              # of the init container that gives everything under /var/configs 777.
               mountPath: /var/configs/waterfowl
               {{- if (not .Values.aggregator.legacyMode ) }}
-              # mount the clickhouse directories on the same PV as the duckdb,
-              # this way they can seamlessly share the same PV before, during, and after the upgrade
             - name: aggregator-db-storage
               mountPath: /var/lib/clickhouse
               {{- end }}
