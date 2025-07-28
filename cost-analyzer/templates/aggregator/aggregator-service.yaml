@@ -1,0 +1,28 @@
+{{- if (.Values.aggregator).enabled  -}}
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ template "kubecost.aggregator.serviceName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "kubecost.aggregator.commonLabels" . | nindent 4 }}
+    {{- if .Values.aggregator.service.labels }}
+    {{- toYaml .Values.aggregator.service.labels | nindent 4 }}
+    {{- end }}
+spec:
+  selector:
+    {{- include "kubecost.aggregator.selectorLabels" . | nindent 4 }}
+  type: "ClusterIP"
+  ports:
+    - name: tcp-api
+      port: 9004
+      targetPort: 9004
+    {{- if or .Values.saml.enabled .Values.oidc.enabled}}
+    - name: apiserver
+      port: 9008
+      targetPort: 9008
+    {{- end }}
+  {{- with .Values.aggregator.extraPorts }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}

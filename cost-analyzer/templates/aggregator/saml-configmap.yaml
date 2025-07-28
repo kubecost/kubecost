@@ -1,0 +1,14 @@
+{{- if .Values.saml }}
+{{- if .Values.saml.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "kubecost.fullname" . }}-saml
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
+data:
+{{- $root := . }}
+    saml.json: '{{ toJson .Values.saml }}'
+{{- end -}}
+{{- end -}}

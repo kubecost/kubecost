@@ -1,0 +1,17 @@
+{{- if (.Values.forecasting).enabled }}
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ template "kubecost.forecasting.serviceName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "kubecost.forecasting.commonLabels" . | nindent 4 }}
+spec:
+  selector:
+    {{- include "kubecost.forecasting.selectorLabels" . | nindent 4 }}
+  type: ClusterIP
+  ports:
+    - name: tcp-api
+      port: 5000
+      targetPort: 5000
+{{- end }}

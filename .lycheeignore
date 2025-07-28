@@ -17,7 +17,6 @@ http://aggregator/
 http://cloudcost/
 http://forecasting/
 http://clustercontroller/
-http://multi-cluster-diagnostics/
 http://model/
 http://api/
 kubecost-aggregator.kubecost:9004

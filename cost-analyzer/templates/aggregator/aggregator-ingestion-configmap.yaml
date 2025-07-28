@@ -1,0 +1,12 @@
+{{- if (.Values.aggregator).standardDiscount }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ default "ingestion-configs" .Values.ingestionConfigmapName }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
+data:
+  standardDiscount: "{{ .Values.aggregator.standardDiscount }}"
+  helmConfig: "true"
+{{- end -}}
