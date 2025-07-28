@@ -510,21 +510,6 @@ frontend:
       - Cache-Control "must-revalidate";
       - "X-Content-Type-Options \"nosniff\";"
 
-sigV4Proxy:
-  image: public.ecr.aws/aws-observability/aws-sigv4-proxy:latest
-  imagePullPolicy: IfNotPresent
-  name: aps
-  port: 8005
-  region: us-west-2  # The AWS region
-  host: aps-workspaces.us-west-2.amazonaws.com  # The hostname for AMP service.
-  # role_arn: arn:aws:iam::<account>:role/role-name # The AWS IAM role to assume.
-  extraEnv:  # Pass extra env variables to sigV4Proxy
-  # - name: AWS_ACCESS_KEY_ID
-  #   value: <access_key>
-  # - name: AWS_SECRET_ACCESS_KEY
-  #   value: <secret_key>
-  resources: {}
-
 ## Values for the finops-agent subchart
 finops-agent:
   enabled: true
@@ -595,8 +580,9 @@ kubecost:
   ## Example:
   ## fullImageName: gcr.io/kubecost1/aggregator:v3.0.0
   fullImageName: ""
-  registry: gcr.io
+  
   image:
+    registry: gcr.io
     repository: kubecost1/aggregator
     tag: latest
 
