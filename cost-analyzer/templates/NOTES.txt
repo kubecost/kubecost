@@ -10,7 +10,6 @@ TODO: add v3 preconditions
 {{- include "kubecost.clusterId.check" . -}}
 {{- include "kubecost.caCertsSecretConfig.check" . -}}
 {{- include "kubecost.actionsStorageSourceCheck" . -}}
-{{- include "kubecost.actionsStorage.source.check" . -}}
 
 Kubecost {{ .Chart.Version }} has been successfully installed.
 

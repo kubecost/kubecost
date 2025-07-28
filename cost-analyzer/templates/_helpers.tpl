@@ -66,17 +66,6 @@ RBAC exclusivity check: make sure either simple RBAC or RBAC Teams is configured
 {{- end -}}
 
 {{/*
-Actions Storage source contents check. Either the Secret must be specified or the YAML, not both.
-*/}}
-{{- define "kubecost.actionsStorageSourceCheck" -}}
-  {{- if ((.Values.kubecostProductConfigs).actions).enabled -}}
-  {{- if and ((.Values.kubecostProductConfigs).actions).storageConfigSecret ((.Values.kubecostProductConfigs).actions).storageConfig -}}
-    {{- fail "\nkubecostProductConfigs.actions.storageConfigSecret and kubecostProductConfigs.actions.storageConfig are mutually exclusive. Please specify only one." -}}
-  {{- end -}}
-  {{- end -}}
-{{- end -}}
-
-{{/*
 Print a warning if PV is enabled AND EKS is detected AND the EBS-CSI driver is not installed
 */}}
 {{- define "kubecost.eksStorage.check" }}
@@ -142,7 +131,7 @@ federated storage source check. Either the Secret must be specified or the JSON,
 {{/*
 Actions Storage source contents check. Either the Secret must be specified or the YAML, not both.
 */}}
-{{- define "kubecost.actionsStorage.source.check" -}}
+{{- define "kubecost.actionsStorageSourceCheck" -}}
   {{- if ((.Values.kubecostProductConfigs).actions).enabled -}}
   {{- if and ((.Values.kubecostProductConfigs).actions).storageConfigSecret ((.Values.kubecostProductConfigs).actions).storageConfig -}}
     {{- fail "\nkubecostProductConfigs.actions.storageConfigSecret and kubecostProductConfigs.actions.storageConfig are mutually exclusive. Please specify only one." -}}
@@ -333,269 +322,6 @@ The implied use case is {{ template "cost-analyzer.filterEnabled" .Values }}
 {{- $result | toJson | b64enc }}
 {{- end -}}
 
-{{/*
-==============================================================
-Begin Prometheus templates
-==============================================================
-*/}}
-{{/*
-Expand the name of the chart.
-*/}}
-{{- define "prometheus.name" -}}
-{{- "prometheus" -}}
-{{- end -}}
-
-{{/*
-Define common selector labels for all Prometheus components
-*/}}
-{{- define "prometheus.common.matchLabels" -}}
-app: {{ template "prometheus.name" . }}
-release: {{ .Release.Name }}
-{{- end -}}
-
-{{/*
-Define common top-level labels for all Prometheus components
-*/}}
-{{- define "prometheus.common.metaLabels" -}}
-heritage: {{ .Release.Service }}
-{{- end -}}
-
-{{/*
-Define top-level labels for Alert Manager
-*/}}
-{{- define "prometheus.alertmanager.labels" -}}
-{{ include "prometheus.alertmanager.matchLabels" . }}
-{{ include "prometheus.common.metaLabels" . }}
-{{- end -}}
-
-{{/*
-Define selector labels for Alert Manager
-*/}}
-{{- define "prometheus.alertmanager.matchLabels" -}}
-component: {{ .Values.prometheus.alertmanager.name | quote }}
-{{ include "prometheus.common.matchLabels" . }}
-{{- end -}}
-
-{{/*
-Define top-level labels for Node Exporter
-*/}}
-{{- define "prometheus.nodeExporter.labels" -}}
-{{ include "prometheus.nodeExporter.matchLabels" . }}
-{{ include "prometheus.common.metaLabels" . }}
-{{- end -}}
-
-{{/*
-Define selector labels for Node Exporter
-*/}}
-{{- define "prometheus.nodeExporter.matchLabels" -}}
-component: {{ .Values.prometheus.nodeExporter.name | quote }}
-{{ include "prometheus.common.matchLabels" . }}
-{{- end -}}
-
-{{/*
-Define top-level labels for Push Gateway
-*/}}
-{{- define "prometheus.pushgateway.labels" -}}
-{{ include "prometheus.pushgateway.matchLabels" . }}
-{{ include "prometheus.common.metaLabels" . }}
-{{- end -}}
-
-{{/*
-Define selector labels for Push Gateway
-*/}}
-{{- define "prometheus.pushgateway.matchLabels" -}}
-component: {{ .Values.prometheus.pushgateway.name | quote }}
-{{ include "prometheus.common.matchLabels" . }}
-{{- end -}}
-
-{{/*
-Define top-level labels for Server
-*/}}
-{{- define "prometheus.server.labels" -}}
-{{ include "prometheus.server.matchLabels" . }}
-{{ include "prometheus.common.metaLabels" . }}
-{{- end -}}
-
-{{/*
-Define selector labels for Server
-*/}}
-{{- define "prometheus.server.matchLabels" -}}
-component: {{ .Values.prometheus.server.name | quote }}
-{{ include "prometheus.common.matchLabels" . }}
-{{- end -}}
-
-{{/*
-Create a default fully qualified app name.
-We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
-*/}}
-{{- define "prometheus.fullname" -}}
-{{- if .Values.prometheus.fullnameOverride -}}
-{{- .Values.prometheus.fullnameOverride | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{- $name := default "prometheus" .Values.prometheus.nameOverride -}}
-{{- if contains $name .Release.Name -}}
-{{- .Release.Name | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Create a fully qualified alertmanager name.
-We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
-*/}}
-
-{{- define "prometheus.alertmanager.fullname" -}}
-{{- if .Values.prometheus.alertmanager.fullnameOverride -}}
-{{- .Values.prometheus.alertmanager.fullnameOverride | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{- $name := default "prometheus" .Values.prometheus.nameOverride -}}
-{{- if contains $name .Release.Name -}}
-{{- printf "%s-%s" .Release.Name .Values.prometheus.alertmanager.name | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{- printf "%s-%s-%s" .Release.Name $name .Values.prometheus.alertmanager.name | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-{{- end -}}
-{{- end -}}
-
-
-{{/*
-Create a fully qualified node-exporter name.
-We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
-*/}}
-{{- define "prometheus.nodeExporter.fullname" -}}
-{{- if .Values.prometheus.nodeExporter.fullnameOverride -}}
-{{- .Values.prometheus.nodeExporter.fullnameOverride | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{- $name := default "prometheus" .Values.prometheus.nameOverride -}}
-{{- if contains $name .Release.Name -}}
-{{- printf "%s-%s" .Release.Name .Values.prometheus.nodeExporter.name | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{- printf "%s-%s-%s" .Release.Name $name .Values.prometheus.nodeExporter.name | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Create a fully qualified Prometheus server name.
-We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
-*/}}
-{{- define "prometheus.server.fullname" -}}
-{{- if .Values.prometheus.server.fullnameOverride -}}
-{{- .Values.prometheus.server.fullnameOverride | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{- $name := default "prometheus" .Values.prometheus.nameOverride -}}
-{{- if contains $name .Release.Name -}}
-{{- printf "%s-%s" .Release.Name .Values.prometheus.server.name | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{- printf "%s-%s-%s" .Release.Name $name .Values.prometheus.server.name | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Create a fully qualified pushgateway name.
-We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
-*/}}
-{{- define "prometheus.pushgateway.fullname" -}}
-{{- if .Values.prometheus.pushgateway.fullnameOverride -}}
-{{- .Values.prometheus.pushgateway.fullnameOverride | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{- $name := default "prometheus" .Values.nameOverride -}}
-{{- if contains $name .Release.Name -}}
-{{- printf "%s-%s" .Release.Name .Values.prometheus.pushgateway.name | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{- printf "%s-%s-%s" .Release.Name $name .Values.prometheus.pushgateway.name | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Create the name of the service account to use for the alertmanager component
-*/}}
-{{- define "prometheus.serviceAccountName.alertmanager" -}}
-{{- if .Values.prometheus.serviceAccounts.alertmanager.create -}}
-    {{ default (include "prometheus.alertmanager.fullname" .) .Values.prometheus.serviceAccounts.alertmanager.name }}
-{{- else -}}
-    {{ default "default" .Values.prometheus.serviceAccounts.alertmanager.name }}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Create the name of the service account to use for the nodeExporter component
-*/}}
-{{- define "prometheus.serviceAccountName.nodeExporter" -}}
-{{- if .Values.prometheus.serviceAccounts.nodeExporter.create -}}
-    {{ default (include "prometheus.nodeExporter.fullname" .) .Values.prometheus.serviceAccounts.nodeExporter.name }}
-{{- else -}}
-    {{ default "default" .Values.prometheus.serviceAccounts.nodeExporter.name }}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Create the name of the service account to use for the pushgateway component
-*/}}
-{{- define "prometheus.serviceAccountName.pushgateway" -}}
-{{- if .Values.prometheus.serviceAccounts.pushgateway.create -}}
-    {{ default (include "prometheus.pushgateway.fullname" .) .Values.prometheus.serviceAccounts.pushgateway.name }}
-{{- else -}}
-    {{ default "default" .Values.prometheus.serviceAccounts.pushgateway.name }}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Create the name of the service account to use for the server component
-*/}}
-{{- define "prometheus.serviceAccountName.server" -}}
-{{- if .Values.prometheus.serviceAccounts.server.create -}}
-    {{ default (include "prometheus.server.fullname" .) .Values.prometheus.serviceAccounts.server.name }}
-{{- else -}}
-    {{ default "default" .Values.prometheus.serviceAccounts.server.name }}
-{{- end -}}
-{{- end -}}
-
-{{/*
-==============================================================
-Begin Grafana templates
-==============================================================
-*/}}
-{{/*
-Expand the name of the chart.
-*/}}
-{{- define "grafana.name" -}}
-{{- "grafana" -}}
-{{- end -}}
-
-{{/*
-Create a default fully qualified app name.
-We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
-If release name contains chart name it will be used as a full name.
-*/}}
-{{- define "grafana.fullname" -}}
-{{- if .Values.grafana.fullnameOverride -}}
-{{- .Values.grafana.fullnameOverride | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{- $name := default "grafana" .Values.grafana.nameOverride -}}
-{{- if contains $name .Release.Name -}}
-{{- .Release.Name | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Create the name of the service account
-*/}}
-{{- define "grafana.serviceAccountName" -}}
-{{- if .Values.grafana.serviceAccount.create -}}
-    {{ default (include "grafana.fullname" .) .Values.grafana.serviceAccount.name }}
-{{- else -}}
-    {{ default "default" .Values.grafana.serviceAccount.name }}
-{{- end -}}
-{{- end -}}
-
 {{- define "common.systemProxy" -}}
 {{- if .Values.systemProxy.enabled }}
     - name: HTTP_PROXY
@@ -769,7 +495,7 @@ Kubecost image to be used by all apps which run, can be overridden in each apps 
   {{- if .Values.aggregator.fullImageName }}
     {{- .Values.aggregator.fullImageName }}
   {{- else if eq "development" .Chart.AppVersion -}}
-    gcr.io/kubecost1/aggregator-nightly:latest
+    gcr.io/kubecost1/cost-model-nightly:latest
   {{- else -}}
     {{- include "common.imageRegistry" . }}/{{ .Values.kubecost.image.repository }}:{{ .Values.kubecost.image.tag }}
   {{- end }}
@@ -778,7 +504,7 @@ Kubecost image to be used by all apps which run, can be overridden in each apps 
   {{- if .Values.cloudCost.fullImageName }}
     {{- .Values.cloudCost.fullImageName }}
   {{- else if eq "development" .Chart.AppVersion -}}
-    gcr.io/kubecost1/aggregator-nightly:latest
+    gcr.io/kubecost1/cost-model-nightly:latest
   {{- else -}}
     {{- include "common.imageRegistry" . }}/{{ .Values.kubecost.image.repository }}:{{ .Values.kubecost.image.tag }}
   {{- end }}

@@ -1311,6 +1311,65 @@ telemetry:
 # # UI. Values in this block override config changes in the Settings UI on pod
 # # restart
 kubecostProductConfigs:
+  actions:
+    # Enable multi-cluster cluster controller actions (v2)
+    enabled: false
+
+    # # The Actions feature requires an external storage config.
+    # # By default, will use the same bucket config as set in federatedStorage.config (or global.federatedStorage.existingSecret)
+
+    # # A separate bucket config specific to action storage can alternatively be supplied via a Secret or a yaml block
+    # # The name of the Secret containing the bucket config. The contents should be stored under a key named actions-store.yaml
+    # storageConfigSecret: actions-store
+
+    # # (If not using Secret) Define storage config directly in yaml, as below:
+    # storageConfig: |-
+    # # AWS EXAMPLE
+    #   type: S3
+    #   config:
+    #     bucket: kubecost-actions-storage-bucket
+    #     endpoint: s3.amazonaws.com
+    #     region: us-east-1
+    #     # best practice is to use pod identities to access AWS resources. Otherwise it is possible to use an access_key and secret_key
+    #     access_key: "<your-access-key>"
+    #     secret_key: "<your-secret-key>"
+    # # AZURE EXAMPLE
+    #   type: AZURE
+    #   config:
+    #     storage_account: ""
+    #     storage_account_key: ""
+    #     container: ""
+    #     max_retries: 0
+    # # GCP EXAMPLE
+    #   type: GCS
+    #   config:
+    #     bucket: kubecost-actions-storage-bucket
+    #     service_account: |-
+    #       {
+    #         "type": "service_account",
+    #         "project_id": "...",
+    #         "private_key_id": "...",
+    #         "private_key": "...",
+    #         "client_email": "...",
+    #         "client_id": "...",
+    #         "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+    #         "token_uri": "https://oauth2.googleapis.com/token",
+    #         "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+    #         "client_x509_cert_url": ""
+    #       }
+    # # Actions can reference configuration at a global or cluster-specific level
+    # config:
+    #   global: # Define global action configuration
+    #     rightsizing:
+    #       enabled: true
+    #   clusters: # Define cluster-specific action configuration, where top-level keys are cluster names
+    #     cluster-1:
+    #       rightsizing:
+    #         enabled: false
+    #     cluster-2:
+    #       rightsizing:
+    #         enabled: false
+
 #   # The cluster profile represents a predefined set of parameters to use when calculating savings.
 #   # Possible values are: [ development, production, high-availability ]
 #   clusterProfile: production
@@ -1427,68 +1486,6 @@ kubecostProductConfigs:
 #     AWS: []
 #     GCP: []
 #     Azure: []
-#    actions:
-#      # Enable multi-cluster cluster controller actions (v2)
-#      enabled: true
-#
-#      # Enable multi-cluster cluster controller actions (v2)
-#      enabled: true
-#
-#      # The Actions feature requires an external storage config.
-#      # By default, will use the same bucket config as set in federatedStorage.config (or global.federatedStorage.existingSecret)
-#
-#      # A separate bucket config specific to action storage can alternatively be supplied via a Secret or a yaml block
-#      # The name of the Secret containing the bucket config. The contents should be stored under a key named actions-store.yaml
-#      storageConfigSecret: actions-store
-#
-#      # (If not using Secret) Define storage config directly in yaml, as below:
-#      storageConfig: |-
-#      # AWS EXAMPLE
-#        type: S3
-#        config:
-#          bucket: kubecost-actions-storage-bucket
-#          endpoint: s3.amazonaws.com
-#          region: us-east-1
-#          # best practice is to use pod identities to access AWS resources. Otherwise it is possible to use an access_key and secret_key
-#          access_key: "<your-access-key>"
-#          secret_key: "<your-secret-key>"
-#      # AZURE EXAMPLE
-#        type: AZURE
-#        config:
-#          storage_account: ""
-#          storage_account_key: ""
-#          container: ""
-#          max_retries: 0
-#      # GCP EXAMPLE
-#        type: GCS
-#        config:
-#          bucket: kubecost-actions-storage-bucket
-#          service_account: |-
-#            {
-#              "type": "service_account",
-#              "project_id": "...",
-#              "private_key_id": "...",
-#              "private_key": "...",
-#              "client_email": "...",
-#              "client_id": "...",
-#              "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-#              "token_uri": "https://oauth2.googleapis.com/token",
-#              "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-#              "client_x509_cert_url": ""
-#            }
-#      # Actions can reference configuration at a global or cluster-specific level
-#      config:
-#        global: # Define global action configuration
-#          rightsizing:
-#            enabled: true
-#        clusters: # Define cluster-specific action configuration, where top-level keys are cluster names
-#          cluster-1:
-#            rightsizing:
-#              enabled: false
-#          cluster-2:
-#            rightsizing:
-#              enabled: false
-
 
   # ingestPodUID: false # Enables using UIDs to uniquely ID pods. This requires either Kubecost's replicated KSM metrics, or KSM v2.1.0+. This may impact performance, and changes the default cost-model allocation behavior.
   # regionOverrides: "region1,region2,region3" # list of regions which will override default costmodel provider regions
