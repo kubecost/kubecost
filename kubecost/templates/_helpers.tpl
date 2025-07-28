@@ -162,8 +162,6 @@ Expand the name of the chart.
 Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
-Before changing this, please see:
-https://github.com/kubecost/cost-analyzer-helm-chart/blob/0f27b723cc395910b4b9667925d43001304e877d/cost-analyzer/templates/ingress-template.yaml#L7-L9
 */}}
 {{- define "kubecost.fullname" -}}
 {{- if .Values.fullnameOverride -}}
@@ -228,7 +226,7 @@ app.kubernetes.io/name: {{ include "kubecost.name" . }}
 helm.sh/chart: {{ include "kubecost.chart" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
-app: cost-analyzer
+app: kubecost
 {{- end -}}
 
 {{/*
@@ -237,7 +235,7 @@ Create the selector labels.
 {{- define "kubecost.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "kubecost.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
-app: cost-analyzer
+app: kubecost
 {{- end -}}
 
 {{/*
@@ -246,7 +244,7 @@ Create the selector labels for haMode frontend.
 {{- define "frontend.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "frontend.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
-app: cost-analyzer
+app: kubecost
 {{- end -}}
 
 {{- define "aggregator.selectorLabels" -}}
@@ -255,7 +253,7 @@ app.kubernetes.io/name: {{ include "aggregator.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app: aggregator
 {{- else if eq (include "aggregator.deployMethod" .) "singlepod" }}
-{{- include "cost-analyzer.selectorLabels" . }}
+{{- include "kubecost.selectorLabels" . }}
 {{- else }}
 {{ fail "Failed to set aggregator.selectorLabels" }}
 {{- end }}
@@ -267,7 +265,7 @@ app.kubernetes.io/name: {{ include "cloudCost.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app: {{ include "cloudCost.name" . }}
 {{- else }}
-{{- include "cost-analyzer.selectorLabels" . }}
+{{- include "kubecost.selectorLabels" . }}
 {{- end }}
 {{- end }}
 
@@ -289,7 +287,7 @@ is discovered, we look for an 'enabled' key. If it doesn't exist, we continue tr
 map. If it does exist, we omit the inner map traversal iff enabled is false. This filter writes the
 enabled only version to the output .r
 */}}
-{{- define "cost-analyzer.filter" -}}
+{{- define "kubecost.filter" -}}
 {{- $v := .v }}
 {{- $r := .r }}
 {{- range $key, $value := .v }}
@@ -301,7 +299,7 @@ enabled only version to the output .r
         {{- end -}}
         {{- if $isEnabled -}}
             {{- $rr := "{}" | fromYaml }}
-            {{- template "cost-analyzer.filter" (dict "v" $value "r" $rr) }}
+            {{- template "kubecost.filter" (dict "v" $value "r" $rr) }}
             {{- $_ := set $r $key $rr -}}
         {{- end -}}
     {{- else -}}
@@ -310,17 +308,6 @@ enabled only version to the output .r
 {{- end -}}
 {{- end -}}
 
-{{/*
-This template accepts a map and returns a base64 encoded json version of the map where all disabled
-leaf nodes are omitted.
-
-The implied use case is {{ template "cost-analyzer.filterEnabled" .Values }}
-*/}}
-{{- define "cost-analyzer.filterEnabled" -}}
-{{- $result := "{}" | fromYaml }}
-{{- template "cost-analyzer.filter" (dict "v" . "r" $result) }}
-{{- $result | toJson | b64enc }}
-{{- end -}}
 
 {{- define "common.systemProxy" -}}
 {{- if .Values.systemProxy.enabled }}
@@ -443,12 +430,12 @@ kubecost.costEventsAudit.enabled flag for nginx configmap
   "aggregator/actions-config-configmap.yaml"
   "aggregator/actions-store-secret.yaml"
   "aggregator/aggregator-ingestion-configmap.yaml"
-  "aggregator/cost-analyzer-account-mapping-configmap.yaml"
-  "aggregator/cost-analyzer-alerts-configmap.yaml"
-  "aggregator/cost-analyzer-asset-reports-configmap.yaml"
-  "aggregator/cost-analyzer-cloud-cost-reports-configmap.yaml"
-  "aggregator/cost-analyzer-saved-reports-configmap.yaml"
-  "aggregator/cost-analyzer-smtp-configmap.yaml"
+  "aggregator/kubecost-account-mapping-configmap.yaml"
+  "aggregator/kubecost-alerts-configmap.yaml"
+  "aggregator/kubecost-asset-reports-configmap.yaml"
+  "aggregator/kubecost-cloud-cost-reports-configmap.yaml"
+  "aggregator/kubecost-saved-reports-configmap.yaml"
+  "aggregator/kubecost-smtp-configmap.yaml"
   "aggregator/saml-configmap.yaml"
   "cloud-cost/cloud-cost-integration-secret.yaml"
   "cluster-controller/cluster-controller-secret.yaml"
