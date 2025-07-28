@@ -1511,5 +1511,7 @@ extraObjects: []
 #               number: 80
 
 # -- Optional override for the image used for the basic health test container
-# basicHealth:
-#   fullImageName: alpine/k8s:1.33.3
+basicHealth:
+  registry: docker.io
+  repository: alpine/k8s
+  tag: 1.33.3
