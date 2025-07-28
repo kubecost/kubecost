@@ -450,7 +450,7 @@ frontend:
   fullImageName: ""
   image:
     registry: gcr.io
-    repository: kubecost1/frontend-nightly
+    repository: kubecost1/frontend
     tag: latest
   imagePullPolicy: IfNotPresent
   # fullImageName overrides the default image construction logic. The exact
@@ -592,7 +592,7 @@ federatedStorage:
 kubecost:
   image:
     registry: gcr.io
-    repository: kubecost1/cost-model-nightly
+    repository: kubecost1/aggregator
     tag: latest
 
   imagePullPolicy: IfNotPresent
