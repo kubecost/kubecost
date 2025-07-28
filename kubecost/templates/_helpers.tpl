@@ -308,17 +308,6 @@ enabled only version to the output .r
 {{- end -}}
 {{- end -}}
 
-{{/*
-This template accepts a map and returns a base64 encoded json version of the map where all disabled
-leaf nodes are omitted.
-
-The implied use case is {{ template "kubecost.filterEnabled" .Values }}
-*/}}
-{{- define "kubecost.filterEnabled" -}}
-{{- $result := "{}" | fromYaml }}
-{{- template "kubecost.filter" (dict "v" . "r" $result) }}
-{{- $result | toJson | b64enc }}
-{{- end -}}
 
 {{- define "common.systemProxy" -}}
 {{- if .Values.systemProxy.enabled }}
