@@ -140,6 +140,7 @@ data:
         location /healthz {
             add_header 'Content-Type' 'text/plain';
             return 200 "healthy\n";
+            access_log off;
         }
         location = /teamsError.html { }
         location = /images/kubecost-logo.svg { }

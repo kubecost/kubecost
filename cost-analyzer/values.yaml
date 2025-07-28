@@ -15,7 +15,17 @@ global:
     existingSecretName: ""
     fileName: federated-store.yaml # set this value to change what the file name for the yaml config is
 
+  ## Global image registry to use if it needs to be overridden for some specific use cases (e.g local registries, custom images, ...)
+  ##
+  imageRegistry: ""
 
+  ## Reference to one or more secrets to be used when pulling images
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+  ##
+  imagePullSecrets: []
+  # - name: "image-pull-secret"
+  # or
+  # - "image-pull-secret"
 
   ## Kubecost Alerting
   ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=ui-alerts
@@ -432,7 +442,16 @@ systemProxy:
 frontend:
   enabled: true
   replicas: 1
-  image: "gcr.io/kubecost1/frontend"
+  ## Override the image name and version for the frontend.
+  ## If not set, the image will be pulled from the registry and repository specified in the image block.
+  ## If set, the fullImageName will be used to pull the image.
+  ## Example:
+  ## fullImageName: gcr.io/kubecost1/frontend:v3.0.0
+  fullImageName: ""
+  image:
+    registry: gcr.io
+    repository: kubecost1/frontend-nightly
+    tag: latest
   imagePullPolicy: IfNotPresent
   # fullImageName overrides the default image construction logic. The exact
   # image provided (registry, image, tag) will be used for the frontend.
@@ -677,8 +696,14 @@ service:
 ## https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-network-cost
 networkCosts:
   enabled: false
+  ## Override the image name and version for the network costs.
+  ## If not set, the image will be pulled from the registry and repository specified in the image block.
+  ## If set, the fullImageName will be used to pull the image.
+  ## Example:
+  ## fullImageName: gcr.io/kubecost1/kubecost-network-costs:v0.17.10
+  fullImageName: ""
   image:
-    repository: gcr.io/kubecost1/kubecost-network-costs
+    repository: kubecost1/kubecost-network-costs
     tag: v0.17.10
   imagePullPolicy: IfNotPresent
   updateStrategy:
@@ -802,7 +827,8 @@ forecasting:
   enabled: true
   fullImageName: ""
   image:
-    repository: gcr.io/kubecost1/kubecost-modeling
+    registry: gcr.io
+    repository: kubecost1/kubecost-modeling
     tag: v0.1.27
   imagePullPolicy: IfNotPresent
 
@@ -1005,7 +1031,7 @@ aggregator:
           - __meta_kubernetes_namespace
         targetLabel: namespace
 
-## TODO change this comment, what are we doing with service acounts
+## TODO change this comment, what are we doing with service accounts
 ## Creates a new container/pod to retrieve CloudCost data. By default it uses
 ## the same serviceaccount as the cost-analyzer pod. A custom serviceaccount
 ## can be specified.
@@ -1102,8 +1128,14 @@ cloudCost:
 # Kubecost Cluster Controller for Right Sizing and Cluster Turndown
 clusterController:
   enabled: false
+  ## Override the image name and version for the cluster controller.
+  ## If not set, the image will be pulled from the registry and repository specified in the image block.
+  ## If set, the fullImageName will be used to pull the image.
+  ## Example:
+  ## fullImageName: gcr.io/kubecost1/cluster-controller:v0.16.19
+  fullImageName: ""
   image:
-    repository: gcr.io/kubecost1/cluster-controller
+    repository: kubecost1/cluster-controller
     tag: v0.16.19
   imagePullPolicy: IfNotPresent
   extraEnv: []
@@ -1488,4 +1520,4 @@ extraObjects: []
 
 # -- Optional override for the image used for the basic health test container
 # basicHealth:
-#   fullImageName: alpine/k8s:1.26.9
+#   fullImageName: alpine/k8s:1.33.3

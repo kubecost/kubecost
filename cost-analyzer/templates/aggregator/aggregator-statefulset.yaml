@@ -241,7 +241,7 @@ spec:
       initContainers:
       {{- if .Values.global.updateCaTrust.enabled }}
         - name: update-ca-trust
-          image: {{ include "kubecost.aggregator.image" . }}
+          image: {{ include "aggregator.image" . }}
           {{- if .Values.kubecost.imagePullPolicy }}
           imagePullPolicy: {{ .Values.kubecost.imagePullPolicy }}
           {{- else }}
@@ -276,7 +276,7 @@ spec:
           securityContext:
             {{- toYaml .Values.global.containerSecurityContext | nindent 12 }}
         {{- end }}
-          image: {{ include "kubecost.image" . }}
+          image: {{ include "aggregator.image" . }}
           {{- if .Values.aggregator.readinessProbe.enabled }}
           readinessProbe:
             httpGet:
@@ -463,20 +463,7 @@ spec:
             {{- end }}
             - name: READ_ONLY
               value: {{ (quote .Values.readonly) | default (quote false) }}
-            {{- if .Values.systemProxy.enabled }}
-            - name: HTTP_PROXY
-              value: {{ .Values.systemProxy.httpProxyUrl }}
-            - name: http_proxy
-              value: {{ .Values.systemProxy.httpProxyUrl }}
-            - name: HTTPS_PROXY
-              value: {{ .Values.systemProxy.httpsProxyUrl }}
-            - name: https_proxy
-              value: {{ .Values.systemProxy.httpsProxyUrl }}
-            - name: NO_PROXY
-              value: {{ .Values.systemProxy.noProxy }}
-            - name: no_proxy
-              value: {{ .Values.systemProxy.noProxy }}
-            {{- end }}
+            {{- include "common.systemProxy" . }}
             {{- if ((.Values.kubecostProductConfigs).carbonEstimates) }}
             - name: CARBON_ESTIMATES_ENABLED
               value: "true"
