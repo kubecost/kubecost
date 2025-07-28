@@ -556,7 +556,7 @@ federated storage config helpers
 {{- end -}}
 
 {{- define "kubecost.federatedStorage.config" }}
-{{- if .Values.kubecostModel.federatedStorageConfig -}}
+{{- if (.Values.kubecostModel).federatedStorageConfig -}}
 {{ (.Values.kubecostModel).federatedStorageConfig }}
 {{- else if (.Values.federatedStorage).config }}
 {{ (.Values.federatedStorage).config }}
