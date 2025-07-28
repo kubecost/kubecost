@@ -262,7 +262,7 @@ global:
 
 ## Provide additional labels for the chart.
 # chartLabels:
-#   app.kubernetes.io/name: kubecost-cost-analyzer
+#   app.kubernetes.io/name: kubecost
 
 ## This flag is only required for users upgrading to a new version of Kubecost.
 ## The flag is used to ensure users are aware of important
@@ -671,7 +671,7 @@ ingress:
   hosts:
     - kubecost.local
   tls: []
-  #  - secretName: cost-analyzer-tls
+  #  - secretName: kubecost-tls
   #    hosts:
   #      - kubecost.local
 
@@ -1037,7 +1037,7 @@ aggregator:
 
 ## TODO change this comment, what are we doing with service accounts
 ## Creates a new container/pod to retrieve CloudCost data. By default it uses
-## the same serviceaccount as the cost-analyzer pod. A custom serviceaccount
+## the same serviceaccount as the aggregator pod. A custom serviceaccount
 ## can be specified.
 cloudCost:
   enabled: true

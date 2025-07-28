@@ -6,42 +6,39 @@ To install via Helm, run the following command.
 
 ```sh
 helm upgrade --install kubecost -n kubecost --create-namespace \
-  --repo https://kubecost.github.io/cost-analyzer/ kubecost \
+  --repo https://kubecost.github.io/kubecost/ kubecost \
   --set kubecostToken="aGVsbUBrdWJlY29zdC5jb20=xm343yadf98"
 ```
 
 Alternatively, add the Helm repository first and scan for updates.
 
 ```sh
-helm repo add kubecost https://kubecost.github.io/cost-analyzer/
+helm repo add kubecost https://kubecost.github.io/kubecost/
 helm repo update
 ```
 
 Next, install the chart.
 
 ```sh
-helm install kubecost kubecost/cost-analyzer -n kubecost --create-namespace \
+helm install kubecost kubecost/kubecost -n kubecost --create-namespace \
   --set kubecostToken="aGVsbUBrdWJlY29zdC5jb20=xm343yadf98"
 ```
 
 While Helm is the [recommended install path](http://kubecost.com/install) for Kubecost especially in production, Kubecost can alternatively be deployed with a single-file manifest using the following command. Keep in mind when choosing this method, Kubecost will be installed from a development branch and may include unreleased changes.
 
 ```sh
-kubectl apply -f https://raw.githubusercontent.com/kubecost/cost-analyzer-helm-chart/develop/kubecost.yaml
+kubectl apply -f https://raw.githubusercontent.com/kubecost/kubecost-helm-chart/develop/kubecost.yaml
 ```
 
 The following table lists commonly used configuration parameters for the Kubecost Helm chart and their default values. Please see the [values file](values.yaml) for the complete set of definable values.
 
 | Parameter                                                                          | Description                                                                                                                                                  | Default                                               |
 |------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------|
-| `persistentVolume.enabled`                                                         | If true, Kubecost will create a Persistent Volume Claim for product config data.                                                                             | `true`                                                |
-| `persistentVolume.size`                                                            | Define PVC size for cost-analyzer                                                                                                                            | `32.0Gi`                                              |
-| `persistentVolume.dbSize`                                                          | Define PVC size for cost-analyzer's flat file database                                                                                                       | `32.0Gi`                                              |
 | `ingress.enabled`                                                                  | If true, Ingress will be created                                                                                                                             | `false`                                               |
 | `ingress.annotations`                                                              | Ingress annotations                                                                                                                                          | `{}`                                                  |
 | `ingress.className`                                                                | Ingress class name                                                                                                                                           | `{}`                                                  |
 | `ingress.paths`                                                                    | Ingress paths                                                                                                                                                | `["/"]`                                               |
-| `ingress.hosts`                                                                    | Ingress hostnames                                                                                                                                            | `[cost-analyzer.local]`                               |
+| `ingress.hosts`                                                                    | Ingress hostnames                                                                                                                                            | `[kubecost.local]`                               |
 | `ingress.tls`                                                                      | Ingress TLS configuration (YAML)                                                                                                                             | `[]`                                                  |
 | `networkCosts.enabled`                                                             | If true, collect network allocation metrics [More info](https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=ui-network-monitoring)                                                         | `false`                                               |
 | `networkCosts.podMonitor.enabled`                                                  | If true, a PodMonitor for the network-cost daemonset is created | `false`                                               |
@@ -49,7 +46,7 @@ The following table lists commonly used configuration parameters for the Kubecos
 | `serviceMonitor.additionalLabels`                                                  | Additional labels that can be used so ServiceMonitor will be discovered by Prometheus                                                                        | `{}`                                                  |
 | `serviceMonitor.relabelings`                                                       | Sets Prometheus metric_relabel_configs on the scrape job                                                                                                     | `[]`                                                  |
 | `serviceMonitor.metricRelabelings`                                                 | Sets Prometheus relabel_configs on the scrape job                                                                                                            | `[]`                                                  |
-| `serviceAccount.create`                                                            | Set this to `false` if you want to create the service account `kubecost-cost-analyzer` on your own                                                           | `true`                                                |
+| `serviceAccount.create`                                                            | Set this to `false` if you want to create the service account `kubecost-kubecost` on your own                                                           | `true`                                                |
 | `tolerations`                                                                      | node taints to tolerate                                                                                                                                      | `[]`                                                  |
 | `affinity`                                                                         | pod affinity                                                                                                                                                 | `{}`                                                  |
 | `kubecostProductConfigs.productKey.mountPath`                                      | Use instead of `kubecostProductConfigs.productKey.secretname` to declare the path at which the product key file is mounted (eg. by a secrets provisioner)    | `N/A`                                                 |

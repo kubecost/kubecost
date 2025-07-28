@@ -36,7 +36,7 @@ spec:
       - -c
       - |
         set -x
-        svc="{{ .Release.Name }}-cost-analyzer"
+        svc="{{ .Release.Name }}-kubecost"
         echo "Getting current Kubecost state."
         curl -vvv http://${svc}:9090/model/healthz
         response=$(curl -sL -w "%{http_code}" http://${svc}:9090/model/healthz)

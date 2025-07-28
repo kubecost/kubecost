@@ -7,9 +7,6 @@ prometheus.monitor.azure.com
 
 # Prometheus
 prometheus-k8s
-kubecost-prometheus-server
-kubecost-cost-analyzer-mimir-proxy
-prometheus-operated
 kubecost-prometheus-alertmanager
 
 # Nginx ConfigMap
