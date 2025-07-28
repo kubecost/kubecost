@@ -485,6 +485,8 @@ Kubecost image to be used by all apps which run, can be overridden in each apps 
 {{- define "aggregator.image" }}
   {{- if .Values.aggregator.fullImageName }}
     {{- .Values.aggregator.fullImageName }}
+  {{- else if .Values.kubecost.fullImageName }}
+    {{- .Values.kubecost.fullImageName }}
   {{- else if eq "development" .Chart.AppVersion -}}
     gcr.io/kubecost1/cost-model-nightly:latest
   {{- else -}}
@@ -494,6 +496,8 @@ Kubecost image to be used by all apps which run, can be overridden in each apps 
 {{- define "cloudCost.image" }}
   {{- if .Values.cloudCost.fullImageName }}
     {{- .Values.cloudCost.fullImageName }}
+  {{- else if .Values.kubecost.fullImageName }}
+    {{- .Values.kubecost.fullImageName }}
   {{- else if eq "development" .Chart.AppVersion -}}
     gcr.io/kubecost1/cost-model-nightly:latest
   {{- else -}}
