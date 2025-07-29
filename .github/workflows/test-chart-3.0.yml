@@ -4,11 +4,8 @@ on:
   workflow_dispatch: {}
   # Normally using pull_request_target along with checking out the ref of the PR is not
   # a good idea, but this is low risk since it's a Helm chart repo.
-  # pull_request_target:
-  #   types: [opened, synchronize, reopened, ready_for_review]
-  pull_request:
-    branches:
-      - develop
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review]
 
 # Prevents multiple runs of the same workflow on the same branch from executing 
 # simultaneously. Saves resources.
@@ -36,6 +33,10 @@ jobs:
       # Lint all chart values including those in the ci directory.
       - name: Run chart-testing (lint)
         run: ct lint --chart-dirs=kubecost/ --charts kubecost/ --validate-maintainers=false
+
+      - name: Print Helm template output for debugging
+        if: failure()
+        run: helm template kubecost/ -f kubecost/ci/aggregator-values.yaml --debug --dry-run
 
       # TODO: Need to remove "--set kubecostModel.federatedStorageConfig=tmp" before 3.0 release.
 

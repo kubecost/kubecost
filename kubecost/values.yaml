@@ -513,7 +513,6 @@ frontend:
 ## Values for the finops-agent subchart
 finops-agent:
   enabled: true
-  clusterId: cluster-one
   # federated storage for the finops-agent will be managed by this chart
   # TODO write better explaination
   federatedStorage: {}
