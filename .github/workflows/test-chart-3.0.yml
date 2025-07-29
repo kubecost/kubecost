@@ -8,7 +8,7 @@ on:
   #   types: [opened, synchronize, reopened, ready_for_review]
   pull_request:
     branches:
-      - cdp/build-fix-07.28.25
+      - develop
 
 # Prevents multiple runs of the same workflow on the same branch from executing 
 # simultaneously. Saves resources.
