@@ -510,21 +510,6 @@ frontend:
       - Cache-Control "must-revalidate";
       - "X-Content-Type-Options \"nosniff\";"
 
-sigV4Proxy:
-  image: public.ecr.aws/aws-observability/aws-sigv4-proxy:latest
-  imagePullPolicy: IfNotPresent
-  name: aps
-  port: 8005
-  region: us-west-2  # The AWS region
-  host: aps-workspaces.us-west-2.amazonaws.com  # The hostname for AMP service.
-  # role_arn: arn:aws:iam::<account>:role/role-name # The AWS IAM role to assume.
-  extraEnv:  # Pass extra env variables to sigV4Proxy
-  # - name: AWS_ACCESS_KEY_ID
-  #   value: <access_key>
-  # - name: AWS_SECRET_ACCESS_KEY
-  #   value: <secret_key>
-  resources: {}
-
 ## Values for the finops-agent subchart
 finops-agent:
   enabled: true
@@ -595,8 +580,9 @@ kubecost:
   ## Example:
   ## fullImageName: gcr.io/kubecost1/aggregator:v3.0.0
   fullImageName: ""
-  registry: gcr.io
+  
   image:
+    registry: gcr.io
     repository: kubecost1/aggregator
     tag: latest
 
@@ -705,11 +691,11 @@ networkCosts:
   ## If not set, the image will be pulled from the registry and repository specified in the image block.
   ## If set, the fullImageName will be used to pull the image.
   ## Example:
-  ## fullImageName: gcr.io/kubecost1/kubecost-network-costs:v0.17.10
+  ## fullImageName: gcr.io/kubecost1/kubecost-network-costs:v0.17.11
   fullImageName: ""
   image:
     repository: kubecost1/kubecost-network-costs
-    tag: v0.17.10
+    tag: v0.17.11
   imagePullPolicy: IfNotPresent
   updateStrategy:
     type: RollingUpdate
@@ -830,10 +816,15 @@ networkCosts:
 ## patterns observed by Kubecost.
 forecasting:
   enabled: true
+  ## Override the image name and version for the forecasting.
+  ## If not set, the image will be pulled from the registry and repository specified in the image block.
+  ## If set, the fullImageName will be used to pull the image.
+  ## Example:
+  ## fullImageName: gcr.io/kubecost1/kubecost-modeling:v0.1.28
   fullImageName: ""
   image:
     repository: kubecost1/kubecost-modeling
-    tag: v0.1.27
+    tag: v0.1.28
   imagePullPolicy: IfNotPresent
 
   # Resource specification block for the forecasting container.
@@ -1136,11 +1127,11 @@ clusterController:
   ## If not set, the image will be pulled from the registry and repository specified in the image block.
   ## If set, the fullImageName will be used to pull the image.
   ## Example:
-  ## fullImageName: gcr.io/kubecost1/cluster-controller:v0.16.19
+  ## fullImageName: gcr.io/kubecost1/cluster-controller:v0.16.20
   fullImageName: ""
   image:
     repository: kubecost1/cluster-controller
-    tag: v0.16.19
+    tag: v0.16.20
   imagePullPolicy: IfNotPresent
   extraEnv: []
   # - name: EXTRA_ENV_VAR
