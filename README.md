@@ -1,6 +1,6 @@
 # Kubecost Helm chart
 
-This is the official Helm chart for [Kubecost](https://www.kubecost.com/), an enterprise-grade application to monitor and manage Kubernetes spend. Please see the [website](https://www.kubecost.com/) for more details on what Kubecost can do for you and the official documentation [here](https://docs.kubecost.com/), or contact [team-kubecost@wwpdl.vnet.ibm.com](mailto:team-kubecost@wwpdl.vnet.ibm.com) for assistance.
+This repository contains the Helm chart templates for the development of [Kubecost](https://www.kubecost.com/), an enterprise-grade application to monitor and manage Kubernetes spend. Please see the [website](https://www.kubecost.com/) for more details on what Kubecost can do for you and the official documentation [IBM Docs](https://www.ibm.com/docs/en/kubecost/self-hosted/2.x), or contact [team-kubecost@wwpdl.vnet.ibm.com](mailto:team-kubecost@wwpdl.vnet.ibm.com) for assistance.
 
 ## Version Support
 
@@ -9,23 +9,18 @@ While the below versions may work with the given versions of Kubernetes, Kubecos
 
 | Chart Version                  | Kubernetes Min | Kubernetes Max |
 |--------------------------------|----------------|----------------|
-| 1.107                          | 1.20           | 1.28           |
-| 1.108                          | 1.20           | 1.28           |
-| 2.1                            | 1.20           | 1.29           |
-| 2.2                            | 1.21           | 1.29           |
-| 2.3                            | 1.21           | 1.30           |
-| 2.4                            | 1.22           | 1.31           |
-| 2.5                            | 1.22           | 1.32           |
-| 2.6                            | 1.22           | 1.32           |
+| 2.7                            | 1.22           | 1.32           |
+| 2.8                            | 1.22           | 1.33           |
 
 ## Installation
 
-To install via Helm, run the following command.
+***Note: Upcoming changes to the Kubecost Helm chart will require changes.***
+
+To install the current GA version (2.8) of Kubecost via Helm, run the following command.
 
 ```sh
 helm upgrade --install kubecost -n kubecost --create-namespace \
-  --repo https://kubecost.github.io/cost-analyzer/ kubecost \
-  --set kubecostToken="aGVsbUBrdWJlY29zdC5jb20=xm343yadf98"
+  --repo https://kubecost.github.io/cost-analyzer/ cost-analyzer
 ```
 
 Alternatively, add the Helm repository first and scan for updates.
@@ -33,74 +28,15 @@ Alternatively, add the Helm repository first and scan for updates.
 ```sh
 helm repo add kubecost https://kubecost.github.io/cost-analyzer/
 helm repo update
+helm install kubecost kubecost/cost-analyzer -n kubecost --create-namespace
 ```
 
-Next, install the chart.
+The default branch of this repository is the `develop` branch. This branch is not stable and is subject to change. Please use the following command to show values available for the chart you are using:
 
 ```sh
-helm install kubecost kubecost/cost-analyzer -n kubecost --create-namespace \
-  --set kubecostToken="aGVsbUBrdWJlY29zdC5jb20=xm343yadf98"
+helm show values kubecost/cost-analyzer --version 2.8.1
 ```
 
-While Helm is the [recommended install path](http://kubecost.com/install) for Kubecost, especially in production, Kubecost can alternatively be deployed with a single-file manifest using the following command. Keep in mind when choosing this method, Kubecost will be installed from a development branch and may include unreleased changes. We recommend using the manifest from a release branch, such as v1.108.
+Or switch to the tag of the version you are using:
 
-```sh
-kubectl apply -f https://raw.githubusercontent.com/kubecost/cost-analyzer-helm-chart/develop/kubecost.yaml
-```
-
-## Common Parameters
-
-The following table lists commonly used configuration parameters for the Kubecost Helm chart and their default values. Please see the [values file](/cost-analyzer/values.yaml) for the complete set of definable values.
-
-Parameter | Description | Default
---------- | ----------- | -------
-`persistentVolume.enabled` | If true, Kubecost will create a Persistent Volume Claim for product config data.  | `true`
-`persistentVolume.size` | Define PVC size for cost-analyzer  | `32.0Gi`
-`persistentVolume.dbSize` | Define PVC size for cost-analyzer's flat file database  | `32.0Gi`
-`persistentVolume.storageClass` | Define storage class for cost-analyzer's persistent volume  | `-`
-`ingress.enabled` | If true, Ingress will be created | `false`
-`ingress.annotations` | Ingress annotations | `{}`
-`ingress.className` | Ingress class name | `{}`
-`ingress.paths` | Ingress paths | `["/"]`
-`ingress.hosts` | Ingress hostnames | `[cost-analyzer.local]`
-`ingress.tls` | Ingress TLS configuration (YAML) | `[]`
-`networkCosts.enabled` | If true, collect network allocation metrics [More info](https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=dashboard-network-traffic-cost-allocation) | `false`
-`networkCosts.prometheusScrape` | If true, scrape the network allocation metrics from the `network-costs` daemonset | `false`
-`networkCosts.podMonitor.enabled` | If true, a PodMonitor for the network-cost daemonset is created | `false`
-`serviceMonitor.enabled` | Set this to `true` to create ServiceMonitor for Prometheus operator | `false`
-`serviceMonitor.additionalLabels` | Additional labels that can be used so ServiceMonitor will be discovered by Prometheus | `{}`
-`serviceAccount.create` | Set this to `false` if you want to create the service account `kubecost-cost-analyzer` on your own | `true`
-`tolerations` | node taints to tolerate | `[]`
-`affinity` | pod affinity | `{}`
-`extraVolumes` | A list of volumes to be added to the pod | `[]`|
-`extraVolumeMounts` | A list of volume mounts to be added to the pod | `[]`
-
-## Adjusting Log Output
-
-You can adjust the log output by using the `logLevel` Helm value and/or the `LOG_FORMAT` environment variable.
-
-### Adjusting Log Level
-
-Adjusting the log level increases or decreases the level of verbosity written to the logs. The `logLevel` property accepts the following values:
-
-* `trace`
-* `debug`
-* `info`
-* `warn`
-* `error`
-* `fatal`
-
-For example, to set the log level to `debug`, add the following flag to the Helm command:
-
-```sh
---set 'kubecost.logLevel=debug'
-```
-
-### Adjusting Log Format
-
-Adjusting the log format changes the format in which the logs are output making it easier for log aggregators to parse and display logged messages. The `LOG_FORMAT` environment variable accepts the values `JSON`, for a structured output, and `pretty` for a nice, human-readable output.
-
-| Value  | Output                                                                                                                     |
-|--------|----------------------------------------------------------------------------------------------------------------------------|
-| `JSON`   | `{"level":"info","time":"2006-01-02T15:04:05.999999999Z07:00","message":"Starting cost-model (git commit \"1.91.0-rc.0\")"}` |
-| `pretty` | `2006-01-02T15:04:05.999999999Z07:00 INF Starting cost-model (git commit "1.91.0-rc.0")`                                     |
+<https://github.com/kubecost/kubecost/tree/v2.8.1>

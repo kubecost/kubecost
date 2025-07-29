@@ -29,10 +29,6 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 app: aggregator
 {{- end }}
 
-{{- define "kubecost.aggregator.image" -}}
-{{ include "kubecost.image" . }}
-{{- end }}
-
 {{- define "kubecost.actions.secretName" -}}
 {{- if ((.Values.kubecostProductConfigs).actions).storageConfig.secret }}
 {{- ((.Values.kubecostProductConfigs).actions).storageConfig.secret }}

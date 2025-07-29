@@ -5,3 +5,6 @@
 .dist
 .manifest
 .kubeconfig
+kubecost/charts/*.tgz
+gke_gcloud_auth_plugin_cache
+temp/

@@ -212,21 +212,36 @@ spec:
           configMap:
             name: actions-config
         {{- end }}
-        {{- if ((.Values.kubecostProductConfigs).actions).enabled }}
-        {{- if or ((.Values.kubecostProductConfigs).actions).federatedStorage ((.Values.kubecostProductConfigs).actions).federatedStorageSecret }}
-        - name: actions-federated-storage-config
+      {{- if ((.Values.kubecostProductConfigs).actions).enabled }}
+        {{- if and (not (((.Values.kubecostProductConfigs).actions).storageConfigSecret)) (not (((.Values.kubecostProductConfigs).actions).storageConfig)) }}
+        - name: actions-storage
+          emptyDir: {}
+        {{- end }}
+        {{- if ((.Values.kubecostProductConfigs).actions).storageConfig }}
+        - name: actions-storage-config
           secret:
             defaultMode: 420
             secretName: {{ include "kubecost.actions.secretName" . }}
         {{- end }}
+        {{- if ((.Values.kubecostProductConfigs).actions).storageConfigSecret }}
+          {{- if eq ((.Values.kubecostProductConfigs).actions).storageConfigSecret (include "kubecost.federatedStorage.secretName" .) }}
+        - name: actions-storage
+          emptyDir: {}
+          {{- else }}
+        - name: actions-storage-config
+          secret:
+            defaultMode: 420
+            secretName: {{ ((.Values.kubecostProductConfigs).actions).storageConfigSecret | default "actions-store" }}
+          {{- end }}
         {{- end }}
+      {{- end }}
         {{- if .Values.aggregator.extraVolumes }}
         {{- toYaml .Values.aggregator.extraVolumes | nindent 12 }}
         {{- end }}
       initContainers:
       {{- if .Values.global.updateCaTrust.enabled }}
         - name: update-ca-trust
-          image: {{ include "kubecost.aggregator.image" . }}
+          image: {{ include "aggregator.image" . }}
           {{- if .Values.kubecost.imagePullPolicy }}
           imagePullPolicy: {{ .Values.kubecost.imagePullPolicy }}
           {{- else }}
@@ -261,7 +276,7 @@ spec:
           securityContext:
             {{- toYaml .Values.global.containerSecurityContext | nindent 12 }}
         {{- end }}
-          image: {{ include "kubecost.image" . }}
+          image: {{ include "aggregator.image" . }}
           {{- if .Values.aggregator.readinessProbe.enabled }}
           readinessProbe:
             httpGet:
@@ -296,18 +311,8 @@ spec:
             - name: aggregator-db-storage
               mountPath: /var/configs/waterfowl/duckdb
             - name: aggregator-staging
-              # Aggregator uses /var/configs/waterfowl as a "staging" directory for
-              # things like intermediate-state files pre-ingestion. In order to avoid a
-              # permission problem similar to
-              # https://github.com/kubernetes/kubernetes/issues/81676, we create an
-              # emptyDir at this path.
-              #
-              # This hasn't been observed as a problem in cost-analyzer, likely because
-              # of the init container that gives everything under /var/configs 777.
               mountPath: /var/configs/waterfowl
               {{- if (not .Values.aggregator.legacyMode ) }}
-              # mount the clickhouse directories on the same PV as the duckdb,
-              # this way they can seamlessly share the same PV before, during, and after the upgrade
             - name: aggregator-db-storage
               mountPath: /var/lib/clickhouse
               {{- end }}
@@ -389,7 +394,7 @@ spec:
               mountPath: /var/configs/actions
             {{- end }}
             {{- if ((.Values.kubecostProductConfigs).actions).enabled }}
-            {{- if or ((.Values.kubecostProductConfigs).actions).storageConfig ((.Values.kubecostProductConfigs).actions).storageConfig.secret }}
+            {{- if or ((.Values.kubecostProductConfigs).actions).storageConfig (((.Values.kubecostProductConfigs).actions).storageConfig).secret }}
             - name: actions-storage-config
               mountPath: /var/configs/actions/actions-store.yaml
               subPath: actions-store.yaml
@@ -448,20 +453,7 @@ spec:
             {{- end }}
             - name: READ_ONLY
               value: {{ (quote .Values.readonly) | default (quote false) }}
-            {{- if .Values.systemProxy.enabled }}
-            - name: HTTP_PROXY
-              value: {{ .Values.systemProxy.httpProxyUrl }}
-            - name: http_proxy
-              value: {{ .Values.systemProxy.httpProxyUrl }}
-            - name: HTTPS_PROXY
-              value: {{ .Values.systemProxy.httpsProxyUrl }}
-            - name: https_proxy
-              value: {{ .Values.systemProxy.httpsProxyUrl }}
-            - name: NO_PROXY
-              value: {{ .Values.systemProxy.noProxy }}
-            - name: no_proxy
-              value: {{ .Values.systemProxy.noProxy }}
-            {{- end }}
+            {{- include "common.systemProxy" . }}
             {{- if ((.Values.kubecostProductConfigs).carbonEstimates) }}
             - name: CARBON_ESTIMATES_ENABLED
               value: "true"
@@ -641,5 +633,5 @@ spec:
       {{- with .Values.aggregator.affinity }}
       affinity:
         {{- toYaml . | nindent 16 }}
-      {{- end }}
+{{- end }}
 {{- end }}
