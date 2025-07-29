@@ -583,7 +583,7 @@ kubecost:
 
   image:
     registry: gcr.io
-    repository: kubecost1/aggregator
+    repository: kubecost1/cost-model
     tag: latest
 
   imagePullPolicy: IfNotPresent
