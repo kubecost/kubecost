@@ -13,7 +13,7 @@ global:
   ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-long-term-federated-storage-configuration
   federatedStorage:
     existingSecretName: ""
-    fileName: federated-store.yaml # set this value to change what the file name for the yaml config is
+    fileName: federated-store.yaml  # set this value to change what the file name for the yaml config is
 
   ## If global.imageRegistry is set, it will override all kubecost images to allow air-gapped and self-hosted registries.
   ##
@@ -516,7 +516,7 @@ finops-agent:
   # federated storage for the finops-agent will be managed by this chart
   # TODO write better explaination
   federatedStorage: {}
-  
+
   agent:
     collectorDataSource:
       enabled: true
@@ -580,7 +580,7 @@ kubecost:
   ## Example:
   ## fullImageName: gcr.io/kubecost1/aggregator:v3.0.0
   fullImageName: ""
-  
+
   image:
     registry: gcr.io
     repository: kubecost1/aggregator
