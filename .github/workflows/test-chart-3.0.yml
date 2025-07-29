@@ -40,11 +40,12 @@ jobs:
       # Run `helm template` on the main values file plus all those in the ci directory.
       - name: Helm template
         run: |
-          helm template kubecost/ -f .github/ci-helmValues/helmValues-federated-store.yaml > full.yaml
+          helm template kubecost/ -f .github/ci-helmValues/helmValues-federated-store.yaml --debug > full.yaml
           directory="kubecost/ci"
           for file in "$directory"/*; do
           if [ -f "$file" ]; then
-              helm template kubecost/ -f "$file" >> full.yaml
+              echo "Templating file $file"
+              helm template kubecost/ -f "$file" --debug >> full.yaml
           fi
           done
 

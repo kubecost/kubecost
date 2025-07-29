@@ -23,3 +23,6 @@ aggregator:
     requests:
       cpu: 2000m
       memory: 10Gi
+finops-agent:
+  enabled: false
+  clusterId: cluster-one
