@@ -11,19 +11,18 @@ metadata:
   labels:
       {{- include "kubecost.commonLabels" . | nindent 4 }}
 rules:
- # Kubescaler required permissions. Cluster controller panics if kubescaler is not initialized
+  {{- if .Values.clusterController.rbac.containerRightsize }}
   - apiGroups: ['']
     resources: ['configmaps']
-    verbs: ['get', 'update']
+    verbs: ['get']
   - apiGroups: ['apps']
     resources: ['deployments', 'daemonsets']
-    verbs: ['get','list', 'patch']
+    verbs: ['get','list', 'patch', 'update']
   - apiGroups: ['batch']
     resources: ['cronjobs', 'jobs']
     verbs: ['get','list','patch']
-  {{- if .Values.clusterController.rbac.containerRightsize }}
   - apiGroups: ['apps']
-    resources: ['deployments', 'daemonsets', 'statefulsets', 'replicasets']
+    resources: ['statefulsets', 'replicasets']
     verbs: ['get', 'update']
   {{- end }}
   {{- if .Values.clusterController.rbac.clusterRightsize }}
