@@ -603,7 +603,7 @@ spec:
            {{- if ((.Values.kubecostProductConfigs).actions).enabled }}
            {{- if or ((.Values.kubecostProductConfigs).actions).enabled }}
             - name: ACTIONS_BUCKET_CONFIG
-              value: /var/configs/actions/actions-store.yaml
+              value: /var/configs/actions/storage/actions-store.yaml
             {{- end }}
             {{- if (.Values.kubecostProductConfigs).currencyCode }}
             - name: DISPLAY_CURRENCY
