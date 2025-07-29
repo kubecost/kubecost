@@ -136,7 +136,7 @@ spec:
       {{- end }}
       {{- if .Values.global.updateCaTrust.enabled }}
       - name: update-ca-trust
-        image: {{ include "kubecost.cloudCost.image" . }}
+        image: {{ include "cloudCost.image" . }}
         {{- if .Values.kubecost.imagePullPolicy }}
         imagePullPolicy: {{ .Values.kubecost.imagePullPolicy }}
         {{- else }}
@@ -164,7 +164,7 @@ spec:
       {{- end}}
       containers:
         - name: cloud-cost
-          image: {{ include "kubecost.cloudCost.image" . }}
+          image: {{ include "cloudCost.image" . }}
           {{- if (.Values.cloudCost).readinessProbe.enabled }}
           readinessProbe:
             httpGet:
@@ -240,20 +240,7 @@ spec:
             - name: {{ $key | quote }}
               value: {{ $value | quote }}
             {{- end }}
-            {{- if .Values.systemProxy.enabled }}
-            - name: HTTP_PROXY
-              value: {{ .Values.systemProxy.httpProxyUrl }}
-            - name: http_proxy
-              value: {{ .Values.systemProxy.httpProxyUrl }}
-            - name: HTTPS_PROXY
-              value: {{ .Values.systemProxy.httpsProxyUrl }}
-            - name: https_proxy
-              value: {{ .Values.systemProxy.httpsProxyUrl }}
-            - name: NO_PROXY
-              value: {{ .Values.systemProxy.noProxy }}
-            - name: no_proxy
-              value: {{ .Values.systemProxy.noProxy }}
-            {{- end }}
+            {{- include "common.systemProxy" . }}
     {{- if .Values.imagePullSecrets }}
       imagePullSecrets:
       {{- range $.Values.imagePullSecrets }}

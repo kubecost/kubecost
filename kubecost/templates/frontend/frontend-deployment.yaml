@@ -100,20 +100,8 @@ spec:
         {{- end }}
         {{- end }}
       containers:
-        {{- if .Values.frontend }}
-        {{- if .Values.frontend.fullImageName }}
-        - image: {{ .Values.frontend.fullImageName }}
-        {{- else if .Values.imageVersion }}
-        - image: {{ .Values.frontend.image }}:{{ .Values.imageVersion }}
-        {{- else if eq "development" .Chart.AppVersion }}
-        - image: gcr.io/kubecost1/frontend-nightly:latest
-        {{- else }}
-        - image: {{ .Values.frontend.image }}:prod-{{ $.Chart.AppVersion }}
-        {{- end }}
-        {{- else }}
-        - image: gcr.io/kubecost1/frontend:prod-{{ $.Chart.AppVersion }}
-        {{- end }}
-          name: cost-analyzer-frontend
+        - name: frontend
+          image: {{ include "frontend.image" . }}
           ports:
           - name: tcp-frontend
             containerPort: 9090

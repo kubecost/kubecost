@@ -15,7 +15,17 @@ global:
     existingSecretName: ""
     fileName: federated-store.yaml # set this value to change what the file name for the yaml config is
 
+  ## If global.imageRegistry is set, it will override all kubecost images to allow air-gapped and self-hosted registries.
+  ##
+  imageRegistry: ""
 
+  ## Reference to one or more secrets to be used when pulling images
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+  ##
+  imagePullSecrets: []
+  # - name: "image-pull-secret"
+  # or
+  # - "image-pull-secret"
 
   ## Kubecost Alerting
   ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=ui-alerts
@@ -252,7 +262,7 @@ global:
 
 ## Provide additional labels for the chart.
 # chartLabels:
-#   app.kubernetes.io/name: kubecost-cost-analyzer
+#   app.kubernetes.io/name: kubecost
 
 ## This flag is only required for users upgrading to a new version of Kubecost.
 ## The flag is used to ensure users are aware of important
@@ -432,7 +442,15 @@ systemProxy:
 frontend:
   enabled: true
   replicas: 1
-  image: "gcr.io/kubecost1/frontend"
+  ## Override the image name and version for the frontend.
+  ## If not set, the image will be pulled from the registry and repository specified in the image block.
+  ## If set, the fullImageName will be used to pull the image.
+  ## Example:
+  ## fullImageName: gcr.io/kubecost1/frontend:v3.0.0
+  fullImageName: ""
+  image:
+    repository: kubecost1/frontend
+    tag: latest
   imagePullPolicy: IfNotPresent
   # fullImageName overrides the default image construction logic. The exact
   # image provided (registry, image, tag) will be used for the frontend.
@@ -491,21 +509,6 @@ frontend:
       - "Content-Security-Policy \"default-src 'self' data: telemetry.monitoring.kubecost.cloud api.userway.com cdn.userway.com api.mixpanel.com; connect-src http: https:; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'; form-action 'self';\";"
       - Cache-Control "must-revalidate";
       - "X-Content-Type-Options \"nosniff\";"
-
-sigV4Proxy:
-  image: public.ecr.aws/aws-observability/aws-sigv4-proxy:latest
-  imagePullPolicy: IfNotPresent
-  name: aps
-  port: 8005
-  region: us-west-2  # The AWS region
-  host: aps-workspaces.us-west-2.amazonaws.com  # The hostname for AMP service.
-  # role_arn: arn:aws:iam::<account>:role/role-name # The AWS IAM role to assume.
-  extraEnv:  # Pass extra env variables to sigV4Proxy
-  # - name: AWS_ACCESS_KEY_ID
-  #   value: <access_key>
-  # - name: AWS_SECRET_ACCESS_KEY
-  #   value: <secret_key>
-  resources: {}
 
 ## Values for the finops-agent subchart
 finops-agent:
@@ -571,9 +574,16 @@ federatedStorage:
 
 
 kubecost:
+  ## Override the image name and version for containers that use the aggregator image.
+  ## If not set, the image will be pulled from the registry and repository specified in the image block.
+  ## If set, the fullImageName will be used to pull the image.
+  ## Example:
+  ## fullImageName: gcr.io/kubecost1/aggregator:v3.0.0
+  fullImageName: ""
+  
   image:
     registry: gcr.io
-    repository: kubecost1/cost-model-nightly
+    repository: kubecost1/aggregator
     tag: latest
 
   imagePullPolicy: IfNotPresent
@@ -647,7 +657,7 @@ ingress:
   hosts:
     - kubecost.local
   tls: []
-  #  - secretName: cost-analyzer-tls
+  #  - secretName: kubecost-tls
   #    hosts:
   #      - kubecost.local
 
@@ -677,9 +687,15 @@ service:
 ## https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-network-cost
 networkCosts:
   enabled: false
+  ## Override the image name and version for the network costs.
+  ## If not set, the image will be pulled from the registry and repository specified in the image block.
+  ## If set, the fullImageName will be used to pull the image.
+  ## Example:
+  ## fullImageName: gcr.io/kubecost1/kubecost-network-costs:v0.17.11
+  fullImageName: ""
   image:
-    repository: gcr.io/kubecost1/kubecost-network-costs
-    tag: v0.17.10
+    repository: kubecost1/kubecost-network-costs
+    tag: v0.17.11
   imagePullPolicy: IfNotPresent
   updateStrategy:
     type: RollingUpdate
@@ -800,10 +816,15 @@ networkCosts:
 ## patterns observed by Kubecost.
 forecasting:
   enabled: true
+  ## Override the image name and version for the forecasting.
+  ## If not set, the image will be pulled from the registry and repository specified in the image block.
+  ## If set, the fullImageName will be used to pull the image.
+  ## Example:
+  ## fullImageName: gcr.io/kubecost1/kubecost-modeling:v0.1.28
   fullImageName: ""
   image:
-    repository: gcr.io/kubecost1/kubecost-modeling
-    tag: v0.1.27
+    repository: kubecost1/kubecost-modeling
+    tag: v0.1.28
   imagePullPolicy: IfNotPresent
 
   # Resource specification block for the forecasting container.
@@ -1016,7 +1037,7 @@ diagnostics:
 
 ## TODO change this comment, what are we doing with service acounts
 ## Creates a new container/pod to retrieve CloudCost data. By default it uses
-## the same serviceaccount as the cost-analyzer pod. A custom serviceaccount
+## the same serviceaccount as the aggregator pod. A custom serviceaccount
 ## can be specified.
 cloudCost:
   enabled: true
@@ -1111,9 +1132,15 @@ cloudCost:
 # Kubecost Cluster Controller for Right Sizing and Cluster Turndown
 clusterController:
   enabled: false
+  ## Override the image name and version for the cluster controller.
+  ## If not set, the image will be pulled from the registry and repository specified in the image block.
+  ## If set, the fullImageName will be used to pull the image.
+  ## Example:
+  ## fullImageName: gcr.io/kubecost1/cluster-controller:v0.16.20
+  fullImageName: ""
   image:
-    repository: gcr.io/kubecost1/cluster-controller
-    tag: v0.16.19
+    repository: kubecost1/cluster-controller
+    tag: v0.16.20
   imagePullPolicy: IfNotPresent
   extraEnv: []
   # - name: EXTRA_ENV_VAR
@@ -1248,15 +1275,6 @@ serviceAccount:
   create: true  # Set this to false if you're bringing your own service account.
   annotations: {}
 
-awsstore:
-  useAwsStore: false
-  imageNameAndVersion: gcr.io/kubecost1/awsstore:latest
-  createServiceAccount: false
-  priorityClassName: ""
-  nodeSelector: {}
-  annotations: {}
-
-
 ## Kubecost Admission Controller (beta feature)
 ## To use this feature, ensure you have run the `create-admission-controller.sh`
 ## script. This generates a k8s secret with TLS keys/certificats and a
@@ -1288,6 +1306,65 @@ telemetry:
 # # UI. Values in this block override config changes in the Settings UI on pod
 # # restart
 kubecostProductConfigs:
+  actions:
+    # Enable multi-cluster cluster controller actions (v2)
+    enabled: false
+
+    # # The Actions feature requires an external storage config.
+    # # By default, will use the same bucket config as set in federatedStorage.config (or global.federatedStorage.existingSecret)
+
+    # # A separate bucket config specific to action storage can alternatively be supplied via a Secret or a yaml block
+    # # The name of the Secret containing the bucket config. The contents should be stored under a key named actions-store.yaml
+    # storageConfigSecret: actions-store
+
+    # # (If not using Secret) Define storage config directly in yaml, as below:
+    # storageConfig: |-
+    # # AWS EXAMPLE
+    #   type: S3
+    #   config:
+    #     bucket: kubecost-actions-storage-bucket
+    #     endpoint: s3.amazonaws.com
+    #     region: us-east-1
+    #     # best practice is to use pod identities to access AWS resources. Otherwise it is possible to use an access_key and secret_key
+    #     access_key: "<your-access-key>"
+    #     secret_key: "<your-secret-key>"
+    # # AZURE EXAMPLE
+    #   type: AZURE
+    #   config:
+    #     storage_account: ""
+    #     storage_account_key: ""
+    #     container: ""
+    #     max_retries: 0
+    # # GCP EXAMPLE
+    #   type: GCS
+    #   config:
+    #     bucket: kubecost-actions-storage-bucket
+    #     service_account: |-
+    #       {
+    #         "type": "service_account",
+    #         "project_id": "...",
+    #         "private_key_id": "...",
+    #         "private_key": "...",
+    #         "client_email": "...",
+    #         "client_id": "...",
+    #         "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+    #         "token_uri": "https://oauth2.googleapis.com/token",
+    #         "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+    #         "client_x509_cert_url": ""
+    #       }
+    # # Actions can reference configuration at a global or cluster-specific level
+    # config:
+    #   global: # Define global action configuration
+    #     rightsizing:
+    #       enabled: true
+    #   clusters: # Define cluster-specific action configuration, where top-level keys are cluster names
+    #     cluster-1:
+    #       rightsizing:
+    #         enabled: false
+    #     cluster-2:
+    #       rightsizing:
+    #         enabled: false
+
 #   # The cluster profile represents a predefined set of parameters to use when calculating savings.
 #   # Possible values are: [ development, production, high-availability ]
 #   clusterProfile: production
@@ -1404,68 +1481,6 @@ kubecostProductConfigs:
 #     AWS: []
 #     GCP: []
 #     Azure: []
-#    actions:
-#      # Enable multi-cluster cluster controller actions (v2)
-#      enabled: true
-#
-#      # Enable multi-cluster cluster controller actions (v2)
-#      enabled: true
-#
-#      # The Actions feature requires an external storage config.
-#      # By default, will use the same bucket config as set in federatedStorage.config (or global.federatedStorage.existingSecret)
-#
-#      # A separate bucket config specific to action storage can alternatively be supplied via a Secret or a yaml block
-#      # The name of the Secret containing the bucket config. The contents should be stored under a key named actions-store.yaml
-#      storageConfigSecret: actions-store
-#
-#      # (If not using Secret) Define storage config directly in yaml, as below:
-#      storageConfig: |-
-#      # AWS EXAMPLE
-#        type: S3
-#        config:
-#          bucket: kubecost-actions-storage-bucket
-#          endpoint: s3.amazonaws.com
-#          region: us-east-1
-#          # best practice is to use pod identities to access AWS resources. Otherwise it is possible to use an access_key and secret_key
-#          access_key: "<your-access-key>"
-#          secret_key: "<your-secret-key>"
-#      # AZURE EXAMPLE
-#        type: AZURE
-#        config:
-#          storage_account: ""
-#          storage_account_key: ""
-#          container: ""
-#          max_retries: 0
-#      # GCP EXAMPLE
-#        type: GCS
-#        config:
-#          bucket: kubecost-actions-storage-bucket
-#          service_account: |-
-#            {
-#              "type": "service_account",
-#              "project_id": "...",
-#              "private_key_id": "...",
-#              "private_key": "...",
-#              "client_email": "...",
-#              "client_id": "...",
-#              "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-#              "token_uri": "https://oauth2.googleapis.com/token",
-#              "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-#              "client_x509_cert_url": ""
-#            }
-#      # Actions can reference configuration at a global or cluster-specific level
-#      config:
-#        global: # Define global action configuration
-#          rightsizing:
-#            enabled: true
-#        clusters: # Define cluster-specific action configuration, where top-level keys are cluster names
-#          cluster-1:
-#            rightsizing:
-#              enabled: false
-#          cluster-2:
-#            rightsizing:
-#              enabled: false
-
 
   # ingestPodUID: false # Enables using UIDs to uniquely ID pods. This requires either Kubecost's replicated KSM metrics, or KSM v2.1.0+. This may impact performance, and changes the default cost-model allocation behavior.
   # regionOverrides: "region1,region2,region3" # list of regions which will override default costmodel provider regions
@@ -1496,5 +1511,7 @@ extraObjects: []
 #               number: 80
 
 # -- Optional override for the image used for the basic health test container
-# basicHealth:
-#   fullImageName: alpine/k8s:1.26.9
+basicHealth:
+  registry: docker.io
+  repository: alpine/k8s
+  tag: 1.33.3

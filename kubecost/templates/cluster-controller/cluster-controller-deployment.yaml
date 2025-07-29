@@ -61,11 +61,7 @@ spec:
       {{- end }}
       containers:
       - name: {{ include "kubecost.clusterController.name" . }}
-        {{- if eq (typeOf .Values.clusterController.image) "string" }}
-        image: {{ .Values.clusterController.image }}
-        {{- else }}
-        image: {{ .Values.clusterController.image.repository }}:{{ .Values.clusterController.image.tag }}
-        {{- end}}
+        image: {{ include "clusterController.image" . }}
         imagePullPolicy: {{ .Values.clusterController.imagePullPolicy }}
         securityContext:
         {{- if .Values.clusterController.securityContext }}
