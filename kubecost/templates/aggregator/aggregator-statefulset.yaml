@@ -460,6 +460,12 @@ spec:
             {{- end }}
             - name: CUSTOM_COST_ENABLED
               value: {{ .Values.kubecost.plugins.enabled | quote }}
+            {{- if .Values.diagnostics.enabled }}
+            - name: DIAGNOSTICS_ENABLED
+              value: "true"
+            - name: DIAGNOSTICS_RETENTION
+              value: {{ .Values.diagnostics.retention | quote }}
+            {{- end }}
             {{- if .Values.aggregator.extraEnv -}}
             {{- toYaml .Values.aggregator.extraEnv | nindent 12 }}
             {{- end }}
