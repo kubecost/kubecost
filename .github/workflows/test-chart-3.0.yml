@@ -37,6 +37,10 @@ jobs:
       - name: Run chart-testing (lint)
         run: ct lint --chart-dirs=kubecost/ --charts kubecost/ --validate-maintainers=false
 
+      - name: Print Helm template output for debugging
+        if: failure()
+        run: helm template kubecost/ -f kubecost/ci/aggregator-values.yaml
+
       # TODO: Need to remove "--set kubecostModel.federatedStorageConfig=tmp" before 3.0 release.
 
       # Run `helm template` on the main values file plus all those in the ci directory.
