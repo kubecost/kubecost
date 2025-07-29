@@ -394,11 +394,30 @@ spec:
               mountPath: /var/configs/actions
             {{- end }}
             {{- if ((.Values.kubecostProductConfigs).actions).enabled }}
-            {{- if or ((.Values.kubecostProductConfigs).actions).storageConfig (((.Values.kubecostProductConfigs).actions).storageConfig).secret }}
-            - name: actions-storage-config
-              mountPath: /var/configs/actions/actions-store.yaml
-              subPath: actions-store.yaml
+            {{- if and (not (((.Values.kubecostProductConfigs).actions).storageConfigSecret)) (not (((.Values.kubecostProductConfigs).actions).storageConfig)) }}
+            - name: actions-storage
+              mountPath: /var/configs/actions/storage
+            - name: federated-storage-config
+              mountPath: /var/configs/actions/storage/actions-store.yaml
+              subPath: federated-store.yaml
               readOnly: true
+            {{- end }}
+            {{- if ((.Values.kubecostProductConfigs).actions).storageConfig }}
+            - name: actions-storage-config
+              mountPath: /var/configs/actions/storage
+            {{- end }}
+            {{- if ((.Values.kubecostProductConfigs).actions).storageConfigSecret }}
+            {{- if eq ((.Values.kubecostProductConfigs).actions).storageConfigSecret (.Values.kubecostModel).federatedStorageConfigSecret }}
+            - name: actions-storage
+              mountPath: /var/configs/actions/storage
+            - name: federated-storage-config
+              mountPath: /var/configs/actions/storage/actions-store.yaml
+              subPath: federated-store.yaml
+              readOnly: true
+            {{- else }}
+            - name: actions-storage-config
+              mountPath: /var/configs/actions/storage
+            {{- end }}
             {{- end }}
             {{- end }}
             {{- if .Values.aggregator.extraVolumeMounts }}
@@ -588,9 +607,9 @@ spec:
               value: {{ (quote .Values.instanceTypes.custom.location.URI) }}
             {{- end }}
            {{- if ((.Values.kubecostProductConfigs).actions).enabled }}
-           {{- if or ((.Values.kubecostProductConfigs).actions).storageConfig ((.Values.kubecostProductConfigs).actions).storageConfigSecret }}
+           {{- if or ((.Values.kubecostProductConfigs).actions).enabled }}
             - name: ACTIONS_BUCKET_CONFIG
-              value: /var/configs/actions/actions-store.yaml
+              value: /var/configs/actions/storage/actions-store.yaml
             {{- end }}
             {{- if (.Values.kubecostProductConfigs).currencyCode }}
             - name: DISPLAY_CURRENCY
