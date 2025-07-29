@@ -39,7 +39,7 @@ jobs:
 
       - name: Print Helm template output for debugging
         if: failure()
-        run: helm template kubecost/ -f kubecost/ci/aggregator-values.yaml
+        run: helm template kubecost/ -f kubecost/values.yaml
 
       # TODO: Need to remove "--set kubecostModel.federatedStorageConfig=tmp" before 3.0 release.
 
