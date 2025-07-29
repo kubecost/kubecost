@@ -14,6 +14,9 @@ aggregator:
 cloudCost:
   enabled: true
   cloudIntegrationSecret: cloud-integration
+finops-agent:
+  enabled: false
+  clusterId: cluster-one
 kubecostProductConfigs:
   clusterName: CLUSTER_NAME
 prometheus:
