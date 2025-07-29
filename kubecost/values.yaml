@@ -1026,7 +1026,16 @@ aggregator:
           - __meta_kubernetes_namespace
         targetLabel: namespace
 
-## TODO change this comment, what are we doing with service accounts
+## Kubecost Multi-cluster Diagnostics
+## A single view into the health of all agent clusters. Each agent cluster sends
+## its diagnostic data to a storage bucket.
+## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-multi-diagnostics
+## retention: deletes data beyond specified retention period
+diagnostics:
+  enabled: true
+  retention: 90d
+
+## TODO change this comment, what are we doing with service acounts
 ## Creates a new container/pod to retrieve CloudCost data. By default it uses
 ## the same serviceaccount as the aggregator pod. A custom serviceaccount
 ## can be specified.
