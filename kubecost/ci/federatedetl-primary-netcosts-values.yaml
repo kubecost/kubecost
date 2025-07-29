@@ -3,7 +3,7 @@ global:
     existingSecret: federated-storage-config
 kubecostProductConfigs:
   clusterName: CLUSTER_NAME
-#cloudCost:
+#  cloudCost:
 #  cloudIntegrationSecret: cloud-integration
 serviceAccount:  # this example uses AWS IRSA, which creates a service account with rights to the s3 bucket. If using keys+secrets in the federated storage, set create: true
   create: true
