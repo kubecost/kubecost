@@ -7,3 +7,6 @@ kubecostModel:
       region: "us-east-2"
 kubecostProductConfigs:
   clusterName: helm-testing
+finops-agent:
+  enabled: true
+  clusterID: cluster-one
