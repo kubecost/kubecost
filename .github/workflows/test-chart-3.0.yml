@@ -32,18 +32,18 @@ jobs:
 
       # Lint all chart values including those in the ci directory.
       - name: Run chart-testing (lint)
-        run: ct lint --chart-dirs=cost-analyzer/ --charts cost-analyzer/ --validate-maintainers=false
+        run: ct lint --chart-dirs=kubecost/ --charts kubecost/ --validate-maintainers=false
 
       # TODO: Need to remove "--set kubecostModel.federatedStorageConfig=tmp" before 3.0 release.
 
       # Run `helm template` on the main values file plus all those in the ci directory.
       - name: Helm template
         run: |
-          helm template cost-analyzer/ -f cost-analyzer/values.yaml --set kubecostModel.federatedStorageConfig=tmp > full.yaml
-          directory="cost-analyzer/ci"
+          helm template kubecost/ -f kubecost/values.yaml --set kubecostModel.federatedStorageConfig=tmp > full.yaml
+          directory="kubecost/ci"
           for file in "$directory"/*; do
           if [ -f "$file" ]; then
-              helm template cost-analyzer/ -f "$file" >> full.yaml
+              helm template kubecost/ -f "$file" >> full.yaml
           fi
           done
 
