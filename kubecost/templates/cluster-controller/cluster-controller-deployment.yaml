@@ -1,0 +1,158 @@
+{{- if (.Values.clusterController).enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "kubecost.clusterController.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
+    {{- if .Values.global.additionalLabels }}
+    {{- toYaml .Values.global.additionalLabels | nindent 4 }}
+    {{- end }}
+    {{- if .Values.clusterController.labels }}
+    {{- toYaml .Values.clusterController.labels | nindent 4 }}
+    {{- end }}
+  annotations:
+  {{- with .Values.global.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.clusterController.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+    checksum/configs: {{ include "kubecost.configsChecksum" . }}
+spec:
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: {{ include "kubecost.clusterController.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "kubecost.clusterController.name" . }}
+        {{- if .Values.global.additionalLabels }}
+        {{- toYaml .Values.global.additionalLabels | nindent 8 }}
+        {{- end }}
+        {{- if .Values.clusterController.labels }}
+        {{- toYaml .Values.clusterController.labels | nindent 8 }}
+        {{- end }}
+      {{- with .Values.global.podAnnotations}}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- if .Values.global.platforms.openshift.enabled }}
+      securityContext:
+      {{- toYaml .Values.global.platforms.openshift.securityContext | nindent 8 }}
+      {{- else if .Values.global.securityContext }}
+      securityContext:
+      {{- toYaml .Values.global.securityContext | nindent 8 }}
+      {{- else }}
+      securityContext:
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+      {{- end }}
+      {{- if .Values.clusterController.priorityClassName }}
+      priorityClassName: "{{ .Values.clusterController.priorityClassName }}"
+      {{- end }}
+      containers:
+      - name: {{ include "kubecost.clusterController.name" . }}
+        image: {{ include "clusterController.image" . }}
+        imagePullPolicy: {{ .Values.clusterController.imagePullPolicy }}
+        securityContext:
+        {{- if .Values.clusterController.securityContext }}
+          {{- toYaml .Values.clusterController.securityContext | nindent 10 -}}
+        {{- else if .Values.global.containerSecurityContext }}
+          {{- toYaml .Values.global.containerSecurityContext | nindent 10 -}}
+        {{- end }}
+        volumeMounts:
+        - name: cluster-controller-keys
+          mountPath: /var/keys
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: CLUSTER_ID
+          value: {{ include "kubecost.clusterId" . }}
+        - name: TURNDOWN_NAMESPACE
+          value: {{ .Release.Namespace }}
+        - name: TURNDOWN_DEPLOYMENT
+          value: {{ include "kubecost.clusterController.name" . }}
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: /var/keys/service-key.json
+        - name: CC_LOG_LEVEL
+          value: {{ .Values.clusterController.logLevel | default "info" }}
+        - name: CC_KUBESCALER_COST_MODEL_PATH
+          {{- if .Values.clusterController.primaryKubecostURL }}
+          value: {{ .Values.clusterController.primaryKubecostURL }}/model
+          {{- else }}
+          value: http://{{ include "kubecost.frontend.serviceName" . }}.{{ .Release.Namespace }}:{{ .Values.service.targetPort | default 9090 }}/model
+          {{- end }}
+        - name: CC_CCL_COST_MODEL_PATH
+          {{- if .Values.clusterController.primaryKubecostURL }}
+          value: {{ .Values.clusterController.primaryKubecostURL }}/model
+          {{- else }}
+          value: http://{{ include "kubecost.frontend.serviceName" . }}.{{ .Release.Namespace }}:{{ .Values.service.targetPort | default 9090 }}/model
+          {{- end }}
+        {{- if .Values.clusterController.kubecostAPIKey }}
+        - name: KUBECOST_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.clusterController.secretName }}
+              key: kubecostAPIKey
+        {{- end }}
+        {{- if .Values.clusterController.kubescaler }}
+        - name: CC_KUBESCALER_DEFAULT_RESIZE_ALL
+          value: {{ .Values.clusterController.kubescaler.defaultResizeAll | default "false" | quote }}
+        {{- end }}
+        {{- if .Values.clusterController.extraEnv -}}
+        {{ toYaml .Values.clusterController.extraEnv | nindent 8 }}
+        {{- end }}
+        ports:
+        - name: http-server
+          containerPort: 9731
+        resources:
+          {{- toYaml .Values.clusterController.resources | nindent 12 }}
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range $.Values.imagePullSecrets }}
+        - name: {{ .name }}
+        {{- end }}
+      {{- end }}
+      serviceAccount: {{ include "kubecost.clusterController.name" . }}
+      serviceAccountName: {{ include "kubecost.clusterController.name" . }}
+      {{- with .Values.clusterController.tolerations }}
+      tolerations:
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.clusterController.nodeSelector }}
+      nodeSelector:
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.clusterController.affinity }}
+      affinity:
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+      - name: cluster-controller-keys
+        secret:
+          secretName: {{ .Values.clusterController.secretName | default "cluster-controller-service-key" }}
+          # The secret is optional because not all of cluster controller's
+          # functionality requires this secret. Cluster controller will
+          # partially or fully initialize based on the presence of these keys
+          # and their validity.
+          optional: true
+{{- end }}

@@ -1,0 +1,49 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: basic-health
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    {{- include "kubecost.test.annotations" . | nindent 4 }}
+  labels:
+    app: basic-health
+    app.kubernetes.io/name: basic-health
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  automountServiceAccountToken: false
+  restartPolicy: Never
+  securityContext:
+    seccompProfile:
+      type: RuntimeDefault
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 3000
+    fsGroup: 2000
+  containers:
+  - name: test-kubecost
+    image: {{ .Values.basicHealth.registry }}/{{ .Values.basicHealth.repository }}:{{ .Values.basicHealth.tag }}
+    securityContext:
+      privileged: false
+      capabilities:
+        drop:
+        - ALL
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+    command:
+      - /bin/sh
+    args:
+      - -c
+      - |
+        set -x
+        svc="{{ .Release.Name }}-kubecost"
+        echo "Getting current Kubecost state."
+        curl -vvv http://${svc}:9090/model/healthz
+        response=$(curl -sL -w "%{http_code}" http://${svc}:9090/model/healthz)
+        if [ "$response" -eq 200 ]; then
+          echo "Got Kubecost 200 on healthz. Successful."
+          exit 0
+        else
+          echo "Failed to fetch Kubecost 200 on healthz. Response code was $response"
+          exit 1
+        fi

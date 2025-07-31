@@ -1,0 +1,11 @@
+{{- if ((.Values.kubecostProductConfigs).actions).config }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: actions-config
+  labels:
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
+data:
+  config.yaml: |-
+{{- toYaml ((.Values.kubecostProductConfigs).actions).config | nindent 4 }}
+{{- end -}}

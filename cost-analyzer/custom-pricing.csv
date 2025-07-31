@@ -1,7 +1,0 @@
-EndTimestamp,InstanceID,Region,AssetClass,InstanceIDField,InstanceType,MarketPriceHourly,Version
-2028-01-06 23:34:45 UTC,,us-east-2,node,metadata.name,g4dn.xlarge,5.55,
-2028-01-06 23:34:45 UTC,,,node,metadata.name,R730-type1,1.35,
-2028-01-06 23:34:45 UTC,,,pv,metadata.name,standard,0.44,
-2028-01-06 23:34:45 UTC,a100,,gpu,gpu.nvidia.com/class,,0.75,
-2028-01-06 23:34:45 UTC,RTX3090,,gpu,nvidia.com/gpu_type,,0.65,
-2028-01-06 23:34:45 UTC,i-01045ab6d13179700,,,spec.providerID,,1.2,

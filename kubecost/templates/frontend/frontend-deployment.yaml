@@ -1,0 +1,205 @@
+{{- if (.Values.frontend).enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "kubecost.frontend.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
+    {{- with .Values.global.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  annotations:
+  {{- with .Values.global.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: {{ .Values.frontend.replicas | default 1 }}
+  selector:
+    matchLabels:
+      {{- include "kubecost.frontend.selectorLabels" . | nindent 6 }}
+  {{- if .Values.frontend.deploymentStrategy }}
+  {{- with .Values.frontend.deploymentStrategy }}
+  strategy: {{ toYaml . | nindent 4 }}
+  {{- end }}
+  {{- else }}
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  {{- end }}
+  template:
+    metadata:
+      labels:
+        {{- include "kubecost.frontend.selectorLabels" . | nindent 8 }}
+        {{- if .Values.global.additionalLabels }}
+        {{- toYaml .Values.global.additionalLabels | nindent 8 }}
+        {{- end }}
+      annotations:
+        {{- with .Values.global.podAnnotations}}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        checksum/configs: {{ include "kubecost.configsChecksum" . }}
+    spec:
+      {{- if .Values.global.platforms.openshift.enabled }}
+      securityContext:
+        {{- toYaml .Values.global.platforms.openshift.securityContext | nindent 8 }}
+      {{- else if .Values.global.securityContext }}
+      securityContext:
+        {{- toYaml .Values.global.securityContext | nindent 8 }}
+      {{- else }}
+      securityContext:
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+      {{- end }}
+      restartPolicy: Always
+      serviceAccountName: {{ include "kubecost.serviceAccountName" . }}
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: log
+          emptyDir: {}
+        - name: nginx-conf
+          configMap:
+            name: nginx-conf
+            items:
+              - key: nginx.conf
+                path: default.conf
+        {{- if .Values.global.containerSecuritycontext }}
+        - name: var-run
+          emptyDir: {}
+        - name: cache
+          emptyDir: {}
+        {{- end }}
+        {{- if .Values.frontend.tls }}
+        {{- if .Values.frontend.tls.enabled }}
+        - name: tls
+          secret:
+            secretName : {{ .Values.frontend.tls.secretName }}
+            items:
+            - key: tls.crt
+              path: kc.crt
+            - key: tls.key
+              path: kc.key
+        {{- end }}
+        {{- end }}
+        {{- if .Values.kubecostAdmissionController }}
+        {{- if .Values.kubecostAdmissionController.enabled }}
+        {{- if .Values.kubecostAdmissionController.secretName }}
+        - name: webhook-server-tls
+          secret:
+            secretName: {{ .Values.kubecostAdmissionController.secretName }}
+            items:
+            - key: tls.crt
+              path: tls.crt
+            - key: tls.key
+              path: tls.key
+        {{- end }}
+        {{- end }}
+        {{- end }}
+      containers:
+        - name: frontend
+          image: {{ include "frontend.image" . }}
+          ports:
+          - name: tcp-frontend
+            containerPort: 9090
+            protocol: TCP
+          env:
+            - name: GET_HOSTS_FROM
+              value: dns
+            {{- if .Values.frontend.extraEnv -}}
+            {{ toYaml .Values.frontend.extraEnv | nindent 12 }}
+            {{- end }}
+        {{- if .Values.frontend.securityContext }}
+          securityContext:
+            {{- toYaml .Values.frontend.securityContext | nindent 12 }}
+          {{- else  }}
+          securityContext:
+            {{- toYaml .Values.global.containerSecurityContext | nindent 12 }}
+        {{- end }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: tmp
+              mountPath: /var/lib/nginx/tmp
+            - name: tmp
+              mountPath: /var/run
+            - name: log
+              mountPath: /var/log/nginx
+            - name: nginx-conf
+              mountPath: /etc/nginx/conf.d/
+            {{- if .Values.global.containerSecuritycontext }}
+            - mountPath: /var/cache/nginx
+              name: cache
+            - mountPath: /var/run
+              name: var-run
+            {{- end }}
+            {{- if .Values.frontend.tls }}
+            {{- if .Values.frontend.tls.enabled }}
+            - name: tls
+              mountPath: /etc/ssl/certs
+            {{- end }}
+            {{- end }}
+          resources:
+          {{- toYaml .Values.frontend.resources | nindent 12 }}
+        {{- if .Values.frontend.imagePullPolicy }}
+          imagePullPolicy: {{ .Values.frontend.imagePullPolicy }}
+        {{- else }}
+          imagePullPolicy: Always
+        {{- end }}
+          {{- if .Values.frontend.readinessProbe.enabled }}
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 9090
+            initialDelaySeconds: {{ .Values.frontend.readinessProbe.initialDelaySeconds  }}
+            periodSeconds: {{ .Values.frontend.readinessProbe.periodSeconds  }}
+            failureThreshold: {{ .Values.frontend.readinessProbe.failureThreshold  }}
+          {{- end }}
+          {{- if .Values.frontend.livenessProbe.enabled }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 9090
+            initialDelaySeconds: {{ .Values.frontend.livenessProbe.initialDelaySeconds  }}
+            periodSeconds: {{ .Values.frontend.livenessProbe.periodSeconds  }}
+            failureThreshold: {{ .Values.frontend.livenessProbe.failureThreshold  }}
+          {{- end }}
+          {{- if .Values.global.containerSecuritycontext }}
+          securityContext:
+          {{- toYaml .Values.global.containerSecuritycontext | nindent 12 }}
+          {{- end }}
+    {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+      {{- range $.Values.imagePullSecrets }}
+        - name: {{ .name }}
+      {{- end }}
+    {{- end }}
+      {{- if .Values.priority }}
+      {{- if .Values.priority.enabled }}
+      {{- if gt (len .Values.priority.name) 0 }}
+      priorityClassName: {{ .Values.priority.name }}
+      {{- else }}
+      priorityClassName: {{ include "kubecost.fullname" . }}-priority
+      {{- end }}
+      {{- end }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

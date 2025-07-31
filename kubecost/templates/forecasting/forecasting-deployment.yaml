@@ -1,0 +1,150 @@
+{{- if (.Values.forecasting).enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "kubecost.forecasting.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "kubecost.forecasting.commonLabels" . | nindent 4 }}
+    {{- with .Values.global.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  annotations:
+  {{- with .Values.global.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.forecasting.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "kubecost.forecasting.selectorLabels" . | nindent 6 }}
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: forecasting
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app: forecasting
+        {{- with .Values.global.additionalLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.global.podAnnotations}}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      automountServiceAccountToken: false
+      {{- if .Values.global.platforms.openshift.enabled }}
+      securityContext:
+      {{- toYaml .Values.global.platforms.openshift.securityContext | nindent 8 }}
+      {{- else if .Values.global.securityContext }}
+      securityContext:
+      {{- toYaml .Values.global.securityContext | nindent 8 }}
+      {{- else }}
+      securityContext:
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+      {{- end }}
+      restartPolicy: Always
+      containers:
+        - name: forecasting
+          image: {{ include "forecasting.image" . }}
+          {{- if .Values.forecasting.readinessProbe.enabled }}
+          volumeMounts:
+            - name: tmp
+              {{- /* In the future, this path should be configurable and not under tmp */}}
+              mountPath: /tmp
+          securityContext:
+            {{- toYaml .Values.global.containerSecurityContext | nindent 12 }}
+          {{- if .Values.forecasting.imagePullPolicy }}
+          imagePullPolicy: {{ .Values.forecasting.imagePullPolicy }}
+          {{- else }}
+          imagePullPolicy: Always
+          {{- end }}
+          ports:
+            - name: tcp-api
+              containerPort: 5000
+              protocol: TCP
+          {{- with .Values.forecasting.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          env:
+            - name: CONFIG_PATH
+              value: /var/configs/
+            {{- if or .Values.saml.enabled .Values.oidc.enabled }}
+            - name: KCM_BASE_URL
+              value: http://{{ template "kubecost.aggregator.serviceName" . }}:9008
+            {{- else }}
+            - name: KCM_BASE_URL
+              value: http://{{ template "kubecost.aggregator.serviceName" . }}:9004
+            {{- end }}
+            - name: MODEL_STORAGE_PATH
+              value: "/tmp/localrun/models"
+            - name: PAGE_ITEM_LIMIT
+              value: "1000"
+            {{- range $key, $value := .Values.forecasting.env }}
+            - name: {{ $key | quote }}
+              value: {{ $value | quote }}
+            {{- end }}
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 5000
+            initialDelaySeconds: {{ .Values.forecasting.readinessProbe.initialDelaySeconds  }}
+            periodSeconds: {{ .Values.forecasting.readinessProbe.periodSeconds  }}
+            failureThreshold: {{ .Values.forecasting.readinessProbe.failureThreshold  }}
+            {{- end }}
+          {{- if .Values.forecasting.livenessProbe.enabled }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 5000
+            initialDelaySeconds: {{ .Values.forecasting.livenessProbe.initialDelaySeconds  }}
+            periodSeconds: {{ .Values.forecasting.livenessProbe.periodSeconds  }}
+            failureThreshold: {{ .Values.forecasting.livenessProbe.failureThreshold  }}
+          {{- end }}
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range $.Values.imagePullSecrets }}
+        - name: {{ .name }}
+        {{- end }}
+      {{- end }}
+      {{- if .Values.forecasting.priority }}
+      {{- if .Values.forecasting.priority.enabled }}
+      {{- if .Values.forecasting.priority.name }}
+      priorityClassName: {{ .Values.forecasting.priority.name }}
+      {{- else }}
+      priorityClassName: {{ template "kubecost.forecasting.fullname" . }}-priority
+      {{- end }}
+      {{- end }}
+      {{- end }}
+      {{- with .Values.forecasting.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.forecasting.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.forecasting.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+      - name: tmp
+        {{- /*
+        An emptyDir for models is necessary because of the
+        readOnlyRootFilesystem default In the future, this may optionally be a
+        PV. To allow Python to auto-detect a temp directory, which the code
+        currently relies on, we mount it at /tmp. In the future this will be a
+        configurable path.
+        */}}
+        emptyDir:
+          sizeLimit: 500Mi
+{{- end }}

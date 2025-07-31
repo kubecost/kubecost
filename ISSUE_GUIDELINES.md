@@ -34,7 +34,7 @@ In the following example of a bug report, a user is claiming that using an exist
 
 **Problem Statement**
 
-"When the `global.podAnnotations` flag is used and multiple annotations are written, Kubecost fails to deploy because of a templating issue in the cost-analyzer Deployment."
+"When the `global.podAnnotations` flag is used and multiple annotations are written, Kubecost fails to deploy because of a templating issue in the kubecost Deployment."
 
 **Solution Description**
 
