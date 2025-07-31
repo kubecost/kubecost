@@ -13,7 +13,7 @@ global:
   ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-long-term-federated-storage-configuration
   federatedStorage:
     existingSecretName: ""
-    fileName: federated-store.yaml # set this value to change what the file name for the yaml config is
+    fileName: federated-store.yaml  # set this value to change what the file name for the yaml config is
 
   ## If global.imageRegistry is set, it will override all kubecost images to allow air-gapped and self-hosted registries.
   ##
@@ -516,7 +516,7 @@ finops-agent:
   # federated storage for the finops-agent will be managed by this chart
   # TODO write better explaination
   federatedStorage: {}
-  
+
   agent:
     collectorDataSource:
       enabled: true
@@ -580,7 +580,7 @@ kubecost:
   ## Example:
   ## fullImageName: gcr.io/kubecost1/aggregator:v3.0.0
   fullImageName: ""
-  
+
   image:
     registry: gcr.io
     repository: kubecost1/aggregator
@@ -1026,7 +1026,16 @@ aggregator:
           - __meta_kubernetes_namespace
         targetLabel: namespace
 
-## TODO change this comment, what are we doing with service accounts
+## Kubecost Multi-cluster Diagnostics
+## A single view into the health of all agent clusters. Each agent cluster sends
+## its diagnostic data to a storage bucket.
+## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-multi-diagnostics
+## retention: deletes data beyond specified retention period
+diagnostics:
+  enabled: true
+  retention: 90d
+
+## TODO change this comment, what are we doing with service acounts
 ## Creates a new container/pod to retrieve CloudCost data. By default it uses
 ## the same serviceaccount as the aggregator pod. A custom serviceaccount
 ## can be specified.
