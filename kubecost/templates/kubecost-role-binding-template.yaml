@@ -17,14 +17,14 @@ subjects:
 ---
 {{- end }}
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
+kind: RoleBinding
 metadata:
   name: {{ template "kubecost.serviceAccountName" . }}
   labels:
     {{- include "kubecost.commonLabels" . | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
+  kind: Role
   name: {{ template "kubecost.serviceAccountName" . }}
 subjects:
   - kind: ServiceAccount
