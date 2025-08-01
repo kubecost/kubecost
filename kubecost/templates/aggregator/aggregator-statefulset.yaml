@@ -485,9 +485,6 @@ spec:
             - name: DIAGNOSTICS_RETENTION
               value: {{ .Values.diagnostics.retention | quote }}
             {{- end }}
-            {{- if .Values.aggregator.extraEnv -}}
-            {{- toYaml .Values.aggregator.extraEnv | nindent 12 }}
-            {{- end }}
             {{- if (.Values.aggregator).standardDiscount }}
             {{- if .Values.ingestionConfigmapName }}
             - name: INGESTION_CONFIGMAP_NAME
@@ -607,7 +604,8 @@ spec:
               value: {{ (quote .Values.instanceTypes.custom.location.URI) }}
             {{- end }}
            {{- if ((.Values.kubecostProductConfigs).actions).enabled }}
-           {{- if or ((.Values.kubecostProductConfigs).actions).enabled }}
+            - name: ACTIONS_ENABLED
+              value: "true"
             - name: ACTIONS_BUCKET_CONFIG
               value: /var/configs/actions/storage/actions-store.yaml
             {{- end }}
@@ -615,6 +613,8 @@ spec:
             - name: DISPLAY_CURRENCY
               value: {{ (.Values.kubecostProductConfigs).currencyCode }}
             {{- end }}
+            {{- if .Values.aggregator.extraEnv -}}
+            {{- toYaml .Values.aggregator.extraEnv | nindent 12 }}
             {{- end }}
         {{- if .Values.aggregator.jaeger.enabled }}
         - name: embedded-jaeger
