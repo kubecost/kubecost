@@ -34,6 +34,12 @@ metadata:
     {{- include "kubecost.commonLabels" . | nindent 4 }}
 rules:
   - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - list
+  - apiGroups:
       - ''
     resources:
       - configmaps
