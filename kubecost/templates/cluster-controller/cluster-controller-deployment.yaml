@@ -63,7 +63,7 @@ spec:
       - name: {{ include "kubecost.clusterController.name" . }}
         image: {{ include "clusterController.image" . }}
         imagePullPolicy: {{ .Values.clusterController.imagePullPolicy }}
-        {{- if ().Values.clusterController.v2).enabled }}
+        {{- if (.Values.clusterController.v2).enabled }}
         args:
         - v2
         {{- end }}
