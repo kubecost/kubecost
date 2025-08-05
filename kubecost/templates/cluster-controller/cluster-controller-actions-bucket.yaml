@@ -1,0 +1,14 @@
+{{- if (.Values.clusterController).enabled }}
+{{- if and .Values.clusterController.v2.enabled (not .Values.clusterController.existingSecret) }}
+apiVersion: v1
+kind: Secret
+type: Opaque
+metadata:
+  name: {{ include "kubecost.clusterController.actionsBucketConfigSecretName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
+data:
+  actions-bucket-config.yaml: {{ printf "%s" .Values.clusterController.bucketConfig | b64enc }}
+{{- end }}
+{{- end }}
