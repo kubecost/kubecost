@@ -1,0 +1,58 @@
+{{- if (.Values.reporting).logCollection -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: {{ .Release.Namespace }}
+  name: {{ template "kubecost.serviceAccountName" . }}-log-collection
+  labels:
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
+rules:
+- apiGroups: 
+    - ''
+  resources:
+    - "pods/log"
+  verbs:
+    - get
+    - list
+    - watch
+- apiGroups:
+    - ''
+  resources:
+    - configmaps
+  verbs:
+    - get
+    - list
+    - watch
+    - update
+---
+{{- end }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ template "kubecost.serviceAccountName" . }}
+  labels:
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - list
+  - apiGroups:
+      - ''
+    resources:
+      - configmaps
+      - secrets
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  
+
+
+

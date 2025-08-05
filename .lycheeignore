@@ -1,6 +1,9 @@
 # Ignorefile for the Lychee link checker
 # Ref: https://github.com/lycheeverse/lychee
 
+# Kubecost domains (lychee does not handle the redirects well)
+kubecost.com
+
 # Managed Prometheus
 aps-workspaces
 prometheus.monitor.azure.com
