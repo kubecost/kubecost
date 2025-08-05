@@ -63,7 +63,7 @@ spec:
       - name: {{ include "kubecost.clusterController.name" . }}
         image: {{ include "clusterController.image" . }}
         imagePullPolicy: {{ .Values.clusterController.imagePullPolicy }}
-        {{- if .Values.clusterController.v2.enabled }}
+        {{- if ().Values.clusterController.v2).enabled }}
         args:
         - v2
         {{- end }}
@@ -99,7 +99,7 @@ spec:
           value: /var/keys/service-key.json
         - name: CC_LOG_LEVEL
           value: {{ .Values.clusterController.logLevel | default "info" }}
-        {{- if .Values.clusterController.v2.enabled }}
+        {{- if (.Values.clusterController.v2).enabled }}
         - name: LOG_LEVEL
           value: {{ .Values.clusterController.logLevel | default "info" }}
         - name: ACTIONS_BUCKET_CONFIG
@@ -134,7 +134,7 @@ spec:
         ports:
         - name: http-server
           containerPort: 9731
-        {{- if .Values.clusterController.v2.enabled }}
+        {{- if (.Values.clusterController.v2).enabled }}
         volumeMounts:
         - name: actions-bucket-config
           mountPath: /var/configs
@@ -171,7 +171,7 @@ spec:
           # partially or fully initialize based on the presence of these keys
           # and their validity.
           optional: true
-      {{- if .Values.clusterController.v2.enabled }}
+      {{- if (.Values.clusterController.v2).enabled }}
       - name: actions-bucket-config
         secret:
           secretName: {{ include "kubecost.clusterController.actionsBucketConfigSecretName" . }}
