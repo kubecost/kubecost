@@ -1037,7 +1037,7 @@ diagnostics:
 
 heartbeat:
   enabled: true
-  retention: 7d
+  retention: 30d
 
 ## TODO change this comment, what are we doing with service acounts
 ## Creates a new container/pod to retrieve CloudCost data. By default it uses
