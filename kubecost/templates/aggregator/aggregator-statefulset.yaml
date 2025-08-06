@@ -485,6 +485,12 @@ spec:
             - name: DIAGNOSTICS_RETENTION
               value: {{ .Values.diagnostics.retention | quote }}
             {{- end }}
+            {{- if .Values.heartbeat.enabled }}
+            - name: HEARTBEAT_ENABLED
+              value: "true"
+            - name: HEARTBEAT_RETENTION
+              value: {{ .Values.heartbeat.retention | quote }}
+            {{- end }}
             {{- if (.Values.aggregator).standardDiscount }}
             {{- if .Values.ingestionConfigmapName }}
             - name: INGESTION_CONFIGMAP_NAME
