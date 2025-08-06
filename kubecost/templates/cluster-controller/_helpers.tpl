@@ -11,3 +11,10 @@
 {{- printf "%s-%s" .Release.Name "cluster-controller" -}}
 {{- end -}}
 
+{{- define "kubecost.clusterController.actionsBucketConfigSecretName" -}}
+{{- if (.Values.clusterController).storageConfigSecret }}
+{{- printf "%s" .Values.clusterController.storageConfigSecret -}}
+{{- else -}}
+{{- printf "%s-%s" .Release.Name "actions-bucket-config" | trunc 63 -}}
+{{- end -}}
+{{- end }}
