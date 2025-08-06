@@ -12,8 +12,8 @@
 {{- end -}}
 
 {{- define "kubecost.clusterController.actionsBucketConfigSecretName" -}}
-{{- if (.Values.clusterController).existingSecret }}
-{{- printf "%s" .Values.clusterController.existingSecret -}}
+{{- if (.Values.clusterController).storageConfigSecret }}
+{{- printf "%s" .Values.clusterController.storageConfigSecret -}}
 {{- else -}}
 {{- printf "%s-%s" .Release.Name "actions-bucket-config" | trunc 63 -}}
 {{- end -}}

@@ -1,5 +1,5 @@
 {{- if (.Values.clusterController).enabled }}
-{{- if and (.Values.clusterController.v2).enabled (not (.Values.clusterController).existingSecret) }}
+{{- if not (.Values.clusterController).storageConfigSecret }}
 apiVersion: v1
 kind: Secret
 type: Opaque
@@ -9,6 +9,6 @@ metadata:
   labels:
     {{- include "kubecost.commonLabels" . | nindent 4 }}
 data:
-  actions-bucket-config.yaml: {{ printf "%s" .Values.clusterController.bucketConfig | b64enc }}
+  actions-store.yaml: {{ printf "%s" .Values.clusterController.storageConfig | b64enc }}
 {{- end }}
 {{- end }}
