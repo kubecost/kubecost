@@ -149,7 +149,7 @@ rules:
     # Used for namespace turndown
     # When cleaning a namespace, we need the ability to remove
     # arbitrary resources (since we helm uninstall all releases in that NS first)
-    {{- if .Values.clusterController.namespaceTurndown.rbac.enabled }}
+    {{- if (((.Values.clusterController).namespaceTurndown).rbac).enabled }}
   - apiGroups: [ "*" ]
     resources: [ "*" ]
     verbs:
