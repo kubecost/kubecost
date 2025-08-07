@@ -63,7 +63,7 @@ spec:
         {{- if or (.Values.cloudCost).cloudIntegrationSecret (.Values.cloudCost).cloudIntegrationJSON }}
         - name: cloud-integration
           secret:
-            secretName: {{ include "kubecost.cloudCost.secretName" . }}
+            secretName: {{ .Values.cloudCost.cloudIntegrationSecret }}
             items:
               - key: cloud-integration.json
                 path: cloud-integration.json

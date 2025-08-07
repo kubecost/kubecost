@@ -13,7 +13,7 @@ global:
   ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-long-term-federated-storage-configuration
   federatedStorage:
     existingSecretName: ""
-    fileName: federated-store.yaml # set this value to change what the file name for the yaml config is
+    fileName: federated-store.yaml  # set this value to change what the file name for the yaml config is
 
   ## If global.imageRegistry is set, it will override all kubecost images to allow air-gapped and self-hosted registries.
   ##
@@ -516,7 +516,7 @@ finops-agent:
   # federated storage for the finops-agent will be managed by this chart
   # TODO write better explaination
   federatedStorage: {}
-  
+
   agent:
     collectorDataSource:
       enabled: true
@@ -580,7 +580,7 @@ kubecost:
   ## Example:
   ## fullImageName: gcr.io/kubecost1/aggregator:v3.0.0
   fullImageName: ""
-  
+
   image:
     registry: gcr.io
     repository: kubecost1/aggregator
@@ -1026,7 +1026,20 @@ aggregator:
           - __meta_kubernetes_namespace
         targetLabel: namespace
 
-## TODO change this comment, what are we doing with service accounts
+## Kubecost Multi-cluster Diagnostics
+## A single view into the health of all agent clusters. Each agent cluster sends
+## its diagnostic data to a storage bucket.
+## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-multi-diagnostics
+## retention: deletes data beyond specified retention period
+diagnostics:
+  enabled: true
+  retention: 30d
+
+heartbeat:
+  enabled: true
+  retention: 30d
+
+## TODO change this comment, what are we doing with service acounts
 ## Creates a new container/pod to retrieve CloudCost data. By default it uses
 ## the same serviceaccount as the aggregator pod. A custom serviceaccount
 ## can be specified.
@@ -1123,6 +1136,14 @@ cloudCost:
 # Kubecost Cluster Controller for Right Sizing and Cluster Turndown
 clusterController:
   enabled: false
+
+  # enables legacy mode for cluster controller actions (v1)
+  # only used with kubecost versions < 3.0.0
+  legacyMode: false
+
+  # log level for cluster controller
+  logLevel: info
+
   ## Override the image name and version for the cluster controller.
   ## If not set, the image will be pulled from the registry and repository specified in the image block.
   ## If set, the fullImageName will be used to pull the image.
@@ -1136,7 +1157,6 @@ clusterController:
   extraEnv: []
   # - name: EXTRA_ENV_VAR
   #   value: "extra_env_var_value"
-  logLevel: info
   priorityClassName: ""
   tolerations: []
   annotations: {}
@@ -1145,104 +1165,57 @@ clusterController:
   resources: {}
   affinity: {}
   nodeSelector: {}
-  primaryKubecostURL: ""  # URL for secondary clusters to connect to primary Kubecost (ex: https://kubecost.myorganization.com)
-  kubecostAPIKey: ""  # API Key for secondary clusters to authenticate with primary
-  createClusterControllerSecret: true  # disable if you want to use your own secret manager
-  secretName: controller-secrets
-  actionConfigs:
-    # this configures the Kubecost Cluster Turndown action
-    # for more details, see documentation at https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=controller-cluster-turndown
-    clusterTurndown: []
-      # - name: my-schedule
-      #   start: "2024-02-09T00:00:00Z"
-      #   end: "2024-02-09T12:00:00Z"
-      #   repeat: daily
-      # - name: my-schedule2
-      #   start: "2024-02-09T00:00:00Z"
-      #   end: "2024-02-09T01:00:00Z"
-      #   repeat: weekly
-    # this configures the Kubecost Namespace Turndown action
-    # for more details, see documentation at https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=savings-actions
-    namespaceTurndown:
-      # - name: my-ns-turndown-action
-      #   dryRun: false
-      #   schedule: "0 0 * * *"
-      #   type: Scheduled
-      #   targetObjs:
-      #     - namespace
-      #   keepPatterns:
-      #     - ignorednamespace
-      #   keepLabels:
-      #     turndown: ignore
-      #   params:
-      #     minNamespaceAge: 4h
-    # this configures the Kubecost Cluster Sizing action
-    # for more details, see documentation at https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=savings-actions
-    clusterRightsize:
-        # startTime: '2024-01-02T15:04:05Z'
-        # frequencyMinutes: 1440
-        # lastCompleted: ''
-        # recommendationParams:
-        #   window: 48h
-        #   architecture: ''
-        #   targetUtilization: 0.8
-        #   minNodeCount: 1
-        #   allowSharedCore: false
-        # allowCostIncrease: false
-        # recommendationType: ''
-    # This configures the Kubecost Continuous Request Sizing Action
-    #
-    # Using this configuration overrides annotation-based configuration of
-    # Continuous Request Sizing. Annotation configuration will be ignored while
-    # this configuration method is present in the cluster.
-    #
-    # For more details, see documentation at https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=savings-actions
-    containerRightsize:
-      # Workloads can be selected by an _exact_ key (namespace, controllerKind,
-      # controllerName). This will only match a single controller. The cluster
-      # ID is current irrelevant because Cluster Controller can only modify
-      # workloads within the cluster it is running in.
-      #  workloads:
-      #   - clusterID: cluster-one
-      #     namespace: my-namespace
-      #     controllerKind: deployment
-      #     controllerName: my-controller
-      # An alternative to exact key selection is filter selection. The filters
-      # are syntactically identical to Kubecost's "v2" filters [1] but only
-      # support a small set of filter fields, those being:
-      # - namespace
-      # - controllerKind
-      # - controllerName
-      # - label
-      # - annotation
-      #
-      # If multiple filters are listed, they will be ORed together at the top
-      # level.
-      #
-      # See the examples below.
-      #
-      # [1] https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=filter-parameters-v2
-      # filterConfig:
-      #   - filter: |
-      #       namespace:"abc"+controllerKind:"deployment"
-      #   - filter: |
-      #       controllerName:"abc123"+controllerKind:"daemonset"
-      #   - filter: |
-      #       namespace:"foo"+controllerKind!:"statefulset"
-      #   - filter: |
-      #       namespace:"bar","baz"
-      #  schedule:
-      #   start: "2024-01-30T15:04:05Z"
-      #   frequencyMinutes: 5
-      #   recommendationQueryWindow: "48h"
-      #   lastModified: ''
-      #   targetUtilizationCPU: 0.8 # results in a cpu request setting that is 20% higher than the max seen over last 48h
-      #   targetUtilizationMemory: 0.8 # results in a RAM request setting that is 20% higher than the max seen over last 48h
+  # # A separate bucket config specific to action storage can alternatively be supplied via a Secret or a yaml block
+  # # The name of the Secret containing the bucket config. The contents should be stored under a key named actions-store.yaml
+  # storageConfigSecret: actions-store
 
-  kubescaler:
-    # If true, will cause all (supported) workloads to be have their requests
-    # automatically right-sized on a regular basis.
-    defaultResizeAll: false
+  # # (If not using Secret) Define storage config directly in yaml, as below:
+  # storageConfig: |-
+  # # AWS EXAMPLE
+  #   type: S3
+  #   config:
+  #     bucket: kubecost-actions-storage-bucket
+  #     endpoint: s3.amazonaws.com
+  #     region: us-east-1
+  #     # best practice is to use pod identities to access AWS resources. Otherwise it is possible to use an access_key and secret_key
+  #     access_key: "<your-access-key>"
+  #     secret_key: "<your-secret-key>"
+  # # AZURE EXAMPLE
+  #   type: AZURE
+  #   config:
+  #     storage_account: ""
+  #     storage_account_key: ""
+  #     container: ""
+  #     max_retries: 0
+  # # GCP EXAMPLE
+  #   type: GCS
+  #   config:
+  #     bucket: kubecost-actions-storage-bucket
+  #     service_account: |-
+  #       {
+  #         "type": "service_account",
+  #         "project_id": "...",
+  #         "private_key_id": "...",
+  #         "private_key": "...",
+  #         "client_email": "...",
+  #         "client_id": "...",
+  #         "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  #         "token_uri": "https://oauth2.googleapis.com/token",
+  #         "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  #         "client_x509_cert_url": ""
+  #       }
+  # # Actions can reference configuration at a global or cluster-specific level
+  # config:
+  #   global: # Define global action configuration
+  #     rightsizing:
+  #       enabled: true
+  #   clusters: # Define cluster-specific action configuration, where top-level keys are cluster names
+  #     cluster-1:
+  #       rightsizing:
+  #         enabled: false
+  #     cluster-2:
+  #       rightsizing:
+  #         enabled: false
 #  fqdn: kubecost-cluster-controller.kubecost.svc.cluster.local:9731
 
   rbac:

@@ -26,3 +26,6 @@ clusterController:
         start: "2034-02-09T00:00:00Z"
         end: "2034-02-09T01:00:00Z"
         repeat: none
+finops-agent:
+  enabled: false
+  clusterId: cluster-one
