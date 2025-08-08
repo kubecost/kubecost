@@ -1308,14 +1308,14 @@ kubecostProductConfigs:
     # # Actions can reference configuration at a global or cluster-specific level
     # config:
     #   global: # Define global action configuration
-    #     rightsizing:
+    #     containerRequestRightSizing:
     #       enabled: true
     #   clusters: # Define cluster-specific action configuration, where top-level keys are cluster names
     #     cluster-1:
-    #       rightsizing:
+    #       containerRequestRightSizing:
     #         enabled: false
     #     cluster-2:
-    #       rightsizing:
+    #       containerRequestRightSizing:
     #         enabled: false
 
 #   # The cluster profile represents a predefined set of parameters to use when calculating savings.
