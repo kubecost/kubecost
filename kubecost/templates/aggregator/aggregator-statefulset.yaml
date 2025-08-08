@@ -520,18 +520,6 @@ spec:
             - name: DB_WRITE_MEMORY_LIMIT
               value: {{ .Values.aggregator.dbWriteMemoryLimit | quote }}
             {{- end }}
-            - name: ETL_DAILY_STORE_DURATION_DAYS
-              value: "366"
-            - name: ETL_HOURLY_STORE_DURATION_HOURS
-              value: "49"
-            - name: FEDERATED_CLUSTER
-              value: "true"
-            - name: FEDERATED_PRIMARY_CLUSTER
-              value: "true"
-            - name: ETL_BUCKET_CONFIG
-              value: /var/configs/federated-store.yaml
-            - name: FEDERATED_STORE_CONFIG
-              value: /var/configs/federated-store.yaml
             - name: RESOLUTION_1D_RETENTION
               value: {{ .Values.kubecost.retention1d | quote }}
             - name: RESOLUTION_1H_RETENTION
