@@ -402,7 +402,7 @@ spec:
               mountPath: /var/configs/actions/storage
             - name: federated-storage-config
               mountPath: /var/configs/actions/storage/actions-store.yaml
-              subPath: federated-store.yaml
+              subPath: actions-store.yaml
               readOnly: true
             {{- end }}
             {{- if ((.Values.kubecostProductConfigs).actions).storageConfig }}
@@ -415,7 +415,7 @@ spec:
               mountPath: /var/configs/actions/storage
             - name: federated-storage-config
               mountPath: /var/configs/actions/storage/actions-store.yaml
-              subPath: federated-store.yaml
+              subPath: {{ include "kubecost.federatedStorage.fileName" . }}
               readOnly: true
             {{- else }}
             - name: actions-storage-config
