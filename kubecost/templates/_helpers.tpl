@@ -539,25 +539,29 @@ federated storage config helpers
 */}}
 
 {{- define "kubecost.federatedStorage.secretName" }}
-{{- if (.Values.global.federatedStorage).existingSecret -}}
-{{ (.Values.global.federatedStorage).existingSecret }}
-{{- else -}}
-{{ .Release.Name }}-federated-storage-config
-{{- end }}
+  {{- if (.Values.kubecostModel).federatedStorageConfigSecret }}
+    {{- .Values.kubecostModel.federatedStorageConfigSecret }}
+  {{- else if (.Values.global.federatedStorage).existingSecret -}}
+    {{ .Values.global.federatedStorage.existingSecret }}
+  {{- else -}}
+    {{- .Release.Name }}-federated-storage-config
+  {{- end }}
 {{- end -}}
 
 {{- define "kubecost.federatedStorage.config" }}
-{{- if (.Values.kubecostModel).federatedStorageConfig -}}
-{{ (.Values.kubecostModel).federatedStorageConfig }}
-{{- else if (.Values.federatedStorage).config }}
-{{ (.Values.federatedStorage).config }}
-{{ else }}
-{{/*
-TODO:Default federated storage config 
-for single cluster environments
-*/}}
-type: cluster
-{{- end }}
+  {{- if (.Values.kubecostModel).federatedStorageConfig -}}
+    {{- (.Values.kubecostModel).federatedStorageConfig -}}
+  {{- else if (.Values.federatedStorage).config }}
+    {{- (.Values.federatedStorage).config -}}
+  {{- else if (.Values.global.federatedStorage).federatedStorageConfig -}}
+    {{- (.Values.global.federatedStorage).federatedStorageConfig -}}
+  {{ else }}
+    {{/*
+    TODO:Default federated storage config 
+    for single cluster environments
+    */}}
+    {{- printf "localClusterBucket" }}
+  {{- end }}
 {{- end }}
 
 {{- define "kubecost.federatedStorage.fileName" -}}

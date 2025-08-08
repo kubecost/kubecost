@@ -16,12 +16,16 @@ spec:
   ports:
     - name: tcp-api
       port: 9004
-      targetPort: 9004
-    {{- if or .Values.saml.enabled .Values.oidc.enabled}}
-    - name: apiserver
+      targetPort: 9004  
+    {{- if or .Values.saml.enabled .Values.oidc.enabled}}    
+    - name: tcp-api-rbac
       port: 9008
       targetPort: 9008
+    {{- else }}
     {{- end }}
+    - name: db-metrics
+      port: 9363
+      targetPort: 9363
   {{- with .Values.aggregator.extraPorts }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
