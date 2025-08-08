@@ -236,7 +236,7 @@ spec:
         {{- end }}
       {{- end }}
         {{- if .Values.aggregator.extraVolumes }}
-        {{- toYaml .Values.aggregator.extraVolumes | nindent 12 }}
+        {{- toYaml .Values.aggregator.extraVolumes | nindent 8 }}
         {{- end }}
       initContainers:
       {{- if .Values.global.updateCaTrust.enabled }}
