@@ -229,16 +229,15 @@ spec:
             - name: RESOLUTION_1D_RETENTION
               value: {{ (quote .Values.kubecost.retention1d) }}
             - name: CLOUD_COST_REFRESH_RATE_HOURS
-              value: {{ (.Values.cloudCost).refreshRateHours | default 6 | quote }}
+              value: {{ (.Values.cloudCost).refreshRateHours | quote }}
             - name: CLOUD_COST_QUERY_WINDOW_DAYS
-              value: {{ (.Values.cloudCost).queryWindowDays | default 7 | quote }}
+              value: {{ (.Values.cloudCost).queryWindowDays | quote }}
             - name: CLOUD_COST_RUN_WINDOW_DAYS
-              value: {{ (.Values.cloudCost).runWindowDays | default 3 | quote }}
+              value: {{ (.Values.cloudCost).runWindowDays | quote }}
             - name: CUSTOM_COST_ENABLED
               value: {{ .Values.kubecost.plugins.enabled | quote }}
-            {{- range $key, $value := (.Values.cloudCost).env }}
-            - name: {{ $key | quote }}
-              value: {{ $value | quote }}
+            {{- if (.Values.cloudCost).extraEnv }}
+            {{- toYaml (.Values.cloudCost).extraEnv | nindent 12 }}
             {{- end }}
             {{- include "common.systemProxy" . }}
     {{- if .Values.imagePullSecrets }}

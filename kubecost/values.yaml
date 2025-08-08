@@ -1053,10 +1053,13 @@ heartbeat:
 ## can be specified.
 cloudCost:
   enabled: true
+
   ## Specify an existing Kubernetes Secret holding the cloud integration information. This Secret must contain
   ## a key with name `cloud-integration.json` and the contents must be in a specific format. It is expected
   ## to exist in the release Namespace. This is mutually exclusive with cloudIntegrationJSON where only one must be defined.
-  # cloudIntegrationSecret: "cloud-integration"
+  ## Kubecost does support (and recommends) assumed roles-based authentication to the cloud provider.
+  ## When using assumed roles, the secrets can be removed from the json file.
+  cloudIntegrationSecret: ""
 
   ## Specify the cloud integration information in JSON form if pointing to an existing Secret is not desired or you'd rather
   ## define the cloud integration information directly in the values file. This will result in a new Secret being created
@@ -1105,10 +1108,13 @@ cloudCost:
     # requests:
     #   cpu: 1000m
   #   memory: 1Gi
-  # refreshRateHours:
-  # queryWindowDays:
-  # runWindowDays:
-  # serviceAccountName:
+  refreshRateHours: 6
+  queryWindowDays: 7
+  runWindowDays: 3
+  ## by default, the cloud cost pod will use the same service account as the aggregator pod.
+  ## this can be overridden to use a different service account.
+  serviceAccountName: ""
+
   readinessProbe:
     enabled: true
     initialDelaySeconds: 10
@@ -1116,30 +1122,24 @@ cloudCost:
     failureThreshold: 200
 
   ## Add a nodeSelector for aggregator cloud costs
-  # nodeSelector: {}
+  nodeSelector: {}
 
   ## Tolerations for the aggregator cloud costs
-  # tolerations: []
+  tolerations: []
 
   ## Affinity for the aggregator cloud costs
-  # affinity: {}
-
-  ## ServiceAccount for the aggregator cloud costs
-  # serviceAccountName: ""
+  affinity: {}
 
   ## Define environment variables for cloud cost
-  # env: {}
+  extraEnv: []
+  # - name: EXTRA_ENV_VAR
+  #   value: "extra_env_var_value"
 
   ## Define extra volumes for the cloud cost pod
-  # extraVolumes: []
+  extraVolumes: []
 
   ## Define extra volumemounts for the cloud cost pod
-  # extraVolumeMounts: []
-
-  ## Configure the Collections service for aggregator.
-  # collections:
-  #   cache:
-  #     enabled: false
+  extraVolumeMounts: []
 
 # Kubecost Cluster Controller for Right Sizing and Cluster Turndown
 clusterController:
