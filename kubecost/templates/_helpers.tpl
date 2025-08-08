@@ -553,6 +553,8 @@ federated storage config helpers
     {{ (.Values.kubecostModel).federatedStorageConfig }}
   {{- else if (.Values.federatedStorage).config }}
     {{ (.Values.federatedStorage).config }}
+  {{- else if (.Values.global.federatedStorage).federatedStorageConfig -}}
+    {{ (.Values.global.federatedStorage).federatedStorageConfig }}
   {{ else }}
     {{/*
     TODO:Default federated storage config 
