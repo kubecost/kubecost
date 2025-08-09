@@ -60,10 +60,10 @@ spec:
           secret:
             defaultMode: 420
             secretName: {{ include "kubecost.federatedStorage.secretName" . }}
-        {{- if or (.Values.cloudCost).cloudIntegrationSecret (.Values.cloudCost).cloudIntegrationJSON }}
+        {{- if or (.Values.cloudCost).cloudIntegrationSecret (.Values.cloudCost).cloudIntegrationJSON (.Values.kubecostProductConfigs).cloudIntegrationSecret (.Values.kubecostProductConfigs).cloudIntegrationJSON }}
         - name: cloud-integration
           secret:
-            secretName: {{ .Values.cloudCost.cloudIntegrationSecret }}
+            secretName: {{ include "kubecost.cloudCost.secretName" . }}
             items:
               - key: cloud-integration.json
                 path: cloud-integration.json
@@ -86,7 +86,7 @@ spec:
           secret:
             secretName: {{ .Values.kubecost.plugins.secretName }}
             items:
-             {{- range $key, $config := .Values.kubecost.plugins.enabledPlugins }}
+            {{- range $key, $config := .Values.kubecost.plugins.enabledPlugins }}
               - key: {{ $config }}_config.json
                 path: {{ $config }}_config.json
             {{- end }}
@@ -199,7 +199,7 @@ spec:
               mountPath: /var/configs/federated-store.yaml
               subPath: {{ include "kubecost.federatedStorage.fileName" . }}
               readOnly: true
-          {{- if or (.Values.cloudCost).cloudIntegrationSecret (.Values.cloudCost).cloudIntegrationJSON }}
+          {{- if or (.Values.cloudCost).cloudIntegrationSecret (.Values.cloudCost).cloudIntegrationJSON (.Values.kubecostProductConfigs).cloudIntegrationSecret (.Values.kubecostProductConfigs).cloudIntegrationJSON }}
             - name: cloud-integration
               mountPath: /var/configs/cloud-integration
           {{- end }}
