@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kubecost
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kubecost-cost-analyzer
+  namespace: kubecost
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kubecost-cost-analyzer
+  namespace: kubecost
+data:
+  prometheus-server-endpoint: "http://prometheus-server.kube-system.svc"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubecost-cost-analyzer
+  namespace: kubecost
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kubecost-cost-analyzer
+  template:
+    metadata:
+      labels:
+        app: kubecost-cost-analyzer
+    spec:
+      serviceAccountName: kubecost-cost-analyzer
+      containers:
+      - name: cost-analyzer
+        image: gcr.io/kubecost1/cost-analyzer:v1.100.0
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 9090
+        env:
+        - name: KUBERNETES_SERVICE_HOST
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubecost-cost-analyzer
+  namespace: kubecost
+spec:
+  selector:
+    app: kubecost-cost-analyzer
+  type: LoadBalancer
+  ports:
+  - name: http
+    port: 9090
+    targetPort: 9090
