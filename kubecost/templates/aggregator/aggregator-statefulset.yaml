@@ -231,7 +231,7 @@ spec:
         {{- end }}
       {{- end }}
         {{- if .Values.aggregator.extraVolumes }}
-        {{- toYaml .Values.aggregator.extraVolumes | nindent 12 }}
+        {{- toYaml .Values.aggregator.extraVolumes | nindent 8 }}
         {{- end }}
       initContainers:
       {{- if .Values.global.updateCaTrust.enabled }}
@@ -291,8 +291,11 @@ spec:
             - name: tcp-api
               containerPort: 9004
               protocol: TCP
-          {{- with.Values.aggregator.extraPorts }}
-            {{- toYaml . | nindent 4 }}
+            - name: db-metrics
+              containerPort: 9363
+              protocol: TCP
+          {{- with.Values.aggregator.extraContainerPorts }}
+            {{- toYaml . | nindent 12 }}
           {{- end }}
           resources:
             {{- toYaml .Values.aggregator.resources | nindent 12 }}
@@ -394,7 +397,7 @@ spec:
               mountPath: /var/configs/actions/storage
             - name: federated-storage-config
               mountPath: /var/configs/actions/storage/actions-store.yaml
-              subPath: actions-store.yaml
+              subPath: {{ include "kubecost.federatedStorage.fileName" . }}
               readOnly: true
             {{- end }}
             {{- if ((.Values.kubecostProductConfigs).actions).storageConfig }}
