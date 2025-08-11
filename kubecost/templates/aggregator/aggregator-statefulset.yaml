@@ -241,7 +241,7 @@ spec:
       initContainers:
       {{- if .Values.global.updateCaTrust.enabled }}
         - name: update-ca-trust
-          image: {{ include "aggregator.image" . }}
+          image: {{ include "kubecost.aggregator.image" . }}
           {{- if .Values.kubecost.imagePullPolicy }}
           imagePullPolicy: {{ .Values.kubecost.imagePullPolicy }}
           {{- else }}
@@ -276,7 +276,7 @@ spec:
           securityContext:
             {{- toYaml .Values.global.containerSecurityContext | nindent 12 }}
         {{- end }}
-          image: {{ include "aggregator.image" . }}
+          image: {{ include "kubecost.aggregator.image" . }}
           {{- if .Values.aggregator.readinessProbe.enabled }}
           readinessProbe:
             httpGet:

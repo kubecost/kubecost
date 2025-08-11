@@ -1,4 +1,3 @@
-
 {{- define "kubecost.clusterController.enabled" }}
 {{- if (.Values.clusterController).enabled }}
 {{- printf "true" -}}
@@ -6,6 +5,14 @@
 {{- printf "false" -}}
 {{- end -}}
 {{- end -}}
+
+{{- define "kubecost.clusterController.image" }}
+  {{- if .Values.clusterController.fullImageName }}
+    {{- .Values.clusterController.fullImageName }}
+  {{- else -}}
+    {{- include "common.imageRegistry" . }}/{{ .Values.clusterController.image.repository }}:{{ .Values.clusterController.image.tag }}
+  {{- end }}
+{{- end }}
 
 {{- define "kubecost.clusterController.name" -}}
 {{- printf "%s-%s" .Release.Name "cluster-controller" -}}

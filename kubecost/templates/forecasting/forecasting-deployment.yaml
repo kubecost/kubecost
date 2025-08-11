@@ -53,7 +53,7 @@ spec:
       restartPolicy: Always
       containers:
         - name: forecasting
-          image: {{ include "forecasting.image" . }}
+          image: {{ include "kubecost.forecasting.image" . }}
           {{- if .Values.forecasting.readinessProbe.enabled }}
           volumeMounts:
             - name: tmp
