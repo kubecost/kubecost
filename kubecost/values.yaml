@@ -12,8 +12,20 @@ global:
   ## The contents should be stored under a key named storage-config.yaml by default.
   ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-long-term-federated-storage-configuration
   federatedStorage:
+    config: ""
     # A federated storage config can be provided via a secret or via helm values.
     # If both are provided, the federatedStorageConfig take precedence.
+    # Example:
+    # federatedStorage:
+    #   config: |-
+    #     type: S3
+    #     config:
+    #       bucket: ibm-kubecost-unified-agent-demo-data
+    #       endpoint: s3.amazonaws.com
+    #       region: us-west-2
+    #       access_key: xxx
+    #       secret_key: xxx
+    # see federatedStorage: below for more examples
     existingSecretName: ""
     federatedStorageConfig: ""  # Use this to include the federated storage config via helm values.
     # If you want to use a different file name for the federated storage config, you can set the fileName value.
