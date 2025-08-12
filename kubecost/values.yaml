@@ -12,9 +12,21 @@ global:
   ## The contents should be stored under a key named storage-config.yaml by default.
   ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-long-term-federated-storage-configuration
   federatedStorage:
+    config: ""
+    # A federated storage config can be provided via an existingSecretName or via a string in helm values.
+    # If both are provided, the string in helm values take precedence.
+    # Example:
+    #   config: |-
+    #     type: S3
+    #     config:
+    #       bucket: ibm-kubecost-unified-agent-demo-data
+    #       endpoint: s3.amazonaws.com
+    #       region: us-west-2
+    #       access_key: xxx
+    #       secret_key: xxx
     existingSecretName: ""
+    # If you want to use a different file name for the federated storage config, you can set the fileName value.
     fileName: federated-store.yaml  # set this value to change what the file name for the yaml config is
-
   ## If global.imageRegistry is set, it will override all kubecost images to allow air-gapped and self-hosted registries.
   ##
   imageRegistry: ""
@@ -300,14 +312,6 @@ enterpriseCustomPricing:
   location:
     URI: /var/configs/enterprise-pricing/pricing.csv
 
-instanceTypes:
-  enabled: false
-  #  kubectl create configmap -n kubecost custom-instance-types --from-file custom.json
-  custom:
-    configMapName: custom-instance-types
-    location:
-      URI: /var/configs/instance-types/custom.json
-
 ## Kubecost SAML (enterprise key required)
 ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-user-management-saml
 saml:
@@ -391,7 +395,7 @@ teams:
     #   roles:
     #   - id: ''
     #     name: helm-role
-    #     description: helm configrured role
+    #     description: helm configured role
     #     pages:
     #       showOverview: true
     #       showAllocation: true
@@ -491,7 +495,7 @@ frontend:
   # set to true to set all upstreams to use <service>.<namespace>.svc.cluster.local instead of just <service>.<namespace>
   useDefaultFqdn: false
 #  forecasting:
-#    fqdn: kubecost-forcasting.kubecost.svc.cluster.local:5000
+#    fqdn: kubecost-forecasting.kubecost.svc.cluster.local:5000
 #  aggregator:
 #    fqdn: kubecost-aggregator.kubecost.svc.cluster.local:9004
 #  cloudCost:
@@ -514,7 +518,7 @@ frontend:
 finops-agent:
   enabled: true
   # federated storage for the finops-agent will be managed by this chart
-  # TODO write better explaination
+  # TODO write better explanation
   federatedStorage: {}
 
   agent:
@@ -583,7 +587,7 @@ kubecost:
 
   image:
     registry: gcr.io
-    repository: kubecost1/aggregator
+    repository: kubecost1/cost-model
     tag: latest
 
   imagePullPolicy: IfNotPresent
@@ -820,11 +824,11 @@ forecasting:
   ## If not set, the image will be pulled from the registry and repository specified in the image block.
   ## If set, the fullImageName will be used to pull the image.
   ## Example:
-  ## fullImageName: gcr.io/kubecost1/kubecost-modeling:v0.1.28
+  ## fullImageName: gcr.io/kubecost1/kubecost-modeling:v0.1.29
   fullImageName: ""
   image:
     repository: kubecost1/kubecost-modeling
-    tag: v0.1.28
+    tag: v0.1.29
   imagePullPolicy: IfNotPresent
 
   # Resource specification block for the forecasting container.
@@ -960,48 +964,53 @@ aggregator:
     failureThreshold: 200
 
   ## Set additional environment variables for the aggregator pod
-  # extraEnv:
+  extraEnv: []
   # - name: SOME_VARIABLE
   #   value: "some_value"
 
   ## Add a priority class to the aggregator pod
-  # priority:
-  #   enabled: false
-  #   name: ""
+  priority:
+    enabled: false
+    name: ""
 
   ## Optional - add extra ports to the aggregator container. For kubecost development purposes only - not recommended for users.
-  # extraPorts: []
+  extraPorts: []
   #   - name: debug
   #     port: 40000
   #     targetPort: 40000
-  #     containerPort: 40000
+
+  extraContainerPorts: []
+  #   - name: db-metrics
+  #     protocol: TCP
+  #     targetPort: 9363
+  #     containerPort: 9363
 
   ## Define a securityContext for the aggregator pod. This will take highest precedence.
-  # securityContext: {}
+  securityContext: {}
 
   ## Define the container-level security context for the aggregator pod. This will take highest precedence.
-  # containerSecurityContext: {}
+  containerSecurityContext: {}
 
   ## Provide a Service Account name for aggregator.
   # serviceAccountName: ""
 
   ## Define a nodeSelector for the aggregator pod
-  # nodeSelector: {}
+  nodeSelector: {}
 
   ## Define tolerations for the aggregator pod
-  # tolerations: []
+  tolerations: []
 
   ## Annotations to be added for aggregator deployment or statefulset
-  # annotations: {}
+  annotations: {}
 
   ## Define Pod affinity for the aggregator pod
-  # affinity: {}
+  affinity: {}
 
   ## Define extra volumes for the aggregator pod
-  # extraVolumes: []
+  extraVolumes: []
 
   ## Define extra volumemounts for the aggregator pod
-  # extraVolumeMounts: []
+  extraVolumeMounts: []
 
   # Jaeger is an optional container attached to wherever the Aggregator
   # container is running. It is used for performance investigation. Enable if
@@ -1039,7 +1048,7 @@ heartbeat:
   enabled: true
   retention: 30d
 
-## TODO change this comment, what are we doing with service acounts
+## TODO change this comment, what are we doing with service accounts
 ## Creates a new container/pod to retrieve CloudCost data. By default it uses
 ## the same serviceaccount as the aggregator pod. A custom serviceaccount
 ## can be specified.
@@ -1244,7 +1253,7 @@ serviceAccount:
 
 ## Kubecost Admission Controller (beta feature)
 ## To use this feature, ensure you have run the `create-admission-controller.sh`
-## script. This generates a k8s secret with TLS keys/certificats and a
+## script. This generates a k8s secret with TLS keys/certificates and a
 ## corresponding CA bundle.
 ##
 kubecostAdmissionController:
@@ -1322,14 +1331,14 @@ kubecostProductConfigs:
     # # Actions can reference configuration at a global or cluster-specific level
     # config:
     #   global: # Define global action configuration
-    #     rightsizing:
+    #     containerRequestRightSizing:
     #       enabled: true
     #   clusters: # Define cluster-specific action configuration, where top-level keys are cluster names
     #     cluster-1:
-    #       rightsizing:
+    #       containerRequestRightSizing:
     #         enabled: false
     #     cluster-2:
-    #       rightsizing:
+    #       containerRequestRightSizing:
     #         enabled: false
 
 #   # The cluster profile represents a predefined set of parameters to use when calculating savings.

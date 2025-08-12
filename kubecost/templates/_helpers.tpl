@@ -539,26 +539,33 @@ federated storage config helpers
 */}}
 
 {{- define "kubecost.federatedStorage.secretName" }}
-{{- if (.Values.global.federatedStorage).existingSecret -}}
-{{ (.Values.global.federatedStorage).existingSecret }}
-{{- else -}}
-{{ .Release.Name }}-federated-storage-config
-{{- end }}
+  {{- if (.Values.kubecostModel).federatedStorageConfigSecret }}
+    {{- .Values.kubecostModel.federatedStorageConfigSecret }}
+  {{- else if (.Values.global.federatedStorage).existingSecret -}}
+    {{ .Values.global.federatedStorage.existingSecret }}
+  {{- else -}}
+    {{- .Release.Name }}-federated-storage-config
+  {{- end }}
 {{- end -}}
 
-{{- define "kubecost.federatedStorage.config" }}
-{{- if (.Values.kubecostModel).federatedStorageConfig -}}
-{{ (.Values.kubecostModel).federatedStorageConfig }}
-{{- else if (.Values.federatedStorage).config }}
-{{ (.Values.federatedStorage).config }}
-{{ else }}
 {{/*
-TODO:Default federated storage config 
-for single cluster environments
+NOTE: added kubecostModel for backward compatibility
 */}}
-type: cluster
-{{- end }}
-{{- end }}
+{{- define "kubecost.federatedStorage.config-b64" }}
+  {{- if (.Values.kubecostModel).federatedStorageConfig -}}
+    {{- (.Values.kubecostModel).federatedStorageConfig | b64enc -}}
+  {{- else if (.Values.federatedStorage).config -}}
+    {{- (.Values.federatedStorage).config | b64enc -}}
+  {{- else if (.Values.global.federatedStorage).config -}}
+    {{- (.Values.global.federatedStorage).config | b64enc -}}
+  {{- else -}}
+    {{/*
+    TODO:Default federated storage config 
+    for single cluster environments
+    */}}
+    {{- printf "localClusterBucket" -}}
+  {{- end -}}
+{{- end -}}
 
 {{- define "kubecost.federatedStorage.fileName" -}}
 {{ default "federated-store.yaml" (.Values.global.federatedStorage).fileName }}
