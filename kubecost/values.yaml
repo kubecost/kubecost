@@ -27,7 +27,6 @@ global:
     #       secret_key: xxx
     # see federatedStorage: below for more examples
     existingSecretName: ""
-    federatedStorageConfig: ""  # Use this to include the federated storage config via helm values.
     # If you want to use a different file name for the federated storage config, you can set the fileName value.
     fileName: federated-store.yaml  # set this value to change what the file name for the yaml config is
   ## If global.imageRegistry is set, it will override all kubecost images to allow air-gapped and self-hosted registries.
