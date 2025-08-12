@@ -497,26 +497,29 @@ federated storage config helpers
   {{- end }}
 {{- end -}}
 
-{{- define "kubecost.federatedStorage.config" }}
-{{- if (.Values.kubecostModel).federatedStorageConfig -}}
-{{ (.Values.kubecostModel).federatedStorageConfig }}
-{{- else if (.Values.federatedStorage).config }}
-{{ (.Values.federatedStorage).config }}
-{{- else if (.Values.global.federatedStorage).federatedStorageConfig -}}
-{{- (.Values.global.federatedStorage).federatedStorageConfig -}}
-{{ else }}
 {{/*
-for single cluster environments
+NOTE: added kubecostModel for backward compatibility
 */}}
-type: cluster
-config:
-  host: {{ include "kubecost.clusterStorage.serviceName" . }}.{{ .Release.Namespace }}.svc.cluster.local
-  port: 9006
-  http_config:
-    tls_config:
-      insecure_skip_verify: true
-{{- end }}
-{{- end }}
+{{- define "kubecost.federatedStorage.config-b64" }}
+  {{- if (.Values.kubecostModel).federatedStorageConfig -}}
+    {{- (.Values.kubecostModel).federatedStorageConfig | b64enc -}}
+  {{- else if (.Values.federatedStorage).config -}}
+    {{- (.Values.federatedStorage).config | b64enc -}}
+  {{- else if (.Values.global.federatedStorage).config -}}
+    {{- (.Values.global.federatedStorage).config | b64enc -}}
+  {{- else -}}
+    {{/*
+    for single cluster environments
+    */}}
+    type: cluster
+    config:
+      host: {{ include "kubecost.clusterStorage.serviceName" . }}.{{ .Release.Namespace }}.svc.cluster.local
+      port: 9006
+      http_config:
+        tls_config:
+          insecure_skip_verify: true
+  {{- end -}}
+{{- end -}}
 
 {{- define "kubecost.federatedStorage.fileName" -}}
 {{- default "federated-store.yaml" (.Values.global.federatedStorage).fileName }}
