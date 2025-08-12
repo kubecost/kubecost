@@ -11,12 +11,10 @@ global:
   ## The name of the Secret containing a bucket config for federated storage.
   ## The contents should be stored under a key named storage-config.yaml by default.
   ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-long-term-federated-storage-configuration
+  ## TODO: when should this be used vs federatedStorage root key
   federatedStorage:
     config: ""
-    # A federated storage config can be provided via a secret or via helm values.
-    # If both are provided, the federatedStorage: key on the root values takes precedence.
     # Example:
-    # federatedStorage:
     #   config: |-
     #     type: S3
     #     config:
@@ -25,7 +23,6 @@ global:
     #       region: us-west-2
     #       access_key: xxx
     #       secret_key: xxx
-    # see federatedStorage: below for more examples
     existingSecretName: ""
     # If you want to use a different file name for the federated storage config, you can set the fileName value.
     fileName: federated-store.yaml  # set this value to change what the file name for the yaml config is
