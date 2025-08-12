@@ -548,21 +548,24 @@ federated storage config helpers
   {{- end }}
 {{- end -}}
 
-{{- define "kubecost.federatedStorage.config" }}
+{{/*
+NOTE: added kubecostModel for backward compatibility
+*/}}
+{{- define "kubecost.federatedStorage.config-b64" }}
   {{- if (.Values.kubecostModel).federatedStorageConfig -}}
-    {{- (.Values.kubecostModel).federatedStorageConfig -}}
-  {{- else if (.Values.federatedStorage).config }}
-    {{- (.Values.federatedStorage).config -}}
-  {{- else if (.Values.global.federatedStorage).federatedStorageConfig -}}
-    {{- (.Values.global.federatedStorage).federatedStorageConfig -}}
-  {{ else }}
+    {{- (.Values.kubecostModel).federatedStorageConfig | b64enc -}}
+  {{- else if (.Values.federatedStorage).config -}}
+    {{- (.Values.federatedStorage).config | b64enc -}}
+  {{- else if (.Values.global.federatedStorage).config -}}
+    {{- (.Values.global.federatedStorage).config | b64enc -}}
+  {{- else -}}
     {{/*
     TODO:Default federated storage config 
     for single cluster environments
     */}}
-    {{- printf "localClusterBucket" }}
-  {{- end }}
-{{- end }}
+    {{- printf "localClusterBucket" -}}
+  {{- end -}}
+{{- end -}}
 
 {{- define "kubecost.federatedStorage.fileName" -}}
 {{ default "federated-store.yaml" (.Values.global.federatedStorage).fileName }}
