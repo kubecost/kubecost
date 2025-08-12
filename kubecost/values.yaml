@@ -14,7 +14,7 @@ global:
   federatedStorage:
     config: ""
     # A federated storage config can be provided via a secret or via helm values.
-    # If both are provided, the federatedStorageConfig take precedence.
+    # If both are provided, the federatedStorage: key on the root values takes precedence.
     # Example:
     # federatedStorage:
     #   config: |-
@@ -538,6 +538,7 @@ finops-agent:
 
 
 federatedStorage:
+  config: ""
   ## federated storage config can be supplied via a secret or the yaml block
   ## below when using the block below, only a single provider is supported,
   ## others are for example purposes.
