@@ -13,10 +13,9 @@ global:
   ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-long-term-federated-storage-configuration
   federatedStorage:
     config: ""
-    # A federated storage config can be provided via a secret or via helm values.
-    # If both are provided, the federatedStorageConfig take precedence.
+    # A federated storage config can be provided via an existingSecretName or via a string in helm values.
+    # If both are provided, the string in helm values take precedence.
     # Example:
-    # federatedStorage:
     #   config: |-
     #     type: S3
     #     config:
@@ -25,7 +24,6 @@ global:
     #       region: us-west-2
     #       access_key: xxx
     #       secret_key: xxx
-    # see federatedStorage: below for more examples
     existingSecretName: ""
     # If you want to use a different file name for the federated storage config, you can set the fileName value.
     fileName: federated-store.yaml  # set this value to change what the file name for the yaml config is
