@@ -76,6 +76,9 @@ spec:
         - name: aggregator-staging
           emptyDir:
             sizeLimit: {{ .Values.aggregator.stagingEmptyDirSizeLimit }}
+        - name: user-helm-values
+          configMap:
+            name: helm-values
         - name: federated-storage-config
           secret:
             defaultMode: 420
@@ -302,6 +305,8 @@ spec:
           volumeMounts:
             - name: persistent-configs
               mountPath: /var/configs
+            - name: user-helm-values
+              mountPath: /var/configs/values
             - name: federated-storage-config
               mountPath: /var/configs/federated-store.yaml
               subPath: {{ include "kubecost.federatedStorage.fileName" . }}
