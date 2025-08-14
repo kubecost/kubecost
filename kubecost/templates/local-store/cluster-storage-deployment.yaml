@@ -74,7 +74,7 @@ spec:
           {{- else }}
           imagePullPolicy: Always
           {{- end }}
-          args: ["local-object-store"]
+          args: ["cluster-storage"]
           ports:
             - name: tcp-api
               containerPort: 9006
