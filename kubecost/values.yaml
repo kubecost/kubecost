@@ -953,9 +953,9 @@ aggregator:
     limits: {}
       # memory: ""
       # cpu: ""
-    requests: {}
-      # memory: ""
-      # cpu: ""
+    requests:
+      memory: 3Gi
+      cpu: 100m
   readinessProbe:
     enabled: true
     initialDelaySeconds: 10
