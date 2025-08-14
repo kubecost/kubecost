@@ -1,11 +1,11 @@
-{{- if (.Values.clusterStorage).enabled }}
+{{- if eq (include "kubecost.localStore.enabled" .) "Enabled" }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "kubecost.clusterStorage.fullname" . }}
+  name: {{ include "kubecost.localStore.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "kubecost.clusterStorage.commonLabels" . | nindent 4 }}
+    {{- include "kubecost.localStore.commonLabels" . | nindent 4 }}
     {{- with .Values.global.additionalLabels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
@@ -13,20 +13,20 @@ metadata:
   {{- with .Values.global.annotations }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
-  {{- with .Values.clusterStorage.annotations }}
+  {{- with .Values.localStore.annotations }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      {{- include "kubecost.clusterStorage.selectorLabels" . | nindent 6 }}
+      {{- include "kubecost.localStore.selectorLabels" . | nindent 6 }}
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        {{- include "kubecost.clusterStorage.selectorLabels" . | nindent 8 }}
+        {{- include "kubecost.localStore.selectorLabels" . | nindent 8 }}
         {{- with .Values.global.additionalLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -51,35 +51,35 @@ spec:
       restartPolicy: Always
       volumes:
         - name: file-storage
-          {{- if ((.Values.clusterStorage).persistentVolume).enabled }}
+          {{- if ((.Values.localStore).persistentVolume).enabled }}
           persistentVolumeClaim:
-            claimName: {{ default ((.Values.clusterStorage).persistentVolume).existingClaim ( include "kubecost.clusterStorage.fullname" . ) }}
+            claimName: {{ default ((.Values.localStore).persistentVolume).existingClaim ( include "kubecost.localStore.fullname" . ) }}
           {{- else }}
           emptyDir: {}
           {{- end }}
       containers:
-        - name: cluster-storage
-          image: {{ include "kubecost.clusterStorage.image" . }}
-          {{- if ((.Values.clusterStorage).readinessProbe).enabled }}
+        - name: local-object-store
+          image: {{ include "kubecost.localStore.image" . }}
+          {{- if ((.Values.localStore).readinessProbe).enabled }}
           readinessProbe:
             httpGet:
               path: /healthz
               port: 9006
-            initialDelaySeconds: {{ (.Values.clusterStorage).readinessProbe.initialDelaySeconds }}
-            periodSeconds: {{ (.Values.clusterStorage).readinessProbe.periodSeconds }}
-            failureThreshold: {{ (.Values.clusterStorage).readinessProbe.failureThreshold }}
+            initialDelaySeconds: {{ (.Values.localStore).readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ (.Values.localStore).readinessProbe.periodSeconds }}
+            failureThreshold: {{ (.Values.localStore).readinessProbe.failureThreshold }}
           {{- end }}
-          {{- if .Values.clusterStorage.imagePullPolicy }}
-          imagePullPolicy: {{ .Values.clusterStorage.imagePullPolicy }}
+          {{- if .Values.localStore.imagePullPolicy }}
+          imagePullPolicy: {{ .Values.localStore.imagePullPolicy }}
           {{- else }}
           imagePullPolicy: Always
           {{- end }}
-          args: ["cluster-storage"]
+          args: ["local-object-store"]
           ports:
             - name: tcp-api
               containerPort: 9006
               protocol: TCP
-          {{- with (.Values.clusterStorage).resources }}
+          {{- with (.Values.localStore).resources }}
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
@@ -90,8 +90,8 @@ spec:
           volumeMounts:
             - name: file-storage
               mountPath: /var/configs
-          {{- if (.Values.clusterStorage).extraVolumeMounts }}
-            {{- toYaml (.Values.clusterStorage).extraVolumeMounts | nindent 4 }}
+          {{- if (.Values.localStore).extraVolumeMounts }}
+            {{- toYaml (.Values.localStore).extraVolumeMounts | nindent 4 }}
           {{- end }}
           env:
             - name: CONFIG_PATH
@@ -102,7 +102,7 @@ spec:
               value: {{ (quote .Values.clusterController.retention1h) }}
             - name: RESOLUTION_1D_RETENTION
               value: {{ (quote .Values.clusterController.retention1d) }}
-            {{- range $key, $value := (.Values.clusterStorage).env }}
+            {{- range $key, $value := (.Values.localStore).env }}
             - name: {{ $key | quote }}
               value: {{ $value | quote }}
             {{- end }}
@@ -113,15 +113,15 @@ spec:
         - name: {{ .name }}
       {{- end }}
     {{- end }}
-      {{- with (.Values.clusterStorage).nodeSelector }}
+      {{- with (.Values.localStore).nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with (.Values.clusterStorage).tolerations }}
+      {{- with (.Values.localStore).tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with (.Values.clusterStorage).affinity }}
+      {{- with (.Values.localStore).affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}

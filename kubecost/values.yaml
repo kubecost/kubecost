@@ -514,7 +514,7 @@ frontend:
       - Cache-Control "must-revalidate";
       - "X-Content-Type-Options \"nosniff\";"
 
-clusterStorage:
+localStore:
   enabled: true
   retention10m: 36
   retention1h: 49
@@ -534,22 +534,22 @@ clusterStorage:
     periodSeconds: 10
     failureThreshold: 200
 
-  ## Add a nodeSelector for cluster-storage pod
+  ## Add a nodeSelector for local-object-store pod
   nodeSelector: {}
 
-  ## Tolerations for the cluster-storage pod
+  ## Tolerations for the local-object-store pod
   tolerations: []
 
-  ## Affinity for the cluster-storage pod
+  ## Affinity for the local-object-store pod
   affinity: {}
 
-  ## Define environment variables for cluster-storage
+  ## Define environment variables for local-object-store
   extraEnv: {}
 
-  ## Define extra volumes for the cluster-storage
+  ## Define extra volumes for the local-object-store
   extraVolumes: []
 
-  ## Define extra volumemounts for the cluster-storage
+  ## Define extra volumemounts for the local-object-store
   extraVolumeMounts: []
 
   persistentVolume:
@@ -559,7 +559,7 @@ clusterStorage:
     existingClaim: ""  # kubecost-cost-analyzer # use this if upgrading from kubecost 2.x
     labels: {}
     annotations: {}
-
+  fullImageName: ""
 
 ## Values for the finops-agent subchart
 finops-agent:

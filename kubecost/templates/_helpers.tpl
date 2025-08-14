@@ -513,7 +513,7 @@ NOTE: added kubecostModel for backward compatibility
     */}}
     type: cluster
     config:
-      host: {{ include "kubecost.clusterStorage.serviceName" . }}.{{ .Release.Namespace }}.svc.cluster.local
+      host: {{ include "kubecost.localStore.serviceName" . }}.{{ .Release.Namespace }}.svc.cluster.local
       port: 9006
       http_config:
         tls_config:
