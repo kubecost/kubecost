@@ -949,14 +949,13 @@ aggregator:
   aggregatorDbStorage:
     storageClass: ""  # default storage class
     storageRequest: 128Gi
-
   resources:
-    limits:
-      memory: 5Gi
+    limits: {}
+      # memory: ""
+      # cpu: ""
     requests:
-      cpu: 2000m
-      memory: 5Gi
-
+      memory: 3Gi
+      cpu: 100m
   readinessProbe:
     enabled: true
     initialDelaySeconds: 10
