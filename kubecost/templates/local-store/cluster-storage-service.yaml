@@ -1,4 +1,4 @@
-{{- if eq (include "kubecost.localStore.enabled" .) "Enabled" }}
+{{- if eq (include "kubecost.localStore.enabled" .) "enabled" }}
 kind: Service
 apiVersion: v1
 metadata:

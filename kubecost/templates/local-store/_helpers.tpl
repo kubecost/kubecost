@@ -1,16 +1,18 @@
 {{- define "kubecost.localStore.enabled" -}}
   {{- if (.Values.kubecostModel).localStoreConfigSecret }}
-    {{- printf "Disabled" -}}
+    {{- printf "disabled" -}}
   {{- else if (.Values.global.localStore).existingSecret -}}
-    {{- printf "Disabled" -}}
+    {{- printf "disabled" -}}
   {{- else if (.Values.kubecostModel).federatedStorageConfig -}}
-    {{- printf "Disabled" -}}
+    {{- printf "disabled" -}}
   {{- else if (.Values.federatedStorage).config -}}
-    {{- printf "Disabled" -}}
+    {{- printf "disabled" -}}
   {{- else if (.Values.global.federatedStorage).config -}}
-    {{- printf "Disabled" -}}
+    {{- printf "disabled" -}}
+  {{- else if (.Values.global).federatedStorage.existingSecret -}}
+    {{- printf "disabled" -}}
   {{- else -}}
-    {{- printf "Enabled" -}}
+    {{- printf "enabled" -}}
   {{- end -}}
 {{- end -}}
 

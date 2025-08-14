@@ -1,4 +1,4 @@
-{{- if eq (include "kubecost.localStore.enabled" .) "Enabled" }}
+{{- if eq (include "kubecost.localStore.enabled" .) "enabled" }}
 {{- if and ((.Values.localStore).persistentVolume).enabled (not ((.Values.localStore).persistentVolume).existingClaim) -}}
 kind: PersistentVolumeClaim
 apiVersion: v1
