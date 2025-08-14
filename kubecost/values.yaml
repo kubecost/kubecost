@@ -514,7 +514,7 @@ frontend:
       - Cache-Control "must-revalidate";
       - "X-Content-Type-Options \"nosniff\";"
 
-clusterStorage:
+localStore:
   enabled: true
   retention10m: 36
   retention1h: 49
@@ -524,6 +524,9 @@ clusterStorage:
   # requests:
   #   cpu: 1000m
   #   memory: 1Gi
+  # limits:
+  #   memory: 3Gi
+  #   cpu: 100m
 
   readinessProbe:
     enabled: true
@@ -531,35 +534,36 @@ clusterStorage:
     periodSeconds: 10
     failureThreshold: 200
 
-  ## Add a nodeSelector for cluster-storage pod
-  # nodeSelector: {}
+  ## Add a nodeSelector for local-object-store pod
+  nodeSelector: {}
 
-  ## Tolerations for the cluster-storage pod
-  # tolerations: []
+  ## Tolerations for the local-object-store pod
+  tolerations: []
 
-  ## Affinity for the cluster-storage pod
-  # affinity: {}
+  ## Affinity for the local-object-store pod
+  affinity: {}
 
-  ## Define environment variables for cluster-storage
-  # env: {}
+  ## Define environment variables for local-object-store
+  extraEnv: {}
 
-  ## Define extra volumes for the cluster-storage
-  # extraVolumes: []
+  ## Define extra volumes for the local-object-store
+  extraVolumes: []
 
-  ## Define extra volumemounts for the cluster-storage
-  # extraVolumeMounts: []
+  ## Define extra volumemounts for the local-object-store
+  extraVolumeMounts: []
 
   persistentVolume:
     size: 32Gi
     enabled: true  # Note that setting this to false means cluster storage will be wiped out on pod restart.
-    # storageClass: "-" #
-    # existingClaim: kubecost-cost-analyzer # use this if upgrading from kubecost 2.x
+    storageClass: ""
+    existingClaim: ""  # kubecost-cost-analyzer # use this if upgrading from kubecost 2.x
     labels: {}
     annotations: {}
-
+  fullImageName: ""
 
 ## Values for the finops-agent subchart
 finops-agent:
+  clusterId: cluster-one
   enabled: true
   ## federated storage for the finops-agent will be managed by this chart
   ## .Values.finops-agent.federatedStorage should not be set when running the agent as a sub-chart
