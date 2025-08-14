@@ -2,7 +2,7 @@
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-  name: {{ template "kubecost.clusterStorage.fullname" . }}
+  name: {{ include "kubecost.clusterStorage.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "kubecost.commonLabels" . | nindent 4 }}

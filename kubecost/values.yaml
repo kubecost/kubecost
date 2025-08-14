@@ -524,6 +524,9 @@ clusterStorage:
   # requests:
   #   cpu: 1000m
   #   memory: 1Gi
+  # limits:
+  #   memory: 3Gi
+  #   cpu: 100m
 
   readinessProbe:
     enabled: true
@@ -532,34 +535,35 @@ clusterStorage:
     failureThreshold: 200
 
   ## Add a nodeSelector for cluster-storage pod
-  # nodeSelector: {}
+  nodeSelector: {}
 
   ## Tolerations for the cluster-storage pod
-  # tolerations: []
+  tolerations: []
 
   ## Affinity for the cluster-storage pod
-  # affinity: {}
+  affinity: {}
 
   ## Define environment variables for cluster-storage
-  # env: {}
+  extraEnv: {}
 
   ## Define extra volumes for the cluster-storage
-  # extraVolumes: []
+  extraVolumes: []
 
   ## Define extra volumemounts for the cluster-storage
-  # extraVolumeMounts: []
+  extraVolumeMounts: []
 
   persistentVolume:
     size: 32Gi
     enabled: true  # Note that setting this to false means cluster storage will be wiped out on pod restart.
-    # storageClass: "-" #
-    # existingClaim: kubecost-cost-analyzer # use this if upgrading from kubecost 2.x
+    storageClass: ""
+    existingClaim: ""  # kubecost-cost-analyzer # use this if upgrading from kubecost 2.x
     labels: {}
     annotations: {}
 
 
 ## Values for the finops-agent subchart
 finops-agent:
+  clusterId: cluster-one
   enabled: true
   ## federated storage for the finops-agent will be managed by this chart
   ## .Values.finops-agent.federatedStorage should not be set when running the agent as a sub-chart

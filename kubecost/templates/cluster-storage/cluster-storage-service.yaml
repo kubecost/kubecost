@@ -1,8 +1,8 @@
-{{- if (.Values.clusterStorage).enabled -}}
+{{- if .Values.clusterStorage.enabled -}}
 kind: Service
 apiVersion: v1
 metadata:
-  name: {{ template "kubecost.clusterStorage.serviceName" . }}
+  name: {{ include "kubecost.clusterStorage.serviceName" . }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "kubecost.clusterStorage.commonLabels" . | nindent 4 }}

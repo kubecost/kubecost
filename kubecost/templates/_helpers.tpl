@@ -500,13 +500,13 @@ federated storage config helpers
 {{/*
 NOTE: added kubecostModel for backward compatibility
 */}}
-{{- define "kubecost.federatedStorage.config-b64" }}
+{{- define "kubecost.federatedStorage.config" }}
   {{- if (.Values.kubecostModel).federatedStorageConfig -}}
-    {{- (.Values.kubecostModel).federatedStorageConfig | b64enc -}}
+    {{- (.Values.kubecostModel).federatedStorageConfig -}}
   {{- else if (.Values.federatedStorage).config -}}
-    {{- (.Values.federatedStorage).config | b64enc -}}
+    {{- (.Values.federatedStorage).config -}}
   {{- else if (.Values.global.federatedStorage).config -}}
-    {{- (.Values.global.federatedStorage).config | b64enc -}}
+    {{- (.Values.global.federatedStorage).config -}}
   {{- else -}}
     {{/*
     for single cluster environments
