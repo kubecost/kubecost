@@ -1,3 +1,13 @@
+{{- define "kubecost.frontend.image" }}
+  {{- if .Values.frontend.fullImageName }}
+    {{- .Values.frontend.fullImageName }}
+  {{- else if eq "development" .Chart.AppVersion -}}
+    gcr.io/kubecost1/frontend-nightly:latest
+  {{- else -}}
+    {{- include "common.imageRegistry" . }}/{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}
+  {{- end }}
+{{- end }}
+
 {{- define "kubecost.frontend.name" -}}
 {{- default "frontend" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
