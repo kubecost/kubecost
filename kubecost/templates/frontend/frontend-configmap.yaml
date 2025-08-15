@@ -505,6 +505,7 @@ data:
                 "carbonEstimatesEnabled": "{{ include "kubecost.carbonEstimates.enabled" . }}",
                 "clusterControllerEnabled": "{{ include "kubecost.clusterController.enabled" . }}",
                 "forecastingEnabled": "{{ include "kubecost.forecasting.enabled" . }}",
+                "turbonomicEnabled": "{{include "kubecost.turbonomic.enabled" .}}"
                 "chartVersion": "DEVELOP_BRANCH",
                 "hourlyDataRetention": "{{ (.Values.kubecost.retention1h) }}",
                 "dailyDataRetention": "{{ (.Values.kubecost.retention1d) }}",
