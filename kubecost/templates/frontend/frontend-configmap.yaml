@@ -519,6 +519,7 @@ data:
                 "hideTeams": "{{ default false ((.Values.kubecostProductConfigs).hideTeams) }}",
                 "legacyModeEnabled": "{{ .Values.aggregator.legacyMode }}",
                 "clusterId": "{{ include "kubecost.clusterId" . }}"
+                "defaultSavingsProfile": "{{ default "production" ((.Values.kubecostProductConfigs).clusterProfile)}}"
                 }
             ';
         }
