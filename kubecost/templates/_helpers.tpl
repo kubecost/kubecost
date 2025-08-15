@@ -482,58 +482,7 @@ Kubecost image to be used by all apps which run, can be overridden in each apps 
     {{- .Values.kubecost.image.registry -}}
   {{- end -}}
 {{- end -}}
-{{- define "aggregator.image" }}
-  {{- if .Values.aggregator.fullImageName }}
-    {{- .Values.aggregator.fullImageName }}
-  {{- else if .Values.kubecost.fullImageName }}
-    {{- .Values.kubecost.fullImageName }}
-  {{- else if eq "development" .Chart.AppVersion -}}
-    gcr.io/kubecost1/cost-model-nightly:latest
-  {{- else -}}
-    {{- include "common.imageRegistry" . }}/{{ .Values.kubecost.image.repository }}:{{ .Values.kubecost.image.tag }}
-  {{- end }}
-{{- end }}
-{{- define "cloudCost.image" }}
-  {{- if .Values.cloudCost.fullImageName }}
-    {{- .Values.cloudCost.fullImageName }}
-  {{- else if .Values.kubecost.fullImageName }}
-    {{- .Values.kubecost.fullImageName }}
-  {{- else if eq "development" .Chart.AppVersion -}}
-    gcr.io/kubecost1/cost-model-nightly:latest
-  {{- else -}}
-    {{- include "common.imageRegistry" . }}/{{ .Values.kubecost.image.repository }}:{{ .Values.kubecost.image.tag }}
-  {{- end }}
-{{- end }}
-{{- define "frontend.image" }}
-  {{- if .Values.frontend.fullImageName }}
-    {{- .Values.frontend.fullImageName }}
-  {{- else if eq "development" .Chart.AppVersion -}}
-    gcr.io/kubecost1/frontend-nightly:latest
-  {{- else -}}
-    {{- include "common.imageRegistry" . }}/{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}
-  {{- end }}
-{{- end }}
-{{- define "clusterController.image" }}
-  {{- if .Values.clusterController.fullImageName }}
-    {{- .Values.clusterController.fullImageName }}
-  {{- else -}}
-    {{- include "common.imageRegistry" . }}/{{ .Values.clusterController.image.repository }}:{{ .Values.clusterController.image.tag }}
-  {{- end }}
-{{- end }}
-{{- define "forecasting.image" }}
-  {{- if .Values.forecasting.fullImageName }}
-    {{- .Values.forecasting.fullImageName }}
-  {{- else -}}
-    {{- include "common.imageRegistry" . }}/{{ .Values.forecasting.image.repository }}:{{ .Values.forecasting.image.tag }}
-  {{- end }}
-{{- end }}
-{{- define "networkCosts.image" }}
-  {{- if .Values.networkCosts.fullImageName }}
-    {{- .Values.networkCosts.fullImageName }}
-  {{- else -}}
-    {{- include "common.imageRegistry" . }}/{{ .Values.networkCosts.image.repository }}:{{ .Values.networkCosts.image.tag }}
-  {{- end }}
-{{- end }}
+
 {{/*
 federated storage config helpers
 */}}
@@ -551,22 +500,27 @@ federated storage config helpers
 {{/*
 NOTE: added kubecostModel for backward compatibility
 */}}
-{{- define "kubecost.federatedStorage.config-b64" }}
+{{- define "kubecost.federatedStorage.config" }}
   {{- if (.Values.kubecostModel).federatedStorageConfig -}}
-    {{- (.Values.kubecostModel).federatedStorageConfig | b64enc -}}
+    {{- (.Values.kubecostModel).federatedStorageConfig -}}
   {{- else if (.Values.federatedStorage).config -}}
-    {{- (.Values.federatedStorage).config | b64enc -}}
+    {{- (.Values.federatedStorage).config -}}
   {{- else if (.Values.global.federatedStorage).config -}}
-    {{- (.Values.global.federatedStorage).config | b64enc -}}
+    {{- (.Values.global.federatedStorage).config -}}
   {{- else -}}
     {{/*
-    TODO:Default federated storage config 
     for single cluster environments
     */}}
-    {{- printf "localClusterBucket" -}}
+    type: cluster
+    config:
+      host: {{ include "kubecost.localStore.serviceName" . }}.{{ .Release.Namespace }}.svc.cluster.local
+      port: 9006
+      http_config:
+        tls_config:
+          insecure_skip_verify: true
   {{- end -}}
 {{- end -}}
 
 {{- define "kubecost.federatedStorage.fileName" -}}
-{{ default "federated-store.yaml" (.Values.global.federatedStorage).fileName }}
-{{- end -}}
+{{- default "federated-store.yaml" (.Values.global.federatedStorage).fileName }}
+{{- end }}

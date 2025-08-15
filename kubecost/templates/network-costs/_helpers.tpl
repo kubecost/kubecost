@@ -1,3 +1,12 @@
+
+{{- define "kubecost.networkCosts.image" }}
+  {{- if .Values.networkCosts.fullImageName }}
+    {{- .Values.networkCosts.fullImageName }}
+  {{- else -}}
+    {{- include "common.imageRegistry" . }}/{{ .Values.networkCosts.image.repository }}:{{ .Values.networkCosts.image.tag }}
+  {{- end }}
+{{- end }}
+
 {{/*
 Network Costs name used to tie autodiscovery of metrics to daemon set pods
 */}}

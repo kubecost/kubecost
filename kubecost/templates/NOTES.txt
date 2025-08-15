@@ -3,7 +3,7 @@ TODO: add v3 preconditions
 {{- include "kubecost.v3-preconditions" . -}}
 {{- include "kubecost.eksStorage.check" . -}}
 {{- include "kubecost.cloudCost.awsAthena.CloudIntegrationCheck" . -}}
-{{- include "kubecost.cloudCost.gcpBigQuery.CloudIntegrationJSON" . -}}
+{{- include "kubecost.cloudCost.gcpBigQuery.CloudIntegrationCheck" . -}}
 {{- include "kubecost.cloudCost.azureStorage.CloudIntegrationCheck" . -}}
 {{- include "kubecost.federatedStorage.secret.check" . -}}
 {{- include "kubecost.federatedStorage.source.check" . -}}
