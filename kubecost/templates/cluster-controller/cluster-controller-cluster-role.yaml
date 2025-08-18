@@ -16,7 +16,7 @@ rules:
     resources: ['deployments', 'daemonsets', 'statefulsets', 'replicasets']
     verbs: ['get', 'patch']
   - apiGroups: ['batch']
-    resources: ['cronjobs', 'jobs']
+    resources: ['cronjobs']
     verbs: ['get', 'patch']
   {{- end }}
   {{- if .Values.clusterController.rbac.clusterRightsize }}
