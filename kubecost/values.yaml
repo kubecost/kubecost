@@ -270,7 +270,7 @@ global:
 ## Provide a name override for the chart.
 # nameOverride: ""
 ## Provide a full name override option for the chart.
-# fullnameOverride: ""
+fullnameOverride: ""
 
 ## Provide additional labels for the chart.
 # chartLabels:
@@ -558,10 +558,13 @@ localStore:
     storageClass: ""
     existingClaim: ""  # kubecost-cost-analyzer # use this if upgrading from kubecost 2.x
     labels: {}
-    annotations: {}
+    annotations:
+      ## The "helm.sh/resource-policy: keep" annotation is used to prevent the persistent volume from being deleted when uninstalling or moving to a different deployment method.
+      # This can be used to allow the agent history to be uploaded to cloud storage when upgrading to Enterprise.
+      helm.sh/resource-policy: keep
   fullImageName: ""
 
-## Values for the finops-agent subchart
+## Values for the finops-agent sub-chart
 finops-agent:
   clusterId: cluster-one
   enabled: true
