@@ -11,19 +11,13 @@ metadata:
   labels:
       {{- include "kubecost.commonLabels" . | nindent 4 }}
 rules:
-  {{- if .Values.clusterController.rbac.containerRightsize }}
-  - apiGroups: ['']
-    resources: ['configmaps']
-    verbs: ['get']
+  {{- if .Values.clusterController.rbac.containerRequestRightSizing }}
   - apiGroups: ['apps']
-    resources: ['deployments', 'daemonsets']
-    verbs: ['get','list', 'patch', 'update']
+    resources: ['deployments', 'daemonsets', 'statefulsets', 'replicasets']
+    verbs: ['get', 'patch']
   - apiGroups: ['batch']
     resources: ['cronjobs', 'jobs']
-    verbs: ['get','list','patch']
-  - apiGroups: ['apps']
-    resources: ['statefulsets', 'replicasets']
-    verbs: ['get', 'update']
+    verbs: ['get', 'patch']
   {{- end }}
   {{- if .Values.clusterController.rbac.clusterRightsize }}
   - apiGroups: ['']

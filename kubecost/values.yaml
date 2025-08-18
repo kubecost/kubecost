@@ -1277,8 +1277,8 @@ clusterController:
 #  fqdn: kubecost-cluster-controller.kubecost.svc.cluster.local:9731
 
   rbac:
-    containerRightsize: true
-    clusterRightsize: false
+    containerRequestRightSizing: true
+    clusterRightSizing: false
     clusterTurndown: false
     namespaceTurndown: false
 
