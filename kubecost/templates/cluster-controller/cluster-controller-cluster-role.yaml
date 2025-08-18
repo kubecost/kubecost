@@ -19,7 +19,7 @@ rules:
     resources: ['cronjobs']
     verbs: ['get', 'patch']
   {{- end }}
-  {{- if .Values.clusterController.rbac.clusterRightsize }}
+  {{- if .Values.clusterController.rbac.clusterRightSizing }}
   - apiGroups: ['']
     resources: ['configmaps']
     verbs: ['get', 'update']
