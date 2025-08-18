@@ -1276,6 +1276,12 @@ clusterController:
   #         enabled: false
 #  fqdn: kubecost-cluster-controller.kubecost.svc.cluster.local:9731
 
+  rbac:
+    containerRequestRightSizing: true
+    clusterRightSizing: false
+    clusterTurndown: false
+    namespaceTurndown: false
+
 reporting:
   # Kubecost bug report feature: Logs access/collection limited to .Release.Namespace
   # Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=capture-bug-report
