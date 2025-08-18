@@ -101,7 +101,7 @@ spec:
         {{- end }}
       containers:
         - name: frontend
-          image: {{ include "frontend.image" . }}
+          image: {{ include "kubecost.frontend.image" . }}
           ports:
           - name: tcp-frontend
             containerPort: 9090

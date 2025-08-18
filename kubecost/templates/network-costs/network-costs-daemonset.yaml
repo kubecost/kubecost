@@ -53,7 +53,7 @@ spec:
         {{- if eq (typeOf .Values.networkCosts.image) "string" }}
         image: {{ .Values.networkCosts.image }}
         {{- else }}
-        image: {{ include "networkCosts.image" . }}
+        image: {{ include "kubecost.networkCosts.image" . }}
         {{- end}}
         {{- if .Values.networkCosts.extraArgs }}
         args:
