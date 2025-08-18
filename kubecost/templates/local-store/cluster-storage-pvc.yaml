@@ -3,7 +3,7 @@
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-  name: {{ include "kubecost.localStore.fullname" . }}
+  name: {{ include "kubecost.localStore.pvcName" . }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "kubecost.commonLabels" . | nindent 4 }}
@@ -22,10 +22,6 @@ spec:
   {{ end }}
   resources:
     requests:
-    {{- if .Values.localStore.persistentVolume }}
       storage: {{ .Values.localStore.persistentVolume.size }}
-    {{- else }}
-      storage: 32.0Gi
-    {{ end }}
 {{- end -}}
 {{- end -}}

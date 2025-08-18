@@ -28,12 +28,18 @@
   {{- end }}
 {{- end }}
 
-{{- define "kubecost.localStore.name" -}}
-{{- default "local-object-store" | trunc 63 | trimSuffix "-" -}}
+{{- define "kubecost.localStore.fullname" -}}
+{{- printf "%s-%s" .Release.Name "local-store" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
-{{- define "kubecost.localStore.fullname" -}}
-{{- printf "%s-%s" .Release.Name (include "kubecost.localStore.name" .) | trunc 63 | trimSuffix "-" -}}
+{{- define "kubecost.localStore.pvcName" -}}
+{{- if .Values.localStore.persistentVolume.existingClaim -}}
+  {{- .Values.localStore.persistentVolume.existingClaim -}}
+{{- else if .Values.fullnameOverride -}}
+  {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+  {{- include "kubecost.localStore.fullname" . -}}
+{{- end -}}
 {{- end -}}
 
 {{- define "kubecost.localStore.serviceName" -}}
@@ -46,9 +52,9 @@
 {{- end -}}
 
 {{- define "kubecost.localStore.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "kubecost.localStore.name" . }}
+app.kubernetes.io/name: {{ include "kubecost.localStore.fullname" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
-app: {{ include "kubecost.localStore.name" . }}
+app: {{ include "kubecost.localStore.fullname" . }}
 {{- end }}
 
 
