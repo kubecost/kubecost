@@ -422,6 +422,14 @@ kubecost.costEventsAudit.enabled flag for nginx configmap
 {{- end -}}
 {{- end -}}
 
+{{- define "kubecost.turbonomic.enabled" }}
+{{- if ((.Values.global.integrations.turbonomic).enabled) }}
+{{- printf "true" -}}
+{{- else -}}
+{{- printf "false" -}}
+{{- end -}}
+{{- end -}}
+
 {{- /*
   Compute a checksum based on the rendered content of specific ConfigMaps and Secrets.
 */ -}}
