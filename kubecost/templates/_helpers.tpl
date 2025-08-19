@@ -531,19 +531,6 @@ NOTE: added kubecostModel for backward compatibility
           insecure_skip_verify: true
   {{- end -}}
 {{- end -}}
-{{- define "finops-agent.localStoreEnabled" }}
-  {{- if (.Values.kubecostModel).federatedStorageConfig -}}
-    {{- printf "false" -}}
-  {{- else if (.Values.kubecostModel).federatedStorageConfigSecret -}}
-    {{- "false" -}}
-  {{- else if .Values.global.federatedStorage.existingSecretName -}}
-    {{- "false" -}}
-  {{- else if .Values.global.federatedStorage.config -}}
-    {{- "false" -}}
-  {{- else -}}
-    {{- "true" -}}
-  {{- end -}}
-{{- end -}}
 
 {{- define "kubecost.federatedStorage.fileName" -}}
 {{- default "federated-store.yaml" (.Values.global.federatedStorage).fileName }}
@@ -551,6 +538,6 @@ NOTE: added kubecostModel for backward compatibility
 
 {{- define "kubecost.localStoreClusterIdCheck" -}}
 {{- if eq (include "kubecost.clusterId" .) "cluster-one" -}}
-{{ printf "WARNING: the clusterId is set to the default values of cluster-one. This is not recommended if you intend to use multi-cluster federation in the future. Please set a globally unique .Values.global.clusterId" }}
+{{ printf "WARNING: The clusterId is set to the default value of 'cluster-one'. This is not recommended if you intend to use multi-cluster federation in the future. Please set a globally unique .Values.global.clusterId" }}
 {{- end -}}
 {{- end -}}
