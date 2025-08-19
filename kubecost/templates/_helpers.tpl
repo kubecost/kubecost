@@ -467,6 +467,9 @@ kubecost.costEventsAudit.enabled flag for nginx configmap
   {{- $content := include (print $.Template.BasePath (printf "/%s" .)) $ -}}
   {{- $checksum = printf "%s%s" $checksum $content | sha256sum -}}
 {{- end -}}
+{{- /* Add global values to the checksum */ -}}
+{{- $globalChecksum := toYaml $.Values.global | sha256sum -}}
+{{- $checksum = printf "%s%s" $checksum $globalChecksum | sha256sum -}}
 {{- $checksum | sha256sum -}}
 {{- end -}}
 
