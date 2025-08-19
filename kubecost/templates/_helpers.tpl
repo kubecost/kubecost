@@ -101,7 +101,7 @@ Verify that the global cluster id is set
 {{- end -}}
 
 {{/*
-Verify the federated stoerage config secret exists with the expected key.
+Verify the federated storage config secret exists with the expected key.
 Skip the check if CI/CD is enabled and skipSanityChecks is set. Argo CD, for
 example, does not support templating a chart which uses the lookup function.
 */}}
@@ -144,8 +144,6 @@ Actions Storage source contents check. Either the Secret must be specified or th
     {{- .Values.prometheus.server.global.external_labels.cluster_id }}
   {{- else if (.Values.kubecostProductConfigs).clusterName }}
     {{- .Values.kubecostProductConfigs.clusterName }}
-  {{- else if .Values.clusterId }}
-    {{- .Values.clusterId }}
   {{- else -}}
     {{- .Values.global.clusterId }}
   {{- end -}}
@@ -528,15 +526,23 @@ NOTE: added kubecostModel for backward compatibility
 {{- define "finops-agent.localStoreEnabled" }}
   {{- if (.Values.kubecostModel).federatedStorageConfig -}}
     {{- printf "false" -}}
-  {{- else if (.Values.federatedStorage).config -}}
-    {{- printf "false" -}}
-  {{- else if (.Values.global.federatedStorage).config -}}
-    {{- printf "false" -}}
+  {{- else if (.Values.kubecostModel).federatedStorageConfigSecret -}}
+    {{- "false" -}}
+  {{- else if .Values.global.federatedStorage.existingSecretName -}}
+    {{- "false" -}}
+  {{- else if .Values.global.federatedStorage.config -}}
+    {{- "false" -}}
   {{- else -}}
-    {{- printf "true" -}}
+    {{- "true" -}}
   {{- end -}}
 {{- end -}}
 
 {{- define "kubecost.federatedStorage.fileName" -}}
 {{- default "federated-store.yaml" (.Values.global.federatedStorage).fileName }}
 {{- end }}
+
+{{- define "kubecost.localStoreClusterIdCheck" -}}
+{{- if eq (include "kubecost.clusterId" .) "cluster-one" -}}
+{{ printf "WARNING: the clusterId is set to the default values of cluster-one. This is not recommended if you intend to use multi-cluster federation in the future. Please set a globally unique .Values.global.clusterId" }}
+{{- end -}}
+{{- end -}}
