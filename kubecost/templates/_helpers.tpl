@@ -5,7 +5,12 @@ Kubecost 3.0 preconditions
 */}}
 {{- define "kubecost.v3-preconditions" -}}
   {{- if or .Values.kubecostAggregator .Values.kubecostFrontend -}}
-    {{- fail "\n\n--- Kubecost 3.0 requires configuration changes. Please refer to the documentation for more information. ---" -}}
+    {{ fail "\n\n--- Kubecost 3.0 requires configuration changes. Please refer to the documentation for more information. ---" }}
+  {{- end -}}
+  {{- if (.Values.kubecostModel).federatedStorageConfig -}}
+    {{ fail "\n\n--- `.Values.kubecostModel.federatedStorageConfig` is no longer supported. Please use `.Values.global.federatedStorage.config` instead. ---" }}
+  {{- else if (.Values.kubecostModel).federatedStorageConfigSecret -}}
+    {{ fail "\n\n--- `.Values.kubecostModel.federatedStorageConfigSecret` is no longer supported. Please use `.Values.kubecostModel.federatedStorage.existingSecretName` instead. ---" }}
   {{- end -}}
 {{- end -}}
 
@@ -85,10 +90,10 @@ Verify that the global cluster id is set
 */}}
 {{- define "kubecost.clusterId.check" -}}
   {{- if ((((.Values.prometheus).server).global).external_labels).cluster_id }}
-    {{- printf "\n\nIn Kubecost 3.0, `.Values.prometheus.server.global.external_labels.cluster_id` is no longer required.\nWhen it is set, it is used for backwards compatibility. \nSee TODO for more information.\n" -}}
+    {{ fail "\n\nIn Kubecost 3.0, `.Values.prometheus.server.global.external_labels.cluster_id` is no longer required.\nWhen it is set, it is used for backwards compatibility. \nSee TODO for more information.\n" }}
   {{- end }}
   {{- if (.Values.kubecostProductConfigs).clusterName }}
-    {{- printf "\n\nIn Kubecost 3.0, `.Values.prometheus.server.global.external_labels.cluster_id` is no longer required.\nWhen it is set, it is used for backwards compatibility. \nSee TODO for more information.\n" -}}
+    {{ fail "\n\nIn Kubecost 3.0, `.Values.kubecostProductConfigs.clusterName` is no longer required.\nWhen it is set, it is used for backwards compatibility. \nSee TODO for more information.\n" }}
   {{- end }}
   {{- if not .Values.global.clusterId }}
     {{- fail "\n\nIn Kubecost 3.0, `.Values.global.clusterId` is required to be set"}}
@@ -101,7 +106,7 @@ Verify that the global cluster id is set
 {{- end -}}
 
 {{/*
-Verify the federated stoerage config secret exists with the expected key.
+Verify the federated storage config secret exists with the expected key.
 Skip the check if CI/CD is enabled and skipSanityChecks is set. Argo CD, for
 example, does not support templating a chart which uses the lookup function.
 */}}
@@ -144,8 +149,6 @@ Actions Storage source contents check. Either the Secret must be specified or th
     {{- .Values.prometheus.server.global.external_labels.cluster_id }}
   {{- else if (.Values.kubecostProductConfigs).clusterName }}
     {{- .Values.kubecostProductConfigs.clusterName }}
-  {{- else if .Values.clusterId }}
-    {{- .Values.clusterId }}
   {{- else -}}
     {{- .Values.global.clusterId }}
   {{- end -}}
@@ -469,6 +472,9 @@ kubecost.costEventsAudit.enabled flag for nginx configmap
   {{- $content := include (print $.Template.BasePath (printf "/%s" .)) $ -}}
   {{- $checksum = printf "%s%s" $checksum $content | sha256sum -}}
 {{- end -}}
+{{- /* Add global values to the checksum */ -}}
+{{- $globalChecksum := toYaml $.Values.global | sha256sum -}}
+{{- $checksum = printf "%s%s" $checksum $globalChecksum | sha256sum -}}
 {{- $checksum | sha256sum -}}
 {{- end -}}
 
@@ -515,10 +521,7 @@ NOTE: added kubecostModel for backward compatibility
     {{- (.Values.federatedStorage).config -}}
   {{- else if (.Values.global.federatedStorage).config -}}
     {{- (.Values.global.federatedStorage).config -}}
-  {{- else -}}
-    {{/*
-    for single cluster environments
-    */}}
+  {{- else }}
     type: cluster
     config:
       host: {{ include "kubecost.localStore.serviceName" . }}.{{ .Release.Namespace }}.svc.cluster.local
@@ -532,3 +535,9 @@ NOTE: added kubecostModel for backward compatibility
 {{- define "kubecost.federatedStorage.fileName" -}}
 {{- default "federated-store.yaml" (.Values.global.federatedStorage).fileName }}
 {{- end }}
+
+{{- define "kubecost.localStoreClusterIdCheck" -}}
+{{- if eq (include "kubecost.clusterId" .) "cluster-one" -}}
+{{ printf "WARNING: The clusterId is set to the default value of 'cluster-one'. This is not recommended if you intend to use multi-cluster federation in the future. Please set a globally unique .Values.global.clusterId" }}
+{{- end -}}
+{{- end -}}

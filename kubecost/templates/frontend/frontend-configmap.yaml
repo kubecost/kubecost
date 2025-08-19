@@ -79,8 +79,8 @@ data:
         {{- if .Values.frontend.useDefaultFqdn }}
         server {{ .Release.Name }}-forecasting.{{ .Release.Namespace }}.svc.cluster.local:5000;
         {{- else }}
-        {{- if (.Values.frontend.forcasting).fqdn }}
-        server {{ .Values.frontend.forcasting.fqdn }};
+        {{- if (.Values.frontend.forecasting).fqdn }}
+        server {{ .Values.frontend.forecasting.fqdn }};
         {{- else }}
         server {{ .Release.Name }}-forecasting.{{ .Release.Namespace }}:5000;
         {{- end }}
@@ -520,7 +520,7 @@ data:
                 "hideTeams": "{{ default false ((.Values.kubecostProductConfigs).hideTeams) }}",
                 "legacyModeEnabled": "{{ .Values.aggregator.legacyMode }}",
                 "clusterId": "{{ include "kubecost.clusterId" . }}",
-                "defaultSavingsProfile": "{{ default "production" ((.Values.kubecostProductConfigs).clusterProfile)}}"
+                "defaultSavingsProfile": "{{ .Values.kubecostProductConfigs.clusterProfile }}"
                 }
             ';
         }
