@@ -1,18 +1,12 @@
 {{- define "kubecost.localStore.enabled" -}}
-  {{- if (.Values.kubecostModel).localStoreConfigSecret }}
-    {{- printf "disabled" -}}
-  {{- else if (.Values.global.localStore).existingSecret -}}
-    {{- printf "disabled" -}}
-  {{- else if (.Values.kubecostModel).federatedStorageConfig -}}
-    {{- printf "disabled" -}}
-  {{- else if (.Values.federatedStorage).config -}}
-    {{- printf "disabled" -}}
-  {{- else if (.Values.global.federatedStorage).config -}}
-    {{- printf "disabled" -}}
-  {{- else if (.Values.global).federatedStorage.existingSecret -}}
-    {{- printf "disabled" -}}
+  {{- if .Values.global.federatedStorage.config -}}
+    {{- "disabled" -}}
+  {{- else if .Values.global.federatedStorage.existingSecretName -}}
+    {{- "disabled" -}}
+  {{- else if not .Values.localStore.enabled -}}
+    {{- "disabled" -}}
   {{- else -}}
-    {{- printf "enabled" -}}
+    {{- "enabled" -}}
   {{- end -}}
 {{- end -}}
 
@@ -28,12 +22,18 @@
   {{- end }}
 {{- end }}
 
-{{- define "kubecost.localStore.name" -}}
-{{- default "local-object-store" | trunc 63 | trimSuffix "-" -}}
+{{- define "kubecost.localStore.fullname" -}}
+{{- printf "%s-%s" .Release.Name "local-store" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
-{{- define "kubecost.localStore.fullname" -}}
-{{- printf "%s-%s" .Release.Name (include "kubecost.localStore.name" .) | trunc 63 | trimSuffix "-" -}}
+{{- define "kubecost.localStore.pvcName" -}}
+{{- if .Values.localStore.persistentVolume.existingClaim -}}
+  {{- .Values.localStore.persistentVolume.existingClaim -}}
+{{- else if .Values.fullnameOverride -}}
+  {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+  {{- include "kubecost.localStore.fullname" . -}}
+{{- end -}}
 {{- end -}}
 
 {{- define "kubecost.localStore.serviceName" -}}
@@ -46,9 +46,9 @@
 {{- end -}}
 
 {{- define "kubecost.localStore.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "kubecost.localStore.name" . }}
+app.kubernetes.io/name: {{ include "kubecost.localStore.fullname" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
-app: {{ include "kubecost.localStore.name" . }}
+app: {{ include "kubecost.localStore.fullname" . }}
 {{- end }}
 
 
