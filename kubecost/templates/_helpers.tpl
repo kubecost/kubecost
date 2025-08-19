@@ -515,10 +515,7 @@ NOTE: added kubecostModel for backward compatibility
     {{- (.Values.federatedStorage).config -}}
   {{- else if (.Values.global.federatedStorage).config -}}
     {{- (.Values.global.federatedStorage).config -}}
-  {{- else -}}
-    {{/*
-    for single cluster environments
-    */}}
+  {{- else }}
     type: cluster
     config:
       host: {{ include "kubecost.localStore.serviceName" . }}.{{ .Release.Namespace }}.svc.cluster.local
@@ -526,6 +523,17 @@ NOTE: added kubecostModel for backward compatibility
       http_config:
         tls_config:
           insecure_skip_verify: true
+  {{- end -}}
+{{- end -}}
+{{- define "finops-agent.localStoreEnabled" }}
+  {{- if (.Values.kubecostModel).federatedStorageConfig -}}
+    {{- printf "false" -}}
+  {{- else if (.Values.federatedStorage).config -}}
+    {{- printf "false" -}}
+  {{- else if (.Values.global.federatedStorage).config -}}
+    {{- printf "false" -}}
+  {{- else -}}
+    {{- printf "true" -}}
   {{- end -}}
 {{- end -}}
 

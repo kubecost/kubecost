@@ -573,6 +573,7 @@ finops-agent:
   ## existing secrets can be configured using .Values.global.federatedStorage
   ## or .Values.federatedStorage.config to have the helm chart generate a secret with a provided config
   federatedStorage: {}
+  localStoreEnabled: true
 
   agent:
     collectorDataSource:
