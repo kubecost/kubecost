@@ -5,7 +5,12 @@ Kubecost 3.0 preconditions
 */}}
 {{- define "kubecost.v3-preconditions" -}}
   {{- if or .Values.kubecostAggregator .Values.kubecostFrontend -}}
-    {{- fail "\n\n--- Kubecost 3.0 requires configuration changes. Please refer to the documentation for more information. ---" -}}
+    {{ fail "\n\n--- Kubecost 3.0 requires configuration changes. Please refer to the documentation for more information. ---" }}
+  {{- end -}}
+  {{- if (.Values.kubecostModel).federatedStorageConfig -}}
+    {{ fail "\n\n--- `.Values.kubecostModel.federatedStorageConfig` is no longer supported. Please use `.Values.global.federatedStorage.config` instead. ---" }}
+  {{- else if (.Values.kubecostModel).federatedStorageConfigSecret -}}
+    {{ fail "\n\n--- `.Values.kubecostModel.federatedStorageConfigSecret` is no longer supported. Please use `.Values.kubecostModel.federatedStorage.existingSecretName` instead. ---" }}
   {{- end -}}
 {{- end -}}
 
@@ -85,10 +90,10 @@ Verify that the global cluster id is set
 */}}
 {{- define "kubecost.clusterId.check" -}}
   {{- if ((((.Values.prometheus).server).global).external_labels).cluster_id }}
-    {{- printf "\n\nIn Kubecost 3.0, `.Values.prometheus.server.global.external_labels.cluster_id` is no longer required.\nWhen it is set, it is used for backwards compatibility. \nSee TODO for more information.\n" -}}
+    {{ fail "\n\nIn Kubecost 3.0, `.Values.prometheus.server.global.external_labels.cluster_id` is no longer required.\nWhen it is set, it is used for backwards compatibility. \nSee TODO for more information.\n" }}
   {{- end }}
   {{- if (.Values.kubecostProductConfigs).clusterName }}
-    {{- printf "\n\nIn Kubecost 3.0, `.Values.prometheus.server.global.external_labels.cluster_id` is no longer required.\nWhen it is set, it is used for backwards compatibility. \nSee TODO for more information.\n" -}}
+    {{ fail "\n\nIn Kubecost 3.0, `.Values.kubecostProductConfigs.clusterName` is no longer required.\nWhen it is set, it is used for backwards compatibility. \nSee TODO for more information.\n" }}
   {{- end }}
   {{- if not .Values.global.clusterId }}
     {{- fail "\n\nIn Kubecost 3.0, `.Values.global.clusterId` is required to be set"}}

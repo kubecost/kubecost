@@ -1,5 +1,4 @@
 --------------------------------------------------
-TODO: add v3 preconditions
 {{- include "kubecost.v3-preconditions" . -}}
 {{- include "kubecost.eksStorage.check" . -}}
 {{- include "kubecost.cloudCost.awsAthena.CloudIntegrationCheck" . -}}

@@ -32,8 +32,6 @@ global:
   cspPricingApiKey:
     existingSecretName: ""
     apiKey: ""
-  ## @param global.fullImageName If set, this will override the image name and tag.
-  finopsAgentFullImageName: ""
   ## @param global.imageRegistry The image registry to use for the finops agent
   imageRegistry: ""
   ## E.g.
@@ -53,7 +51,6 @@ global:
       ## @param global.compatibility.openshift.adaptSecurityContext Adapt the securityContext sections of the deployment to make them compatible with Openshift restricted-v2 SCC: remove runAsUser, runAsGroup and fsGroup and let the platform use their allowed default IDs. Possible values: auto (apply if the detected running cluster is Openshift), force (perform the adaptation always), disabled (do not perform adaptation)
       ##
       adaptSecurityContext: auto
-
 
   ## Kubecost Alerting
   ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=ui-alerts
@@ -109,7 +106,7 @@ global:
     #     # Kubecost Health Diagnostic
     #     - type: diagnostic          # Alerts when kubecost is unable to compute costs - ie: unreachable metric sources
     #       window: 10m
-
+  chartName: "kubecost"
   ## Kubecost Saved Reports
   ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=ui-reports
   ##
@@ -583,8 +580,7 @@ localStore:
 ## Values for the finops-agent sub-chart
 finops-agent:
   enabled: true
-  localStoreEnabled: true
-
+  fullImageName: ""
   agent:
     collectorDataSource:
       enabled: true
