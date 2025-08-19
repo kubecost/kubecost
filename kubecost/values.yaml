@@ -579,17 +579,48 @@ localStore:
 
 ## Values for the finops-agent sub-chart
 finops-agent:
-  enabled: true
-  fullImageName: ""
   agent:
     collectorDataSource:
       enabled: true
       scrapeInterval: 30s
       networkPort: 3001
-      # TODO: how are these different than kubecost.retention10m, kubecost.retention1h, kubecost.retention1d?
       retentionResolution10m: 6
       retentionResolution1h: 3
       retentionResolution1d: 2
+    exporter:
+      emissionInterval: 1m
+    cloudability:
+      ## Cloudability requires an API key to send data to the cloudability platform
+      enabled: false
+      pathToCloudabilitySecrets: "/opt/cloudability"
+      keyAccessFile: ""
+      keySecretFile: ""
+      envIDFile: ""
+      localWorkingDir: /tmp
+      uploadRegion: us
+      httpsClientTimeout: 60
+      uploadRetryCount: 5
+      outboundProxyInsecure: false
+      parseMetricData: false
+      outboundProxy: ""
+      outboundProxyAuth: ""
+      customS3UploadBucket: ""
+      customS3UploadRegion: ""
+      customAzureBlobContainerName: ""
+      customAzureBlobURL: ""
+      customAzureTenantID: ""
+      customAzureClientID: ""
+      customAzureBlobClientSecretFile: ""
+      emissionInterval: 3m
+
+      secret:
+        create: false
+        existingSecret: ""
+        cloudabilityAccessKey: ""
+        cloudabilitySecretKey: ""
+        cloudabilityEnvId: ""
+        customAzureClientSecret: ""
+
 
 kubecost:
   ## Override the image name and version for containers that use the aggregator image.
