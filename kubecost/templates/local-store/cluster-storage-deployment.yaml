@@ -1,0 +1,128 @@
+{{- if eq (include "kubecost.localStore.enabled" .) "enabled" }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "kubecost.localStore.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "kubecost.localStore.commonLabels" . | nindent 4 }}
+    {{- with .Values.global.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  annotations:
+  {{- with .Values.global.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.localStore.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "kubecost.localStore.selectorLabels" . | nindent 6 }}
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        {{- include "kubecost.localStore.selectorLabels" . | nindent 8 }}
+        {{- with .Values.global.additionalLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      annotations:
+        {{- with .Values.global.podAnnotations}}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        checksum/configs: {{ include "kubecost.configsChecksum" . }}
+    spec:
+      {{- if .Values.global.platforms.openshift.enabled }}
+      securityContext:
+      {{- toYaml .Values.global.platforms.openshift.securityContext | nindent 8 }}
+      {{- else if .Values.global.securityContext }}
+      securityContext:
+      {{- toYaml .Values.global.securityContext | nindent 8 }}
+      {{- else }}
+      securityContext:
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+      {{- end }}
+      restartPolicy: Always
+      volumes:
+        - name: file-storage
+          {{- if ((.Values.localStore).persistentVolume).enabled }}
+          persistentVolumeClaim:
+            claimName: {{ default ((.Values.localStore).persistentVolume).existingClaim ( include "kubecost.localStore.fullname" . ) }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+      containers:
+        - name: local-object-store
+          image: {{ include "kubecost.localStore.image" . }}
+          {{- if ((.Values.localStore).readinessProbe).enabled }}
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 9006
+            initialDelaySeconds: {{ (.Values.localStore).readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ (.Values.localStore).readinessProbe.periodSeconds }}
+            failureThreshold: {{ (.Values.localStore).readinessProbe.failureThreshold }}
+          {{- end }}
+          {{- if .Values.localStore.imagePullPolicy }}
+          imagePullPolicy: {{ .Values.localStore.imagePullPolicy }}
+          {{- else }}
+          imagePullPolicy: Always
+          {{- end }}
+          args: ["cluster-storage"]
+          ports:
+            - name: tcp-api
+              containerPort: 9006
+              protocol: TCP
+          {{- with (.Values.localStore).resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.global.containerSecurityContext }}
+          securityContext:
+            {{- toYaml .Values.global.containerSecurityContext | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: file-storage
+              mountPath: /var/configs
+          {{- if (.Values.localStore).extraVolumeMounts }}
+            {{- toYaml (.Values.localStore).extraVolumeMounts | nindent 4 }}
+          {{- end }}
+          env:
+            - name: CONFIG_PATH
+              value: /var/configs/
+            - name: RESOLUTION_10M_RETENTION
+              value: {{ (quote .Values.clusterController.retention10m) }}
+            - name: RESOLUTION_1H_RETENTION
+              value: {{ (quote .Values.clusterController.retention1h) }}
+            - name: RESOLUTION_1D_RETENTION
+              value: {{ (quote .Values.clusterController.retention1d) }}
+            {{- range $key, $value := (.Values.localStore).env }}
+            - name: {{ $key | quote }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- include "common.systemProxy" . }}
+    {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+      {{- range $.Values.imagePullSecrets }}
+        - name: {{ .name }}
+      {{- end }}
+    {{- end }}
+      {{- with (.Values.localStore).nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with (.Values.localStore).tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with (.Values.localStore).affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

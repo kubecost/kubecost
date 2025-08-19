@@ -12,10 +12,19 @@ global:
   ## The contents should be stored under a key named storage-config.yaml by default.
   ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-long-term-federated-storage-configuration
   federatedStorage:
-    # A federated storage config can be provided via a secret or via helm values.
-    # If both are provided, the federatedStorageConfig take precedence.
+    config: ""
+    # A federated storage config can be provided via an existingSecretName or via a string in helm values.
+    # If both are provided, the string in helm values take precedence.
+    # Example:
+    #   config: |-
+    #     type: S3
+    #     config:
+    #       bucket: ibm-kubecost-unified-agent-demo-data
+    #       endpoint: s3.amazonaws.com
+    #       region: us-west-2
+    #       access_key: xxx
+    #       secret_key: xxx
     existingSecretName: ""
-    federatedStorageConfig: ""  # Use this to include the federated storage config via helm values.
     # If you want to use a different file name for the federated storage config, you can set the fileName value.
     fileName: federated-store.yaml  # set this value to change what the file name for the yaml config is
   ## If global.imageRegistry is set, it will override all kubecost images to allow air-gapped and self-hosted registries.
@@ -303,14 +312,6 @@ enterpriseCustomPricing:
   location:
     URI: /var/configs/enterprise-pricing/pricing.csv
 
-instanceTypes:
-  enabled: false
-  #  kubectl create configmap -n kubecost custom-instance-types --from-file custom.json
-  custom:
-    configMapName: custom-instance-types
-    location:
-      URI: /var/configs/instance-types/custom.json
-
 ## Kubecost SAML (enterprise key required)
 ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-user-management-saml
 saml:
@@ -513,11 +514,61 @@ frontend:
       - Cache-Control "must-revalidate";
       - "X-Content-Type-Options \"nosniff\";"
 
+localStore:
+  enabled: true
+  retention10m: 36
+  retention1h: 49
+  retention1d: 15
+
+  resources: {}
+  # requests:
+  #   cpu: 1000m
+  #   memory: 1Gi
+  # limits:
+  #   memory: 3Gi
+  #   cpu: 100m
+
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 200
+
+  ## Add a nodeSelector for local-object-store pod
+  nodeSelector: {}
+
+  ## Tolerations for the local-object-store pod
+  tolerations: []
+
+  ## Affinity for the local-object-store pod
+  affinity: {}
+
+  ## Define environment variables for local-object-store
+  extraEnv: {}
+
+  ## Define extra volumes for the local-object-store
+  extraVolumes: []
+
+  ## Define extra volumemounts for the local-object-store
+  extraVolumeMounts: []
+
+  persistentVolume:
+    size: 32Gi
+    enabled: true  # Note that setting this to false means cluster storage will be wiped out on pod restart.
+    storageClass: ""
+    existingClaim: ""  # kubecost-cost-analyzer # use this if upgrading from kubecost 2.x
+    labels: {}
+    annotations: {}
+  fullImageName: ""
+
 ## Values for the finops-agent subchart
 finops-agent:
+  clusterId: cluster-one
   enabled: true
-  # federated storage for the finops-agent will be managed by this chart
-  # TODO write better explanation
+  ## federated storage for the finops-agent will be managed by this chart
+  ## .Values.finops-agent.federatedStorage should not be set when running the agent as a sub-chart
+  ## existing secrets can be configured using .Values.global.federatedStorage
+  ## or .Values.federatedStorage.config to have the helm chart generate a secret with a provided config
   federatedStorage: {}
 
   agent:
@@ -948,14 +999,13 @@ aggregator:
   aggregatorDbStorage:
     storageClass: ""  # default storage class
     storageRequest: 128Gi
-
   resources:
-    limits:
-      memory: 5Gi
+    limits: {}
+      # memory: ""
+      # cpu: ""
     requests:
-      cpu: 2000m
-      memory: 5Gi
-
+      memory: 3Gi
+      cpu: 100m
   readinessProbe:
     enabled: true
     initialDelaySeconds: 10
@@ -1225,6 +1275,12 @@ clusterController:
   #       rightsizing:
   #         enabled: false
 #  fqdn: kubecost-cluster-controller.kubecost.svc.cluster.local:9731
+
+  rbac:
+    containerRequestRightSizing: true
+    clusterRightSizing: false
+    clusterTurndown: false
+    namespaceTurndown: false
 
 reporting:
   # Kubecost bug report feature: Logs access/collection limited to .Release.Namespace

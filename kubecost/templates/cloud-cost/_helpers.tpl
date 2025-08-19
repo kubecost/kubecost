@@ -27,6 +27,17 @@ support templating a chart which uses the lookup function.
 {{- end -}}
 {{- end -}}
 
+{{- define "kubecost.cloudCost.image" }}
+  {{- if .Values.cloudCost.fullImageName }}
+    {{- .Values.cloudCost.fullImageName }}
+  {{- else if .Values.kubecost.fullImageName }}
+    {{- .Values.kubecost.fullImageName }}
+  {{- else if eq "development" .Chart.AppVersion -}}
+    gcr.io/kubecost1/cost-model-nightly:latest
+  {{- else -}}
+    {{- include "common.imageRegistry" . }}/{{ .Values.kubecost.image.repository }}:{{ .Values.kubecost.image.tag }}
+  {{- end }}
+{{- end }}
 
 {{- define "kubecost.cloudCost.name" -}}
 {{- default "cloud-cost" | trunc 63 | trimSuffix "-" -}}
@@ -152,9 +163,9 @@ for more information
 }
 {{- end }}
 
-{{- define "kubecost.cloudCost.gcpCloudIntegrationCheck" }}
+{{- define "kubecost.cloudCost.gcpBigQuery.CloudIntegrationCheck" }}
 {{- if ((.Values.kubecostProductConfigs).bigQueryBillingDataDataset) }}
-{{- fail (include "kubecost.cloudCost.gcpCloudIntegrationJSON" .) }}
+{{- fail (include "kubecost.cloudCost.gcpBigQuery.CloudIntegrationJSON" .) }}
 {{- end }}
 {{- end }}
 

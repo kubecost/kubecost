@@ -202,11 +202,6 @@ spec:
           configMap:
             name: {{ .Values.enterpriseCustomPricing.configMapName }}
         {{- end }}
-        {{- if (.Values.instanceTypes).enabled }}
-        - name: custom-instance-types
-          configMap:
-            name: {{ .Values.instanceTypes.custom.configMapName }}
-        {{- end }}
         {{- if ((.Values.kubecostProductConfigs).actions).config }}
         - name: actions-config
           configMap:
@@ -241,7 +236,7 @@ spec:
       initContainers:
       {{- if .Values.global.updateCaTrust.enabled }}
         - name: update-ca-trust
-          image: {{ include "aggregator.image" . }}
+          image: {{ include "kubecost.aggregator.image" . }}
           {{- if .Values.kubecost.imagePullPolicy }}
           imagePullPolicy: {{ .Values.kubecost.imagePullPolicy }}
           {{- else }}
@@ -276,7 +271,7 @@ spec:
           securityContext:
             {{- toYaml .Values.global.containerSecurityContext | nindent 12 }}
         {{- end }}
-          image: {{ include "aggregator.image" . }}
+          image: {{ include "kubecost.aggregator.image" . }}
           {{- if .Values.aggregator.readinessProbe.enabled }}
           readinessProbe:
             httpGet:
@@ -388,10 +383,6 @@ spec:
             - name: kubecost-enterprise-pricing
               mountPath: /var/configs/enterprise-pricing
             {{- end }}
-            {{- if and (.Values.instanceTypes.enabled) (.Values.instanceTypes.custom) }}
-            - name: custom-instance-types
-              mountPath: /var/configs/instance-types
-            {{- end }}
             {{- if ((.Values.kubecostProductConfigs).actions).config }}
             - name: actions-config
               mountPath: /var/configs/actions
@@ -402,7 +393,7 @@ spec:
               mountPath: /var/configs/actions/storage
             - name: federated-storage-config
               mountPath: /var/configs/actions/storage/actions-store.yaml
-              subPath: actions-store.yaml
+              subPath: {{ include "kubecost.federatedStorage.fileName" . }}
               readOnly: true
             {{- end }}
             {{- if ((.Values.kubecostProductConfigs).actions).storageConfig }}
@@ -612,11 +603,7 @@ spec:
             - name: ENTERPRISE_CUSTOM_PRICING_APPLY_RETROACTIVELY
               value: "true"
             {{- end }}
-            {{- if (.Values.instanceTypes).enabled }}
-            - name: CUSTOM_TYPE_INSTANCES_URI
-              value: {{ (quote .Values.instanceTypes.custom.location.URI) }}
-            {{- end }}
-           {{- if ((.Values.kubecostProductConfigs).actions).enabled }}
+            {{- if ((.Values.kubecostProductConfigs).actions).enabled }}
             - name: ACTIONS_ENABLED
               value: "true"
             - name: ACTIONS_BUCKET_CONFIG

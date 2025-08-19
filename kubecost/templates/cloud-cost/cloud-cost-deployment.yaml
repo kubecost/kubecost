@@ -136,7 +136,7 @@ spec:
       {{- end }}
       {{- if .Values.global.updateCaTrust.enabled }}
       - name: update-ca-trust
-        image: {{ include "cloudCost.image" . }}
+        image: {{ include "kubecost.cloudCost.image" . }}
         {{- if .Values.kubecost.imagePullPolicy }}
         imagePullPolicy: {{ .Values.kubecost.imagePullPolicy }}
         {{- else }}
@@ -164,7 +164,7 @@ spec:
       {{- end}}
       containers:
         - name: cloud-cost
-          image: {{ include "cloudCost.image" . }}
+          image: {{ include "kubecost.cloudCost.image" . }}
           {{- if (.Values.cloudCost).readinessProbe.enabled }}
           readinessProbe:
             httpGet:
