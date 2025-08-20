@@ -1,0 +1,17 @@
+{{- if eq (include "kubecost.localStore.enabled" .) "enabled" }}
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ include "kubecost.localStore.serviceName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "kubecost.localStore.commonLabels" . | nindent 4 }}
+spec:
+  selector:
+    {{- include "kubecost.localStore.selectorLabels" . | nindent 4 }}
+  type: "ClusterIP"
+  ports:
+    - name: tcp-api
+      port: 9006
+      targetPort: 9006
+{{- end }}

@@ -79,8 +79,8 @@ data:
         {{- if .Values.frontend.useDefaultFqdn }}
         server {{ .Release.Name }}-forecasting.{{ .Release.Namespace }}.svc.cluster.local:5000;
         {{- else }}
-        {{- if (.Values.frontend.forcasting).fqdn }}
-        server {{ .Values.frontend.forcasting.fqdn }};
+        {{- if (.Values.frontend.forecasting).fqdn }}
+        server {{ .Values.frontend.forecasting.fqdn }};
         {{- else }}
         server {{ .Release.Name }}-forecasting.{{ .Release.Namespace }}:5000;
         {{- end }}
@@ -505,6 +505,7 @@ data:
                 "carbonEstimatesEnabled": "{{ include "kubecost.carbonEstimates.enabled" . }}",
                 "clusterControllerEnabled": "{{ include "kubecost.clusterController.enabled" . }}",
                 "forecastingEnabled": "{{ include "kubecost.forecasting.enabled" . }}",
+                "turbonomicEnabled": "{{ include "kubecost.turbonomic.enabled" . }}",
                 "chartVersion": "DEVELOP_BRANCH",
                 "hourlyDataRetention": "{{ (.Values.kubecost.retention1h) }}",
                 "dailyDataRetention": "{{ (.Values.kubecost.retention1d) }}",
@@ -518,7 +519,8 @@ data:
                 "hideBellIcon": "{{ default true ((.Values.kubecostProductConfigs).hideBellIcon) }}",
                 "hideTeams": "{{ default false ((.Values.kubecostProductConfigs).hideTeams) }}",
                 "legacyModeEnabled": "{{ .Values.aggregator.legacyMode }}",
-                "clusterId": "{{ include "kubecost.clusterId" . }}"
+                "clusterId": "{{ include "kubecost.clusterId" . }}",
+                "defaultSavingsProfile": "{{ .Values.kubecostProductConfigs.clusterProfile }}"
                 }
             ';
         }

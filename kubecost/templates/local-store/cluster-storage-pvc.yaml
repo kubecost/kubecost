@@ -1,0 +1,27 @@
+{{- if eq (include "kubecost.localStore.enabled" .) "enabled" }}
+{{- if and ((.Values.localStore).persistentVolume).enabled (not ((.Values.localStore).persistentVolume).existingClaim) -}}
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{ include "kubecost.localStore.pvcName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
+    {{- with .Values.localStore.persistentVolume.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.localStore.persistentVolume.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  {{- if .Values.localStore.persistentVolume.storageClass }}
+  storageClassName: {{ .Values.localStore.persistentVolume.storageClass }}
+  {{ end }}
+  resources:
+    requests:
+      storage: {{ .Values.localStore.persistentVolume.size }}
+{{- end -}}
+{{- end -}}

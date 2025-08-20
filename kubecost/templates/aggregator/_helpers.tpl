@@ -1,3 +1,15 @@
+{{- define "kubecost.aggregator.image" }}
+  {{- if .Values.aggregator.fullImageName }}
+    {{- .Values.aggregator.fullImageName }}
+  {{- else if .Values.kubecost.fullImageName }}
+    {{- .Values.kubecost.fullImageName }}
+  {{- else if eq "development" .Chart.AppVersion -}}
+    gcr.io/kubecost1/cost-model-nightly:latest
+  {{- else -}}
+    {{- include "common.imageRegistry" . }}/{{ .Values.kubecost.image.repository }}:{{ .Values.kubecost.image.tag }}
+  {{- end }}
+{{- end }}
+
 {{- define "kubecost.aggregator.name" -}}
 {{- default "aggregator" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}

@@ -6,6 +6,14 @@
 {{- end -}}
 {{- end -}}
 
+{{- define "kubecost.forecasting.image" }}
+  {{- if .Values.forecasting.fullImageName }}
+    {{- .Values.forecasting.fullImageName }}
+  {{- else -}}
+    {{- include "common.imageRegistry" . }}/{{ .Values.forecasting.image.repository }}:{{ .Values.forecasting.image.tag }}
+  {{- end }}
+{{- end }}
+
 {{- define "kubecost.forecasting.name" -}}
 {{- default "forecasting" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}

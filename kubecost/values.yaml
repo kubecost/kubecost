@@ -2,33 +2,55 @@
 ##
 
 global:
-  ## If your DNS server doesn't live in the same zone as Kubecost
+  ## @param clusterId The id of the cluster REQUIRED
   ##
-  zone: ""  # cluster.local
-
-  clusterId: cluster-one  # globally unique cluster name
-
+  clusterId: cluster-one
+  ## @param global.federatedStorage.config The config for the federated storage
+  ## @param global.federatedStorage.existingSecret The name of an existing secret to use for the federated storage config. Note, you cannot set both `config` and `existingSecret`.
   ## The name of the Secret containing a bucket config for federated storage.
   ## The contents should be stored under a key named storage-config.yaml by default.
   ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-long-term-federated-storage-configuration
   federatedStorage:
-    # A federated storage config can be provided via a secret or via helm values.
-    # If both are provided, the federatedStorageConfig take precedence.
-    existingSecretName: ""
-    federatedStorageConfig: ""  # Use this to include the federated storage config via helm values.
+    config: ""
+    # A federated storage config can be provided via an existingSecret or via a string in helm values.
+    # If both are provided, the string in helm values take precedence.
+    # Example:
+    #   config: |-
+    #     type: S3
+    #     config:
+    #       bucket: ibm-kubecost-unified-agent-demo-data
+    #       endpoint: s3.amazonaws.com
+    #       region: us-west-2
+    #       access_key: xxx
+    #       secret_key: xxx
+    existingSecret: ""
     # If you want to use a different file name for the federated storage config, you can set the fileName value.
     fileName: federated-store.yaml  # set this value to change what the file name for the yaml config is
-  ## If global.imageRegistry is set, it will override all kubecost images to allow air-gapped and self-hosted registries.
-  ##
+    ## @param cspPricingApiKey.existingSecret The name of an existing secret to use for the GCP API key. If this is set, the secret will be used. Leave empty to create a new secret.
+    ## @param cspPricingApiKey.apiKey The GCP API key value. If this is set, the secret will be created. Leave empty to use an existing secret.
+    ## This is currently only used for GCP.
+  cspPricingApiKey:
+    existingSecret: ""
+    apiKey: ""
+  ## @param global.imageRegistry The image registry to use for the finops agent
   imageRegistry: ""
-
-  ## Reference to one or more secrets to be used when pulling images
-  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+  ## E.g.
+  ## imagePullSecrets:
+  ##   - myRegistryKeySecretName
   ##
   imagePullSecrets: []
-  # - name: "image-pull-secret"
-  # or
-  # - "image-pull-secret"
+  ## If your DNS server doesn't live in the same zone as Kubecost
+  ##
+  zone: ""  # cluster.local
+  ## Compatibility adaptations for Kubernetes platforms
+  ##
+  compatibility:
+    ## Compatibility adaptations for Openshift
+    ##
+    openshift:
+      ## @param global.compatibility.openshift.adaptSecurityContext Adapt the securityContext sections of the deployment to make them compatible with Openshift restricted-v2 SCC: remove runAsUser, runAsGroup and fsGroup and let the platform use their allowed default IDs. Possible values: auto (apply if the detected running cluster is Openshift), force (perform the adaptation always), disabled (do not perform adaptation)
+      ##
+      adaptSecurityContext: auto
 
   ## Kubecost Alerting
   ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=ui-alerts
@@ -227,7 +249,7 @@ global:
 ## Provide a name override for the chart.
 # nameOverride: ""
 ## Provide a full name override option for the chart.
-# fullnameOverride: ""
+fullnameOverride: ""
 
 ## Provide additional labels for the chart.
 # chartLabels:
@@ -471,13 +493,58 @@ frontend:
       - Cache-Control "must-revalidate";
       - "X-Content-Type-Options \"nosniff\";"
 
-## Values for the finops-agent subchart
-finops-agent:
+localStore:
   enabled: true
-  # federated storage for the finops-agent will be managed by this chart
-  # TODO write better explanation
-  federatedStorage: {}
+  retention10m: 36
+  retention1h: 49
+  retention1d: 15
 
+  resources: {}
+  # requests:
+  #   cpu: 1000m
+  #   memory: 1Gi
+  # limits:
+  #   memory: 3Gi
+  #   cpu: 100m
+
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 200
+
+  ## Add a nodeSelector for local-object-store pod
+  nodeSelector: {}
+
+  ## Tolerations for the local-object-store pod
+  tolerations: []
+
+  ## Affinity for the local-object-store pod
+  affinity: {}
+
+  ## Define environment variables for local-object-store
+  extraEnv: {}
+
+  ## Define extra volumes for the local-object-store
+  extraVolumes: []
+
+  ## Define extra volumemounts for the local-object-store
+  extraVolumeMounts: []
+
+  persistentVolume:
+    size: 32Gi
+    enabled: true  # Note that setting this to false means cluster storage will be wiped out on pod restart.
+    storageClass: ""
+    existingClaim: ""  # kubecost-cost-analyzer # use this if upgrading from kubecost 2.x
+    labels: {}
+    annotations:
+      ## The "helm.sh/resource-policy: keep" annotation is used to prevent the persistent volume from being deleted when uninstalling or moving to a different deployment method.
+      # This can be used to allow the agent history to be uploaded to cloud storage when upgrading to Enterprise.
+      helm.sh/resource-policy: keep
+  fullImageName: ""
+
+## Values for the finops-agent sub-chart
+finops-agent:
   agent:
     collectorDataSource:
       enabled: true
@@ -486,52 +553,39 @@ finops-agent:
       retentionResolution10m: 6
       retentionResolution1h: 3
       retentionResolution1d: 2
-    kubecost:
-      enabled: true
+    exporter:
+      emissionInterval: 1m
     cloudability:
+      ## Cloudability requires an API key to send data to the cloudability platform
       enabled: false
+      pathToCloudabilitySecrets: "/opt/cloudability"
+      keyAccessFile: ""
+      keySecretFile: ""
+      envIDFile: ""
+      localWorkingDir: /tmp
+      uploadRegion: us
+      httpsClientTimeout: 60
+      uploadRetryCount: 5
+      outboundProxyInsecure: false
+      parseMetricData: false
+      outboundProxy: ""
+      outboundProxyAuth: ""
+      customS3UploadBucket: ""
+      customS3UploadRegion: ""
+      customAzureBlobContainerName: ""
+      customAzureBlobURL: ""
+      customAzureTenantID: ""
+      customAzureClientID: ""
+      customAzureBlobClientSecretFile: ""
+      emissionInterval: 3m
 
-
-federatedStorage:
-  ## federated storage config can be supplied via a secret or the yaml block
-  ## below when using the block below, only a single provider is supported,
-  ## others are for example purposes.
-  ## TODO update doc
-  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-long-term-federated-storage-configuration
-  # config: |-
-  #   # AWS EXAMPLE
-  #   type: S3
-  #   config:
-  #     bucket: kubecost-export-storage
-  #     endpoint: s3.amazonaws.com
-  #     region: us-east-1
-  #     # best practice is to use pod identities to access AWS resources. Otherwise it is possible to use an access_key and secret_key
-  #     access_key: "<your-access-key>"
-  #     secret_key: "<your-secret-key>"
-  #   # AZURE EXAMPLE
-  #   type: AZURE
-  #   config:
-  #     storage_account: ""
-  #     storage_account_key: ""
-  #     container: ""
-  #     max_retries: 0
-  #   # GCP EXAMPLE
-  #   type: GCS
-  #   config:
-  #     bucket: kubecost-export-storage
-  #     service_account: |-
-  #       {
-  #         "type": "service_account",
-  #         "project_id": "...",
-  #         "private_key_id": "...",
-  #         "private_key": "...",
-  #         "client_email": "...",
-  #         "client_id": "...",
-  #         "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-  #         "token_uri": "https://oauth2.googleapis.com/token",
-  #         "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-  #         "client_x509_cert_url": ""
-  #       }
+      secret:
+        create: false
+        existingSecret: ""
+        cloudabilityAccessKey: ""
+        cloudabilitySecretKey: ""
+        cloudabilityEnvId: ""
+        customAzureClientSecret: ""
 
 
 kubecost:
@@ -906,14 +960,13 @@ aggregator:
   aggregatorDbStorage:
     storageClass: ""  # default storage class
     storageRequest: 128Gi
-
   resources:
-    limits:
-      memory: 5Gi
+    limits: {}
+      # memory: ""
+      # cpu: ""
     requests:
-      cpu: 2000m
-      memory: 5Gi
-
+      memory: 3Gi
+      cpu: 100m
   readinessProbe:
     enabled: true
     initialDelaySeconds: 10
@@ -1184,6 +1237,12 @@ clusterController:
   #         enabled: false
 #  fqdn: kubecost-cluster-controller.kubecost.svc.cluster.local:9731
 
+  rbac:
+    containerRequestRightSizing: true
+    clusterRightSizing: false
+    clusterTurndown: false
+    namespaceTurndown: false
+
 reporting:
   # Kubecost bug report feature: Logs access/collection limited to .Release.Namespace
   # Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=capture-bug-report
@@ -1291,10 +1350,19 @@ kubecostProductConfigs:
     #     cluster-2:
     #       containerRequestRightSizing:
     #         enabled: false
+    #   actions:
+    #     containerRequestRightSizing:
+    # 	    resize-my-cluster:
+    # 		     cpu: true
+    # 		     enabled: true
+    # 		     filter: "cluster:\"my-cluster\""
+    # 		     memory: true
+    # 		     profile: "Development"
+    # 		     rightSizingWindow: "24h"
 
 #   # The cluster profile represents a predefined set of parameters to use when calculating savings.
 #   # Possible values are: [ development, production, high-availability ]
-#   clusterProfile: production
+  clusterProfile: production
 #   spotLabel: lifecycle
 #   spotLabelValue: Ec2Spot
 #   gpuLabel: gpu
@@ -1441,4 +1509,4 @@ extraObjects: []
 basicHealth:
   registry: docker.io
   repository: alpine/k8s
-  tag: 1.33.3
+  tag: 1.33.4
