@@ -10,7 +10,7 @@ Kubecost 3.0 preconditions
   {{- if (.Values.kubecostModel).federatedStorageConfig -}}
     {{ fail "\n\n--- `.Values.kubecostModel.federatedStorageConfig` is no longer supported. Please use `.Values.global.federatedStorage.config` instead. ---" }}
   {{- else if (.Values.kubecostModel).federatedStorageConfigSecret -}}
-    {{ fail "\n\n--- `.Values.kubecostModel.federatedStorageConfigSecret` is no longer supported. Please use `.Values.kubecostModel.federatedStorage.existingSecretName` instead. ---" }}
+    {{ fail "\n\n--- `.Values.kubecostModel.federatedStorageConfigSecret` is no longer supported. Please use `.Values.kubecostModel.federatedStorage.existingSecret` instead. ---" }}
   {{- end -}}
 {{- end -}}
 
