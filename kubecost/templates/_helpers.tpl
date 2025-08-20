@@ -10,7 +10,7 @@ Kubecost 3.0 preconditions
   {{- if (.Values.kubecostModel).federatedStorageConfig -}}
     {{ fail "\n\n--- `.Values.kubecostModel.federatedStorageConfig` is no longer supported. Please use `.Values.global.federatedStorage.config` instead. ---" }}
   {{- else if (.Values.kubecostModel).federatedStorageConfigSecret -}}
-    {{ fail "\n\n--- `.Values.kubecostModel.federatedStorageConfigSecret` is no longer supported. Please use `.Values.kubecostModel.federatedStorage.existingSecretName` instead. ---" }}
+    {{ fail "\n\n--- `.Values.kubecostModel.federatedStorageConfigSecret` is no longer supported. Please use `.Values.kubecostModel.federatedStorage.existingSecret` instead. ---" }}
   {{- end -}}
 {{- end -}}
 
@@ -90,15 +90,15 @@ Verify that the global cluster id is set
 */}}
 {{- define "kubecost.clusterId.check" -}}
   {{- if ((((.Values.prometheus).server).global).external_labels).cluster_id }}
-    {{ fail "\n\nIn Kubecost 3.0, `.Values.prometheus.server.global.external_labels.cluster_id` is no longer required.\nWhen it is set, it is used for backwards compatibility. \nSee TODO for more information.\n" }}
+    {{ fail "\n\nIn Kubecost 3.0, `.Values.prometheus.server.global.external_labels.cluster_id` has been moved to `.Values.global.clusterId`\n" }}
   {{- end }}
   {{- if (.Values.kubecostProductConfigs).clusterName }}
-    {{ fail "\n\nIn Kubecost 3.0, `.Values.kubecostProductConfigs.clusterName` is no longer required.\nWhen it is set, it is used for backwards compatibility. \nSee TODO for more information.\n" }}
+    {{ fail "\n\nIn Kubecost 3.0, `.Values.kubecostProductConfigs.clusterName` has been moved to `.Values.global.clusterId`\n" }}
   {{- end }}
   {{- if not .Values.global.clusterId }}
     {{- fail "\n\nIn Kubecost 3.0, `.Values.global.clusterId` is required to be set"}}
   {{- end }}
-  {{- if or (.Values.global.federatedStorage).existingSecret ((.Values.federatedStorage).secret).config }}
+  {{- if or .Values.global.federatedStorage.existingSecret .Values.global.federatedStorage.config }}
     {{- if eq .Values.global.clusterId "cluster-one" }}
       {{- printf "\n\nWarning: it is recommended to specify a unique `.Values.global.clusterId` for each cluster.\nNote this must be a globally unique identifier in multi-cluster environments.\n" -}}
     {{- end -}}
@@ -124,14 +124,6 @@ example, does not support templating a chart which uses the lookup function.
 {{- end -}}
 {{- end -}}
 
-{{/*
-federated storage source check. Either the Secret must be specified or the JSON, not both.
-*/}}
-{{- define "kubecost.federatedStorage.source.check" -}}
-  {{- if and ((.Values.global).federatedStorage).existingSecret ((.Values.federatedStorage).secret).config -}}
-    {{- fail "\n.Values.global.federatedStorage.existingSecret and .Values.federatedStorage.secret.config both set, please specify only one." -}}
-  {{- end -}}
-{{- end -}}
 
 {{/*
 Actions Storage source contents check. Either the Secret must be specified or the YAML, not both.
@@ -502,10 +494,8 @@ federated storage config helpers
 */}}
 
 {{- define "kubecost.federatedStorage.secretName" }}
-  {{- if (.Values.kubecostModel).federatedStorageConfigSecret }}
-    {{- .Values.kubecostModel.federatedStorageConfigSecret }}
-  {{- else if (.Values.global.federatedStorage).existingSecret -}}
-    {{ .Values.global.federatedStorage.existingSecret }}
+  {{- if .Values.global.federatedStorage.existingSecret  }}
+    {{- .Values.global.federatedStorage.existingSecret }}
   {{- else -}}
     {{- .Release.Name }}-federated-storage-config
   {{- end }}
@@ -515,12 +505,8 @@ federated storage config helpers
 NOTE: added kubecostModel for backward compatibility
 */}}
 {{- define "kubecost.federatedStorage.config" }}
-  {{- if (.Values.kubecostModel).federatedStorageConfig -}}
-    {{- (.Values.kubecostModel).federatedStorageConfig -}}
-  {{- else if (.Values.federatedStorage).config -}}
-    {{- (.Values.federatedStorage).config -}}
-  {{- else if (.Values.global.federatedStorage).config -}}
-    {{- (.Values.global.federatedStorage).config -}}
+  {{- if .Values.global.federatedStorage.config -}}
+    {{- .Values.global.federatedStorage.config -}}
   {{- else }}
     type: cluster
     config:

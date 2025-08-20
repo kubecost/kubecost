@@ -1,8 +1,7 @@
 global:
   federatedStorage:
     existingSecret: federated-storage-config
-kubecostProductConfigs:
-  clusterName: CLUSTER_NAME
+  clusterId: helm-testing
 #  cloudCost:
 #  cloudIntegrationSecret: cloud-integration
 serviceAccount:  # this example uses AWS IRSA, which creates a service account with rights to the s3 bucket. If using keys+secrets in the federated storage, set create: true
@@ -25,4 +24,3 @@ aggregator:
       memory: 10Gi
 finops-agent:
   enabled: false
-  clusterId: cluster-one
