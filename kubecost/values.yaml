@@ -31,59 +31,25 @@ global:
   # - "image-pull-secret"
 
   ## Kubecost Alerting
-  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=ui-alerts
-  ##
+  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=ui-alerts
   notifications:
-    # alertConfigs:
-    #   frontendUrl: http://localhost:9090  # Optional
-    #   globalSlackWebhookUrl: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX  # Optional
-    #   globalMsTeamsWebhookUrl: https://xxxxx.webhook.office.com/webhookb2/XXXXXXXXXXXXXXXXXXXXXXXX/IncomingWebhook/XXXXXXXXXXXXXXXXXXXXXXXX  # Optional
-    #   globalAlertEmails:
-    #     - recipient@example.com
-    #     - additionalRecipient@example.com
-    #   globalEmailSubject: Custom Subject
-    #   alerts:
-    #     # Daily namespace budget alert on namespace `kubecost`
-    #     - type: budget                # supported: budget, recurringUpdate
-    #       threshold: 50               # optional, required for budget alerts
-    #       window: daily               # or 1d
-    #       aggregation: namespace
-    #       filter: kubecost
-    #       ownerContact:               # optional, overrides globalAlertEmails default
-    #         - owner@example.com
-    #         - owner2@example.com
-    #       slackWebhookUrl: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX  # Optional
-    #       msTeamsWebhookUrl: https://xxxxx.webhook.office.com/webhookb2/XXXXXXXXXXXXXXXXXXXXXXXX/IncomingWebhook/XXXXXXXXXXXXXXXXXXXXXXXX  # Optional
-    #     # Daily cluster budget alert on cluster `cluster-one`
-    #     - type: budget
-    #       threshold: 200.8        # optional, required for budget alerts
-    #       window: daily           # or 1d
-    #       aggregation: cluster
-    #       filter: cluster-one     # does not accept csv
-    #     # Recurring weekly update (weeklyUpdate alert)
-    #     - type: recurringUpdate
-    #       window: weekly          # or 7d
-    #       aggregation: namespace
-    #       filter: '*'
-    #     # Recurring weekly namespace update on kubecost namespace
-    #     - type: recurringUpdate
-    #       window: weekly # or 7d
-    #       aggregation: namespace
-    #       filter: kubecost
-    #     # Spend Change Alert
-    #     - type: spendChange         # change relative to moving avg
-    #       relativeThreshold: 0.20   # Proportional change relative to baseline. Must be greater than -1 (can be negative)
-    #       window: 1d                # accepts ‘d’, ‘h’
-    #       baselineWindow: 30d       # previous window, offset by window
-    #       aggregation: namespace
-    #       filter: kubecost, default # accepts csv
-    #     # Health Score Alert
-    #     - type: health              # Alerts when health score changes by a threshold
-    #       window: 10m
-    #       threshold: 5              # Send Alert if health scores changes by 5 or more
-    #     # Kubecost Health Diagnostic
-    #     - type: diagnostic          # Alerts when kubecost is unable to compute costs - ie: unreachable metric sources
-    #       window: 10m
+  #   alertConfigs:
+  #     frontendUrl: http://localhost:9090/  # Optional
+  #     globalSlackWebhookUrl: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX  # Optional
+  #     globalMsTeamsWebhookUrl: https://xxxxx.webhook.office.com/webhookb2/XXXXXXXXXXXXXXXXXXXXXXXX/IncomingWebhook/XXXXXXXXXXXXXXXXXXXXXXXX  # Optional
+  #     globalAlertEmails:
+  #       - recipient@example.com
+  #       - additionalRecipient@example.com
+  #     globalEmailSubject: Custom Subject
+  #     alerts:
+  #       # Application health alerts are reported. 
+  #       - type: health    # Currently supports Multi Cluster diagnostic related alerts and further application alerts can be added
+  #         window: 1h      # how often do you want alert system to poll for health related alerts.
+  #         ownerContact:   # optional, adds email address to notify in addition to globalAlertEmails.
+  #           - owner@example.com
+  #           - owner2@example.com
+  #         slackWebhookUrl: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX  # Optional, adds slack webhook to notify in addition to globalSlackWebhookUrl.
+  #         msTeamsWebhookUrl: https://xxxxx.webhook.office.com/webhookb2/XXXXXXXXXXXXXXXXXXXXXXXX/IncomingWebhook/XXXXXXXXXXXXXXXXXXXXXXXX  # Optional, , adds MS teams webhook to notify in addition to globalMsTeamsWebhookUrl.
 
   ## Kubecost Saved Reports
   ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=ui-reports
