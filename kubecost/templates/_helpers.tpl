@@ -495,7 +495,7 @@ federated storage config helpers
 
 {{- define "kubecost.federatedStorage.secretName" }}
   {{- if .Values.global.federatedStorage.existingSecret  }}
-    {{ .Values.global.federatedStorage.existingSecret }}
+    {{- .Values.global.federatedStorage.existingSecret }}
   {{- else -}}
     {{- .Release.Name }}-federated-storage-config
   {{- end }}
