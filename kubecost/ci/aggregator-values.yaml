@@ -1,4 +1,5 @@
 global:
+  clusterId: helm-testing
   federatedStorage:
     existingSecret: federated-storage-config
 aggregator:
@@ -16,12 +17,3 @@ cloudCost:
   cloudIntegrationSecret: cloud-integration
 finops-agent:
   enabled: false
-  clusterId: cluster-one
-kubecostProductConfigs:
-  clusterName: CLUSTER_NAME
-prometheus:
-  server:
-    global:
-      external_labels:
-        # cluster_id should be unique for all clusters and the same value as .kubecostProductConfigs.clusterName
-        cluster_id: CLUSTER_NAME  # keeping for backward compatibility testing
