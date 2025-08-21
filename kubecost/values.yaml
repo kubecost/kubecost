@@ -65,7 +65,7 @@ global:
     #   globalEmailSubject: Custom Subject
     #   alerts:
     #     # Application health alerts are reported. 
-    #     - type: health    # Currently supports Multi Cluster diagnostic related alerts and further application alerts can be added
+    #     - type: health    # Monitors Kubecost health based on multi-cluster diagnostics.
     #       window: 1h      # how often do you want alert system to poll for health related alerts.
     #       ownerContact:   # optional, adds email address to notify in addition to globalAlertEmails.
     #         - owner@example.com
