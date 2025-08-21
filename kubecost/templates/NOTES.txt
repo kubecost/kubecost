@@ -5,7 +5,6 @@
 {{- include "kubecost.cloudCost.gcpBigQuery.CloudIntegrationCheck" . -}}
 {{- include "kubecost.cloudCost.azureStorage.CloudIntegrationCheck" . -}}
 {{- include "kubecost.federatedStorage.secret.check" . -}}
-{{- include "kubecost.federatedStorage.source.check" . -}}
 {{- include "kubecost.clusterId.check" . -}}
 {{- include "kubecost.caCertsSecretConfig.check" . -}}
 {{- include "kubecost.actionsStorageSourceCheck" . -}}

@@ -401,7 +401,7 @@ spec:
               mountPath: /var/configs/actions/storage
             {{- end }}
             {{- if ((.Values.kubecostProductConfigs).actions).storageConfigSecret }}
-            {{- if eq ((.Values.kubecostProductConfigs).actions).storageConfigSecret (.Values.kubecostModel).federatedStorageConfigSecret }}
+            {{- if eq ((.Values.kubecostProductConfigs).actions).storageConfigSecret .Values.global.federatedStorage.existingSecret  }}
             - name: actions-storage
               mountPath: /var/configs/actions/storage
             - name: federated-storage-config

@@ -12,7 +12,7 @@ global:
   ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-long-term-federated-storage-configuration
   federatedStorage:
     config: ""
-    # A federated storage config can be provided via an existingSecretName or via a string in helm values.
+    # A federated storage config can be provided via an existingSecret or via a string in helm values.
     # If both are provided, the string in helm values take precedence.
     # Example:
     #   config: |-
@@ -23,14 +23,14 @@ global:
     #       region: us-west-2
     #       access_key: xxx
     #       secret_key: xxx
-    existingSecretName: ""
+    existingSecret: ""
     # If you want to use a different file name for the federated storage config, you can set the fileName value.
     fileName: federated-store.yaml  # set this value to change what the file name for the yaml config is
-    ## @param cspPricingApiKey.existingSecretName The name of an existing secret to use for the GCP API key. If this is set, the secret will be used. Leave empty to create a new secret.
+    ## @param cspPricingApiKey.existingSecret The name of an existing secret to use for the GCP API key. If this is set, the secret will be used. Leave empty to create a new secret.
     ## @param cspPricingApiKey.apiKey The GCP API key value. If this is set, the secret will be created. Leave empty to use an existing secret.
     ## This is currently only used for GCP.
   cspPricingApiKey:
-    existingSecretName: ""
+    existingSecret: ""
     apiKey: ""
   ## @param global.imageRegistry The image registry to use for the finops agent
   imageRegistry: ""
@@ -1384,6 +1384,15 @@ kubecostProductConfigs:
     #     cluster-2:
     #       containerRequestRightSizing:
     #         enabled: false
+    #   actions:
+    #     containerRequestRightSizing:
+    # 	    resize-my-cluster:
+    # 		     cpu: true
+    # 		     enabled: true
+    # 		     filter: "cluster:\"my-cluster\""
+    # 		     memory: true
+    # 		     profile: "Development"
+    # 		     rightSizingWindow: "24h"
 
 #   # The cluster profile represents a predefined set of parameters to use when calculating savings.
 #   # Possible values are: [ development, production, high-availability ]
