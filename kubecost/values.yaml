@@ -1384,6 +1384,15 @@ kubecostProductConfigs:
     #     cluster-2:
     #       containerRequestRightSizing:
     #         enabled: false
+    #   actions:
+    #     containerRequestRightSizing:
+    # 	    resize-my-cluster:
+    # 		     cpu: true
+    # 		     enabled: true
+    # 		     filter: "cluster:\"my-cluster\""
+    # 		     memory: true
+    # 		     profile: "Development"
+    # 		     rightSizingWindow: "24h"
 
 #   # The cluster profile represents a predefined set of parameters to use when calculating savings.
 #   # Possible values are: [ development, production, high-availability ]
