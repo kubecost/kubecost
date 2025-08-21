@@ -60,7 +60,7 @@ spec:
           secret:
             defaultMode: 420
             secretName: {{ include "kubecost.federatedStorage.secretName" . }}
-        {{- if or (.Values.cloudCost).cloudIntegrationSecret (.Values.cloudCost).cloudIntegrationJSON }}
+        {{- if or (.Values.cloudCost).cloudIntegrationSecret (.Values.cloudCost).cloudIntegrationJSON .Values.kubecostProductConfigs.cloudIntegrationJSON .Values.kubecostProductConfigs.cloudIntegrationSecret }}
         - name: cloud-integration
           secret:
             secretName: {{ .Values.cloudCost.cloudIntegrationSecret }}
