@@ -70,7 +70,7 @@ global:
     #       ownerContact:   # optional, adds email address to notify in addition to globalAlertEmails.
     #         - owner@example.com
     #         - owner2@example.com
-    #       slackWebhookUrl: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX  # Optional, adds slack webhook to notify in addition to globalSlackWebhookUrl.
+    #       slackWebhookUrl: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX  # Optional. Adds a Slack webhook specific to this alert. Is additive to globalSlackWebhookUrl.
     #       msTeamsWebhookUrl: https://xxxxx.webhook.office.com/webhookb2/XXXXXXXXXXXXXXXXXXXXXXXX/IncomingWebhook/XXXXXXXXXXXXXXXXXXXXXXXX  # Optional. Adds a Microsoft Teams webhook specific to this alert. Is additive to globalMsTeamsWebhookUrl.
   chartName: "kubecost"
   ## Kubecost Saved Reports
