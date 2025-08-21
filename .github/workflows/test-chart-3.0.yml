@@ -47,6 +47,7 @@ jobs:
       - name: Build finops-agent subchart
         run: |
           # Package the finops-agent chart
+          helm dependency build finops-agent-chart/charts/finops-agent
           helm package finops-agent-chart/charts/finops-agent
           
           # Create charts directory if it doesn't exist
