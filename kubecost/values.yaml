@@ -53,7 +53,7 @@ global:
       adaptSecurityContext: auto
 
   ## Kubecost Alerting
-  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=ui-alerts
+  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=ui-alerts
   notifications:
   #   alertConfigs:
   #     frontendUrl: http://localhost:9090/  # Optional
