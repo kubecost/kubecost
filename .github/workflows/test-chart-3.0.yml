@@ -35,7 +35,7 @@ jobs:
       - name: Add finops-agent-chart
         uses: actions/checkout@v5
         with:
-          repository: https://github.com/kubecost/finops-agent-chart
+          repository: kubecost/finops-agent-chart
           ref: main
           path: finops-agent-chart
 
