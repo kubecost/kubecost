@@ -55,23 +55,23 @@ global:
   ## Kubecost Alerting
   ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=ui-alerts
   notifications:
-  #   alertConfigs:
-  #     frontendUrl: http://localhost:9090/  # Optional
-  #     globalSlackWebhookUrl: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX  # Optional
-  #     globalMsTeamsWebhookUrl: https://xxxxx.webhook.office.com/webhookb2/XXXXXXXXXXXXXXXXXXXXXXXX/IncomingWebhook/XXXXXXXXXXXXXXXXXXXXXXXX  # Optional
-  #     globalAlertEmails:
-  #       - recipient@example.com
-  #       - additionalRecipient@example.com
-  #     globalEmailSubject: Custom Subject
-  #     alerts:
-  #       # Application health alerts are reported. 
-  #       - type: health    # Currently supports Multi Cluster diagnostic related alerts and further application alerts can be added
-  #         window: 1h      # how often do you want alert system to poll for health related alerts.
-  #         ownerContact:   # optional, adds email address to notify in addition to globalAlertEmails.
-  #           - owner@example.com
-  #           - owner2@example.com
-  #         slackWebhookUrl: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX  # Optional, adds slack webhook to notify in addition to globalSlackWebhookUrl.
-  #         msTeamsWebhookUrl: https://xxxxx.webhook.office.com/webhookb2/XXXXXXXXXXXXXXXXXXXXXXXX/IncomingWebhook/XXXXXXXXXXXXXXXXXXXXXXXX  # Optional, , adds MS teams webhook to notify in addition to globalMsTeamsWebhookUrl.
+    # alertConfigs:
+    #   frontendUrl: http://localhost:9090/  # Optional
+    #   globalSlackWebhookUrl: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX  # Optional
+    #   globalMsTeamsWebhookUrl: https://xxxxx.webhook.office.com/webhookb2/XXXXXXXXXXXXXXXXXXXXXXXX/IncomingWebhook/XXXXXXXXXXXXXXXXXXXXXXXX  # Optional
+    #   globalAlertEmails:
+    #     - recipient@example.com
+    #     - additionalRecipient@example.com
+    #   globalEmailSubject: Custom Subject
+    #   alerts:
+    #     # Application health alerts are reported. 
+    #     - type: health    # Currently supports Multi Cluster diagnostic related alerts and further application alerts can be added
+    #       window: 1h      # how often do you want alert system to poll for health related alerts.
+    #       ownerContact:   # optional, adds email address to notify in addition to globalAlertEmails.
+    #         - owner@example.com
+    #         - owner2@example.com
+    #       slackWebhookUrl: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX  # Optional, adds slack webhook to notify in addition to globalSlackWebhookUrl.
+    #       msTeamsWebhookUrl: https://xxxxx.webhook.office.com/webhookb2/XXXXXXXXXXXXXXXXXXXXXXXX/IncomingWebhook/XXXXXXXXXXXXXXXXXXXXXXXX  # Optional, , adds MS teams webhook to notify in addition to globalMsTeamsWebhookUrl.
   chartName: "kubecost"
   ## Kubecost Saved Reports
   ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=ui-reports
