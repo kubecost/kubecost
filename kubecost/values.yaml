@@ -56,7 +56,7 @@ global:
   ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=ui-alerts
   notifications:
     # alertConfigs:
-    #   frontendUrl: http://localhost:9090/  # Optional
+    #   frontendUrl: http://localhost:9090  # Optional. When configured, the alert message includes a link to the page you want to visit for analyzing the alert.
     #   globalSlackWebhookUrl: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX  # Optional
     #   globalMsTeamsWebhookUrl: https://xxxxx.webhook.office.com/webhookb2/XXXXXXXXXXXXXXXXXXXXXXXX/IncomingWebhook/XXXXXXXXXXXXXXXXXXXXXXXX  # Optional
     #   globalAlertEmails:
