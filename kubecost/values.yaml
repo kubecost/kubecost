@@ -64,7 +64,7 @@ global:
     #     - additionalRecipient@example.com
     #   globalEmailSubject: Custom Subject
     #   alerts:
-    #     # Application health alerts are reported. 
+    #     # Application health alerts are reported.
     #     - type: health    # Monitors Kubecost health based on multi-cluster diagnostics.
     #       window: 1h      # The frequency to poll for alert status.
     #       ownerContact:   # Optional. Adds email address specific to this alert. Is additive to globalAlertEmails.
