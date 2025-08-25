@@ -3,7 +3,7 @@ Cloud integration source contents check. Either the Secret must be specified or 
 Additionally, for upgrade protection,  Users are asked to select one of the two presently-available sources for cloud integration information.
 */}}
 {{- define "kubecost.cloudCost.secretConfigCheck" -}}
-  {{- if and (.Values.cloudCost).cloudIntegrationSecret (.Values.cloudCost).cloudIntegrationJSON -}}
+  {{- if and .Values.cloudCost.cloudIntegrationSecret .Values.cloudCost.cloudIntegrationJSON -}}
     {{- fail "\ncloudCost.cloudIntegrationSecret and cloudCost.cloudIntegrationJSON are mutually exclusive. Please specify only one." -}}
   {{- end -}}
 {{- end -}}
@@ -15,7 +15,7 @@ Skip the check if CI/CD is enabled and skipSanityChecks is set. Argo CD, for exa
 support templating a chart which uses the lookup function.
 */}}
 {{- define "kubecost.cloudCost.secretValidCheck" -}}
-{{- if (.Values.cloudCost).cloudIntegrationSecret }}
+{{- if .Values.cloudCost.cloudIntegrationSecret }}
 {{- if not (and .Values.global.platforms.cicd.enabled .Values.global.platforms.cicd.skipSanityChecks) }}
 {{-  if .Capabilities.APIVersions.Has "v1/Secret" }}
   {{- $secret := lookup "v1" "Secret" .Release.Namespace .Values.cloudCost.cloudIntegrationSecret }}
@@ -52,8 +52,8 @@ support templating a chart which uses the lookup function.
 {{- end -}}
 
 {{- define "kubecost.cloudCost.serviceAccountName" -}}
-{{- if (.Values.cloudCost).serviceAccountName -}}
-    {{ (.Values.cloudCost).serviceAccountName }}
+{{- if .Values.cloudCost.serviceAccountName -}}
+    {{ .Values.cloudCost.serviceAccountName }}
 {{- else -}}
     {{ template "kubecost.serviceAccountName" . }}
 {{- end -}}
@@ -70,11 +70,11 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 app: {{ include "kubecost.cloudCost.name" . }}
 {{- end }}
 
-{{- define "kubecost.cloudCost.secretName" -}}
-{{- if (.Values.cloudCost).cloudIntegrationSecret }}
-(.Values.cloudCost).cloudIntegrationSecret
+{{- define "kubecost.cloudCost.secretName" }}
+{{- if .Values.cloudCost.cloudIntegrationSecret }}
+{{- .Values.cloudCost.cloudIntegrationSecret }}
 {{- else }}
-{{ .Release.Name }}-cloud-cost-integration
+{{- .Release.Name }}-cloud-cost-integration
 {{- end }}
 {{- end }}
 

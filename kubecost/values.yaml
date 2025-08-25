@@ -1067,11 +1067,12 @@ cloudCost:
   ## Specify an existing Kubernetes Secret holding the cloud integration information. This Secret must contain
   ## a key with name `cloud-integration.json` and the contents must be in a specific format. It is expected
   ## to exist in the release Namespace. This is mutually exclusive with cloudIntegrationJSON where only one must be defined.
-  # cloudIntegrationSecret: "cloud-integration"
+  cloudIntegrationSecret: ""
 
   ## Specify the cloud integration information in JSON form if pointing to an existing Secret is not desired or you'd rather
   ## define the cloud integration information directly in the values file. This will result in a new Secret being created
   ## named `cloud-integration` in the release Namespace. It is mutually exclusive with the cloudIntegrationSecret where only one must be defined.
+  cloudIntegrationJSON: ""
   # cloudIntegrationJSON: |-
   #   {
   #     "aws": [
