@@ -42,9 +42,9 @@ app: aggregator
 {{- end }}
 
 {{- define "kubecost.actions.secretName" -}}
-{{- if ((.Values.kubecostProductConfigs).actions).storageConfig.secret }}
-{{- ((.Values.kubecostProductConfigs).actions).storageConfig.secret }}
-{{- else }}
-{{ .Release.Name }}-actions-storage-config
-{{- end }}
+{{- if ((.Values.kubecostProductConfigs).actions).storageConfigSecret -}}
+  {{- ((.Values.kubecostProductConfigs).actions).storageConfigSecret -}}
+{{- else -}}
+  {{ .Release.Name }}-actions-storage-config
+{{- end -}}
 {{- end -}}
