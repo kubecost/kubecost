@@ -181,7 +181,7 @@ data:
             error_page 401 = /login;
             try_files $uri $uri/ /index.html;
         }
-        
+
         # need to be served outside of the auth middleware
         location /healthz {
             add_header 'Content-Type' 'text/plain';
@@ -224,7 +224,7 @@ data:
         listen [::]:{{ .Values.service.targetPort }};
 {{- end }}
 {{- end }}
-        
+
         location /model/ {
             proxy_connect_timeout       {{ .Values.kubecostFrontend.timeoutSeconds | default 300 }};
             proxy_send_timeout          {{ .Values.kubecostFrontend.timeoutSeconds | default 300 }};
@@ -1654,15 +1654,14 @@ data:
                 "code": 200,
                 "status": "success",
                 "data": {
-               
-                    "defaultIdle": "{{ .Values.kubecostProductConfigs.defaultIdle }}",
-                    "currencyCode": "{{ .Values.kubecostProductConfigs.currencyCode }}",
-                    "negotiatedDiscount": "{{ .Values.kubecostProductConfigs.negotiatedDiscount }}",
-                    "sharedOverhead": "{{ .Values.kubecostProductConfigs.sharedOverhead }}",
-                    "sharedNamespaces": "{{ .Values.kubecostProductConfigs.sharedNamespaces }}",
-                    "sharedLabelNames": "{{ .Values.kubecostProductConfigs.sharedLabelNames }}",
-                    "sharedLabelValues": "{{ .Values.kubecostProductConfigs.sharedLabelValues }}",
-                    "shareTenancyCosts": "{{ .Values.kubecostProductConfigs.shareTenancyCosts }}"
+                    "defaultIdle": "{{ (.Values.kubecostProductConfigs).defaultIdle }}",
+                    "currencyCode": "{{ (.Values.kubecostProductConfigs).currencyCode }}",
+                    "negotiatedDiscount": "{{ (.Values.kubecostProductConfigs).negotiatedDiscount }}",
+                    "sharedOverhead": "{{ (.Values.kubecostProductConfigs).sharedOverhead }}",
+                    "sharedNamespaces": "{{ (.Values.kubecostProductConfigs).sharedNamespaces }}",
+                    "sharedLabelNames": "{{ (.Values.kubecostProductConfigs).sharedLabelNames }}",
+                    "sharedLabelValues": "{{ (.Values.kubecostProductConfigs).sharedLabelValues }}",
+                    "shareTenancyCosts": "{{ (.Values.kubecostProductConfigs).shareTenancyCosts }}"
                 }
             }';
         }
