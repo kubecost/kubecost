@@ -549,10 +549,8 @@ spec:
             - name: RBAC_TEAMS_HELM_CONFIG_PATH
               value: "/var/configs/rbac-teams-configs/rbac-teams-configs.json"
             {{- end }}
-            {{- if (((.Values.aggregator).collections).cache) }}
             - name: COLLECTIONS_MEMORY_CACHE_ENABLED
-              value: {{ (quote .Values.aggregator.collections.cache.enabled) | default (quote true) }}
-            {{- end }}
+              value: {{ (quote .Values.aggregator.collections.cache.enabled) }}
             {{- if ((.Values.global.integrations).turbonomic).enabled }}
             - name: TURBONOMIC_ENABLED
               value: "true"
