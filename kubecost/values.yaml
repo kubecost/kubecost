@@ -550,9 +550,9 @@ finops-agent:
       enabled: true
       scrapeInterval: 30s
       networkPort: 3001
-      retentionResolution10m: 6
-      retentionResolution1h: 3
-      retentionResolution1d: 2
+      retention10m: 6
+      retention1h: 3
+      retention1d: 2
     exporter:
       emissionInterval: 1m
     cloudability:
