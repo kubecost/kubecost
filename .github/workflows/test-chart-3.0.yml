@@ -43,22 +43,24 @@ jobs:
         run: ct lint --chart-dirs=kubecost/ --charts kubecost/ --validate-maintainers=false
 
       # Build the finops-agent subchart and make it available for the main chart
-      - name: Build finops-agent subchart
-        run: |
-          # Package the finops-agent chart
-          helm dependency build finops-agent-chart/charts/finops-agent
-          helm package finops-agent-chart/charts/finops-agent
+      # - name: Build finops-agent subchart
+      #   run: |
+      #     # Package the finops-agent chart
+      #     helm dependency build finops-agent-chart/charts/finops-agent
+      #     helm package finops-agent-chart/charts/finops-agent
           
-          # Create charts directory if it doesn't exist
-          mkdir -p kubecost/charts
+      #     # Create charts directory if it doesn't exist
+      #     mkdir -p kubecost/charts
           
-          # Move the packaged chart to the kubecost charts directory
-          mv finops-agent-*.tgz kubecost/charts/
+      #     # Move the packaged chart to the kubecost charts directory
+      #     mv finops-agent-*.tgz kubecost/charts/
 
       # Run `helm template` on the main values file plus all those in the ci directory.
       - name: Helm template
         run: |
-          helm template kubecost/ -f .github/ci-helmValues/helmValues-federated-store.yaml --debug > full.yaml
+          helm template kubecost/ -f .github/ci-helmValues/helmValues-federated-store.yaml \
+            --set finopsAgent.enabled=false \
+            --debug > full.yaml
           directory="kubecost/ci"
           for file in "$directory"/*; do
           if [ -f "$file" ]; then
