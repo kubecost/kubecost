@@ -850,7 +850,7 @@ forecasting:
   imagePullPolicy: IfNotPresent
 
   # Set Service Account For Forecast # optional
-  # serviceAccountName: ""
+  serviceAccountName: ""
 
   # Resource specification block for the forecasting container.
   resources:
