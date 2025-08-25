@@ -955,8 +955,6 @@ aggregator:
   # Trim memory on close, only change if advised by Kubecost support.
   dbTrimMemoryOnClose: true
 
-
-
   ## Configure the Collections service for aggregator.
   collections:
     cache:
