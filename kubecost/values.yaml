@@ -54,10 +54,9 @@ global:
 
   ## Kubecost Alerting
   ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=ui-alerts
-  ##
   notifications:
     # alertConfigs:
-    #   frontendUrl: http://localhost:9090  # Optional
+    #   frontendUrl: http://localhost:9090  # Optional. When configured, alert notifications will include a link back to the Kubecost web portal. Value should be the publicly-accessible URL of Kubecost with no path included. Ex., https://kubecost.mycorp.org
     #   globalSlackWebhookUrl: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX  # Optional
     #   globalMsTeamsWebhookUrl: https://xxxxx.webhook.office.com/webhookb2/XXXXXXXXXXXXXXXXXXXXXXXX/IncomingWebhook/XXXXXXXXXXXXXXXXXXXXXXXX  # Optional
     #   globalAlertEmails:
@@ -65,47 +64,14 @@ global:
     #     - additionalRecipient@example.com
     #   globalEmailSubject: Custom Subject
     #   alerts:
-    #     # Daily namespace budget alert on namespace `kubecost`
-    #     - type: budget                # supported: budget, recurringUpdate
-    #       threshold: 50               # optional, required for budget alerts
-    #       window: daily               # or 1d
-    #       aggregation: namespace
-    #       filter: kubecost
-    #       ownerContact:               # optional, overrides globalAlertEmails default
+    #     # Application health alerts are reported.
+    #     - type: health    # Monitors Kubecost health based on multi-cluster diagnostics.
+    #       window: 1h      # The frequency to poll for alert status.
+    #       ownerContact:   # Optional. Adds email address specific to this alert. Is additive to globalAlertEmails.
     #         - owner@example.com
     #         - owner2@example.com
-    #       slackWebhookUrl: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX  # Optional
-    #       msTeamsWebhookUrl: https://xxxxx.webhook.office.com/webhookb2/XXXXXXXXXXXXXXXXXXXXXXXX/IncomingWebhook/XXXXXXXXXXXXXXXXXXXXXXXX  # Optional
-    #     # Daily cluster budget alert on cluster `cluster-one`
-    #     - type: budget
-    #       threshold: 200.8        # optional, required for budget alerts
-    #       window: daily           # or 1d
-    #       aggregation: cluster
-    #       filter: cluster-one     # does not accept csv
-    #     # Recurring weekly update (weeklyUpdate alert)
-    #     - type: recurringUpdate
-    #       window: weekly          # or 7d
-    #       aggregation: namespace
-    #       filter: '*'
-    #     # Recurring weekly namespace update on kubecost namespace
-    #     - type: recurringUpdate
-    #       window: weekly # or 7d
-    #       aggregation: namespace
-    #       filter: kubecost
-    #     # Spend Change Alert
-    #     - type: spendChange         # change relative to moving avg
-    #       relativeThreshold: 0.20   # Proportional change relative to baseline. Must be greater than -1 (can be negative)
-    #       window: 1d                # accepts ‘d’, ‘h’
-    #       baselineWindow: 30d       # previous window, offset by window
-    #       aggregation: namespace
-    #       filter: kubecost, default # accepts csv
-    #     # Health Score Alert
-    #     - type: health              # Alerts when health score changes by a threshold
-    #       window: 10m
-    #       threshold: 5              # Send Alert if health scores changes by 5 or more
-    #     # Kubecost Health Diagnostic
-    #     - type: diagnostic          # Alerts when kubecost is unable to compute costs - ie: unreachable metric sources
-    #       window: 10m
+    #       slackWebhookUrl: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX  # Optional. Adds a Slack webhook specific to this alert. Is additive to globalSlackWebhookUrl.
+    #       msTeamsWebhookUrl: https://xxxxx.webhook.office.com/webhookb2/XXXXXXXXXXXXXXXXXXXXXXXX/IncomingWebhook/XXXXXXXXXXXXXXXXXXXXXXXX  # Optional. Adds a Microsoft Teams webhook specific to this alert. Is additive to globalMsTeamsWebhookUrl.
   chartName: "kubecost"
   ## Kubecost Saved Reports
   ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=ui-reports
@@ -584,9 +550,9 @@ finops-agent:
       enabled: true
       scrapeInterval: 30s
       networkPort: 3001
-      retentionResolution10m: 6
-      retentionResolution1h: 3
-      retentionResolution1d: 2
+      retention10m: 6
+      retention1h: 3
+      retention1d: 2
     exporter:
       emissionInterval: 1m
     cloudability:
@@ -1101,11 +1067,12 @@ cloudCost:
   ## Specify an existing Kubernetes Secret holding the cloud integration information. This Secret must contain
   ## a key with name `cloud-integration.json` and the contents must be in a specific format. It is expected
   ## to exist in the release Namespace. This is mutually exclusive with cloudIntegrationJSON where only one must be defined.
-  # cloudIntegrationSecret: "cloud-integration"
+  cloudIntegrationSecret: ""
 
   ## Specify the cloud integration information in JSON form if pointing to an existing Secret is not desired or you'd rather
   ## define the cloud integration information directly in the values file. This will result in a new Secret being created
   ## named `cloud-integration` in the release Namespace. It is mutually exclusive with the cloudIntegrationSecret where only one must be defined.
+  cloudIntegrationJSON: ""
   # cloudIntegrationJSON: |-
   #   {
   #     "aws": [
@@ -1153,7 +1120,11 @@ cloudCost:
   # refreshRateHours:
   # queryWindowDays:
   # runWindowDays:
-  # serviceAccountName:
+
+  ## by default, the cloud cost pod will use the same service account as the aggregator pod.
+  ## this can be overridden to use a different service account.
+  serviceAccountName: ""
+
   readinessProbe:
     enabled: true
     initialDelaySeconds: 10
@@ -1161,31 +1132,24 @@ cloudCost:
     failureThreshold: 200
 
   ## Add a nodeSelector for aggregator cloud costs
-  # nodeSelector: {}
+  nodeSelector: {}
 
   ## Tolerations for the aggregator cloud costs
-  # tolerations: []
+  tolerations: []
 
   ## Affinity for the aggregator cloud costs
-  # affinity: {}
-
-  ## ServiceAccount for the aggregator cloud costs
-  # serviceAccountName: ""
+  affinity: {}
 
   ## Define environment variables for cloud cost
-  # env: {}
+  extraEnv: []
+  # - name: EXTRA_ENV_VAR
+  #   value: "extra_env_var_value"
 
   ## Define extra volumes for the cloud cost pod
-  # extraVolumes: []
+  extraVolumes: []
 
   ## Define extra volumemounts for the cloud cost pod
-  # extraVolumeMounts: []
-
-  ## Configure the Collections service for aggregator.
-  # collections:
-  #   cache:
-  #     enabled: false
-
+  extraVolumeMounts: []
 # Kubecost Cluster Controller for Right Sizing and Cluster Turndown
 clusterController:
   enabled: false
