@@ -916,7 +916,7 @@ prometheus:
       rollingUpdate: null
     image:
       repository: quay.io/prometheus/prometheus
-      tag: v3.4.1
+      tag: v3.4.2
       pullPolicy: IfNotPresent
     priorityClassName: ""
     prefixURL: ""
@@ -1445,7 +1445,7 @@ networkCosts:
   enabled: false
   image:
     repository: gcr.io/kubecost1/kubecost-network-costs
-    tag: v0.17.10
+    tag: v0.17.11
   imagePullPolicy: IfNotPresent
   updateStrategy:
     type: RollingUpdate
@@ -1569,7 +1569,7 @@ forecasting:
   fullImageName: ""
   image:
     repository: gcr.io/kubecost1/kubecost-modeling
-    tag: v0.1.27
+    tag: v0.1.28
   imagePullPolicy: IfNotPresent
 
   # Resource specification block for the forecasting container.
@@ -1887,7 +1887,7 @@ clusterController:
   enabled: false
   image:
     repository: gcr.io/kubecost1/cluster-controller
-    tag: v0.16.19
+    tag: v0.16.20
   imagePullPolicy: IfNotPresent
   extraEnv: []
   # - name: EXTRA_ENV_VAR
@@ -2103,7 +2103,7 @@ grafana:
     failureThreshold: 10
   image:
     repository: grafana/grafana
-    tag: 12.0.1
+    tag: 12.0.2
     pullPolicy: IfNotPresent
     # pullSecrets:
   securityContext: {}
