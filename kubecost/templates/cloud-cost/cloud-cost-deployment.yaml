@@ -121,8 +121,8 @@ spec:
         - name: ssl-path
           emptyDir: {}
         {{- end }}
-        {{- if (.Values.cloudCost).extraVolumes }}
-        {{- toYaml (.Values.cloudCost).extraVolumes | nindent 8 }}
+        {{- if .Values.cloudCost.extraVolumes }}
+        {{- toYaml .Values.cloudCost.extraVolumes | nindent 8 }}
         {{- end }}
       initContainers:
       {{- if (and .Values.kubecost.plugins.enabled .Values.kubecost.plugins.install.enabled )}}
@@ -165,6 +165,9 @@ spec:
           - name: ssl-path
             mountPath: "/etc/pki/ca-trust/extracted"
             readOnly: false
+          {{- if (.Values.cloudCost).extraVolumeMounts }}
+          {{- toYaml (.Values.cloudCost).extraVolumeMounts | nindent 8 }}
+          {{- end }}
       {{- end}}
       containers:
         - name: cloud-cost
@@ -225,7 +228,7 @@ spec:
               readOnly: false
             {{- end }}
           {{- if (.Values.cloudCost).extraVolumeMounts }}
-            {{- toYaml (.Values.cloudCost).extraVolumeMounts | nindent 4 }}
+            {{- toYaml (.Values.cloudCost).extraVolumeMounts | nindent 12 }}
           {{- end }}
           env:
             - name: CONFIG_PATH
@@ -240,11 +243,10 @@ spec:
               value: {{ (.Values.cloudCost).runWindowDays | default 3 | quote }}
             - name: CUSTOM_COST_ENABLED
               value: {{ .Values.kubecost.plugins.enabled | quote }}
-            {{- range $key, $value := (.Values.cloudCost).env }}
-            - name: {{ $key | quote }}
-              value: {{ $value | quote }}
+            {{- if (.Values.cloudCost).extraEnv }}
+            {{- toYaml (.Values.cloudCost).extraEnv | nindent 12 }}
             {{- end }}
-            {{- include "common.systemProxy" . }}
+            {{- include "common.systemProxy" . | nindent 12 }}
     {{- if .Values.imagePullSecrets }}
       imagePullSecrets:
       {{- range $.Values.imagePullSecrets }}
