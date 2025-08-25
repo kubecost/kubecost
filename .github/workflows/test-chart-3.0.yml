@@ -59,7 +59,7 @@ jobs:
       - name: Helm template
         run: |
           helm template kubecost/ -f .github/ci-helmValues/helmValues-federated-store.yaml \
-            --set finopsAgent.enabled=false \
+            --set finops-agent.enabled=false \
             --debug > full.yaml
           directory="kubecost/ci"
           for file in "$directory"/*; do
