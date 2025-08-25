@@ -63,7 +63,11 @@ spec:
         {{- if or (.Values.cloudCost).cloudIntegrationSecret (.Values.cloudCost).cloudIntegrationJSON .Values.kubecostProductConfigs.cloudIntegrationJSON .Values.kubecostProductConfigs.cloudIntegrationSecret }}
         - name: cloud-integration
           secret:
+            {{- if .Values.kubecostProductConfigs.cloudIntegrationSecret }}
+            secretName: {{ .Values.kubecostProductConfigs.cloudIntegrationSecret }}
+            {{- else }}
             secretName: {{ .Values.cloudCost.cloudIntegrationSecret }}
+            {{- end }}
             items:
               - key: cloud-integration.json
                 path: cloud-integration.json
@@ -199,7 +203,7 @@ spec:
               mountPath: /var/configs/federated-store.yaml
               subPath: {{ include "kubecost.federatedStorage.fileName" . }}
               readOnly: true
-          {{- if or (.Values.cloudCost).cloudIntegrationSecret (.Values.cloudCost).cloudIntegrationJSON }}
+          {{- if or (.Values.cloudCost).cloudIntegrationSecret (.Values.cloudCost).cloudIntegrationJSON .Values.kubecostProductConfigs.cloudIntegrationJSON .Values.kubecostProductConfigs.cloudIntegrationSecret }}
             - name: cloud-integration
               mountPath: /var/configs/cloud-integration
           {{- end }}
