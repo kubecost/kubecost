@@ -1,4 +1,4 @@
-{{- if (.Values.cloudCost).enabled }}
+{{- if .Values.cloudCost.enabled }}
 {{- /*
   TODO add a pvc for persistent configs and maybe a warning if both the pv and secret are not enabled
 */}}
@@ -60,17 +60,16 @@ spec:
           secret:
             defaultMode: 420
             secretName: {{ include "kubecost.federatedStorage.secretName" . }}
-        {{- if or (.Values.cloudCost).cloudIntegrationSecret (.Values.cloudCost).cloudIntegrationJSON }}
+        {{- if or .Values.cloudCost.cloudIntegrationSecret .Values.cloudCost.cloudIntegrationJSON .Values.kubecostProductConfigs.cloudIntegrationJSON .Values.kubecostProductConfigs.cloudIntegrationSecret }}
         - name: cloud-integration
           secret:
-            secretName: {{ .Values.cloudCost.cloudIntegrationSecret }}
+            secretName: {{ include "kubecost.cloudCost.secretName" . }}
             items:
               - key: cloud-integration.json
                 path: cloud-integration.json
         {{- end }}
-        {{- /* Despite the name, this is not persistent-configs.
-            The name is for compatibility with single-pod install.
-            All data stored here is ephemeral, and does not require persistence. */}}
+        {{- /* The cloud costs deployment does not need persistence.
+            The name is for compatibility with single-pod install. */}}
         - name: persistent-configs
           emptyDir: {}
         {{- if .Values.kubecost.plugins.enabled  }}
@@ -86,7 +85,7 @@ spec:
           secret:
             secretName: {{ .Values.kubecost.plugins.secretName }}
             items:
-             {{- range $key, $config := .Values.kubecost.plugins.enabledPlugins }}
+            {{- range $key, $config := .Values.kubecost.plugins.enabledPlugins }}
               - key: {{ $config }}_config.json
                 path: {{ $config }}_config.json
             {{- end }}
@@ -117,11 +116,11 @@ spec:
         - name: ssl-path
           emptyDir: {}
         {{- end }}
-        {{- if (.Values.cloudCost).extraVolumes }}
-        {{- toYaml (.Values.cloudCost).extraVolumes | nindent 8 }}
+        {{- if .Values.cloudCost.extraVolumes }}
+        {{- toYaml .Values.cloudCost.extraVolumes | nindent 8 }}
         {{- end }}
+      {{- if or (and .Values.kubecost.plugins.enabled .Values.kubecost.plugins.install.enabled ) .Values.global.updateCaTrust.enabled }}                
       initContainers:
-      {{- if (and .Values.kubecost.plugins.enabled .Values.kubecost.plugins.install.enabled )}}
       - name: plugin-installer
         image: {{ .Values.kubecost.plugins.install.fullImageName }}
         command: ["sh", "/install/install_plugins.sh"]
@@ -133,6 +132,9 @@ spec:
             mountPath: /install
           - name: plugins-dir
             mountPath: {{ .Values.kubecost.plugins.folder }}
+          {{- if .Values.cloudCost.extraVolumeMounts }}
+          {{- toYaml .Values.cloudCost.extraVolumeMounts | nindent 10 }}
+          {{- end }}
       {{- end }}
       {{- if .Values.global.updateCaTrust.enabled }}
       - name: update-ca-trust
@@ -161,18 +163,21 @@ spec:
           - name: ssl-path
             mountPath: "/etc/pki/ca-trust/extracted"
             readOnly: false
+          {{- if .Values.cloudCost.extraVolumeMounts }}
+          {{- toYaml .Values.cloudCost.extraVolumeMounts | nindent 10 }}
+          {{- end }}
       {{- end}}
       containers:
         - name: cloud-cost
           image: {{ include "kubecost.cloudCost.image" . }}
-          {{- if (.Values.cloudCost).readinessProbe.enabled }}
+          {{- if .Values.cloudCost.readinessProbe.enabled }}
           readinessProbe:
             httpGet:
               path: /healthz
               port: 9005
-            initialDelaySeconds: {{ (.Values.cloudCost).readinessProbe.initialDelaySeconds }}
-            periodSeconds: {{ (.Values.cloudCost).readinessProbe.periodSeconds }}
-            failureThreshold: {{ (.Values.cloudCost).readinessProbe.failureThreshold }}
+            initialDelaySeconds: {{ .Values.cloudCost.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.cloudCost.readinessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.cloudCost.readinessProbe.failureThreshold }}
           {{- end }}
           {{- if .Values.aggregator.imagePullPolicy }}
           imagePullPolicy: {{ .Values.aggregator.imagePullPolicy }}
@@ -184,7 +189,7 @@ spec:
             - name: tcp-api
               containerPort: 9005
               protocol: TCP
-          {{- with (.Values.cloudCost).resources }}
+          {{- with .Values.cloudCost.resources }}
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
@@ -199,9 +204,11 @@ spec:
               mountPath: /var/configs/federated-store.yaml
               subPath: {{ include "kubecost.federatedStorage.fileName" . }}
               readOnly: true
-          {{- if or (.Values.cloudCost).cloudIntegrationSecret (.Values.cloudCost).cloudIntegrationJSON }}
+          {{- if or .Values.cloudCost.cloudIntegrationSecret .Values.cloudCost.cloudIntegrationJSON .Values.kubecostProductConfigs.cloudIntegrationJSON .Values.kubecostProductConfigs.cloudIntegrationSecret }}
             - name: cloud-integration
-              mountPath: /var/configs/cloud-integration
+              mountPath: /var/configs/cloud-integration.json
+              subPath: cloud-integration.json
+              readOnly: true
           {{- end }}
             {{- if .Values.kubecost.plugins.enabled }}
             - mountPath: {{ .Values.kubecost.plugins.folder }}
@@ -220,8 +227,8 @@ spec:
               mountPath: "/etc/pki/ca-trust/extracted"
               readOnly: false
             {{- end }}
-          {{- if (.Values.cloudCost).extraVolumeMounts }}
-            {{- toYaml (.Values.cloudCost).extraVolumeMounts | nindent 4 }}
+          {{- if .Values.cloudCost.extraVolumeMounts }}
+            {{- toYaml .Values.cloudCost.extraVolumeMounts | nindent 12 }}
           {{- end }}
           env:
             - name: CONFIG_PATH
@@ -229,18 +236,17 @@ spec:
             - name: RESOLUTION_1D_RETENTION
               value: {{ (quote .Values.kubecost.retention1d) }}
             - name: CLOUD_COST_REFRESH_RATE_HOURS
-              value: {{ (.Values.cloudCost).refreshRateHours | default 6 | quote }}
+              value: {{ .Values.cloudCost.refreshRateHours | default 6 | quote }}
             - name: CLOUD_COST_QUERY_WINDOW_DAYS
-              value: {{ (.Values.cloudCost).queryWindowDays | default 7 | quote }}
+              value: {{ .Values.cloudCost.queryWindowDays | default 7 | quote }}
             - name: CLOUD_COST_RUN_WINDOW_DAYS
-              value: {{ (.Values.cloudCost).runWindowDays | default 3 | quote }}
+              value: {{ .Values.cloudCost.runWindowDays | default 3 | quote }}
             - name: CUSTOM_COST_ENABLED
               value: {{ .Values.kubecost.plugins.enabled | quote }}
-            {{- range $key, $value := (.Values.cloudCost).env }}
-            - name: {{ $key | quote }}
-              value: {{ $value | quote }}
+            {{- if .Values.cloudCost.extraEnv }}
+            {{- toYaml .Values.cloudCost.extraEnv | nindent 12 }}
             {{- end }}
-            {{- include "common.systemProxy" . }}
+            {{- include "common.systemProxy" . | nindent 12 }}
     {{- if .Values.imagePullSecrets }}
       imagePullSecrets:
       {{- range $.Values.imagePullSecrets }}
@@ -255,15 +261,15 @@ spec:
       {{- end }}
       {{- end }}
 
-      {{- with (.Values.cloudCost).nodeSelector }}
+      {{- with .Values.cloudCost.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with (.Values.cloudCost).tolerations }}
+      {{- with .Values.cloudCost.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with (.Values.cloudCost).affinity }}
+      {{- with .Values.cloudCost.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
