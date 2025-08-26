@@ -1,5 +1,5 @@
 apiVersion: v2
-appVersion: development
+appVersion: v3.0.0-test.0
 description: Kubecost Helm chart - monitor your cloud costs!
 name: kubecost
 version: 3.0.0-test.0  # This is a placeholder used on the develop branch. If installing Kubecost, please reference a release branch.
