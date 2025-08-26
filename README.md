@@ -5,7 +5,7 @@
 The chart is not yet released, so we need to use the devel flag.
 
 ```sh
-helm repo add kubecost-30-testing https://kubecost.github.io/kubecost-30-testing
+helm helm repo add kubecost-30-testing https://kubecost.github.io/kubecost/
 helm repo update
 
 helm install kubecost kubecost-30-testing/kubecost \
