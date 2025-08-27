@@ -4,7 +4,7 @@ metadata:
   name: helm-values
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "cost-analyzer.commonLabels" . | nindent 4 }}
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
 data:
   user-values.json: |
     {{- .Values | toJson | nindent 4 }}
