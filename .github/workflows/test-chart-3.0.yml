@@ -40,7 +40,10 @@ jobs:
 
       # Lint all chart values including those in the ci directory.
       - name: Run chart-testing (lint)
-        run: ct lint --chart-dirs=kubecost/ --charts kubecost/ --validate-maintainers=false
+        run: |
+          helm repo add finops-agent-chart https://kubecost.github.io/finops-agent-chart
+          helm repo update
+          ct lint --chart-dirs=kubecost/ --charts kubecost/ --validate-maintainers=false
 
       # Build the finops-agent subchart and make it available for the main chart
       # - name: Build finops-agent subchart
@@ -131,7 +134,7 @@ jobs:
         # run: ct install --namespace kubecost --chart-dirs=kubecost/ --charts kubecost/
 
       - name: Wait for ready 
-        run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/name=kubecost --timeout=120s
+        run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/instance=kubecost --timeout=120s
       
       - name: gather debug info - install 
         if: failure()
@@ -142,7 +145,7 @@ jobs:
           kubectl get pods -n kubecost -o jsonpath='{.items[*].spec.containers[*].image}'
           kubectl get pods -n kubecost -o jsonpath='{.items[*].spec.containers[*].image}'
           kubectl -n kubecost describe pods
-          kubectl -n kubecost logs -l app.kubernetes.io/name=kubecost
+          kubectl -n kubecost logs -l app.kubernetes.io/instance=kubecost
 
       - name: Run Helm tests 
         run: helm test -n kubecost kubecost
@@ -157,9 +160,9 @@ jobs:
           kubectl get pods -n kubecost -o jsonpath='{.items[*].spec.containers[*].image}'
           kubectl -n kubecost describe pods
           echo "kubecost logs"
-          kubectl -n kubecost logs -l app.kubernetes.io/name=kubecost
+          kubectl -n kubecost logs -l app.kubernetes.io/instance=kubecost
           echo "agg logs"
-          kubectl -n kubecost logs -l app.kubernetes.io/name=aggregator
+          kubectl -n kubecost logs -l app.kubernetes.io/instance=aggregator
           echo "basic-health logs"
           kubectl -n kubecost logs basic-health
 
@@ -182,7 +185,7 @@ jobs:
             echo "### Performing installation with values from $file ###"
             helm install --wait --wait-for-jobs kubecost kubecost/ -n kubecost -f "$file"
             echo "### Waiting for kubecost Pod readiness. ###"
-            kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/name=kubecost --timeout=120s
+            kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/instance=kubecost --timeout=120s
             echo "### Sleeping for 60 seconds longer. ###"
             sleep 60
             echo "### [DEBUG] printing debug info ###"
@@ -191,7 +194,7 @@ jobs:
             kubectl get pods -n kubecost -o jsonpath='{.items[*].spec.containers[*].image}'
             kubectl get pods -n kubecost -o jsonpath='{.items[*].spec.containers[*].image}'
             kubectl -n kubecost describe pods
-            kubectl -n kubecost logs -l app.kubernetes.io/name=kubecost
+            kubectl -n kubecost logs -l app.kubernetes.io/instance=kubecost
             echo "### Performing helm tests ###"
             helm test -n kubecost $(helm ls -n kubecost --all --short)
             echo "### Performing uninstallation ###"
