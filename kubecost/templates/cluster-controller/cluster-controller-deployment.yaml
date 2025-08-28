@@ -150,8 +150,8 @@ spec:
         - name: {{ .name }}
         {{- end }}
       {{- end }}
-      serviceAccount: {{ include "kubecost.clusterController.name" . }}
-      serviceAccountName: {{ include "kubecost.clusterController.name" . }}
+      serviceAccount: {{ include "kubecost.clusterController.serviceAccountName" . }}
+      serviceAccountName: {{ include "kubecost.clusterController.serviceAccountName" . }}
       {{- with .Values.clusterController.tolerations }}
       tolerations:
       {{- toYaml . | nindent 8 }}

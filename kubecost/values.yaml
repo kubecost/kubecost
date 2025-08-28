@@ -831,7 +831,6 @@ networkCosts:
 ## patterns observed by Kubecost.
 forecasting:
   enabled: true
-  serviceAccountName: ""
   ## Override the image name and version for the forecasting.
   ## If not set, the image will be pulled from the registry and repository specified in the image block.
   ## If set, the fullImageName will be used to pull the image.
@@ -1007,8 +1006,7 @@ aggregator:
   ## Define the container-level security context for the aggregator pod. This will take highest precedence.
   containerSecurityContext: {}
 
-  ## Provide a Service Account name for aggregator.
-  # serviceAccountName: ""
+  ## Service account is now configured globally in serviceAccount.components.aggregator
 
   ## Define a nodeSelector for the aggregator pod
   nodeSelector: {}
@@ -1127,9 +1125,7 @@ cloudCost:
   # queryWindowDays:
   # runWindowDays:
 
-  ## by default, the cloud cost pod will use the same service account as the aggregator pod.
-  ## this can be overridden to use a different service account.
-  serviceAccountName: ""
+  ## Service account is now configured globally in serviceAccount.components.cloudCost
 
   readinessProbe:
     enabled: true
@@ -1261,9 +1257,105 @@ reporting:
   # googleAnalyticsTag is only included in our Enterprise offering.
   # googleAnalyticsTag: G-XXXXXXXXX
 
+## Service Account Configuration
+## @section Service Account Configuration
+## This section provides standardized service account configuration for all Kubecost components.
+## Each component can override the global settings with component-specific configurations.
+##
 serviceAccount:
-  create: true  # Set this to false if you're bringing your own service account.
+  ## @param serviceAccount.create Create a service account
+  create: true
+  ## @param serviceAccount.name The name of the service account to use. If empty, uses the chart name
+  name: ""
+  ## @param serviceAccount.annotations Annotations to add to the service account
   annotations: {}
+  ## @param serviceAccount.labels Additional labels to add to the service account
+  labels: {}
+  ## @param serviceAccount.automountServiceAccountToken Whether to automount the service account token
+  automountServiceAccountToken: true
+
+  ## Component-specific service account overrides
+  ## Each component can have its own service account with specific annotations and settings
+  ##
+  components:
+    ## @param serviceAccount.components.aggregator Aggregator service account configuration
+    aggregator:
+      ## @param serviceAccount.components.aggregator.create Create a dedicated service account for aggregator
+      create: true
+      ## @param serviceAccount.components.aggregator.name Service account name for aggregator (if empty, uses global name)
+      name: ""
+      ## @param serviceAccount.components.aggregator.annotations Additional annotations for aggregator service account
+      annotations: {}
+      ## @param serviceAccount.components.aggregator.labels Additional labels for aggregator service account
+      labels: {}
+      ## @param serviceAccount.components.aggregator.automountServiceAccountToken Whether to automount the service account token
+      automountServiceAccountToken: true
+
+    ## @param serviceAccount.components.cloudCost Cloud cost service account configuration
+    cloudCost:
+      ## @param serviceAccount.components.cloudCost.create Create a dedicated service account for cloud cost
+      create: false
+      ## @param serviceAccount.components.cloudCost.name Service account name for cloud cost (if empty, uses global name)
+      name: ""
+      ## @param serviceAccount.components.cloudCost.annotations Additional annotations for cloud cost service account
+      annotations: {}
+      ## @param serviceAccount.components.cloudCost.labels Additional labels for cloud cost service account
+      labels: {}
+      ## @param serviceAccount.components.cloudCost.automountServiceAccountToken Whether to automount the service account token
+      automountServiceAccountToken: false
+
+    ## @param serviceAccount.components.frontend Frontend service account configuration
+    frontend:
+      ## @param serviceAccount.components.frontend.create Create a dedicated service account for frontend
+      create: false
+      ## @param serviceAccount.components.frontend.name Service account name for frontend (if empty, uses global name)
+      name: ""
+      ## @param serviceAccount.components.frontend.annotations Additional annotations for frontend service account
+      annotations: {}
+      ## @param serviceAccount.components.frontend.labels Additional labels for frontend service account
+      labels: {}
+      ## @param serviceAccount.components.frontend.automountServiceAccountToken Whether to automount the service account token
+      automountServiceAccountToken: false
+
+    ## @param serviceAccount.components.forecasting Forecasting service account configuration
+    forecasting:
+      ## @param serviceAccount.components.forecasting.create Create a dedicated service account for forecasting
+      create: false
+      ## @param serviceAccount.components.forecasting.name Service account name for forecasting (if empty, uses global name)
+      name: ""
+      ## @param serviceAccount.components.forecasting.annotations Additional annotations for forecasting service account
+      annotations: {}
+      ## @param serviceAccount.components.forecasting.labels Additional labels for forecasting service account
+      labels: {}
+      ## @param serviceAccount.components.forecasting.automountServiceAccountToken Whether to automount the service account token
+      automountServiceAccountToken: false
+
+    ## @param serviceAccount.components.clustercontroller Cluster controller service account configuration
+    ## the cluster controller requires API access to the cluster to perform actions like rightsizing
+    clustercontroller:
+      ## @param serviceAccount.components.clustercontroller.create Create a dedicated service account for cluster controller
+      create: true
+      ## @param serviceAccount.components.clustercontroller.name Service account name for cluster controller (if empty, uses cluster-controller)
+      name: ""
+      ## @param serviceAccount.components.clustercontroller.annotations Additional annotations for cluster controller service account
+      annotations: {}
+      ## @param serviceAccount.components.clustercontroller.labels Additional labels for cluster controller service account
+      labels: {}
+      ## @param serviceAccount.components.clustercontroller.automountServiceAccountToken Whether to automount the service account token
+      automountServiceAccountToken: true
+
+    ## @param serviceAccount.components.networkcosts Network costs service account configuration
+    networkcosts:
+      ## @param serviceAccount.components.networkcosts.create Create a dedicated service account for network costs
+      create: false
+      ## @param serviceAccount.components.networkcosts.name Service account name for network costs (if empty, uses global name)
+      name: ""
+      ## @param serviceAccount.components.networkcosts.annotations Additional annotations for network costs service account
+      annotations: {}
+      ## @param serviceAccount.components.networkcosts.labels Additional labels for network costs service account
+      labels: {}
+      ## @param serviceAccount.components.networkcosts.automountServiceAccountToken Whether to automount the service account token
+      automountServiceAccountToken: false
 
 ## Kubecost Admission Controller (beta feature)
 ## To use this feature, ensure you have run the `create-admission-controller.sh`

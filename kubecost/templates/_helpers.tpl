@@ -196,6 +196,85 @@ Create the name of the service account
 {{- end -}}
 
 {{/*
+Component-specific service account name helper
+Usage: {{ include "kubecost.componentServiceAccountName" (dict "component" "aggregator" "context" .) }}
+*/}}
+{{- define "kubecost.componentServiceAccountName" -}}
+{{- $component := .component -}}
+{{- $context := .context -}}
+{{- $componentConfig := index $context.Values.serviceAccount.components $component -}}
+{{- if and $componentConfig $componentConfig.create -}}
+    {{ default (printf "%s-%s" (include "kubecost.fullname" $context) ($component | lower)) $componentConfig.name }}
+{{- else if and $componentConfig $componentConfig.name -}}
+    {{ $componentConfig.name }}
+{{- else -}}
+    {{ include "kubecost.serviceAccountName" $context }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Check if component service account should be created
+Usage: {{ include "kubecost.componentServiceAccountCreate" (dict "component" "aggregator" "context" .) }}
+*/}}
+{{- define "kubecost.componentServiceAccountCreate" -}}
+{{- $component := .component -}}
+{{- $context := .context -}}
+{{- $componentConfig := index $context.Values.serviceAccount.components $component -}}
+{{- if and $componentConfig $componentConfig.create -}}
+{{- "true" -}}
+{{- else -}}
+{{- "false" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Get component service account annotations
+Usage: {{ include "kubecost.componentServiceAccountAnnotations" (dict "component" "aggregator" "context" .) }}
+*/}}
+{{- define "kubecost.componentServiceAccountAnnotations" -}}
+{{- $component := .component -}}
+{{- $context := .context -}}
+{{- $componentConfig := index $context.Values.serviceAccount.components $component -}}
+{{- $globalAnnotations := $context.Values.serviceAccount.annotations | default dict -}}
+{{- $componentAnnotations := dict -}}
+{{- if and $componentConfig $componentConfig.annotations -}}
+{{- $componentAnnotations = $componentConfig.annotations -}}
+{{- end -}}
+{{- toYaml (merge $componentAnnotations $globalAnnotations) -}}
+{{- end -}}
+
+{{/*
+Get component service account labels
+Usage: {{ include "kubecost.componentServiceAccountLabels" (dict "component" "aggregator" "context" .) }}
+*/}}
+{{- define "kubecost.componentServiceAccountLabels" -}}
+{{- $component := .component -}}
+{{- $context := .context -}}
+{{- $componentConfig := index $context.Values.serviceAccount.components $component -}}
+{{- $globalLabels := $context.Values.serviceAccount.labels | default dict -}}
+{{- $componentLabels := dict -}}
+{{- if and $componentConfig $componentConfig.labels -}}
+{{- $componentLabels = $componentConfig.labels -}}
+{{- end -}}
+{{- toYaml (merge $componentLabels $globalLabels) -}}
+{{- end -}}
+
+{{/*
+Get component automountServiceAccountToken setting
+Usage: {{ include "kubecost.componentServiceAccountAutomount" (dict "component" "aggregator" "context" .) }}
+*/}}
+{{- define "kubecost.componentServiceAccountAutomount" -}}
+{{- $component := .component -}}
+{{- $context := .context -}}
+{{- $componentConfig := index $context.Values.serviceAccount.components $component -}}
+{{- if $componentConfig -}}
+{{- $componentConfig.automountServiceAccountToken -}}
+{{- else -}}
+{{- $context.Values.serviceAccount.automountServiceAccountToken -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Create chart name and version as used by the chart label.
 */}}
 {{- define "kubecost.chart" -}}

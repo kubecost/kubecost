@@ -37,7 +37,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
-      automountServiceAccountToken: false
+      automountServiceAccountToken: {{ include "kubecost.componentServiceAccountAutomount" (dict "component" "forecasting" "context" .) }}
       {{- if .Values.global.platforms.openshift.enabled }}
       securityContext:
       {{- toYaml .Values.global.platforms.openshift.securityContext | nindent 8 }}
@@ -51,9 +51,7 @@ spec:
         fsGroup: 1001
       {{- end }}
       restartPolicy: Always
-      {{- if .Values.forecasting.serviceAccountName }}
-      serviceAccountName: {{ .Values.forecasting.serviceAccountName }}
-      {{- end }}
+      serviceAccountName: {{ include "kubecost.forecasting.serviceAccountName" . }}
       containers:
         - name: forecasting
           image: {{ include "kubecost.forecasting.image" . }}

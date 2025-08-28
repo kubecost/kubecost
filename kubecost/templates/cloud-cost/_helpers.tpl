@@ -52,11 +52,7 @@ support templating a chart which uses the lookup function.
 {{- end -}}
 
 {{- define "kubecost.cloudCost.serviceAccountName" -}}
-{{- if .Values.cloudCost.serviceAccountName -}}
-    {{ .Values.cloudCost.serviceAccountName }}
-{{- else -}}
-    {{ template "kubecost.serviceAccountName" . }}
-{{- end -}}
+    {{ include "kubecost.componentServiceAccountName" (dict "component" "cloudCost" "context" .) }}
 {{- end -}}
 
 {{- define "kubecost.cloudCost.commonLabels" -}}

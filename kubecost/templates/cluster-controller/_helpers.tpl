@@ -18,6 +18,10 @@
 {{- printf "%s-%s" .Release.Name "cluster-controller" -}}
 {{- end -}}
 
+{{- define "kubecost.clusterController.serviceAccountName" -}}
+    {{ include "kubecost.componentServiceAccountName" (dict "component" "clustercontroller" "context" .) }}
+{{- end -}}
+
 {{- define "kubecost.clusterController.actionsBucketConfigSecretName" -}}
 {{- if (.Values.clusterController).storageConfigSecret }}
 {{- printf "%s" .Values.clusterController.storageConfigSecret -}}

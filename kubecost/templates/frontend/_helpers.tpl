@@ -20,6 +20,10 @@
 {{ include "kubecost.frontend.fullname" . }}
 {{- end -}}
 
+{{- define "kubecost.frontend.serviceAccountName" -}}
+    {{ include "kubecost.componentServiceAccountName" (dict "component" "frontend" "context" .) }}
+{{- end -}}
+
 {{/*
 Create the selector labels for haMode frontend.
 */}}

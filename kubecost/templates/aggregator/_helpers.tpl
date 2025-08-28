@@ -23,11 +23,7 @@
 {{- end -}}
 
 {{- define "kubecost.aggregator.serviceAccountName" -}}
-{{- if .Values.aggregator.serviceAccountName -}}
-    {{ .Values.aggregator.serviceAccountName }}
-{{- else -}}
-    {{ template "kubecost.serviceAccountName" . }}
-{{- end -}}
+    {{ include "kubecost.componentServiceAccountName" (dict "component" "aggregator" "context" .) }}
 {{- end -}}
 
 {{- define "kubecost.aggregator.commonLabels" -}}

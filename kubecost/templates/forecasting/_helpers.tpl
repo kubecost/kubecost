@@ -26,6 +26,10 @@
 {{ include "kubecost.forecasting.fullname" . }}
 {{- end -}}
 
+{{- define "kubecost.forecasting.serviceAccountName" -}}
+    {{ include "kubecost.componentServiceAccountName" (dict "component" "forecasting" "context" .) }}
+{{- end -}}
+
 {{- define "kubecost.forecasting.commonLabels" -}}
 {{ include "kubecost.chartLabels" . }}
 {{ include "kubecost.forecasting.selectorLabels" . }}

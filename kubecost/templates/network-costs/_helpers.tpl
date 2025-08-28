@@ -28,3 +28,7 @@ app: {{ template "kubecost.networkCosts.name" . }}
 {{- define "kubecost.networkCosts.selectorLabels" -}}
 app: {{ template "kubecost.networkCosts.name" . }}
 {{- end }}
+
+{{- define "kubecost.networkCosts.serviceAccountName" -}}
+    {{ include "kubecost.componentServiceAccountName" (dict "component" "networkcosts" "context" .) }}
+{{- end -}}

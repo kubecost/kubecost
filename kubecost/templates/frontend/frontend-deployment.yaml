@@ -55,7 +55,8 @@ spec:
         fsGroup: 1001
       {{- end }}
       restartPolicy: Always
-      serviceAccountName: {{ include "kubecost.serviceAccountName" . }}
+      serviceAccountName: {{ include "kubecost.frontend.serviceAccountName" . }}
+      automountServiceAccountToken: {{ include "kubecost.componentServiceAccountAutomount" (dict "component" "frontend" "context" .) }}
       volumes:
         - name: tmp
           emptyDir: {}

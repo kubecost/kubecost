@@ -71,7 +71,7 @@ spec:
       securityContext:
     {{- toYaml .Values.global.securityContext | nindent 8 }}
     {{- end }}
-      serviceAccountName: {{ template "kubecost.aggregator.serviceAccountName" . }}
+      serviceAccountName: {{ include "kubecost.aggregator.serviceAccountName" . }}
       volumes:
         - name: aggregator-staging
           emptyDir:
