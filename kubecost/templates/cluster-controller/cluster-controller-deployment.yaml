@@ -80,6 +80,8 @@ spec:
           mountPath: /var/keys
         {{- if (not (.Values.clusterController).legacyMode) }}
         {{- if and (not (.Values.clusterController).storageConfigSecret) (not (.Values.clusterController).storageConfig) }}
+        - name: config-storage
+          mountPath: /var/configs
         - name: federated-storage-config
           mountPath: /var/configs/actions-store.yaml
           subPath: {{ include "kubecost.federatedStorage.fileName" . }}
@@ -181,6 +183,8 @@ spec:
           optional: true
       {{- if not (.Values.clusterController).legacyMode }}
       {{- if and (not (.Values.clusterController).storageConfigSecret) (not (.Values.clusterController).storageConfig) }}
+      - name: config-storage
+        emptyDir: { }
       - name: federated-storage-config
         secret:
           defaultMode: 420
