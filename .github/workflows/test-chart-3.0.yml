@@ -130,7 +130,9 @@ jobs:
       # Install the chart with default values and check results.
       - name: Install Kubecost chart
         working-directory: ./kubecost
-        run: helm install --wait --wait-for-jobs kubecost . -n kubecost --debug
+        run: |
+          helm dependency build 
+          helm install --wait --wait-for-jobs kubecost . -n kubecost --debug
         # run: ct install --namespace kubecost --chart-dirs=kubecost/ --charts kubecost/
 
       - name: Wait for ready 
