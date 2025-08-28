@@ -8,9 +8,9 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
 
   # Uncomment this if you need to actively test this workflow from a PR draft
-  # pull_request:
-  #   branches:
-  #     - develop
+  pull_request:
+    branches:
+      - develop
 
 # Prevents multiple runs of the same workflow on the same branch from executing 
 # simultaneously. Saves resources.
@@ -79,3 +79,130 @@ jobs:
         with:
           entrypoint: /kubeconform
           args: "-summary -ignore-missing-schemas -output text full.yaml"
+
+  # Test cluster versions.
+  deploy-chart:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        k8s-version:
+          - name: v1.28
+            version: v1.28.15
+          - name: v1.29
+            version: v1.29.15
+          - name: v1.30
+            version: v1.30.14
+          - name: v1.31
+            version: v1.31.12
+          - name: v1.32
+            version: v1.32.8
+          - name: v1.33
+            version: v1.33.4
+          - name: v1.34
+            version: v1.34.0
+    needs: test-chart
+    name: ${{ matrix.k8s-version.name }} test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Set up chart-testing
+        uses: helm/chart-testing-action@0d28d3144d3a25ea2cc349d6e59901c4ff469b3b # v2.7.0
+
+      - name: Create KinD cluster
+        uses: helm/kind-action@a1b0e391336a6ee6713a0583f8c6240d70863de3 # v1.12.0
+        with:
+          version: v0.20.0
+          node_image: kindest/node:${{ matrix.k8s-version.version }}
+          kubectl_version: ${{ matrix.k8s-version.version }}
+
+      # Create necessary test files in the cluster. Some configurations of the chart
+      # require pre-existing files like Secrets in order for volume mounts to be valid. Without them,
+      # Pods won't come up and tests will fail.
+      - name: Create kubecost Namespace and test files
+        run: |
+          kubectl create ns kubecost
+          kubectl -n kubecost create -f .github/ci-files
+  
+      # Install the chart with default values and check results.
+      - name: Install Kubecost chart
+        working-directory: ./kubecost
+        run: 
+          helm repo add finops-agent-chart https://kubecost.github.io/finops-agent-chart
+          helm repo update
+          helm install --wait --wait-for-jobs kubecost . -n kubecost --debug
+        # run: ct install --namespace kubecost --chart-dirs=kubecost/ --charts kubecost/
+
+      - name: Wait for ready 
+        run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/name=kubecost --timeout=120s
+      
+      - name: gather debug info - install 
+        if: failure()
+        run: |
+          kubectl get pods -n kubecost
+          kubectl get pods -n kubecost -o yaml
+          kubectl get pods -n kubecost -o json
+          kubectl get pods -n kubecost -o jsonpath='{.items[*].spec.containers[*].image}'
+          kubectl get pods -n kubecost -o jsonpath='{.items[*].spec.containers[*].image}'
+          kubectl -n kubecost describe pods
+          kubectl -n kubecost logs -l app.kubernetes.io/name=kubecost
+
+      - name: Run Helm tests 
+        run: helm test -n kubecost kubecost
+
+      - name: gather debug info - test
+        if: failure()
+        run: |
+          kubectl get pods -n kubecost
+          kubectl get pods -n kubecost -o yaml
+          kubectl get pods -n kubecost -o json
+          kubectl get pods -n kubecost -o jsonpath='{.items[*].spec.containers[*].image}'
+          kubectl get pods -n kubecost -o jsonpath='{.items[*].spec.containers[*].image}'
+          kubectl -n kubecost describe pods
+          echo "kubecost logs"
+          kubectl -n kubecost logs -l app.kubernetes.io/name=kubecost
+          echo "agg logs"
+          kubectl -n kubecost logs -l app.kubernetes.io/name=aggregator
+          echo "basic-health logs"
+          kubectl -n kubecost logs basic-health
+
+      - name: Uninstall chart
+        run: helm uninstall kubecost -n kubecost --no-hooks --wait
+
+      - name: Cleanup all Pods in Kubecost Namespace
+        run: kubectl -n kubecost delete deployments,daemonsets,statefulsets,pods --all --force
+
+      # Loops over all the other values files in the ci directory and installs the chart, runs Helm tests, and uninstalls.
+      # Additional sleeps seem necessary for the main Kubecost Pod to be completely available, both frontend and backend.
+      - name: Install, test, remove chart for other values
+        id: loopingtests
+        run: |
+          directory="kubecost/ci"
+          for file in "$directory"/*; do
+          if [ -f "$file" ]; then
+            echo "### Sleeping for 30 seconds ###"
+            sleep 30
+            echo "### Performing installation with values from $file ###"
+            helm install --wait --wait-for-jobs kubecost kubecost/ -n kubecost -f "$file"
+            echo "### Waiting for kubecost Pod readiness. ###"
+            kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/name=kubecost --timeout=120s
+            echo "### Sleeping for 60 seconds longer. ###"
+            sleep 60
+            echo "### [DEBUG] printing debug info ###"
+            kubectl -n kubecost get pods
+            kubectl get pods -n kubecost -o yaml
+            kubectl get pods -n kubecost -o jsonpath='{.items[*].spec.containers[*].image}'
+            kubectl get pods -n kubecost -o jsonpath='{.items[*].spec.containers[*].image}'
+            kubectl -n kubecost describe pods
+            kubectl -n kubecost logs -l app.kubernetes.io/name=kubecost
+            echo "### Performing helm tests ###"
+            helm test -n kubecost $(helm ls -n kubecost --all --short)
+            echo "### Performing uninstallation ###"
+            helm uninstall $(helm ls -n kubecost --all --short) -n kubecost --no-hooks --wait
+            echo "### Cleaning up all Pods and Pod controllers in Kubecost Namespace ###"
+            kubectl -n kubecost delete deployments,daemonsets,statefulsets,pods --all --force
+          fi
+          done
