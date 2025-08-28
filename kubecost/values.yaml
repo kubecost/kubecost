@@ -545,6 +545,7 @@ localStore:
 
 ## Values for the finops-agent sub-chart
 finops-agent:
+  enabled: false
   agent:
     collectorDataSource:
       enabled: true
