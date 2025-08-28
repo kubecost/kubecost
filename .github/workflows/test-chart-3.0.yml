@@ -131,7 +131,9 @@ jobs:
       - name: Install Kubecost chart
         working-directory: ./kubecost
         run: |
-          helm dependency build 
+          helm repo add finops-agent-chart https://kubecost.github.io/finops-agent-chart
+          helm repo update
+          helm dependency build kubecost/
           helm install --wait --wait-for-jobs kubecost . -n kubecost --debug
         # run: ct install --namespace kubecost --chart-dirs=kubecost/ --charts kubecost/
 
