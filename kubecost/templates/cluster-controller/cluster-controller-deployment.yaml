@@ -78,17 +78,17 @@ spec:
         volumeMounts:
         - name: cluster-controller-keys
           mountPath: /var/keys
-        {{- if (not (.Values.clusterController).legacyMode) }}
+        {{- if not (.Values.clusterController).legacyMode }}
         {{- if and (not (.Values.clusterController).storageConfigSecret) (not (.Values.clusterController).storageConfig) }}
-        - name: config-storage
-          mountPath: /var/configs
+        - name: actions-storage
+          mountPath: /var/configs/actions/storage
         - name: federated-storage-config
-          mountPath: /var/configs/actions-store.yaml
+          mountPath: /var/configs/actions/storage/actions-store.yaml
           subPath: {{ include "kubecost.federatedStorage.fileName" . }}
           readOnly: true
         {{- else }}
         - name: actions-bucket-config
-          mountPath: /var/configs
+          mountPath: /var/configs/actions/storage
           readOnly: true
         {{- end }}
         {{- end }}
@@ -119,7 +119,7 @@ spec:
         - name: LOG_LEVEL
           value: {{ .Values.clusterController.logLevel | default "info" }}
         - name: ACTIONS_BUCKET_CONFIG
-          value: /var/configs/actions-store.yaml
+          value: /var/configs/actions/storage/actions-store.yaml
         {{- end }}
         - name: CC_KUBESCALER_COST_MODEL_PATH
           {{- if .Values.clusterController.primaryKubecostURL }}
@@ -183,7 +183,7 @@ spec:
           optional: true
       {{- if not (.Values.clusterController).legacyMode }}
       {{- if and (not (.Values.clusterController).storageConfigSecret) (not (.Values.clusterController).storageConfig) }}
-      - name: config-storage
+      - name: actions-storage
         emptyDir: { }
       - name: federated-storage-config
         secret:
