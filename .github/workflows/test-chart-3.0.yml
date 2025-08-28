@@ -126,7 +126,7 @@ jobs:
         run: |
           kubectl create ns kubecost
           kubectl -n kubecost create -f .github/ci-files
-  
+
       # Install the chart with default values and check results.
       - name: Install Kubecost chart
         working-directory: ./kubecost
