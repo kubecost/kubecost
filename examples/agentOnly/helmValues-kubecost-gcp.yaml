@@ -19,7 +19,7 @@ global:
 clusterController:
   enabled: true  # optional, automated rightsizing of containers
 networkCosts:
-  enabled: true  # optional, daemonset improves cost allocation the the correct pod
+  enabled: true  # optional, daemonset- improves network cost allocations to the correct pod
 aggregator:
   enabled: false
 frontend:
