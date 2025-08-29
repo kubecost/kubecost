@@ -15,8 +15,17 @@ Kubecost uses a flexible service account configuration system that allows you to
 
 By default, Kubecost creates a single service account named `kubecost` that is used by all components except:
 
-- `cluster-controller` - Gets its own service account by default due to elevated permissions needed
-- `finops-agent` - Managed by its own subchart
+| Component | Default Shared Account | Description | Kubernetes API Access | Cloud Provider Object-Storage Access |
+|-----------|----------------|-------------|----------------------|----------------------------|
+| `finops-agent` | `true` | metrics collection | clusterRole | true |
+| `aggregator` | `true` | Core cost data processing | local namespace | true |
+| `cloudcost` | `true` | Cloud provider billing integration | false | true |
+| `frontend` | `false` | Web UI and API gateway | false | false |
+| `localstore` | `false` | Local storage for single cluster deployments | false | false |
+| `forecasting` | `false` | forecasting and predictions | false | false |
+| `clustercontroller` | `true` | Cluster resource management | clusterRole | true |
+| `networkcosts` | `false` | Network cost tracking | false | false |
+
 
 ```yaml
 serviceAccount:
@@ -151,19 +160,6 @@ serviceAccount:
 ```
 
 ## Component-Specific Configuration
-
-### Available Components
-
-Each component supports the following configuration:
-
-| Component | Default Create | Description |
-|-----------|----------------|-------------|
-| `aggregator` | `false` | Core cost data processing engine |
-| `cloudcost` | `false` | Cloud provider billing data integration |
-| `frontend` | `false` | Web UI and API gateway |
-| `forecasting` | `false` | Cost forecasting and predictions |
-| `clustercontroller` | `true` | Cluster resource management |
-| `networkcosts` | `false` | Network cost tracking |
 
 ### Component Configuration Options
 
