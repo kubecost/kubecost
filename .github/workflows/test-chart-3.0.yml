@@ -211,7 +211,7 @@ jobs:
           timeout-minutes: 10
           ttl: 10m
           export-kubeconfig: true
-          disk: 100
+          disk: 150
           api-token: ${{ secrets.REPLICATED_API_TOKEN }}
 
       - name: Populate federated storage config secret
