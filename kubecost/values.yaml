@@ -541,6 +541,7 @@ localStore:
       ## The "helm.sh/resource-policy: keep" annotation is used to prevent the persistent volume from being deleted when uninstalling or moving to a different deployment method.
       # This can be used to allow the agent history to be uploaded to cloud storage when upgrading to Enterprise.
       helm.sh/resource-policy: keep
+  ## localStore uses the images set in 'kubecost.image', but can be overridden here:
   fullImageName: ""
 
 ## Values for the finops-agent sub-chart
@@ -593,12 +594,12 @@ kubecost:
   ## If not set, the image will be pulled from the registry and repository specified in the image block.
   ## If set, the fullImageName will be used to pull the image.
   ## Example:
-  ## fullImageName: gcr.io/kubecost1/aggregator:v3.0.0
+  ## fullImageName: gcr.io/kubecost1/cost-model:v3.0.0
   fullImageName: ""
 
   image:
     registry: gcr.io
-    repository: kubecost1/cost-model
+    repository: kubecost1/cost-model-nightly
     tag: latest
 
   imagePullPolicy: IfNotPresent
@@ -1126,6 +1127,11 @@ cloudCost:
   # runWindowDays:
 
   ## Service account is now configured globally in serviceAccount.components.cloudCost
+  ## by default, the cloud cost pod will use the same service account as the aggregator pod.
+  ## this can be overridden to use a different service account.
+  serviceAccountName: ""
+  ## cloudCost uses the images set in 'kubecost.image', but can be overridden here:
+  fullImageName: ""
 
   readinessProbe:
     enabled: true
@@ -1223,18 +1229,6 @@ clusterController:
   #         "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
   #         "client_x509_cert_url": ""
   #       }
-  # # Actions can reference configuration at a global or cluster-specific level
-  # config:
-  #   global: # Define global action configuration
-  #     rightsizing:
-  #       enabled: true
-  #   clusters: # Define cluster-specific action configuration, where top-level keys are cluster names
-  #     cluster-1:
-  #       rightsizing:
-  #         enabled: false
-  #     cluster-2:
-  #       rightsizing:
-  #         enabled: false
 #  fqdn: kubecost-cluster-controller.kubecost.svc.cluster.local:9731
 
   rbac:
@@ -1399,6 +1393,13 @@ kubecostProductConfigs:
     # # The name of the Secret containing the bucket config. The contents should be stored under a key named actions-store.yaml
     # storageConfigSecret: actions-store
 
+    # # An optional list of cluster definitions that can be added for multicluster turndown
+    # # actions.
+    # turndownClusters:
+    #   - name: "Cluster A"
+    #     address: http://cluster-a.kubecost.com:9090
+    #   - name: "Cluster B"
+    #     address: http://cluster-b.kubecost.com:9090
     # # (If not using Secret) Define storage config directly in yaml, as below:
     # storageConfig: |-
     # # AWS EXAMPLE

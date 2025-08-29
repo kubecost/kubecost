@@ -229,8 +229,13 @@ spec:
         - name: actions-storage-config
           secret:
             defaultMode: 420
-            secretName: {{ ((.Values.kubecostProductConfigs).actions).storageConfigSecret | default "actions-store" }}
+            secretName: {{ include "kubecost.actions.secretName" . }}
           {{- end }}
+        {{- end }}
+        {{- if  ((.Values.kubecostProductConfigs).actions).turndownClusters }}
+        - name: kubecost-clusters
+          configMap:
+            name: kubecost-clusters
         {{- end }}
       {{- end }}
         {{- if .Values.aggregator.extraVolumes }}
@@ -400,6 +405,10 @@ spec:
               mountPath: /var/configs/actions/storage/actions-store.yaml
               subPath: {{ include "kubecost.federatedStorage.fileName" . }}
               readOnly: true
+            {{- end }}
+            {{- if  ((.Values.kubecostProductConfigs).actions).turndownClusters }}
+            - name: kubecost-clusters
+              mountPath: /var/configs/clusters
             {{- end }}
             {{- if ((.Values.kubecostProductConfigs).actions).storageConfig }}
             - name: actions-storage-config

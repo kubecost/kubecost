@@ -1,5 +1,5 @@
 {{- if (.Values.clusterController).enabled }}
-{{- if not (.Values.clusterController).storageConfigSecret }}
+{{- if (.Values.clusterController).storageConfig }}
 apiVersion: v1
 kind: Secret
 type: Opaque

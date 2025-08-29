@@ -1,34 +1,4 @@
-# Kubecost Helm chart
-
-This is the official Helm chart for [Kubecost](https://www.kubecost.com/), an enterprise-grade application to monitor and manage Kubernetes spend. Please see the [website](https://www.kubecost.com/) for more details on what Kubecost can do for you and the official documentation [here](https://www.ibm.com/docs/en/kubecost), or contact [team@kubecost.com](mailto:team@kubecost.com) for assistance.
-
-To install via Helm, run the following command.
-
-```sh
-helm upgrade --install kubecost -n kubecost --create-namespace \
-  --repo https://kubecost.github.io/kubecost/ kubecost \
-  --set kubecostToken="aGVsbUBrdWJlY29zdC5jb20=xm343yadf98"
-```
-
-Alternatively, add the Helm repository first and scan for updates.
-
-```sh
-helm repo add kubecost https://kubecost.github.io/kubecost/
-helm repo update
-```
-
-Next, install the chart.
-
-```sh
-helm install kubecost kubecost/kubecost -n kubecost --create-namespace \
-  --set kubecostToken="aGVsbUBrdWJlY29zdC5jb20=xm343yadf98"
-```
-
-While Helm is the [recommended install path](http://kubecost.com/install) for Kubecost especially in production, Kubecost can alternatively be deployed with a single-file manifest using the following command. Keep in mind when choosing this method, Kubecost will be installed from a development branch and may include unreleased changes.
-
-```sh
-kubectl apply -f https://raw.githubusercontent.com/kubecost/kubecost-helm-chart/develop/kubecost.yaml
-```
+# Kubecost Helm Chart Values
 
 The following table lists commonly used configuration parameters for the Kubecost Helm chart and their default values. Please see the [values file](values.yaml) for the complete set of definable values.
 
