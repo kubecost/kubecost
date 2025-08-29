@@ -541,6 +541,7 @@ localStore:
       ## The "helm.sh/resource-policy: keep" annotation is used to prevent the persistent volume from being deleted when uninstalling or moving to a different deployment method.
       # This can be used to allow the agent history to be uploaded to cloud storage when upgrading to Enterprise.
       helm.sh/resource-policy: keep
+  ## localStore uses the images set in 'kubecost.image', but can be overridden here:
   fullImageName: ""
 
 ## Values for the finops-agent sub-chart
@@ -593,12 +594,12 @@ kubecost:
   ## If not set, the image will be pulled from the registry and repository specified in the image block.
   ## If set, the fullImageName will be used to pull the image.
   ## Example:
-  ## fullImageName: gcr.io/kubecost1/aggregator:v3.0.0
+  ## fullImageName: gcr.io/kubecost1/cost-model:v3.0.0
   fullImageName: ""
 
   image:
     registry: gcr.io
-    repository: kubecost1/cost-model
+    repository: kubecost1/cost-model-nightly
     tag: latest
 
   imagePullPolicy: IfNotPresent
@@ -1130,6 +1131,8 @@ cloudCost:
   ## by default, the cloud cost pod will use the same service account as the aggregator pod.
   ## this can be overridden to use a different service account.
   serviceAccountName: ""
+  ## cloudCost uses the images set in 'kubecost.image', but can be overridden here:
+  fullImageName: ""
 
   readinessProbe:
     enabled: true
