@@ -1,6 +1,6 @@
 type: AZURE
 config:
-  storage_account: "kubecost-multi-cluster-storage"
+  storage_account: kubecost-multi-cluster-storage
   container: ""
   ## keys are not required when using assumed roles
   storage_account_key: ""
