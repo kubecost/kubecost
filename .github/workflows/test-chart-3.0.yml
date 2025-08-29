@@ -269,7 +269,11 @@ jobs:
           ttl: 10m
           export-kubeconfig: true
           api-token: ${{ secrets.REPLICATED_API_TOKEN }}
-      
+
+      - name: Create kubecost Namespace
+        run: |
+          kubectl create ns kubecost
+
       - name: Set the storage class as default
         run: |
           kubectl patch storageclass gp2 -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
