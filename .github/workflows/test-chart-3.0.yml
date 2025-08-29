@@ -85,12 +85,17 @@ jobs:
       - name: Set up chart-testing
         uses: helm/chart-testing-action@v2.7.0
 
-      - name: Create KinD cluster
-        uses: helm/kind-action@v1.12.0
+      - name: Create Cluster
+        id: create-cluster
+        uses: replicatedhq/compatibility-actions/create-cluster@v1
         with:
-          version: v0.20.0
-          node_image: kindest/node:${{ matrix.k8s-version.version }}
-          kubectl_version: ${{ matrix.k8s-version.version }}
+          kubernetes-distribution: kind
+          kubernetes-version: v1.34.0
+          cluster-name: kind-v1.34.0
+          timeout-minutes: 10
+          ttl: 30m
+          export-kubeconfig: true
+          api-token: ${{ secrets.REPLICATED_API_TOKEN }}
 
       - name: Populate federated storage config secret
         run: |
