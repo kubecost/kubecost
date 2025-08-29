@@ -24,7 +24,7 @@ When you have your customized values, use the `-f` flag to pass them to the helm
 
 ```bash
 helm install kubecost \
-  --repo https://kubecost.github.io/cost-analyzer/ kubecost \
+  --repo https://kubecost.github.io/kubecost/ kubecost \
   --namespace kubecost \
   --create-namespace \
   -f helmValues-kubecost-3.0.yaml
