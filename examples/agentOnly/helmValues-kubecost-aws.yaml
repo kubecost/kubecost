@@ -1,0 +1,28 @@
+global:
+  ## clusterId is used to identify the cluster in the FinOps Agent
+  ## when using the same cluster names in different regions, we suggest appending the region to the clusterId
+  clusterId: globally-unique-cluster-id
+  federatedStorage:
+    ## Use the existingSecret when a access key and secret is used to access the federated storage.
+    ## the 'config' can be used when using assumed roles.
+    existingSecret: ""
+    config: |-
+      type: S3
+      config:
+        bucket: kubecost-federated-storage
+        endpoint: s3.amazonaws.com
+        region: us-west-2
+clusterController:
+  enabled: true  # optional, automated rightsizing of containers
+networkCosts:
+  enabled: true  # optional, daemonset improves cost allocation the the correct pod
+aggregator:
+  enabled: false
+frontend:
+  enabled: false
+cloudCost:
+  enabled: false
+forecasting:
+  enabled: false
+finops-agent:
+  enabled: true

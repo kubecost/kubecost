@@ -1,0 +1,9 @@
+type: AZURE
+config:
+  storage_account: "kubecost-multi-cluster-storage"
+  container: ""
+  ## keys are not required when using assumed roles
+  storage_account_key: ""
+  ## endpoint is only needed if primary blob service endpoint domain is not blob.core.windows.net
+  # endpoint: "blob.core.chinacloudapi.cn"
+  # max_retries: 0
