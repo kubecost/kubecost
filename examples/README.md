@@ -4,7 +4,7 @@
 
 Extensive documentation is available at [<https://www.ibm.com/docs/en/kubecost/self-hosted/2.x>](https://www.ibm.com/docs/en/kubecost/self-hosted/2.x).
 
-The 3.0 helm chart has been updated to simplify many of the configurations that had been added over time and will require some changes to the configurations used in previous versions.
+The 3.0 helm chart has been updated to simplify many of the configurations that had been added over time and will require some changes to when upgrading from previous versions.
 
 ## Agent Only Configurations
 
