@@ -27,5 +27,8 @@ helm install kubecost \
   --repo https://kubecost.github.io/kubecost/ kubecost \
   --namespace kubecost \
   --create-namespace \
-  -f helmValues-kubecost-3.0.yaml
+  -f helmValues-kubecost-3.0.yaml \
+  --devel
 ```
+
+> The `--devel` flag is required to install the 3.0 beta helm chart. This not be used when the final 3.0 release is available.
