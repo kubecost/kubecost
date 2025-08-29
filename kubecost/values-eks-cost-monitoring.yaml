@@ -1,21 +1,29 @@
+global:
+  imageRegistry: public.ecr.aws
 frontend:
-  image: public.ecr.aws/kubecost/frontend
+  image:
+    repository: kubecost/frontend
 
-kubecost:
-  image: public.ecr.aws/kubecost/cost-model
+aggregator:
+  image:
+    repository: kubecost/cost-model
 
 forecasting:
   image:
-    repository: public.ecr.aws/kubecost/kubecost-modeling
+    repository: kubecost/kubecost-modeling
+    tag: v0.1.28
 
 networkCosts:
   image:
-    repository: public.ecr.aws/kubecost/kubecost-network-costs
+    repository: kubecost/kubecost-network-costs
 
 clusterController:
   image:
-    repository: public.ecr.aws/kubecost/cluster-controller
+    repository: kubecost/cluster-controller
+
+finops-agent:
+  image:
+    repository: kubecost/agent
 
 reporting:
   productAnalytics: false
-

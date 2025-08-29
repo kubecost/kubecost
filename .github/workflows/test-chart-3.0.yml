@@ -242,6 +242,7 @@ jobs:
         with:
           api-token: ${{ secrets.REPLICATED_API_TOKEN }}
           cluster-id: ${{ steps.create-cluster.outputs.cluster-id }}
+
   deploy-eks:
     runs-on: ubuntu-latest
     needs: test-chart
@@ -266,15 +267,11 @@ jobs:
           ttl: 10m
           export-kubeconfig: true
           api-token: ${{ secrets.REPLICATED_API_TOKEN }}
+      
+      - name: Set the storage class as default
+        run: |
+          kubectl patch storageclass gp2 -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
 
-      - name: Populate federated storage config secret
-        run: |
-          sed -i "s|FEDERATED_STORAGE_CONFIG_YAML|${{ secrets.FEDERATED_STORAGE_CONFIG_YAML }}|" .github/ci-files/federatedStorageConfigSecret.yaml
-      - name: Create kubecost Namespace and test files
-        run: |
-          kubectl create ns kubecost
-          kubectl -n kubecost create -f .github/ci-files
-    
       # Install the chart with EKS values and check results.
       - name: Install Kubecost chart with EKS values
         working-directory: ./kubecost
