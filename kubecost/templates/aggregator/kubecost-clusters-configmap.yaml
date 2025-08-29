@@ -1,0 +1,14 @@
+{{- if .Values.kubecostProductConfigs.actions.enabled }}
+{{- if .Values.kubecostProductConfigs.actions.turndownClusters }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kubecost-clusters
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
+data:
+  clusters.json: |
+{{- toJson .Values.kubecostProductConfigs.actions.turndownClusters | nindent 4 }}
+{{- end }}
+{{- end }}

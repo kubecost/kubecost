@@ -437,6 +437,7 @@ kubecost.costEventsAudit.enabled flag for nginx configmap
   "aggregator/kubecost-alerts-configmap.yaml"
   "aggregator/kubecost-asset-reports-configmap.yaml"
   "aggregator/kubecost-cloud-cost-reports-configmap.yaml"
+  "aggregator/kubecost-clusters-configmap.yaml"
   "aggregator/kubecost-saved-reports-configmap.yaml"
   "aggregator/kubecost-smtp-configmap.yaml"
   "aggregator/saml-configmap.yaml"
