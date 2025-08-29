@@ -226,7 +226,7 @@ spec:
         - name: actions-storage-config
           secret:
             defaultMode: 420
-            secretName: {{ ((.Values.kubecostProductConfigs).actions).storageConfigSecret | default "actions-store" }}
+            secretName: {{ include "kubecost.actions.secretName" . }}
           {{- end }}
         {{- end }}
       {{- end }}
