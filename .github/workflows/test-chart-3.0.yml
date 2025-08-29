@@ -206,6 +206,7 @@ jobs:
           timeout-minutes: 10
           ttl: 10m
           export-kubeconfig: true
+          disk: 100Gi
           api-token: ${{ secrets.REPLICATED_API_TOKEN }}
 
       - name: Populate federated storage config secret
@@ -229,6 +230,7 @@ jobs:
           --set global.platforms.openshift.scc.clusterController=true \
           --set networkCosts.enabled=true \
           --set clusterController.enabled=true \
+          --set clusterController.storageConfigSecret=actions-bucket-config \
           --debug
 
       - name: Wait for ready 
