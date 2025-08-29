@@ -9,7 +9,7 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: {{ template "kubecost.serviceAccountName" . }}
+  name: {{ template "kubecost.serviceAccountName" . }}-log-collection
 subjects:
   - kind: ServiceAccount
     name: {{ template "kubecost.serviceAccountName" . }}
