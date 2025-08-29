@@ -1295,6 +1295,13 @@ kubecostProductConfigs:
     # # The name of the Secret containing the bucket config. The contents should be stored under a key named actions-store.yaml
     # storageConfigSecret: actions-store
 
+    # # An optional list of cluster definitions that can be added for multicluster turndown
+    # # actions.
+    # turndownClusters:
+    #   - name: "Cluster A"
+    #     address: http://cluster-a.kubecost.com:9090
+    #   - name: "Cluster B"
+    #     address: http://cluster-b.kubecost.com:9090
     # # (If not using Secret) Define storage config directly in yaml, as below:
     # storageConfig: |-
     # # AWS EXAMPLE
