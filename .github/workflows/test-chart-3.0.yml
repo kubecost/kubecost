@@ -53,7 +53,7 @@ jobs:
           for file in "$directory"/*; do
           if [ -f "$file" ]; then
               echo "Templating file $file"
-              helm template kubecost/ -f "$file" --debug >> full.yaml
+              helm template kubecost/ -f "$file" >> full.yaml
           fi
           done
 
@@ -85,17 +85,12 @@ jobs:
       - name: Set up chart-testing
         uses: helm/chart-testing-action@v2.7.0
 
-      - name: Create Cluster
-        id: create-cluster
-        uses: replicatedhq/compatibility-actions/create-cluster@v1
+      - name: Create KinD cluster
+        uses: helm/kind-action@v1.12.0
         with:
-          kubernetes-distribution: kind
-          kubernetes-version: v1.34.0
-          cluster-name: kind-v1.34.0
-          timeout-minutes: 10
-          ttl: 30m
-          export-kubeconfig: true
-          api-token: ${{ secrets.REPLICATED_API_TOKEN }}
+          version: v0.20.0
+          node_image: kindest/node:${{ matrix.k8s-version.version }}
+          kubectl_version: ${{ matrix.k8s-version.version }}
 
       - name: Populate federated storage config secret
         run: |
@@ -116,8 +111,7 @@ jobs:
           helm repo add finops-agent-chart https://kubecost.github.io/finops-agent-chart
           helm repo update
           helm dependency build
-          helm install --wait --wait-for-jobs kubecost . -n kubecost --debug
-        # run: ct install --namespace kubecost --chart-dirs=kubecost/ --charts kubecost/
+          helm install --wait --wait-for-jobs kubecost . -n kubecost
 
       - name: Wait for ready 
         run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/instance=kubecost --timeout=120s
@@ -169,7 +163,7 @@ jobs:
             echo "### Sleeping for 30 seconds ###"
             sleep 30
             echo "### Performing installation with values from $file ###"
-            helm install --wait --wait-for-jobs kubecost kubecost/ -n kubecost -f "$file" --debug
+            helm install --wait --wait-for-jobs kubecost kubecost/ -n kubecost -f "$file"
             echo "### Waiting for kubecost Pod readiness. ###"
             kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/instance=kubecost --timeout=120s
             echo "### [DEBUG] printing debug info ###"
@@ -217,6 +211,7 @@ jobs:
       - name: Populate federated storage config secret
         run: |
           sed -i "s|FEDERATED_STORAGE_CONFIG_YAML|${{ secrets.FEDERATED_STORAGE_CONFIG_YAML }}|" .github/ci-files/federatedStorageConfigSecret.yaml
+      
       - name: Create kubecost Namespace and test files
         run: |
           kubectl create ns kubecost
@@ -236,7 +231,6 @@ jobs:
           --set networkCosts.enabled=true \
           --set clusterController.enabled=true \
           --set clusterController.storageConfigSecret=actions-bucket-config \
-          --debug
 
       - name: Wait for ready 
         run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/instance=kubecost --timeout=120s
@@ -262,7 +256,6 @@ jobs:
       - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-      # Outputs: `cluster-kubeconfig`, `cluster-id`
       - name: Create Cluster
         id: create-cluster
         uses: replicatedhq/compatibility-actions/create-cluster@v1
@@ -279,6 +272,7 @@ jobs:
         run: |
           kubectl create ns kubecost
 
+      # replicated eks cluster do not set the storage class as default, so we need to do it manually
       - name: Set the storage class as default
         run: |
           kubectl patch storageclass gp2 -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
@@ -290,7 +284,7 @@ jobs:
           helm repo add finops-agent-chart https://kubecost.github.io/finops-agent-chart
           helm repo update
           helm dependency build
-          helm install --wait --wait-for-jobs kubecost . -n kubecost -f values-eks-cost-monitoring.yaml --debug
+          helm install --wait --wait-for-jobs kubecost . -n kubecost -f values-eks-cost-monitoring.yaml
 
       - name: Wait for ready 
         run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/instance=kubecost --timeout=120s
