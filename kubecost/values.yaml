@@ -1227,18 +1227,6 @@ clusterController:
   #         "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
   #         "client_x509_cert_url": ""
   #       }
-  # # Actions can reference configuration at a global or cluster-specific level
-  # config:
-  #   global: # Define global action configuration
-  #     rightsizing:
-  #       enabled: true
-  #   clusters: # Define cluster-specific action configuration, where top-level keys are cluster names
-  #     cluster-1:
-  #       rightsizing:
-  #         enabled: false
-  #     cluster-2:
-  #       rightsizing:
-  #         enabled: false
 #  fqdn: kubecost-cluster-controller.kubecost.svc.cluster.local:9731
 
   rbac:
