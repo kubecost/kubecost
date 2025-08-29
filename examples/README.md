@@ -31,4 +31,4 @@ helm install kubecost \
   --devel
 ```
 
-> The `--devel` flag is required to install the 3.0 beta helm chart. This not be used when the final 3.0 release is available.
+> The `--devel` flag is required to install the 3.0 beta helm chart. This will not be used when the final 3.0 release is available.
