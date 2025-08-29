@@ -1,0 +1,17 @@
+type: GCS
+config:
+  bucket: kubecost-multi-cluster-storage
+  service_account: |-
+    {
+      "type": "service_account",
+      "project_id": "project-227502",
+      "private_key_id": "",
+      "private_key": "",
+      "client_email": "bucket-user@project-227502.iam.gserviceaccount.com",
+      "client_id": "",
+      "auth_uri": "",
+      "token_uri": "",
+      "auth_provider_x509_cert_url": "",
+      "client_x509_cert_url": "",
+      "universe_domain": "googleapis.com"
+    }
