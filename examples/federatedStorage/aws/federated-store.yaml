@@ -1,0 +1,8 @@
+type: S3
+config:
+  bucket: kubecost-multi-cluster-storage
+  endpoint: s3.amazonaws.com
+  region: us-west-2
+  ## keys are not required when using assumed roles
+  access_key: ""
+  secret_key: ""
