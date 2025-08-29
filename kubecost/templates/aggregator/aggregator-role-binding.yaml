@@ -1,0 +1,17 @@
+{{- if (.Values.reporting).logCollection }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ template "kubecost.aggregator.serviceAccountName" . }}-log-collection
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ template "kubecost.aggregator.serviceAccountName" . }}-log-collection
+subjects:
+  - kind: ServiceAccount
+    name: {{ template "kubecost.aggregator.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+{{- end }}
