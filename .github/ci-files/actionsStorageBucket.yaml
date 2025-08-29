@@ -1,0 +1,7 @@
+apiVersion: v1
+data:
+  actions-store.yaml: dHlwZTogUzMKY29uZmlnOgogIGJ1Y2tldDoga3ViZWNvc3QtYWN0aW9ucy1zdG9yYWdlLWJ1Y2tldAogIGVuZHBvaW50OiBzMy5hbWF6b25hd3MuY29tCiAgcmVnaW9uOiB1cy1lYXN0LTEKICBhY2Nlc3Nfa2V5OiAiPHlvdXItYWNjZXNzLWtleT4iCiAgc2VjcmV0X2tleTogIjx5b3VyLXNlY3JldC1rZXk+Ig==
+kind: Secret
+metadata:
+  name: actions-bucket-config
+type: Opaque

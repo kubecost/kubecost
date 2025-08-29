@@ -8,9 +8,9 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
 
   # Uncomment this if you need to actively test this workflow from a PR draft
-  # pull_request:
-  #   branches:
-  #     - develop
+  pull_request:
+    branches:
+      - develop
 
 # Prevents multiple runs of the same workflow on the same branch from executing 
 # simultaneously. Saves resources.
@@ -29,7 +29,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Set up chart-testing
-        uses: helm/chart-testing-action@0d28d3144d3a25ea2cc349d6e59901c4ff469b3b # v2.7.0
+        uses: helm/chart-testing-action@v2.7.0
 
       - name: Add finops-agent-chart
         uses: actions/checkout@v5
@@ -45,30 +45,15 @@ jobs:
           helm repo update
           ct lint --chart-dirs=kubecost/ --charts kubecost/ --validate-maintainers=false
 
-      # Build the finops-agent subchart and make it available for the main chart
-      # - name: Build finops-agent subchart
-      #   run: |
-      #     # Package the finops-agent chart
-      #     helm dependency build finops-agent-chart/charts/finops-agent
-      #     helm package finops-agent-chart/charts/finops-agent
-          
-      #     # Create charts directory if it doesn't exist
-      #     mkdir -p kubecost/charts
-          
-      #     # Move the packaged chart to the kubecost charts directory
-      #     mv finops-agent-*.tgz kubecost/charts/
-
       # Run `helm template` on the main values file plus all those in the ci directory.
       - name: Helm template
         run: |
-          helm template kubecost/ -f .github/ci-helmValues/helmValues-federated-store.yaml \
-            --set finops-agent.enabled=false \
-            --debug > full.yaml
+          helm template kubecost/ -f .github/ci-helmValues/helmValues-federated-store.yaml > full.yaml
           directory="kubecost/ci"
           for file in "$directory"/*; do
           if [ -f "$file" ]; then
               echo "Templating file $file"
-              helm template kubecost/ -f "$file" --debug >> full.yaml
+              helm template kubecost/ -f "$file" >> full.yaml
           fi
           done
 
@@ -79,3 +64,236 @@ jobs:
         with:
           entrypoint: /kubeconform
           args: "-summary -ignore-missing-schemas -output text full.yaml"
+
+  # Test cluster versions.
+  deploy-chart:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        k8s-version:
+          - name: v1.34
+            version: v1.34.0
+    needs: test-chart
+    name: ${{ matrix.k8s-version.name }} test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Set up chart-testing
+        uses: helm/chart-testing-action@v2.7.0
+
+      - name: Create KinD cluster
+        uses: helm/kind-action@v1.12.0
+        with:
+          version: v0.20.0
+          node_image: kindest/node:${{ matrix.k8s-version.version }}
+          kubectl_version: ${{ matrix.k8s-version.version }}
+
+      - name: Populate federated storage config secret
+        run: |
+          sed -i "s|FEDERATED_STORAGE_CONFIG_YAML|${{ secrets.FEDERATED_STORAGE_CONFIG_YAML }}|" .github/ci-files/federatedStorageConfigSecret.yaml
+
+      # Create necessary test files in the cluster. Some configurations of the chart
+      # require pre-existing files like Secrets in order for volume mounts to be valid. Without them,
+      # Pods won't come up and tests will fail.
+      - name: Create kubecost Namespace and test files
+        run: |
+          kubectl create ns kubecost
+          kubectl -n kubecost create -f .github/ci-files
+
+      # Install the chart with default values and check results.
+      - name: Install Kubecost chart
+        working-directory: ./kubecost
+        run: |
+          helm repo add finops-agent-chart https://kubecost.github.io/finops-agent-chart
+          helm repo update
+          helm dependency build
+          helm install --wait --wait-for-jobs kubecost . -n kubecost
+
+      - name: Wait for ready 
+        run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/instance=kubecost --timeout=120s
+      
+      - name: gather debug info - install 
+        if: failure()
+        run: |
+          kubectl get pods -n kubecost
+          kubectl get pods -n kubecost -o yaml
+          kubectl get pods -n kubecost -o json
+          kubectl get pods -n kubecost -o jsonpath='{.items[*].spec.containers[*].image}'
+          kubectl get pods -n kubecost -o jsonpath='{.items[*].spec.containers[*].image}'
+          kubectl -n kubecost describe pods
+          kubectl -n kubecost logs -l app.kubernetes.io/instance=kubecost
+
+      - name: Run Helm tests 
+        run: helm test -n kubecost kubecost
+
+      - name: gather debug info - test
+        if: failure()
+        run: |
+          kubectl get pods -n kubecost
+          kubectl get pods -n kubecost -o yaml
+          kubectl get pods -n kubecost -o json
+          kubectl get pods -n kubecost -o jsonpath='{.items[*].spec.containers[*].image}'
+          kubectl get pods -n kubecost -o jsonpath='{.items[*].spec.containers[*].image}'
+          kubectl -n kubecost describe pods
+          echo "kubecost logs"
+          kubectl -n kubecost logs -l app.kubernetes.io/instance=kubecost
+          echo "agg logs"
+          kubectl -n kubecost logs -l app.kubernetes.io/instance=aggregator
+          echo "basic-health logs"
+          kubectl -n kubecost logs basic-health
+
+      - name: Uninstall chart
+        run: helm uninstall kubecost -n kubecost --no-hooks --wait
+
+      - name: Cleanup all Pods in Kubecost Namespace
+        run: kubectl -n kubecost delete deployments,daemonsets,statefulsets,pods --all --force
+
+      # Loops over all the other values files in the ci directory and installs the chart, runs Helm tests, and uninstalls.
+      # Additional sleeps seem necessary for the main Kubecost Pod to be completely available, both frontend and backend.
+      - name: Install, test, remove chart for other values
+        id: loopingtests
+        run: |
+          directory="kubecost/ci"
+          for file in "$directory"/*; do
+          if [ -f "$file" ]; then
+            echo "### Sleeping for 30 seconds ###"
+            sleep 30
+            echo "### Performing installation with values from $file ###"
+            helm install --wait --wait-for-jobs kubecost kubecost/ -n kubecost -f "$file"
+            echo "### Waiting for kubecost Pod readiness. ###"
+            kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/instance=kubecost --timeout=120s
+            echo "### [DEBUG] printing debug info ###"
+            kubectl -n kubecost get pods
+            kubectl get pods -n kubecost -o yaml
+            kubectl get pods -n kubecost -o jsonpath='{.items[*].spec.containers[*].image}'
+            kubectl get pods -n kubecost -o jsonpath='{.items[*].spec.containers[*].image}'
+            kubectl -n kubecost describe pods
+            kubectl -n kubecost logs -l app.kubernetes.io/instance=kubecost
+            echo "### Performing helm tests ###"
+            helm test -n kubecost $(helm ls -n kubecost --all --short)
+            echo "### Performing uninstallation ###"
+            helm uninstall $(helm ls -n kubecost --all --short) -n kubecost --no-hooks --wait
+            echo "### Cleaning up all Pods and Pod controllers in Kubecost Namespace ###"
+            kubectl -n kubecost delete deployments,daemonsets,statefulsets,pods --all --force
+          fi
+          done
+
+  deploy-ocp:
+    runs-on: ubuntu-latest
+    needs: test-chart
+    strategy:
+      matrix:
+        cluster:
+        - distribution: openshift
+          version: 4.19.0-okd
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      # Outputs: `cluster-kubeconfig`, `cluster-id`
+      - name: Create Cluster
+        id: create-cluster
+        uses: replicatedhq/compatibility-actions/create-cluster@v1
+        with:
+          kubernetes-distribution: ${{ matrix.cluster.distribution }}
+          kubernetes-version: ${{ matrix.cluster.version }}
+          cluster-name: ${{ matrix.cluster.distribution }}-${{ matrix.cluster.version }}
+          timeout-minutes: 10
+          ttl: 10m
+          export-kubeconfig: true
+          disk: 150
+          api-token: ${{ secrets.REPLICATED_API_TOKEN }}
+
+      - name: Populate federated storage config secret
+        run: |
+          sed -i "s|FEDERATED_STORAGE_CONFIG_YAML|${{ secrets.FEDERATED_STORAGE_CONFIG_YAML }}|" .github/ci-files/federatedStorageConfigSecret.yaml
+      
+      - name: Create kubecost Namespace and test files
+        run: |
+          kubectl create ns kubecost
+          kubectl -n kubecost create -f .github/ci-files
+  
+      # Install the chart with OCP values and check results.
+      - name: Install Kubecost chart with OCP values
+        working-directory: ./kubecost
+        run: |
+          helm repo add finops-agent-chart https://kubecost.github.io/finops-agent-chart
+          helm repo update
+          helm dependency build
+          helm install --wait --wait-for-jobs kubecost . -n kubecost -f values-openshift.yaml \
+          --set global.platforms.openshift.route.enabled=true \
+          --set global.platforms.openshift.scc.networkCosts=true \
+          --set global.platforms.openshift.scc.clusterController=true \
+          --set networkCosts.enabled=true \
+          --set clusterController.enabled=true \
+          --set clusterController.storageConfigSecret=actions-bucket-config \
+
+      - name: Wait for ready 
+        run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/instance=kubecost --timeout=120s
+      - name: Run Helm tests 
+        run: helm test -n kubecost kubecost
+      - name: Remove Cluster
+        id: remove-cluster
+        uses: replicatedhq/compatibility-actions/remove-cluster@v1
+        continue-on-error: true
+        with:
+          api-token: ${{ secrets.REPLICATED_API_TOKEN }}
+          cluster-id: ${{ steps.create-cluster.outputs.cluster-id }}
+
+  deploy-eks:
+    runs-on: ubuntu-latest
+    needs: test-chart
+    strategy:
+      matrix:
+        cluster:
+        - distribution: eks
+          version: v1.33
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Create Cluster
+        id: create-cluster
+        uses: replicatedhq/compatibility-actions/create-cluster@v1
+        with:
+          kubernetes-distribution: ${{ matrix.cluster.distribution }}
+          kubernetes-version: ${{ matrix.cluster.version }}
+          cluster-name: ${{ matrix.cluster.distribution }}-${{ matrix.cluster.version }}
+          timeout-minutes: 10
+          ttl: 10m
+          export-kubeconfig: true
+          api-token: ${{ secrets.REPLICATED_API_TOKEN }}
+
+      - name: Create kubecost Namespace
+        run: |
+          kubectl create ns kubecost
+
+      # replicated eks cluster do not set the storage class as default, so we need to do it manually
+      - name: Set the storage class as default
+        run: |
+          kubectl patch storageclass gp2 -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+
+      # Install the chart with EKS values and check results.
+      - name: Install Kubecost chart with EKS values
+        working-directory: ./kubecost
+        run: |
+          helm repo add finops-agent-chart https://kubecost.github.io/finops-agent-chart
+          helm repo update
+          helm dependency build
+          helm install --wait --wait-for-jobs kubecost . -n kubecost -f values-eks-cost-monitoring.yaml
+
+      - name: Wait for ready 
+        run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/instance=kubecost --timeout=120s
+      - name: Run Helm tests 
+        run: helm test -n kubecost kubecost
+      - name: Remove Cluster
+        id: remove-cluster
+        uses: replicatedhq/compatibility-actions/remove-cluster@v1
+        continue-on-error: true
+        with:
+          api-token: ${{ secrets.REPLICATED_API_TOKEN }}
+          cluster-id: ${{ steps.create-cluster.outputs.cluster-id }}
