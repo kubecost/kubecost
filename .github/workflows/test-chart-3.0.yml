@@ -92,6 +92,10 @@ jobs:
           node_image: kindest/node:${{ matrix.k8s-version.version }}
           kubectl_version: ${{ matrix.k8s-version.version }}
 
+      - name: Populate federated storage config secret
+        run: |
+          sed -i "s|FEDERATED_STORAGE_CONFIG_YAML|${{ secrets.FEDERATED_STORAGE_CONFIG_YAML }}|" .github/ci-files/federatedStorageConfigSecret.yaml
+
       # Create necessary test files in the cluster. Some configurations of the chart
       # require pre-existing files like Secrets in order for volume mounts to be valid. Without them,
       # Pods won't come up and tests will fail.
@@ -204,6 +208,9 @@ jobs:
           export-kubeconfig: true
           api-token: ${{ secrets.REPLICATED_API_TOKEN }}
 
+      - name: Populate federated storage config secret
+        run: |
+          sed -i "s|FEDERATED_STORAGE_CONFIG_YAML|${{ secrets.FEDERATED_STORAGE_CONFIG_YAML }}|" .github/ci-files/federatedStorageConfigSecret.yaml
       - name: Create kubecost Namespace and test files
         run: |
           kubectl create ns kubecost
@@ -260,6 +267,9 @@ jobs:
           export-kubeconfig: true
           api-token: ${{ secrets.REPLICATED_API_TOKEN }}
 
+      - name: Populate federated storage config secret
+        run: |
+          sed -i "s|FEDERATED_STORAGE_CONFIG_YAML|${{ secrets.FEDERATED_STORAGE_CONFIG_YAML }}|" .github/ci-files/federatedStorageConfigSecret.yaml
       - name: Create kubecost Namespace and test files
         run: |
           kubectl create ns kubecost
