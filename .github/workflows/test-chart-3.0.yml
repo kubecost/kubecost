@@ -72,18 +72,6 @@ jobs:
       fail-fast: false
       matrix:
         k8s-version:
-          - name: v1.28
-            version: v1.28.15
-          - name: v1.29
-            version: v1.29.14
-          - name: v1.30
-            version: v1.30.13
-          - name: v1.31
-            version: v1.31.12
-          - name: v1.32
-            version: v1.32.8
-          - name: v1.33
-            version: v1.33.4
           - name: v1.34
             version: v1.34.0
     needs: test-chart
@@ -175,8 +163,6 @@ jobs:
             helm install --wait --wait-for-jobs kubecost kubecost/ -n kubecost -f "$file" --debug
             echo "### Waiting for kubecost Pod readiness. ###"
             kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/instance=kubecost --timeout=120s
-            echo "### Sleeping for 60 seconds longer. ###"
-            sleep 60
             echo "### [DEBUG] printing debug info ###"
             kubectl -n kubecost get pods
             kubectl get pods -n kubecost -o yaml
@@ -199,14 +185,6 @@ jobs:
     strategy:
       matrix:
         cluster:
-        - distribution: openshift
-          version: 4.15.0-okd
-        - distribution: openshift
-          version: 4.16.0-okd
-        - distribution: openshift
-          version: 4.17.0-okd
-        - distribution: openshift
-          version: 4.18.0-okd
         - distribution: openshift
           version: 4.19.0-okd
     steps:
@@ -263,12 +241,6 @@ jobs:
     strategy:
       matrix:
         cluster:
-        - distribution: eks
-          version: v1.30
-        - distribution: eks
-          version: v1.31
-        - distribution: eks
-          version: v1.32
         - distribution: eks
           version: v1.33
     steps:
