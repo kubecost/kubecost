@@ -3,7 +3,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   namespace: {{ .Release.Namespace }}
-  name: {{ template "kubecost.aggregator.serviceAccountName" . }}-log-collection
+  name: {{ template "kubecost.aggregator.serviceAccountName" . }}-aggregator-log-collection
   labels:
     {{- include "kubecost.commonLabels" . | nindent 4 }}
 rules:
