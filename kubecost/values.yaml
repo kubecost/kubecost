@@ -1363,7 +1363,7 @@ kubecostProductConfigs:
     # 		     rightSizingWindow: "24h"
 
 #   # The cluster profile represents a predefined set of parameters to use when calculating savings.
-#   # Possible values are: [ development, production, high-availability ]
+#   # Possible values are: [ development, production, highavailability ]
   clusterProfile: production
 #   spotLabel: lifecycle
 #   spotLabelValue: Ec2Spot
@@ -1478,6 +1478,7 @@ kubecostProductConfigs:
 #     AWS: []
 #     GCP: []
 #     Azure: []
+#     Custom: []
 
   # ingestPodUID: false # Enables using UIDs to uniquely ID pods. This requires either Kubecost's replicated KSM metrics, or KSM v2.1.0+. This may impact performance, and changes the default cost-model allocation behavior.
   # regionOverrides: "region1,region2,region3" # list of regions which will override default costmodel provider regions
