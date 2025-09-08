@@ -1236,7 +1236,7 @@ clusterController:
     namespaceTurndown: false
 
 reporting:
-  # Kubecost bug report feature: Logs access/collection limited to .Release.Namespace
+  # Kubecost bug report feature: Pods/logs access/collection limited to .Release.Namespace
   # Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=capture-bug-report
   logCollection: true
   # Basic frontend analytics
