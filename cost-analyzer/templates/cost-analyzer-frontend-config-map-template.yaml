@@ -1631,7 +1631,7 @@ data:
                 "carbonEstimatesEnabled": "{{ template "carbonEstimatesEnabled" . }}",
                 "clusterControllerEnabled": "{{ template "clusterControllerEnabled" . }}",
                 "forecastingEnabled": "{{ template "forecastingEnabled" . }}",
-                "chartVersion": "2.8.3",
+                "chartVersion": "2.8.3-rc.0",
                 "hourlyDataRetention": "{{ (.Values.kubecostAggregator.etlHourlyStoreDurationHours) }}",
                 "dailyDataRetention": "{{ (.Values.kubecostAggregator.etlDailyStoreDurationDays) }}",
                 "hideDiagnostics": "{{ default false ((.Values.kubecostProductConfigs).hideDiagnostics) }}",
