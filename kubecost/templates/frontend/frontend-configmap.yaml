@@ -60,7 +60,7 @@ data:
         {{- end }}
     }
 
-{{- if and .Values.clusterController .Values.clusterController.enabled }}
+{{- if and .Values.clusterController .Values.clusterController.enabled .Values.clusterController.legacyMode }}
     upstream clustercontroller {
 {{- if .Values.frontend.useDefaultFqdn }}
         server {{ include "kubecost.clusterController.name" . }}-service.{{ .Release.Namespace }}.svc.cluster.local:9731;
@@ -200,7 +200,7 @@ data:
         location ~ ^/(turndown|cluster)/ {
 
 {{- if .Values.clusterController }}
-{{- if .Values.clusterController.enabled }}
+{{- if and .Values.clusterController.enabled .Values.clusterController.legacyMode }}
             {{- if or .Values.saml .Values.oidc }}
             {{- if or .Values.saml.enabled .Values.oidc.enabled }}
             auth_request /auth;
