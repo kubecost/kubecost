@@ -32,6 +32,7 @@ spec:
   template:
     metadata:
       labels:
+        app.kubernetes.io/name: cluster-controller
         app: {{ include "kubecost.clusterController.name" . }}
         {{- if .Values.global.additionalLabels }}
         {{- toYaml .Values.global.additionalLabels | nindent 8 }}
