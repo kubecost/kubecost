@@ -1175,7 +1175,7 @@ clusterController:
   fullImageName: ""
   image:
     repository: kubecost/cluster-controller
-    tag: v0.16.21
+    tag: v0.16.23
   imagePullPolicy: IfNotPresent
   extraEnv: []
   # - name: EXTRA_ENV_VAR
