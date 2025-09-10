@@ -8,10 +8,10 @@ aggregator:
     storageRequest: 10Gi
   resources:
     limits:
-      memory: 10Gi
+      memory: 2Gi
     requests:
-      cpu: 2000m
-      memory: 10Gi
+      cpu: 500m
+      memory: 2Gi
 cloudCost:
   enabled: true
   cloudIntegrationSecret: cloud-integration

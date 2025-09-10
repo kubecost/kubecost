@@ -97,11 +97,11 @@ spec:
             - name: CONFIG_PATH
               value: /var/configs/
             - name: RESOLUTION_10M_RETENTION
-              value: {{ (quote .Values.clusterController.retention10m) }}
+              value: {{ (quote .Values.localStore.retention10m) }}
             - name: RESOLUTION_1H_RETENTION
-              value: {{ (quote .Values.clusterController.retention1h) }}
+              value: {{ (quote .Values.localStore.retention1h) }}
             - name: RESOLUTION_1D_RETENTION
-              value: {{ (quote .Values.clusterController.retention1d) }}
+              value: {{ (quote .Values.localStore.retention1d) }}
             {{- range $key, $value := (.Values.localStore).env }}
             - name: {{ $key | quote }}
               value: {{ $value | quote }}
