@@ -1177,8 +1177,8 @@ clusterController:
   ## fullImageName: gcr.io/kubecost1/cluster-controller:v0.16.20
   fullImageName: ""
   image:
-    repository: kubecost1/cluster-controller
-    tag: v0.16.21
+    repository: kubecost/cluster-controller
+    tag: v0.16.23
   imagePullPolicy: IfNotPresent
   extraEnv: []
   # - name: EXTRA_ENV_VAR
