@@ -73,6 +73,8 @@ app: {{ include "kubecost.cloudCost.name" . }}
 {{- define "kubecost.cloudCost.secretName" }}
 {{- if .Values.cloudCost.cloudIntegrationSecret }}
 {{- .Values.cloudCost.cloudIntegrationSecret }}
+{{- else if .Values.kubecostProductConfigs.cloudIntegrationSecret }}
+{{- .Values.kubecostProductConfigs.cloudIntegrationSecret }}
 {{- else }}
 {{- .Release.Name }}-cloud-cost-integration
 {{- end }}
