@@ -32,7 +32,7 @@ global:
   cspPricingApiKey:
     existingSecret: ""
     apiKey: ""
-  ## @param global.imageRegistry The image registry used for all images in this chart and the ibm-finops-agent chart
+  ## @param global.imageRegistry The image registry used for all images in this chart and subcharts
   imageRegistry: ""
   ## E.g.
   ## imagePullSecrets:
