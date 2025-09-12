@@ -6,11 +6,19 @@
 {{- end -}}
 {{- end -}}
 
+{{- define "forecasting.imageRegistry" -}}
+  {{- if .Values.forecasting.image.registry -}}
+    {{- .Values.forecasting.image.registry -}}
+  {{- else -}}
+    {{- .Values.global.imageRegistry -}}
+  {{- end -}}
+{{- end -}}
+
 {{- define "kubecost.forecasting.image" }}
   {{- if .Values.forecasting.fullImageName }}
     {{- .Values.forecasting.fullImageName }}
   {{- else -}}
-    {{- include "common.imageRegistry" . }}/{{ .Values.forecasting.image.repository }}:{{ .Values.forecasting.image.tag }}
+    {{- include "forecasting.imageRegistry" . }}/{{ .Values.forecasting.image.repository }}:{{ .Values.forecasting.image.tag }}
   {{- end }}
 {{- end }}
 

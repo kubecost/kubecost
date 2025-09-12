@@ -26,14 +26,14 @@ global:
     existingSecret: ""
     # If you want to use a different file name for the federated storage config, you can set the fileName value.
     fileName: federated-store.yaml  # set this value to change what the file name for the yaml config is
-    ## @param cspPricingApiKey.existingSecret The name of an existing secret to use for the GCP API key. If this is set, the secret will be used. Leave empty to create a new secret.
-    ## @param cspPricingApiKey.apiKey The GCP API key value. If this is set, the secret will be created. Leave empty to use an existing secret.
-    ## This is currently only used for GCP.
+  ## @param cspPricingApiKey.existingSecret The name of an existing secret to use for the GCP API key. If this is set, the secret will be used. Leave empty to create a new secret.
+  ## @param cspPricingApiKey.apiKey The GCP API key value. If this is set, the secret will be created. Leave empty to use an existing secret.
+  ## This is currently only used for GCP.
   cspPricingApiKey:
     existingSecret: ""
     apiKey: ""
   ## @param global.imageRegistry The image registry used for all images in this chart and the ibm-finops-agent chart
-  imageRegistry: "icr.io"
+  imageRegistry: ""
   ## E.g.
   ## imagePullSecrets:
   ##   - myRegistryKeySecretName
@@ -429,6 +429,7 @@ frontend:
   ## fullImageName: gcr.io/kubecost1/frontend:v3.0.0
   fullImageName: ""
   image:
+    registry: icr.io
     repository: kubecost/frontend
     tag: ""
 
@@ -703,6 +704,7 @@ networkCosts:
   ## fullImageName: gcr.io/kubecost1/kubecost-network-costs:v0.17.11
   fullImageName: ""
   image:
+    registry: icr.io
     repository: kubecost/network-costs
     tag: v0.17.11
   imagePullPolicy: IfNotPresent
@@ -833,6 +835,7 @@ forecasting:
   ## fullImageName: gcr.io/kubecost1/kubecost-modeling:v0.1.29
   fullImageName: ""
   image:
+    registry: icr.io
     repository: kubecost/modeling
     tag: v0.1.29
   imagePullPolicy: IfNotPresent
@@ -1172,6 +1175,7 @@ clusterController:
   ## fullImageName: gcr.io/kubecost1/cluster-controller:v0.16.20
   fullImageName: ""
   image:
+    registry: icr.io
     repository: kubecost/cluster-controller
     tag: v0.16.23
   imagePullPolicy: IfNotPresent

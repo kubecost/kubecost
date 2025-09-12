@@ -10,6 +10,14 @@
   {{- end -}}
 {{- end -}}
 
+{{- define "kubecost.imageRegistry" -}}
+  {{- if .Values.kubecost.image.registry -}}
+    {{- .Values.kubecost.image.registry -}}
+  {{- else -}}
+    {{- .Values.global.imageRegistry -}}
+  {{- end -}}
+{{- end -}}
+
 {{- define "kubecost.localStore.image" }}
   {{- if .Values.localStore.fullImageName }}
     {{- .Values.localStore.fullImageName }}
@@ -18,9 +26,9 @@
   {{- else if eq "development" .Chart.AppVersion -}}
     gcr.io/kubecost1/cost-model-nightly:latest
   {{- else if .Values.kubecost.image.tag -}}
-    {{- include "common.imageRegistry" . }}/{{ .Values.kubecost.image.repository }}:{{ .Values.kubecost.image.tag }}
+    {{- include "kubecost.imageRegistry" . }}/{{ .Values.kubecost.image.repository }}:{{ .Values.kubecost.image.tag }}
   {{- else -}}
-    {{- include "common.imageRegistry" . }}/{{ .Values.kubecost.image.repository }}:{{ $.Chart.AppVersion }}
+    {{- include "kubecost.imageRegistry" . }}/{{ .Values.kubecost.image.repository }}:{{ $.Chart.AppVersion }}
   {{- end }}
 {{- end }}
 
