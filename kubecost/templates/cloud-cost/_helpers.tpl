@@ -34,8 +34,10 @@ support templating a chart which uses the lookup function.
     {{- .Values.kubecost.fullImageName }}
   {{- else if eq "development" .Chart.AppVersion -}}
     gcr.io/kubecost1/cost-model-nightly:latest
-  {{- else -}}
+  {{- else if .Values.kubecost.image.tag -}}
     {{- include "common.imageRegistry" . }}/{{ .Values.kubecost.image.repository }}:{{ .Values.kubecost.image.tag }}
+  {{- else -}}
+    {{- include "common.imageRegistry" . }}/{{ .Values.kubecost.image.repository }}:{{ $.Chart.AppVersion }}
   {{- end }}
 {{- end }}
 

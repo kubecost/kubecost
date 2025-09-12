@@ -430,7 +430,7 @@ frontend:
   fullImageName: ""
   image:
     repository: kubecost/frontend
-    tag: latest
+    tag: ""
 
   imagePullPolicy: IfNotPresent
 
@@ -589,7 +589,7 @@ kubecost:
   image:
     registry: icr.io
     repository: kubecost/cost-model
-    tag: latest
+    tag: ""
 
   ## Override the image name and version for containers that use the aggregator image.
   ## If not set, the image will be pulled from the registry and repository specified in the image block.

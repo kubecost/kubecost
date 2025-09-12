@@ -3,8 +3,10 @@
     {{- .Values.frontend.fullImageName }}
   {{- else if eq "development" .Chart.AppVersion -}}
     gcr.io/kubecost1/frontend-nightly:latest
-  {{- else -}}
+  {{- else if .Values.frontend.image.tag -}}
     {{- include "common.imageRegistry" . }}/{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}
+  {{- else -}}
+    {{- include "common.imageRegistry" . }}/{{ .Values.frontend.image.repository }}:{{ $.Chart.AppVersion }}
   {{- end }}
 {{- end }}
 
