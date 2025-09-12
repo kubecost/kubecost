@@ -6,5 +6,6 @@
 .manifest
 .kubeconfig
 kubecost/charts/*.tgz
+kubecost/charts/finops-agent-chart
 gke_gcloud_auth_plugin_cache
 temp/

@@ -32,8 +32,8 @@ global:
   cspPricingApiKey:
     existingSecret: ""
     apiKey: ""
-  ## @param global.imageRegistry The image registry to use for the finops agent
-  imageRegistry: ""
+  ## @param global.imageRegistry The image registry used for all images in this chart and the ibm-finops-agent chart
+  imageRegistry: "icr.io"
   ## E.g.
   ## imagePullSecrets:
   ##   - myRegistryKeySecretName
@@ -417,11 +417,6 @@ systemProxy:
 # imagePullSecrets:
 # - name: "image-pull-secret"
 
-# imageVersion uses the base image name (image:) but overrides the version
-# pulled. It should be avoided. If non-default behavior is needed, use
-# fullImageName for the relevant component.
-# imageVersion:
-
 frontend:
   enabled: true
   replicas: 1
@@ -432,12 +427,9 @@ frontend:
   ## fullImageName: gcr.io/kubecost1/frontend:v3.0.0
   fullImageName: ""
   image:
-    repository: kubecost1/frontend
+    repository: kubecost/frontend
     tag: latest
   imagePullPolicy: IfNotPresent
-  # fullImageName overrides the default image construction logic. The exact
-  # image provided (registry, image, tag) will be used for the frontend.
-  # fullImageName:
 
   # extraEnv:
   # - name: NGINX_ENTRYPOINT_WORKER_PROCESSES_AUTOTUNE
@@ -541,6 +533,7 @@ localStore:
       ## The "helm.sh/resource-policy: keep" annotation is used to prevent the persistent volume from being deleted when uninstalling or moving to a different deployment method.
       # This can be used to allow the agent history to be uploaded to cloud storage when upgrading to Enterprise.
       helm.sh/resource-policy: keep
+
   ## localStore uses the images set in 'kubecost.image', but can be overridden here:
   fullImageName: ""
 
@@ -590,6 +583,11 @@ finops-agent:
 
 
 kubecost:
+  image:
+    registry: icr.io
+    repository: kubecost/cost-model
+    tag: latest
+
   ## Override the image name and version for containers that use the aggregator image.
   ## If not set, the image will be pulled from the registry and repository specified in the image block.
   ## If set, the fullImageName will be used to pull the image.
@@ -597,15 +595,7 @@ kubecost:
   ## fullImageName: gcr.io/kubecost1/cost-model:v3.0.0
   fullImageName: ""
 
-  image:
-    registry: gcr.io
-    repository: kubecost1/cost-model-nightly
-    tag: latest
-
   imagePullPolicy: IfNotPresent
-  # fullImageName overrides the default image construction logic. The exact
-  # image provided (registry, image, tag) will be used for cost-model.
-  # fullImageName:
 
   # Log level for the cost model container. Options are "trace", "debug", "info", "warn", "error", "fatal", "panic"
   logLevel: info
@@ -710,7 +700,7 @@ networkCosts:
   ## fullImageName: gcr.io/kubecost1/kubecost-network-costs:v0.17.11
   fullImageName: ""
   image:
-    repository: kubecost1/kubecost-network-costs
+    repository: kubecost/network-costs
     tag: v0.17.11
   imagePullPolicy: IfNotPresent
   updateStrategy:
@@ -840,7 +830,7 @@ forecasting:
   ## fullImageName: gcr.io/kubecost1/kubecost-modeling:v0.1.29
   fullImageName: ""
   image:
-    repository: kubecost1/kubecost-modeling
+    repository: kubecost/modeling
     tag: v0.1.29
   imagePullPolicy: IfNotPresent
 
@@ -881,11 +871,10 @@ forecasting:
 ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=federation-kubecost-aggregator
 ##
 aggregator:
-  # image overrides the values provided in kubecost.image
-  # image:
-  #   registry:
-
   enabled: true
+
+  ## aggregator uses the image set in 'kubecost.image', but can be overridden here:
+  fullImageName: ""
 
   # Replicas sets the number of Aggregator replicas.
   replicas: 1
@@ -1071,6 +1060,10 @@ heartbeat:
 ## can be specified.
 cloudCost:
   enabled: true
+  
+  ## cloudCost uses the images set in 'kubecost.image', but can be overridden here:
+  fullImageName: ""
+
   ## Specify an existing Kubernetes Secret holding the cloud integration information. This Secret must contain
   ## a key with name `cloud-integration.json` and the contents must be in a specific format. It is expected
   ## to exist in the release Namespace. This is mutually exclusive with cloudIntegrationJSON where only one must be defined.
@@ -1131,8 +1124,6 @@ cloudCost:
   ## by default, the cloud cost pod will use the same service account as the aggregator pod.
   ## this can be overridden to use a different service account.
   serviceAccountName: ""
-  ## cloudCost uses the images set in 'kubecost.image', but can be overridden here:
-  fullImageName: ""
 
   readinessProbe:
     enabled: true
@@ -1159,6 +1150,7 @@ cloudCost:
 
   ## Define extra volumemounts for the cloud cost pod
   extraVolumeMounts: []
+
 # Kubecost Cluster Controller for Right Sizing and Cluster Turndown
 clusterController:
   enabled: false
@@ -1177,7 +1169,7 @@ clusterController:
   ## fullImageName: gcr.io/kubecost1/cluster-controller:v0.16.20
   fullImageName: ""
   image:
-    repository: kubecost1/cluster-controller
+    repository: kubecost/cluster-controller
     tag: v0.16.23
   imagePullPolicy: IfNotPresent
   extraEnv: []

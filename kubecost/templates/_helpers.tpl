@@ -485,8 +485,10 @@ Kubecost image to be used by all apps which run, can be overridden in each apps 
 {{- define "common.imageRegistry" -}}
   {{- if .Values.global.imageRegistry -}}
     {{- .Values.global.imageRegistry -}}
+  {{- else if eq "development" .Chart.AppVersion -}}
+    gcr.io
   {{- else -}}
-    {{- .Values.kubecost.image.registry -}}
+    icr.io
   {{- end -}}
 {{- end -}}
 
