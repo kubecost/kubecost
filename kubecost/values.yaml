@@ -414,7 +414,9 @@ systemProxy:
   httpsProxyUrl: ""
   noProxy: ""
 
-# imagePullSecrets:
+## Image pull secrets to apply to all resources
+##
+imagePullSecrets: []
 # - name: "image-pull-secret"
 
 frontend:
@@ -429,6 +431,7 @@ frontend:
   image:
     repository: kubecost/frontend
     tag: latest
+
   imagePullPolicy: IfNotPresent
 
   # extraEnv:
