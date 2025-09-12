@@ -1060,7 +1060,7 @@ heartbeat:
 ## can be specified.
 cloudCost:
   enabled: true
-  
+
   ## cloudCost uses the images set in 'kubecost.image', but can be overridden here:
   fullImageName: ""
 
