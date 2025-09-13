@@ -6,18 +6,18 @@ entries:
         - name: Homepage
           url: https://www.kubecost.com
     apiVersion: v2
-    appVersion: v3.0.0-test.0
-    created: "2025-08-26T17:38:37.625759-04:00"
+    appVersion: 3.0.0-test1
+    created: "2025-09-13T20:58:21.941621978Z"
     dependencies:
     - condition: finops-agent.enabled
       name: finops-agent
       repository: https://kubecost.github.io/finops-agent-chart
       version: v1.0.0-test.0
     description: Kubecost Helm chart - monitor your cloud costs!
-    digest: 756839ba7ad522cea88fd5be99032973011df0dba18382d4732923fcec514241
+    digest: 5a1a759a678fdc0e65752313223bf017b14911ee71df266a4eedf5d4c1a51eaf
     icon: https://raw.githubusercontent.com/kubecost/.github/9602bea0c06773da66ba43cb9ce5e1eb2b797c32/kubecost_logo.png
     name: kubecost
     urls:
-    - https://github.com/kubecost/kubecost/releases/download/v3.0.0-test.0/kubecost-3.0.0-test.0.tgz
-    version: 3.0.0-test.0
-generated: "2025-08-26T17:38:37.619957-04:00"
+    - kubecost-3.0.0-test1.tgz
+    version: 3.0.0-test1
+generated: "2025-09-13T20:58:21.934645212Z"
