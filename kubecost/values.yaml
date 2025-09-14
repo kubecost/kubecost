@@ -469,13 +469,13 @@ frontend:
   # Set to true to set all upstreams to use <service>.<namespace>.svc.cluster.local instead of just <service>.<namespace>
   useDefaultFqdn: false
   forecasting:
-    fqdn: "" # Example: kubecost-forecasting.kubecost.svc.cluster.local:5000
+    fqdn: ""  # Example: kubecost-forecasting.kubecost.svc.cluster.local:5000
   aggregator:
-    fqdn: "" # Example: kubecost-aggregator.kubecost.svc.cluster.local:9004
+    fqdn: ""  # Example: kubecost-aggregator.kubecost.svc.cluster.local:9004
   cloudCost:
-    fqdn: "" # Example: kubecost-cloud-cost.kubecost.svc.cluster.local:9005
+    fqdn: ""  # Example: kubecost-cloud-cost.kubecost.svc.cluster.local:9005
   clusterController:
-    fqdn: "" # Example: cluster-controller.kubecost.svc.cluster.local:9731
+    fqdn: ""  # Example: cluster-controller.kubecost.svc.cluster.local:9731
 
 ## Kubecost Local Store
 ## When no federated storage bucket is configured, localStore provides local storage via a
@@ -1111,7 +1111,7 @@ cloudCost:
   ## By default, the cloud cost pod will use the same service account as the aggregator pod.
   ## This can be overridden to use a different service account.
   serviceAccountName: ""
-  
+
   ## cloudCost uses the images set in 'kubecost.image', but can be overridden here:
   fullImageName: ""
 
@@ -1335,20 +1335,20 @@ kubecostProductConfigs:
   # cloudAccountMapping:
   #   EXAMPLE_ACCOUNT_ID: EXAMPLE_ACCOUNT_NAME
 
-  currencyCode: "USD"   # official support for USD, AUD, BRL, CAD, CHF, CNY, DKK, EUR, GBP, IDR, INR, JPY, NOK, PLN, SEK
-  negotiatedDiscount: ""   # custom negotiated cloud provider discount
+  currencyCode: "USD"  # Official support for USD, AUD, BRL, CAD, CHF, CNY, DKK, EUR, GBP, IDR, INR, JPY, NOK, PLN, SEK
+  negotiatedDiscount: ""   # Custom negotiated cloud provider discount
   defaultIdle: false
-  sharedNamespaces: ""   # namespaces with shared workloads, example value: "kube-system\,ingress-nginx\,kubecost\,monitoring"
-  sharedLabelValues: ""   # default shared label values, e.g., "app:prometheus"
-  sharedOverhead: 0   # value representing a fixed external cost per month to be distributed among aggregations.
-  shareTenancyCosts: true   # enable or disable sharing costs such as cluster management fees (defaults to "true" on Settings page)
+  sharedNamespaces: ""  # Namespaces with shared workloads, example value: "kube-system\,ingress-nginx\,kubecost\,monitoring"
+  sharedLabelValues: ""  # Default shared label values, e.g., "app:prometheus"
+  sharedOverhead: 0  # Value representing a fixed external cost per month to be distributed among aggregations.
+  shareTenancyCosts: true  # Enable or disable sharing costs such as cluster management fees (defaults to "true" on Settings page)
 
   ## Apply Enterprise product license
   productKey:
     enabled: false
     key: ""
-    secretname: "" # Reference an existing k8s secret created from a file named productkey.json of format { "key": "enterprise-key-here" }. If the secretname is specified, a configmap with the key will not be created.
-    mountPath: "" # (use instead of secretname) Declare the path at which the product key file is mounted (eg. "/some/custom/path/productkey.json" by a secrets provisioner). The file must be of format { "key": "enterprise-key-here" }.
+    secretname: ""  # Reference an existing k8s secret created from a file named productkey.json of format { "key": "enterprise-key-here" }. If the secretname is specified, a configmap with the key will not be created.
+    mountPath: ""  # (use instead of secretname) Declare the path at which the product key file is mounted (eg. "/some/custom/path/productkey.json" by a secrets provisioner). The file must be of format { "key": "enterprise-key-here" }.
 
 #   # The following block enables the use of a custom SMTP server which overrides Kubecost's built-in, external SMTP server for alerts and reports
 #   smtp:
@@ -1365,7 +1365,7 @@ kubecostProductConfigs:
 #     secretname: smtpconfigsecret # Reference an existing k8s secret created from a file named smtp.json of format specified by config above. If the secretname is specified, a configmap with the key will not be created.
 #     mountPath: "/some/custom/path/smtp.json" # (use instead of secretname) Declare the path at which the SMTP config file is mounted (eg. by a secrets provisioner). The file must be of format specified by config above.
 
-  carbonEstimates: false # Enables Kubecost beta carbon estimation endpoints /assets/carbon and /allocations/carbon
+  carbonEstimates: false  # Enables Kubecost beta carbon estimation endpoints /assets/carbon and /allocations/carbon
 
   ## The below options to hide UI elements are only supported in Enterprise
   hideDiagnostics: false  # useful if the primary is not monitored. Supported in limited environments.
@@ -1375,7 +1375,7 @@ kubecostProductConfigs:
   hideSpotCommander: false
   hideUnclaimedVolumes: false
   hideCloudIntegrationsUI: false
-  hideBellIcon: true # deprecated in v2.7. default is true, which hides the bell icon in the top right corner of the UI. The new diagnostics is top level in left nav. Change to false to restore the bell icon.
+  hideBellIcon: true  # Deprecated in v2.7. Default is true, which hides the bell icon in the top right corner of the UI. The new diagnostics is top level in left nav. Change to false to restore the bell icon.
   hideTeams: false
 
 #   savingsProfiles: # Define custom profiles used in the Right-Size Container Request savings card. Supported parameters are explained in https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=apis-container-request-right-sizing-recommendation-api.
