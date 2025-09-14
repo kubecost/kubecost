@@ -153,11 +153,7 @@ data:
             try_files $uri $uri/ /index.html;
         }
 {{- end }}
-{{- if .Values.imageVersion }}
-        add_header ETag "{{ $.Values.imageVersion }}";
-{{- else }}
         add_header ETag "{{ $.Chart.Version }}";
-{{- end }}
 {{- if .Values.frontend.tls }}
 {{- if .Values.frontend.tls.enabled }}
 {{- if .Values.frontend.tls.specifyProtocols }}
@@ -443,7 +439,7 @@ data:
 
         location = /model/hideOrphanedResources {
             default_type 'application/json';
-            {{- if .Values.frontend.hideOrphanedResources }}
+            {{- if default false ((.Values.kubecostProductConfigs).hideOrphanedResources) }}
             return 200 '{"hideOrphanedResources": "true"}';
             {{- else }}
             return 200 '{"hideOrphanedResources": "false"}';
@@ -452,7 +448,7 @@ data:
 
         location = /model/hideDiagnostics {
             default_type 'application/json';
-            {{- if .Values.frontend.hideDiagnostics }}
+            {{- if default false ((.Values.kubecostProductConfigs).hideDiagnostics) }}
             return 200 '{"hideDiagnostics": "true"}';
             {{- else }}
             return 200 '{"hideDiagnostics": "false"}';
