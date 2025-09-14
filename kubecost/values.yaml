@@ -695,8 +695,10 @@ service:
 
 ## Optional daemonset to more accurately attribute network costs to the correct workload
 ## https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-network-cost
+##
 networkCosts:
-  enabled: false
+  enabled: true
+
   ## Override the image name and version for the network costs.
   ## If not set, the image will be pulled from the registry and repository specified in the image block.
   ## If set, the fullImageName will be used to pull the image.
@@ -708,13 +710,10 @@ networkCosts:
     repository: kubecost/network-costs
     tag: v0.17.11
   imagePullPolicy: IfNotPresent
+
   updateStrategy:
     type: RollingUpdate
-  # For existing Prometheus Installs, use the serviceMonitor: or prometheusScrape below.
-  # the below setting annotates the networkCost service endpoints for each of the network-costs pods.
-  # The Service is annotated with prometheus.io/scrape: "true" to automatically get picked up by the prometheus config.
-  # NOTE: Setting this option to true and leaving the above extraScrapeConfig "job_name: kubecost-networking" configured will cause the
-  # NOTE: pods to be scraped twice.
+
   prometheusScrape: false
   serviceMonitor:
     enabled: false
@@ -818,13 +817,14 @@ networkCosts:
     additionalLabels: {}
   additionalLabels: {}
   nodeSelector: {}
-  # Annotations to be added to network cost daemonset template and pod template annotations
   annotations: {}
   healthCheckProbes: {}
   additionalSecurityContext: {}
 
 ## Kubecost Forecasting forecasts future cost patterns based on historical
 ## patterns observed by Kubecost.
+## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=forecasting
+##
 forecasting:
   enabled: true
   serviceAccountName: ""
@@ -1157,16 +1157,15 @@ cloudCost:
   ## Define extra volumemounts for the cloud cost pod
   extraVolumeMounts: []
 
-# Kubecost Cluster Controller for Right Sizing and Cluster Turndown
+## Kubecost Cluster Controller for Automated Right Sizing and Turndown
+## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-cluster-controller
+##
 clusterController:
-  enabled: false
+  enabled: true
 
-  # enables legacy mode for cluster controller actions (v1)
-  # only used with kubecost versions < 3.0.0
+  # Enables legacy mode for cluster controller actions (v1)
+  # Only used with kubecost versions < 3.0.0
   legacyMode: false
-
-  # log level for cluster controller
-  logLevel: info
 
   ## Override the image name and version for the cluster controller.
   ## If not set, the image will be pulled from the registry and repository specified in the image block.
@@ -1179,6 +1178,7 @@ clusterController:
     repository: kubecost/cluster-controller
     tag: v0.16.23
   imagePullPolicy: IfNotPresent
+  logLevel: info
   extraEnv: []
   # - name: EXTRA_ENV_VAR
   #   value: "extra_env_var_value"
