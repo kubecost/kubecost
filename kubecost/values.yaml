@@ -841,7 +841,7 @@ forecasting:
   fullImageName: ""
   image:
     repository: kubecost1/kubecost-modeling
-    tag: v0.1.29
+    tag: v0.1.30
   imagePullPolicy: IfNotPresent
 
   # Resource specification block for the forecasting container.
