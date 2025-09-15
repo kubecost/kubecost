@@ -479,16 +479,6 @@ Product key secret name with default fallback
 {{- default "product-key" .Values.kubecostProductConfigs.productKey.secretname -}}
 {{- end -}}
 
-{{/*
-Kubecost image to be used by all apps which run, can be overridden in each apps specific configs
-*/}}
-{{- define "common.imageRegistry" -}}
-  {{- if .Values.global.imageRegistry -}}
-    {{- .Values.global.imageRegistry -}}
-  {{- else -}}
-    {{- .Values.kubecost.image.registry -}}
-  {{- end -}}
-{{- end -}}
 
 {{/*
 federated storage config helpers
