@@ -504,7 +504,7 @@ data:
                 "clusterControllerEnabled": "{{ include "kubecost.clusterController.enabled" . }}",
                 "forecastingEnabled": "{{ include "kubecost.forecasting.enabled" . }}",
                 "turbonomicEnabled": "{{ include "kubecost.turbonomic.enabled" . }}",
-                "chartVersion": "DEVELOP_BRANCH",
+                "chartVersion": "3.0.0-rc.0",
                 "hourlyDataRetention": "{{ (.Values.kubecost.retention1h) }}",
                 "dailyDataRetention": "{{ (.Values.kubecost.retention1d) }}",
                 "hideDiagnostics": "{{ default false ((.Values.kubecostProductConfigs).hideDiagnostics) }}",
