@@ -163,20 +163,20 @@ data:
 {{- end }}
         ssl_certificate     /etc/ssl/certs/kc.crt;
         ssl_certificate_key /etc/ssl/certs/kc.key;
-        listen {{ .Values.service.targetPort }} ssl;
+        listen {{ .Values.frontend.service.targetPort }} ssl;
 {{- if .Values.frontend.ipv6.enabled }}
-        listen [::]:{{ .Values.service.targetPort }} ssl;
+        listen [::]:{{ .Values.frontend.service.targetPort }} ssl;
 {{- end }}
 {{- else }}
-        listen {{ .Values.service.targetPort }};
+        listen {{ .Values.frontend.service.targetPort }};
 {{- if .Values.frontend.ipv6.enabled }}
-        listen [::]:{{ .Values.service.targetPort }};
+        listen [::]:{{ .Values.frontend.service.targetPort }};
 {{- end }}
 {{- end }}
 {{- else }}
-        listen {{ .Values.service.targetPort }};
+        listen {{ .Values.frontend.service.targetPort }};
 {{- if .Values.frontend.ipv6.enabled }}
-        listen [::]:{{ .Values.service.targetPort }};
+        listen [::]:{{ .Values.frontend.service.targetPort }};
 {{- end }}
 {{- end }}
         
