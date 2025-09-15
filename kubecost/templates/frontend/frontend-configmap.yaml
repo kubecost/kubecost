@@ -153,11 +153,9 @@ data:
             try_files $uri $uri/ /index.html;
         }
 {{- end }}
-{{- if .Values.imageVersion }}
-        add_header ETag "{{ $.Values.imageVersion }}";
-{{- else }}
+
         add_header ETag "{{ $.Chart.Version }}";
-{{- end }}
+
 {{- if .Values.frontend.tls }}
 {{- if .Values.frontend.tls.enabled }}
 {{- if .Values.frontend.tls.specifyProtocols }}
