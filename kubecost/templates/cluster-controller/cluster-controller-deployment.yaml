@@ -126,13 +126,13 @@ spec:
           {{- if .Values.clusterController.primaryKubecostURL }}
           value: {{ .Values.clusterController.primaryKubecostURL }}/model
           {{- else }}
-          value: http://{{ include "kubecost.frontend.serviceName" . }}.{{ .Release.Namespace }}:{{ .Values.service.targetPort | default 9090 }}/model
+          value: http://{{ include "kubecost.frontend.serviceName" . }}.{{ .Release.Namespace }}:{{ .Values.frontend.service.targetPort | default 9090 }}/model
           {{- end }}
         - name: CC_CCL_COST_MODEL_PATH
           {{- if .Values.clusterController.primaryKubecostURL }}
           value: {{ .Values.clusterController.primaryKubecostURL }}/model
           {{- else }}
-          value: http://{{ include "kubecost.frontend.serviceName" . }}.{{ .Release.Namespace }}:{{ .Values.service.targetPort | default 9090 }}/model
+          value: http://{{ include "kubecost.frontend.serviceName" . }}.{{ .Release.Namespace }}:{{ .Values.frontend.service.targetPort | default 9090 }}/model
           {{- end }}
         {{- if .Values.clusterController.kubecostAPIKey }}
         - name: KUBECOST_API_KEY
