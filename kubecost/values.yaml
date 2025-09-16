@@ -677,9 +677,9 @@ kubecost:
       #   "datadog_api_key": "<INSERT_DATADOG_API_KEY>",
       #   "datadog_app_key": "<INSERT_DATADOG_APP_KEY>"
       #   }
-    # NOTES.txt contains a check to see if the EBS-CSI driver is installed. 
-    #This can be disabled if the installer's RBAC does not allow kube-system access
-    eksStorage: 
+    # NOTES.txt contains a check to see if the EBS-CSI driver is installed.
+    # This can be disabled if the installer's RBAC does not allow kube-system access
+    eksStorage:
       check:
         enabled: true
 
