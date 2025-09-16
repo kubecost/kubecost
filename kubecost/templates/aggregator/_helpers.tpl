@@ -24,6 +24,10 @@
 {{- default "aggregator" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
+{{- define "kubecost.aggregator.cm.helmvalues.name" -}}
+{{- printf "helm-values-%s" .Release.Name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
 {{- define "kubecost.aggregator.fullname" -}}
 {{- printf "%s-%s" .Release.Name "aggregator" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
@@ -56,5 +60,13 @@ app: aggregator
   {{- ((.Values.kubecostProductConfigs).actions).storageConfigSecret -}}
 {{- else -}}
   {{ .Release.Name }}-actions-storage-config
+{{- end -}}
+{{- end -}}
+
+{{- define "kubecost.smtp.secretName" -}}
+{{- if ((.Values.kubecostProductConfigs).smtp).secretname -}}
+  {{- ((.Values.kubecostProductConfigs).smtp).secretname -}}
+{{- else -}}
+  {{ default (printf "smtp-configs-%s" .Release.Name | trunc 63 | trimSuffix "-") .Values.smtpConfigmapName }}
 {{- end -}}
 {{- end -}}
