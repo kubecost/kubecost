@@ -1,0 +1,152 @@
+name: Update Helm Chart Images
+
+on:
+  workflow_call:
+    inputs:
+      component:
+        description: 'Component that was released'
+        required: true
+        type: string
+      image_tag:
+        description: 'Full image tag of the released component'
+        required: true
+        type: string
+      version:
+        description: 'Release version (e.g., v0.16.23)'
+        required: true
+        type: string
+      registry:
+        description: 'Image registry (e.g., gcr.io)'
+        required: true
+        type: string
+      repository:
+        description: 'Image repository (e.g., kubecost1/cluster-controller)'
+        required: true
+        type: string
+
+jobs:
+  update-helm-chart:
+    runs-on: Kubecost-Linux-Small-x86
+    permissions:
+      contents: write
+      pull-requests: write
+    
+    steps:
+      - name: Checkout kubecost repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+      - name: Update Component Image Tag
+        run: |
+          echo "Updating ${{ inputs.component }} to version ${{ inputs.version }}"
+          
+          case "${{ inputs.component }}" in
+            "cluster-controller")
+              # Update both tag and registry to ICR
+              sed -i "s|tag: v[0-9]\+\.[0-9]\+\.[0-9]\+|tag: ${{ inputs.version }}|g" kubecost/values.yaml
+              sed -i "s|registry: gcr\.io|registry: us.icr.io|g" kubecost/values.yaml
+              sed -i "s|repository: kubecost1/cluster-controller|repository: kubecost/cluster-controller|g" kubecost/values.yaml
+              echo "Updated clusterController.image.tag to ${{ inputs.version }} and switched to ICR"
+              ;;
+            "kubecost-modeling")
+              # Update modeling section (kubecost-modeling -> modeling)
+              sed -i "/^modeling:/,/^[a-zA-Z]/ { s|tag: v[0-9]\+\.[0-9]\+\.[0-9]\+|tag: ${{ inputs.version }}|g; }" kubecost/values.yaml
+              sed -i "/^modeling:/,/^[a-zA-Z]/ { s|registry: gcr\.io|registry: us.icr.io|g; }" kubecost/values.yaml
+              sed -i "/^modeling:/,/^[a-zA-Z]/ { s|repository: kubecost1/kubecost-modeling|repository: kubecost/kubecost-modeling|g; }" kubecost/values.yaml
+              echo "Updated modeling.image.tag to ${{ inputs.version }} and switched to ICR"
+              ;;
+            "kubecost-frontend")
+              # Update frontend section
+              sed -i "/^frontend:/,/^[a-zA-Z]/ { s|tag: v[0-9]\+\.[0-9]\+\.[0-9]\+|tag: ${{ inputs.version }}|g; }" kubecost/values.yaml
+              sed -i "/^frontend:/,/^[a-zA-Z]/ { s|registry: gcr\.io|registry: us.icr.io|g; }" kubecost/values.yaml
+              sed -i "/^frontend:/,/^[a-zA-Z]/ { s|repository: kubecost1/frontend|repository: kubecost/frontend|g; }" kubecost/values.yaml
+              echo "Updated frontend.image.tag to ${{ inputs.version }} and switched to ICR"
+              ;;
+                "ibm-finops-agent")
+                  # Update finops-agent section
+                  sed -i "/^finops-agent:/,/^[a-zA-Z]/ { s|tag: v[0-9]\+\.[0-9]\+\.[0-9]\+|tag: ${{ inputs.version }}|g; }" kubecost/values.yaml
+                  sed -i "/^finops-agent:/,/^[a-zA-Z]/ { s|registry: gcr\.io|registry: us.icr.io|g; }" kubecost/values.yaml
+                  sed -i "/^finops-agent:/,/^[a-zA-Z]/ { s|repository: kubecost1/ibm-finops-agent|repository: ibm-finops/agent|g; }" kubecost/values.yaml
+                  echo "Updated finops-agent.image.tag to ${{ inputs.version }} and switched to ICR"
+                  ;;
+                "kubecost-network-costs")
+                  # Update networkCosts section (kubecost-network-costs -> networkCosts)
+                  sed -i "/^networkCosts:/,/^[a-zA-Z]/ { s|tag: v[0-9]\+\.[0-9]\+\.[0-9]\+|tag: ${{ inputs.version }}|g; }" kubecost/values.yaml
+                  sed -i "/^networkCosts:/,/^[a-zA-Z]/ { s|registry: gcr\.io|registry: us.icr.io|g; }" kubecost/values.yaml
+                  sed -i "/^networkCosts:/,/^[a-zA-Z]/ { s|repository: kubecost1/kubecost-network-costs|repository: kubecost/network-costs|g; }" kubecost/values.yaml
+                  echo "Updated networkCosts.image.tag to ${{ inputs.version }} and switched to ICR"
+              ;;
+            *)
+              echo "Unknown component: ${{ inputs.component }}"
+              exit 1
+              ;;
+          esac
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if git diff --quiet; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "No changes detected"
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Changes detected:"
+            git diff --name-only
+          fi
+
+      - name: Create and Auto-Merge Pull Request
+        if: steps.changes.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: update ${{ inputs.component }} to ${{ inputs.version }}"
+          title: "Update ${{ inputs.component }} to ${{ inputs.version }}"
+          body: |
+            This PR updates the ${{ inputs.component }} image to version ${{ inputs.version }} and switches to ICR registry.
+            
+            **Changes:**
+            - Updated ${{ inputs.component }}.image.tag to `${{ inputs.version }}`
+            - Switched registry from GCR to ICR (`us.icr.io`)
+            - Updated repository path to use ICR format (`kubecost/component-name`)
+            - Chart version unchanged (only image configuration updated)
+            
+            **Image Details:**
+            - Component: ${{ inputs.component }}
+            - Source Image: ${{ inputs.image_tag }}
+            - Target Registry: us.icr.io
+            - Target Repository: kubecost/${{ inputs.component }}
+            - Version: ${{ inputs.version }}
+            
+            **Auto-merge:** This PR will be automatically merged as it only updates image configuration.
+          branch: update-${{ inputs.component }}-${{ inputs.version }}
+          delete-branch: true
+          labels: |
+            automated
+            helm-chart-update
+            ${{ inputs.component }}
+            auto-merge
+
+      - name: Auto-merge PR
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          # Wait a moment for the PR to be created
+          sleep 5
+          
+          # Get the PR number
+          PR_NUMBER=$(gh pr list --head "update-${{ inputs.component }}-${{ inputs.version }}" --json number --jq '.[0].number')
+          
+          if [ "$PR_NUMBER" != "null" ] && [ -n "$PR_NUMBER" ]; then
+            echo "Auto-merging PR #$PR_NUMBER"
+            gh pr merge $PR_NUMBER --auto --squash --delete-branch
+            echo "PR #$PR_NUMBER merged successfully"
+          else
+            echo "Could not find PR to merge"
+            exit 1
+          fi

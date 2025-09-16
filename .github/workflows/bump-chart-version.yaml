@@ -1,0 +1,218 @@
+name: Bump Chart Version
+
+on:
+  # Run daily at 2 AM UTC to check for image changes
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: 'Type of version bump'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+        default: patch
+      custom_version:
+        description: 'Custom version (optional, overrides version_type)'
+        required: false
+        type: string
+
+jobs:
+  bump-chart-version:
+    runs-on: Kubecost-Linux-Small-x86
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: read
+    
+    steps:
+      - name: Checkout kubecost repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+      - name: Check for Recent Image Updates
+        id: check_changes
+        run: |
+          echo "Checking for recent image updates in the last 24 hours..."
+          
+          # Check for commits in the last 24 hours that updated image tags
+          YESTERDAY=$(date -d '1 day ago' '+%Y-%m-%d %H:%M:%S')
+          echo "Checking for changes since: $YESTERDAY"
+          
+          # Look for commits that modified values.yaml and contain image tag updates
+          RECENT_COMMITS=$(git log --since="$YESTERDAY" --oneline --grep="update.*to v" --grep="chore: update" -- kubecost/values.yaml | wc -l)
+          echo "Found $RECENT_COMMITS recent image update commit(s)"
+          
+          if [ "$RECENT_COMMITS" -gt 0 ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "change_count=$RECENT_COMMITS" >> $GITHUB_OUTPUT
+            
+            # Show the recent commits
+            echo "Recent image update commits:"
+            git log --since="$YESTERDAY" --oneline --grep="update.*to v" --grep="chore: update" -- kubecost/values.yaml
+          else
+            echo "No recent image updates found"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "change_count=0" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Skip if No Changes (Cron only)
+        if: github.event_name == 'schedule' && steps.check_changes.outputs.has_changes == 'false'
+        run: |
+          echo "No recent image updates found. Skipping chart version bump."
+          echo "This workflow will run again tomorrow to check for new updates."
+          exit 0
+
+      - name: Check Manual Trigger Requirements
+        if: github.event_name == 'workflow_dispatch' && steps.check_changes.outputs.has_changes == 'false'
+        run: |
+          if [ -n "${{ inputs.custom_version }}" ]; then
+            echo "Custom version specified: ${{ inputs.custom_version }} - proceeding"
+          elif [ "${{ inputs.version_type }}" == "major" ] || [ "${{ inputs.version_type }}" == "minor" ]; then
+            echo "Major/minor version bump requested - proceeding (semantic versioning)"
+          else
+            echo "ERROR: No recent image changes found and no custom version specified."
+            echo "Patch bumps require recent image changes."
+            echo "For major/minor bumps, use version_type input. For specific versions, use custom_version input."
+            exit 1
+          fi
+
+      - name: Manual Trigger with Recent Changes
+        if: github.event_name == 'workflow_dispatch' && steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          echo "Manual trigger with recent image changes detected"
+          echo "Recent image updates: ${{ steps.check_changes.outputs.change_count }} changes"
+
+      - name: Calculate New Version
+        id: version
+        run: |
+          CURRENT_VERSION=$(grep "^version:" kubecost/Chart.yaml | sed 's/version: //' | tr -d ' ')
+          echo "Current chart version: $CURRENT_VERSION"
+          
+          if [ -n "${{ inputs.custom_version }}" ]; then
+            NEW_VERSION="${{ inputs.custom_version }}"
+            echo "Using custom version: $NEW_VERSION"
+          else
+            # For cron jobs, always use patch increment
+            # For manual runs, use the selected version_type
+            if [ "${{ github.event_name }}" == "schedule" ]; then
+              VERSION_TYPE="patch"
+              echo "Cron job: using patch increment"
+            else
+              VERSION_TYPE="${{ inputs.version_type }}"
+              echo "Manual run: using $VERSION_TYPE increment"
+            fi
+            
+            # Parse current version (e.g., 3.0.0-test.0 -> 3.0.0)
+            BASE_VERSION=$(echo "$CURRENT_VERSION" | sed 's/-.*$//')
+            echo "Base version: $BASE_VERSION"
+            
+            # Extract major.minor.patch
+            MAJOR=$(echo "$BASE_VERSION" | cut -d. -f1)
+            MINOR=$(echo "$BASE_VERSION" | cut -d. -f2)
+            PATCH=$(echo "$BASE_VERSION" | cut -d. -f3)
+            
+            case "$VERSION_TYPE" in
+              "major")
+                MAJOR=$((MAJOR + 1))
+                MINOR=0
+                PATCH=0
+                ;;
+              "minor")
+                MINOR=$((MINOR + 1))
+                PATCH=0
+                ;;
+              "patch")
+                PATCH=$((PATCH + 1))
+                ;;
+            esac
+            
+            NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+            echo "Calculated new version: $NEW_VERSION"
+          fi
+          
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Update Chart Version
+        run: |
+          # Update Chart.yaml version
+          sed -i "s|^version: .*|version: ${{ steps.version.outputs.new_version }}|g" kubecost/Chart.yaml
+          echo "Updated Chart.yaml version to ${{ steps.version.outputs.new_version }}"
+          
+          # Also update appVersion to match
+          sed -i "s|^appVersion: .*|appVersion: ${{ steps.version.outputs.new_version }}|g" kubecost/Chart.yaml
+          echo "Updated appVersion to ${{ steps.version.outputs.new_version }}"
+
+      - name: Create and Auto-Merge Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: bump chart version to ${{ steps.version.outputs.new_version }}"
+          title: "Bump Chart Version to ${{ steps.version.outputs.new_version }}"
+          body: |
+            This PR bumps the Helm chart version to ${{ steps.version.outputs.new_version }}.
+            
+            **Changes:**
+            - Updated Chart.yaml version to `${{ steps.version.outputs.new_version }}`
+            - Updated appVersion to `${{ steps.version.outputs.new_version }}`
+            
+            **Triggered by:** ${{ github.event_name == 'schedule' && 'Daily cron job' || 'Manual workflow dispatch' }}
+            ${{ github.event_name == 'schedule' && format('**Image Changes Detected:** %s', steps.check_changes.outputs.change_count) || '' }}
+            ${{ github.event_name == 'workflow_dispatch' && format('**Version Type:** %s', inputs.version_type) || '' }}
+            ${{ inputs.custom_version && format('**Custom Version:** %s', inputs.custom_version) || '' }}
+            
+            **Recent Image Updates:**
+            ${{ github.event_name == 'schedule' && format('Found %s image update(s) in the last 24 hours', steps.check_changes.outputs.change_count) || 'Manual version bump' }}
+            
+            **Auto-merge:** This PR will be automatically merged as it only updates chart versioning.
+          branch: bump-chart-version-${{ steps.version.outputs.new_version }}
+          delete-branch: true
+          labels: |
+            automated
+            chart-version-bump
+            ${{ github.event_name == 'schedule' && 'daily-bump' || 'manual-bump' }}
+            auto-merge
+
+      - name: Auto-merge PR
+        run: |
+          # Wait a moment for the PR to be created
+          sleep 5
+          
+          # Get the PR number
+          PR_NUMBER=$(gh pr list --head "bump-chart-version-${{ steps.version.outputs.new_version }}" --json number --jq '.[0].number')
+          
+          if [ "$PR_NUMBER" != "null" ] && [ -n "$PR_NUMBER" ]; then
+            echo "Auto-merging PR #$PR_NUMBER"
+            gh pr merge $PR_NUMBER --auto --squash --delete-branch
+            echo "PR #$PR_NUMBER merged successfully"
+          else
+            echo "Could not find PR to merge"
+            exit 1
+          fi
+
+      - name: Notify Success (Cron only)
+        if: github.event_name == 'schedule' && steps.check_changes.outputs.has_changes == 'true'
+        uses: 8398a7/action-slack@v3
+        with:
+          status: success
+          channel: '#kubecost-releases'
+          text: |
+            🚀 Daily Chart Version Bump Complete!
+            
+            **New Version:** ${{ steps.version.outputs.new_version }}
+            **Image Changes:** ${{ steps.check_changes.outputs.change_count }} updates detected
+            **PR Created:** Ready for review and merge
+            
+            This automated daily bump includes all image updates from the past 24 hours.
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
