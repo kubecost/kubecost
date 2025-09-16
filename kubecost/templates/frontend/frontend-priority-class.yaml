@@ -1,13 +1,13 @@
-{{- if .Values.priority }}
-{{- if .Values.priority.enabled }}
-{{- if eq (len .Values.priority.name) 0 }}
+{{- if .Values.frontend.priority }}
+{{- if .Values.frontend.priority.enabled }}
+{{- if eq (len .Values.frontend.priority.name) 0 }}
 apiVersion: scheduling.k8s.io/v1
 kind: PriorityClass
 metadata:
   name: {{ template "kubecost.fullname" . }}-priority
   labels:
     {{- include "kubecost.commonLabels" . | nindent 4 }}
-value: {{ .Values.priority.value | default "1000000" }}
+value: {{ .Values.frontend.priority.value | default "1000000" }}
 globalDefault: false
 description: "Priority class for scheduling the frontend pod"
 {{- end }}
