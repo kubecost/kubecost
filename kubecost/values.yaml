@@ -444,7 +444,25 @@ frontend:
     requests:
       cpu: "10m"
       memory: "55Mi"
+  service:
+    type: ClusterIP
+    port: 9090
+    targetPort: 9090
+    nodePort: {}
+    labels: {}
+    annotations: {}
+    loadBalancerSourceRanges: []
+    sessionAffinity:
+      enabled: false  # Makes sure that connections from a client are passed to the same Pod each time, when set to `true`. You should set it when you enabled authentication through OIDC or SAML integration.
+      timeoutSeconds: 10800
   deploymentStrategy: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  topologySpreadConstraints: []
+  priority:
+    enabled: false
+    name: ""
   readinessProbe:
     enabled: true
     initialDelaySeconds: 1
@@ -670,28 +688,6 @@ ingress:
   #  - secretName: kubecost-tls
   #    hosts:
   #      - kubecost.local
-
-nodeSelector: {}
-tolerations: []
-affinity: {}
-topologySpreadConstraints: []
-priority:
-  enabled: false
-  name: ""
-extraVolumes: []
-extraVolumeMounts: []
-
-service:
-  type: ClusterIP
-  port: 9090
-  targetPort: 9090
-  nodePort: {}
-  labels: {}
-  annotations: {}
-  # loadBalancerSourceRanges: []
-  sessionAffinity:
-    enabled: false  # Makes sure that connections from a client are passed to the same Pod each time, when set to `true`. You should set it when you enabled authentication through OIDC or SAML integration.
-    timeoutSeconds: 10800
 
 ## Optional daemonset to more accurately attribute network costs to the correct workload
 ## https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-network-cost
