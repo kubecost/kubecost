@@ -38,3 +38,14 @@ app.kubernetes.io/name: {{ include "kubecost.frontend.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app: cost-analyzer
 {{- end -}}
+
+{{/*
+Create the nginx config map name with fallback logic.
+*/}}
+{{- define "kubecost.frontend.nginxConfigMapName" -}}
+{{- if .Values.frontend.nginxConfigMapName -}}
+  {{- .Values.frontend.nginxConfigMapName -}}
+{{- else -}}
+  {{- printf "nginx-conf-%s" .Release.Name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
