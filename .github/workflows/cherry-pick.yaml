@@ -12,7 +12,7 @@ permissions:
 jobs:
   cherrypick:
     name: Cherrypick to release branch
-    runs-on: Kubecost-Linux-Small-x86
+    runs-on: ubuntu-latest
     # Only run when a PR is merged or a comment `/backport` is created.
     if: >
       (
