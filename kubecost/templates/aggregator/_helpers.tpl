@@ -1,3 +1,11 @@
+{{- define "aggregator.imageRegistry" -}}
+  {{- if .Values.kubecost.image.registry -}}
+    {{- .Values.kubecost.image.registry -}}
+  {{- else -}}
+    {{- .Values.global.imageRegistry -}}
+  {{- end -}}
+{{- end -}}
+
 {{- define "kubecost.aggregator.image" }}
   {{- if .Values.aggregator.fullImageName }}
     {{- .Values.aggregator.fullImageName }}
@@ -5,13 +13,19 @@
     {{- .Values.kubecost.fullImageName }}
   {{- else if eq "development" .Chart.AppVersion -}}
     gcr.io/kubecost1/cost-model-nightly:latest
+  {{- else if .Values.kubecost.image.tag -}}
+    {{- include "aggregator.imageRegistry" . }}/{{ .Values.kubecost.image.repository }}:{{ .Values.kubecost.image.tag }}
   {{- else -}}
-    {{- include "common.imageRegistry" . }}/{{ .Values.kubecost.image.repository }}:{{ .Values.kubecost.image.tag }}
+    {{- include "aggregator.imageRegistry" . }}/{{ .Values.kubecost.image.repository }}:{{ $.Chart.AppVersion }}
   {{- end }}
 {{- end }}
 
 {{- define "kubecost.aggregator.name" -}}
 {{- default "aggregator" | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{- define "kubecost.aggregator.cm.helmvalues.name" -}}
+{{- printf "helm-values-%s" .Release.Name | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{- define "kubecost.aggregator.fullname" -}}
@@ -46,5 +60,13 @@ app: aggregator
   {{- ((.Values.kubecostProductConfigs).actions).storageConfigSecret -}}
 {{- else -}}
   {{ .Release.Name }}-actions-storage-config
+{{- end -}}
+{{- end -}}
+
+{{- define "kubecost.smtp.secretName" -}}
+{{- if ((.Values.kubecostProductConfigs).smtp).secretname -}}
+  {{- ((.Values.kubecostProductConfigs).smtp).secretname -}}
+{{- else -}}
+  {{ default (printf "smtp-configs-%s" .Release.Name | trunc 63 | trimSuffix "-") .Values.smtpConfigmapName }}
 {{- end -}}
 {{- end -}}

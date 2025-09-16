@@ -26,14 +26,14 @@ global:
     existingSecret: ""
     # If you want to use a different file name for the federated storage config, you can set the fileName value.
     fileName: federated-store.yaml  # set this value to change what the file name for the yaml config is
-    ## @param cspPricingApiKey.existingSecret The name of an existing secret to use for the GCP API key. If this is set, the secret will be used. Leave empty to create a new secret.
-    ## @param cspPricingApiKey.apiKey The GCP API key value. If this is set, the secret will be created. Leave empty to use an existing secret.
-    ## This is currently only used for GCP.
+  ## @param cspPricingApiKey.existingSecret The name of an existing secret to use for the GCP API key. If this is set, the secret will be used. Leave empty to create a new secret.
+  ## @param cspPricingApiKey.apiKey The GCP API key value. If this is set, the secret will be created. Leave empty to use an existing secret.
+  ## This is currently only used for GCP.
   cspPricingApiKey:
     existingSecret: ""
     apiKey: ""
-  ## @param global.imageRegistry The image registry to use for the finops agent
-  imageRegistry: ""
+  ## @param global.imageRegistry The image registry used for all images in this chart and subcharts
+  imageRegistry: "icr.io"
   ## E.g.
   ## imagePullSecrets:
   ##   - myRegistryKeySecretName
@@ -402,10 +402,10 @@ systemProxy:
   httpsProxyUrl: ""
   noProxy: ""
 
-## Image Pull Secrets applied to
+## Image pull secrets to apply to all resources
 ##
 imagePullSecrets: []
-  # - name: "image-pull-secret"
+# - name: "image-pull-secret"
 
 ## Kubecost Frontend
 ##
@@ -419,12 +419,18 @@ frontend:
   ## fullImageName: gcr.io/kubecost1/frontend:v3.0.0
   fullImageName: ""
   image:
-    repository: kubecost1/frontend
-    tag: latest
+    registry: ""  # Default is "icr.io"
+    repository: kubecost/frontend
+    tag: ""  # Default is to match the Chart.AppVersion
+
   imagePullPolicy: IfNotPresent
-  # fullImageName overrides the default image construction logic. The exact
-  # image provided (registry, image, tag) will be used for the frontend.
-  # fullImageName:
+
+  ## Override the nginx config map name for the frontend.
+  ## If not set, the default name will be nginx-conf-{release-name} and a configmap will be created.
+  ## If set, the specified config map name will be used and no configmap will be created by this chart.
+  ## Example:
+  ## nginxConfigMapName: my-custom-nginx-config
+  nginxConfigMapName: ""
 
   # extraEnv:
   # - name: NGINX_ENTRYPOINT_WORKER_PROCESSES_AUTOTUNE
@@ -435,7 +441,25 @@ frontend:
     requests:
       cpu: "10m"
       memory: "55Mi"
+  service:
+    type: ClusterIP
+    port: 9090
+    targetPort: 9090
+    nodePort: {}
+    labels: {}
+    annotations: {}
+    loadBalancerSourceRanges: []
+    sessionAffinity:
+      enabled: false  # Makes sure that connections from a client are passed to the same Pod each time, when set to `true`. You should set it when you enabled authentication through OIDC or SAML integration.
+      timeoutSeconds: 10800
   deploymentStrategy: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  topologySpreadConstraints: []
+  priority:
+    enabled: false
+    name: ""
   readinessProbe:
     enabled: true
     initialDelaySeconds: 1
@@ -517,6 +541,7 @@ localStore:
       ## The "helm.sh/resource-policy: keep" annotation is used to prevent the persistent volume from being deleted when uninstalling or moving to a different deployment method.
       # This can be used to allow the agent history to be uploaded to cloud storage when upgrading to Enterprise.
       helm.sh/resource-policy: keep
+
   ## localStore uses the images set in 'kubecost.image', but can be overridden here:
   fullImageName: ""
 
@@ -568,6 +593,11 @@ finops-agent:
 
 
 kubecost:
+  image:
+    registry: ""  # Default is "icr.io"
+    repository: kubecost/cost-model
+    tag: ""  # Default is to match the Chart.AppVersion
+
   ## Override the image name and version for containers that use the aggregator image.
   ## If not set, the image will be pulled from the registry and repository specified in the image block.
   ## If set, the fullImageName will be used to pull the image.
@@ -575,15 +605,7 @@ kubecost:
   ## fullImageName: gcr.io/kubecost1/cost-model:v3.0.0
   fullImageName: ""
 
-  image:
-    registry: gcr.io
-    repository: kubecost1/cost-model-nightly
-    tag: latest
-
   imagePullPolicy: IfNotPresent
-  # fullImageName overrides the default image construction logic. The exact
-  # image provided (registry, image, tag) will be used for cost-model.
-  # fullImageName:
 
   # Log level for the cost model container. Options are "trace", "debug", "info", "warn", "error", "fatal", "panic"
   logLevel: info
@@ -636,6 +658,11 @@ kubecost:
       #   "datadog_api_key": "<INSERT_DATADOG_API_KEY>",
       #   "datadog_app_key": "<INSERT_DATADOG_APP_KEY>"
       #   }
+    # NOTES.txt contains a check to see if the EBS-CSI driver is installed.
+    # This can be disabled if the installer's RBAC does not allow kube-system access
+    eksStorage:
+      check:
+        enabled: true
 
 ## Basic Kubecost ingress, more examples available at https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=installation-ingress-examples
 ##
@@ -656,28 +683,6 @@ ingress:
   #    hosts:
   #      - kubecost.local
 
-nodeSelector: {}
-tolerations: []
-affinity: {}
-topologySpreadConstraints: []
-priority:
-  enabled: false
-  name: ""
-extraVolumes: []
-extraVolumeMounts: []
-
-service:
-  type: ClusterIP
-  port: 9090
-  targetPort: 9090
-  nodePort: {}
-  labels: {}
-  annotations: {}
-  # loadBalancerSourceRanges: []
-  sessionAffinity:
-    enabled: false  # Makes sure that connections from a client are passed to the same Pod each time, when set to `true`. You should set it when you enabled authentication through OIDC or SAML integration.
-    timeoutSeconds: 10800
-
 ## Optional daemonset to more accurately attribute network costs to the correct workload
 ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-network-cost
 ##
@@ -691,7 +696,8 @@ networkCosts:
   ## fullImageName: gcr.io/kubecost1/kubecost-network-costs:v0.17.11
   fullImageName: ""
   image:
-    repository: kubecost1/kubecost-network-costs
+    registry: ""  # Default is "icr.io"
+    repository: kubecost/network-costs
     tag: v0.17.11
   imagePullPolicy: IfNotPresent
 
@@ -819,7 +825,8 @@ forecasting:
   ## fullImageName: gcr.io/kubecost1/kubecost-modeling:v0.1.29
   fullImageName: ""
   image:
-    repository: kubecost1/kubecost-modeling
+    registry: ""  # Default is "icr.io"
+    repository: kubecost/modeling
     tag: v0.1.29
   imagePullPolicy: IfNotPresent
 
@@ -860,11 +867,10 @@ forecasting:
 ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=federation-kubecost-aggregator
 ##
 aggregator:
-  # image overrides the values provided in kubecost.image
-  # image:
-  #   registry:
-
   enabled: true
+
+  ## aggregator uses the image set in 'kubecost.image', but can be overridden here:
+  fullImageName: ""
 
   # Replicas sets the number of Aggregator replicas.
   replicas: 1
@@ -1049,6 +1055,10 @@ heartbeat:
 ##
 cloudCost:
   enabled: true
+
+  ## cloudCost uses the images set in 'kubecost.image', but can be overridden here:
+  fullImageName: ""
+
   ## Specify an existing Kubernetes Secret holding the cloud integration information. This Secret must contain
   ## a key with name `cloud-integration.json` and the contents must be in a specific format. It is expected
   ## to exist in the release Namespace. This is mutually exclusive with cloudIntegrationJSON where only one must be defined.
@@ -1112,9 +1122,6 @@ cloudCost:
   ## This can be overridden to use a different service account.
   serviceAccountName: ""
 
-  ## cloudCost uses the images set in 'kubecost.image', but can be overridden here:
-  fullImageName: ""
-
   readinessProbe:
     enabled: true
     initialDelaySeconds: 10
@@ -1146,8 +1153,9 @@ clusterController:
   ## fullImageName: gcr.io/kubecost1/cluster-controller:v0.16.20
   fullImageName: ""
   image:
-    repository: kubecost1/cluster-controller
-    tag: v0.16.23
+    registry: ""  # Default is "icr.io"
+    repository: kubecost/cluster-controller
+    tag: v0.16.24
   imagePullPolicy: IfNotPresent
   logLevel: info
   extraEnv: []

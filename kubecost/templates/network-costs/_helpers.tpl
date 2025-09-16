@@ -1,9 +1,16 @@
+{{- define "networkCosts.imageRegistry" -}}
+  {{- if .Values.networkCosts.image.registry -}}
+    {{- .Values.networkCosts.image.registry -}}
+  {{- else -}}
+    {{- .Values.global.imageRegistry -}}
+  {{- end -}}
+{{- end -}}
 
 {{- define "kubecost.networkCosts.image" }}
   {{- if .Values.networkCosts.fullImageName }}
     {{- .Values.networkCosts.fullImageName }}
   {{- else -}}
-    {{- include "common.imageRegistry" . }}/{{ .Values.networkCosts.image.repository }}:{{ .Values.networkCosts.image.tag }}
+    {{- include "networkCosts.imageRegistry" . }}/{{ .Values.networkCosts.image.repository }}:{{ .Values.networkCosts.image.tag }}
   {{- end }}
 {{- end }}
 

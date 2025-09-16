@@ -63,7 +63,7 @@ spec:
           emptyDir: {}
         - name: nginx-conf
           configMap:
-            name: nginx-conf
+            name: {{ include "kubecost.frontend.nginxConfigMapName" . }}
             items:
               - key: nginx.conf
                 path: default.conf
@@ -177,28 +177,28 @@ spec:
         - name: {{ .name }}
       {{- end }}
     {{- end }}
-      {{- if .Values.priority }}
-      {{- if .Values.priority.enabled }}
-      {{- if gt (len .Values.priority.name) 0 }}
-      priorityClassName: {{ .Values.priority.name }}
+      {{- if .Values.frontend.priority }}
+      {{- if .Values.frontend.priority.enabled }}
+      {{- if gt (len .Values.frontend.priority.name) 0 }}
+      priorityClassName: {{ .Values.frontend.priority.name }}
       {{- else }}
       priorityClassName: {{ include "kubecost.fullname" . }}-priority
       {{- end }}
       {{- end }}
       {{- end }}
-      {{- with .Values.nodeSelector }}
+      {{- with .Values.frontend.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.tolerations }}
+      {{- with .Values.frontend.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.affinity }}
+      {{- with .Values.frontend.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.topologySpreadConstraints }}
+      {{- with .Values.frontend.topologySpreadConstraints }}
       topologySpreadConstraints:
         {{- toYaml . | nindent 8 }}
       {{- end }}

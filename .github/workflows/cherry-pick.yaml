@@ -1,0 +1,45 @@
+name: Cherrypick labeled PR commits from "develop" into the corresponding release branch
+on:
+  pull_request_target:
+    types: [closed]
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  cherrypick:
+    name: Cherrypick to release branch
+    runs-on: ubuntu-latest
+    # Only run when a PR is merged or a comment `/backport` is created.
+    if: >
+      (
+        github.event_name == 'pull_request_target' && github.event.pull_request.merged == true
+      ) || (
+        github.event_name == 'issue_comment' && github.event.issue.pull_request && github.event.comment.body == '/backport'
+      )
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v5
+
+      - name: Check out actions code
+        uses: actions/checkout@v5
+        with:
+          repository: kubecost/github-actions
+          path: ./github-actions
+          ref: main
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Create cherrypick PR
+        uses: ./github-actions/backport-action
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          label_pattern: '^(v[0-9]+\.[0-9]+)$'
+          pull_description: 'Cherrypick of #${pull_number} to `${target_branch}`'
+          pull_title: ':cherries: ${pull_title} to ${target_branch}'
+          add_labels: cherry-pick
+          branch_name: 'cherry-pick/${pull_number}-to-${target_branch}'
+          merge_commits: fail
+          cherry_picking: auto

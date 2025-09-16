@@ -6,46 +6,46 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "kubecost.commonLabels" . | nindent 4 }}
-{{- if .Values.service.labels }}
-{{ toYaml .Values.service.labels | indent 4 }}
+{{- if .Values.frontend.service.labels }}
+{{ toYaml .Values.frontend.service.labels | indent 4 }}
 {{- end }}
-{{- if .Values.service.annotations }}
+{{- if .Values.frontend.service.annotations }}
   annotations:
-{{ toYaml .Values.service.annotations | indent 4 }}
+{{ toYaml .Values.frontend.service.annotations | indent 4 }}
 {{- end }}
 spec:
   selector:
     {{- include "kubecost.frontend.selectorLabels" . | nindent 4 }}
 {{- if .Values.service -}}
-{{- if .Values.service.type }}
-  type: "{{ .Values.service.type }}"
+{{- if .Values.frontend.service.type }}
+  type: "{{ .Values.frontend.service.type }}"
 {{- else }}
   type: ClusterIP
 {{- end }}
 {{- else }}
   type: ClusterIP
 {{- end }}
-{{- if (eq .Values.service.type "LoadBalancer") }}
-  {{- if .Values.service.loadBalancerSourceRanges }}
+{{- if (eq .Values.frontend.service.type "LoadBalancer") }}
+  {{- if .Values.frontend.service.loadBalancerSourceRanges }}
   loadBalancerSourceRanges:
-    {{- toYaml .Values.service.loadBalancerSourceRanges | nindent 4 -}}
+    {{- toYaml .Values.frontend.service.loadBalancerSourceRanges | nindent 4 -}}
   {{- end -}}
 {{- end }}
   ports:
     - name: tcp-frontend
-      {{- if (eq .Values.service.type "NodePort") }}
-      {{- if .Values.service.nodePort }}
-      nodePort: {{ .Values.service.nodePort }}
+      {{- if (eq .Values.frontend.service.type "NodePort") }}
+      {{- if .Values.frontend.service.nodePort }}
+      nodePort: {{ .Values.frontend.service.nodePort }}
       {{- end }}
       {{- end }}
-      port: {{ .Values.service.port }}
-      targetPort: {{ .Values.service.targetPort }}
-{{- if .Values.service.sessionAffinity.enabled }}
+      port: {{ .Values.frontend.service.port }}
+      targetPort: {{ .Values.frontend.service.targetPort }}
+{{- if .Values.frontend.service.sessionAffinity.enabled }}
   sessionAffinity: ClientIP
-  {{- if .Values.service.sessionAffinity.timeoutSeconds }}
+  {{- if .Values.frontend.service.sessionAffinity.timeoutSeconds }}
   sessionAffinityConfig:
     clientIP:
-      timeoutSeconds: {{ .Values.service.sessionAffinity.timeoutSeconds }}
+      timeoutSeconds: {{ .Values.frontend.service.sessionAffinity.timeoutSeconds }}
   {{- end }}
 {{- else }}
   sessionAffinity: None
