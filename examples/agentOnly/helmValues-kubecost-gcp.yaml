@@ -13,8 +13,8 @@ global:
   cspPricingApiKey:
     ## When using GCP, an API key to access on-demand pricing is required.
     ## use the apiKey OR the secret.
-    ## A secret is recommended- though the apiKey is can be a read only service account exclusively for downloading public pricing data.
-    apiKey: ""
+    ## A secret is recommended- though the apiKey can be a read only service account exclusively for downloading public pricing data.
+    apiKey: "AIzaSyDXQPG_MHUEy9neR7stolq6l0ujXmjJlvk"
     existingSecret: ""
 clusterController:
   enabled: true  # optional, automated rightsizing of containers

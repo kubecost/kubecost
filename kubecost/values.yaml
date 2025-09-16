@@ -26,12 +26,14 @@ global:
     existingSecret: ""
     # If you want to use a different file name for the federated storage config, you can set the fileName value.
     fileName: federated-store.yaml  # set this value to change what the file name for the yaml config is
-  ## @param cspPricingApiKey.existingSecret The name of an existing secret to use for the GCP API key. If this is set, the secret will be used. Leave empty to create a new secret.
-  ## @param cspPricingApiKey.apiKey The GCP API key value. If this is set, the secret will be created. Leave empty to use an existing secret.
-  ## This is currently only used for GCP.
+  ## @param cspPricingApiKey.existingSecret The name of an existing secret containing a GCP API key. If set, this existing secret will be used instead of creating a new one.
+  ## @param cspPricingApiKey.apiKey The GCP API key value used to access pricing data. Required for GCP clusters to fetch on-demand pricing.
+  ## If set, a new secret will be created with this API key. Leave empty if using an existing secret via cspPricingApiKey.existingSecret.
+  ## WARNING: The default API key provided here is rate-limited and shared across all users.
+  ## For production use, it is strongly recommended to create and use your own GCP API key to avoid quota limits.
   cspPricingApiKey:
     existingSecret: ""
-    apiKey: ""
+    apiKey: "AIzaSyDXQPG_MHUEy9neR7stolq6l0ujXmjJlvk"
   ## @param global.imageRegistry The image registry used for all images in this chart and subcharts
   imageRegistry: "icr.io"
   ## E.g.
