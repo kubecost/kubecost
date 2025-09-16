@@ -63,7 +63,7 @@ spec:
           emptyDir: {}
         - name: nginx-conf
           configMap:
-            name: nginx-conf
+            name: {{ include "kubecost.frontend.nginxConfigMapName" . }}
             items:
               - key: nginx.conf
                 path: default.conf

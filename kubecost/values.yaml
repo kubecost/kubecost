@@ -435,6 +435,13 @@ frontend:
 
   imagePullPolicy: IfNotPresent
 
+  ## Override the nginx config map name for the frontend.
+  ## If not set, the default name will be nginx-conf-{release-name} and a configmap will be created.
+  ## If set, the specified config map name will be used and no configmap will be created by this chart.
+  ## Example:
+  ## nginxConfigMapName: my-custom-nginx-config
+  nginxConfigMapName: ""
+
   # extraEnv:
   # - name: NGINX_ENTRYPOINT_WORKER_PROCESSES_AUTOTUNE
   #   value: "1"
@@ -652,6 +659,11 @@ kubecost:
       #   "datadog_api_key": "<INSERT_DATADOG_API_KEY>",
       #   "datadog_app_key": "<INSERT_DATADOG_APP_KEY>"
       #   }
+    # NOTES.txt contains a check to see if the EBS-CSI driver is installed. 
+    #This can be disabled if the installer's RBAC does not allow kube-system access
+    eksStorage: 
+      check:
+        enabled: true
 
 # Basic Kubecost ingress, more examples available at https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=installation-ingress-examples
 ingress:

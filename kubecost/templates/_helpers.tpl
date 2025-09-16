@@ -71,9 +71,10 @@ RBAC exclusivity check: make sure either simple RBAC or RBAC Teams is configured
 {{- end -}}
 
 {{/*
-Print a warning if PV is enabled AND EKS is detected AND the EBS-CSI driver is not installed
+Print a warning if PV is enabled AND EKS is detected AND the EBS-CSI driver is not installed. This can be disabled is the installer's RBAC does not allow kube-system access
 */}}
 {{- define "kubecost.eksStorage.check" }}
+{{ if (((.Values.kubecost).eksStorage).check).enabled }}
 {{- $PVsEnabled := (or (.Values.persistentVolume).enabled) }}
 {{- $isEKS := (regexMatch ".*eks.*" (.Capabilities.KubeVersion | quote) )}}
 {{- $isGT22 := (semverCompare ">=1.23-0" .Capabilities.KubeVersion.GitVersion) }}
@@ -82,6 +83,7 @@ Print a warning if PV is enabled AND EKS is detected AND the EBS-CSI driver is n
 
 ERROR: MISSING EBS-CSI DRIVER WHICH IS REQUIRED ON EKS v1.23+ TO MANAGE PERSISTENT VOLUMES. LEARN MORE HERE: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=installations-amazon-eks-integration
 
+{{- end -}}
 {{- end -}}
 {{- end -}}
 

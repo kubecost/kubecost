@@ -78,7 +78,7 @@ spec:
             sizeLimit: {{ .Values.aggregator.stagingEmptyDirSizeLimit }}
         - name: user-helm-values
           configMap:
-            name: helm-values
+            name: {{ include "kubecost.aggregator.cm.helmvalues.name" . }}
         - name: federated-storage-config
           secret:
             defaultMode: 420
@@ -91,10 +91,10 @@ spec:
             - key: productkey.json
               path: productkey.json
         {{- end }}
-        {{- if ((.Values.kubecostProductConfigs).smtp).secretname }}
+        {{- if or ((.Values.kubecostProductConfigs).smtp).secretname ((.Values.kubecostProductConfigs).smtp).config }}
         - name: smtp-secret
           secret:
-            secretName: {{ .Values.kubecostProductConfigs.smtp.secretname }}
+            secretName: {{ include "kubecost.smtp.secretName" . }}
             items:
             - key: smtp.json
               path: smtp.json
