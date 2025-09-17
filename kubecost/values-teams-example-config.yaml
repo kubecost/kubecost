@@ -13,8 +13,6 @@ saml:
   idpMetadataURL: https://example.okta.com/app/EXAMPLE/sso/saml/metadata
   rbac:
     enabled: true # RBAC must be enabled
-upgrade:
-  tov3: true
 teams:
   teamsConfig:
     - id: ''
