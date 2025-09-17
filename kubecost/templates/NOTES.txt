@@ -11,7 +11,7 @@
 
 Kubecost {{ .Chart.Version }} has been successfully installed.
 
-Kubecost 3.x is a major upgrade from previous versions and includes major new features including a brand new API Backend.
+Kubecost 3.x is a major upgrade from previous versions and includes major new features including a brand new API Backend. Please review the release notes for details and breaking changes: https://github.com/kubecost/kubecost/releases
 
 When pods are Ready, you can enable port-forwarding with the following command:
 
