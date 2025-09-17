@@ -2,7 +2,7 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ template "kubecost.serviceAccountName" . }}-network-costs-cluster-role
+  name: {{ template "kubecost.networkCosts.serviceAccountName" . }}-network-costs-cluster-role
   labels:
     {{- include "kubecost.commonLabels" . | nindent 4 }}
 rules:

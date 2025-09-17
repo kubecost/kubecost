@@ -688,6 +688,7 @@ ingress:
 ##
 networkCosts:
   enabled: true
+  serviceAccountName: ""
 
   ## Override the image name and version for the network costs.
   ## If not set, the image will be pulled from the registry and repository specified in the image block.
