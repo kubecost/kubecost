@@ -1,29 +1,39 @@
 # Kubecost Helm Chart
 
-## Install
+This repository contains the official Helm chart for **Kubecost v3+**, providing cost monitoring and optimization for Kubernetes clusters.
 
-The chart is not yet released, so we need to use the devel flag.
+> **Note:** For Kubecost v1 or v2, please refer to the [cost-analyzer repository](https://github.com/kubecost/cost-analyzer) and use the following installation command:
+>
+> ```sh
+> helm install cost-analyzer kubecost \
+>   --repo https://kubecost.github.io/cost-analyzer \
+>   --namespace kubecost --create-namespace
+> ```
 
-```sh
-helm helm repo add kubecost-30-testing https://kubecost.github.io/kubecost/
-helm repo update
+## Quick Start
 
-helm install kubecost kubecost-30-testing/kubecost \
-  --namespace kubecost \
-  --create-namespace \
-  --devel
-```
-
-## Uninstall
-
-Uninstall the chart.
+Install Kubecost using Helm:
 
 ```sh
-helm uninstall kubecost-30-testing -n kubecost
+helm install kubecost kubecost \
+  --repo https://kubecost.github.io/kubecost \
+  --namespace kubecost --create-namespace \
+  --set global.clusterId=someclustername
 ```
 
-Note that when uninstalling, the persistent volume for the Kubecost metrics are not deleted. You can delete them manually by deleting the namespace.
+## Configuration
+
+Kubecost can be configured using a values.yaml file. See the [values.yaml](https://github.com/kubecost/kubecost/blob/develop/kubecost/values.yaml) file for all available configuration options.
+
+To install with a custom values file:
 
 ```sh
-kubectl delete namespace kubecost
+helm install kubecost kubecost \
+  --repo https://kubecost.github.io/kubecost \
+  --namespace kubecost --create-namespace \
+  --values values.yaml
 ```
+
+## Documentation
+
+For detailed configuration options and advanced usage, visit the [Kubecost documentation](https://docs.kubecost.com/).
