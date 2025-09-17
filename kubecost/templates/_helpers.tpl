@@ -42,18 +42,10 @@ Kubecost 2.0 preconditions
     {{- end -}}
   {{- end -}}
 
-  {{/* TODO: update comments and rules for v3 */}}
-  {{- if or ((.Values.saml).rbac).enabled ((.Values.oidc).rbac).enabled -}}
-    {{- if (not (.Values.upgrade).tov3) -}}
-      {{- printf "\n\nSSO with RBAC is enabled.\nNote that Kubecost 3.x has significant architectural changes that need to be TODO...\n\nWhen ready to upgrade, add `--set upgrade.tov3=true`." -}}
-    {{- end -}}
-  {{- end -}}
-
   {{/* Aggregator config reconciliation and common config */}}
   {{- if (not (.Values.aggregator).aggregatorDbStorage) -}}
     {{- fail "In Enterprise configuration, Aggregator DB storage is required" -}}
   {{- end -}}
-
 
   {{- if (.Values.podSecurityPolicy).enabled }}
     {{- fail "Kubecost no longer includes PodSecurityPolicy by default. Please take steps to preserve your existing PSPs before attempting the installation/upgrade again with the podSecurityPolicy values removed." }}

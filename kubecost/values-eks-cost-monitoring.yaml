@@ -24,6 +24,3 @@ clusterController:
 finops-agent:
   image:
     repository: kubecost/agent
-
-reporting:
-  productAnalytics: false
