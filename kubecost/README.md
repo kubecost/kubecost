@@ -39,12 +39,6 @@ Adjusting the log level increases or decreases the level of verbosity written to
 * `error`
 * `fatal`
 
-For example, to set the log level to `debug`, add the following flag to the Helm command:
-
-```sh
---set 'kubecost.logLevel=debug'
-```
-
 ### Adjusting Log Format
 
 Adjusting the log format changes the format in which the logs are output making it easier for log aggregators to parse and display logged messages. The `LOG_FORMAT` environment variable accepts the values `JSON`, for a structured output, and `pretty` for a nice, human-readable output.
