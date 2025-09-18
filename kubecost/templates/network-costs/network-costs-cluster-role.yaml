@@ -12,6 +12,7 @@ rules:
       - nodes
       - pods
       - services
+      - endpoints
     verbs:
       - get
       - list
