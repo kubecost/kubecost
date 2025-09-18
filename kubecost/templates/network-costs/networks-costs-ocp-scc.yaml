@@ -26,5 +26,5 @@ volumes:
   - projected
   - configMap
 users:
-  - system:serviceaccount:{{ .Release.Namespace }}:{{ template "kubecost.serviceAccountName" . }}
+  - system:serviceaccount:{{ .Release.Namespace }}:{{ template "kubecost.networkCosts.name" . }}
 {{- end }}
