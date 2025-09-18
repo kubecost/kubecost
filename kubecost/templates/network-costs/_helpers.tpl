@@ -35,11 +35,3 @@ app: {{ template "kubecost.networkCosts.name" . }}
 {{- define "kubecost.networkCosts.selectorLabels" -}}
 app: {{ template "kubecost.networkCosts.name" . }}
 {{- end }}
-
-{{- define "kubecost.networkCosts.serviceAccountName" -}}
-{{- if .Values.networkCosts.serviceAccountName -}}
-    {{ .Values.networkCosts.serviceAccountName }}
-{{- else -}}
-    {{ template "kubecost.serviceAccountName" . }}
-{{- end -}}
-{{- end -}}
