@@ -507,7 +507,7 @@ frontend:
 ##
 localStore:
   enabled: true
-  
+
   image:
     registry: ""  # Default is "icr.io"
     repository: kubecost/cost-model
@@ -1040,7 +1040,7 @@ cloudCost:
     tag: ""  # Default is to match the Chart.AppVersion
   fullImageName: ""  # Overrides the default image construction logic.
   imagePullPolicy: IfNotPresent
-  
+
   ## Retention values determine for what duration into the past data cloud billing data will be
   ## queried and processed into ETL.
   retention1d: 91
