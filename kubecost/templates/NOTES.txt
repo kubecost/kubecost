@@ -24,3 +24,5 @@ Please allow 25 minutes for Kubecost to gather metrics. A progress indicator wil
 Having installation issues? View our Troubleshooting Guide at https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=troubleshoot-install
 
 {{ include "kubecost.localStoreClusterIdCheck" . }}
+
+Copyright IBM Corp. 2019-2025
