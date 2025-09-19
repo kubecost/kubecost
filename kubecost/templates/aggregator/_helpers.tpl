@@ -1,6 +1,6 @@
-{{- define "aggregator.imageRegistry" -}}
-  {{- if .Values.kubecost.image.registry -}}
-    {{- .Values.kubecost.image.registry -}}
+{{- define "kubecost.aggregator.imageRegistry" -}}
+  {{- if .Values.aggregator.image.registry -}}
+    {{- .Values.aggregator.image.registry -}}
   {{- else -}}
     {{- .Values.global.imageRegistry -}}
   {{- end -}}
@@ -9,14 +9,12 @@
 {{- define "kubecost.aggregator.image" }}
   {{- if .Values.aggregator.fullImageName }}
     {{- .Values.aggregator.fullImageName }}
-  {{- else if .Values.kubecost.fullImageName }}
-    {{- .Values.kubecost.fullImageName }}
   {{- else if eq "development" .Chart.AppVersion -}}
     gcr.io/kubecost1/cost-model-nightly:latest
-  {{- else if .Values.kubecost.image.tag -}}
-    {{- include "aggregator.imageRegistry" . }}/{{ .Values.kubecost.image.repository }}:{{ .Values.kubecost.image.tag }}
+  {{- else if .Values.aggregator.image.tag -}}
+    {{- include "kubecost.aggregator.imageRegistry" . }}/{{ .Values.aggregator.image.repository }}:{{ .Values.aggregator.image.tag }}
   {{- else -}}
-    {{- include "aggregator.imageRegistry" . }}/{{ .Values.kubecost.image.repository }}:{{ $.Chart.AppVersion }}
+    {{- include "kubecost.aggregator.imageRegistry" . }}/{{ .Values.aggregator.image.repository }}:{{ $.Chart.AppVersion }}
   {{- end }}
 {{- end }}
 
