@@ -245,8 +245,8 @@ spec:
       {{- if .Values.global.updateCaTrust.enabled }}
         - name: update-ca-trust
           image: {{ include "kubecost.aggregator.image" . }}
-          {{- if .Values.kubecost.imagePullPolicy }}
-          imagePullPolicy: {{ .Values.kubecost.imagePullPolicy }}
+          {{- if .Values.aggregator.imagePullPolicy }}
+          imagePullPolicy: {{ .Values.aggregator.imagePullPolicy }}
           {{- else }}
           imagePullPolicy: Always
           {{- end }}
@@ -490,7 +490,7 @@ spec:
               value: "true"
             {{- end }}
             - name: CUSTOM_COST_ENABLED
-              value: {{ .Values.kubecost.plugins.enabled | quote }}
+              value: {{ .Values.plugins.enabled | quote }}
             {{- if .Values.diagnostics.enabled }}
             - name: DIAGNOSTICS_ENABLED
               value: "true"
@@ -526,11 +526,11 @@ spec:
               value: {{ .Values.aggregator.dbWriteMemoryLimit | quote }}
             {{- end }}
             - name: RESOLUTION_1D_RETENTION
-              value: {{ .Values.kubecost.retention1d | quote }}
+              value: {{ .Values.aggregator.retention1d | quote }}
             - name: RESOLUTION_1H_RETENTION
-              value: {{ .Values.kubecost.retention1h | quote }}
+              value: {{ .Values.aggregator.retention1h | quote }}
             - name: RESOLUTION_10M_RETENTION
-              value: {{ .Values.kubecost.retention10m | quote }}
+              value: {{ .Values.aggregator.retention10m | quote }}
             - name: CONTAINER_RESOURCE_USAGE_RETENTION_DAYS
               value: {{ .Values.aggregator.containerResourceUsageRetentionDays | quote }}
             - name: DB_TRIM_MEMORY_ON_CLOSE
