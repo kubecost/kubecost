@@ -72,30 +72,30 @@ spec:
             The name is for compatibility with single-pod install. */}}
         - name: persistent-configs
           emptyDir: {}
-        {{- if .Values.kubecost.plugins.enabled  }}
-        {{- if .Values.kubecost.plugins.install.enabled}}
+        {{- if .Values.plugins.enabled  }}
+        {{- if .Values.plugins.install.enabled}}
         - name: install-script
           configMap:
             name: {{ template "kubecost.fullname" . }}-install-plugins
         {{- end }}
         - name: plugins-dir
           emptyDir: {}
-        {{- if and (not .Values.kubecost.plugins.existingCustomSecret.enabled) .Values.kubecost.plugins.secretName }}
+        {{- if and (not .Values.plugins.existingCustomSecret.enabled) .Values.plugins.secretName }}
         - name: plugins-config
           secret:
-            secretName: {{ .Values.kubecost.plugins.secretName }}
+            secretName: {{ .Values.plugins.secretName }}
             items:
-            {{- range $key, $config := .Values.kubecost.plugins.enabledPlugins }}
+            {{- range $key, $config := .Values.plugins.enabledPlugins }}
               - key: {{ $config }}_config.json
                 path: {{ $config }}_config.json
             {{- end }}
         {{- end }}
-        {{- if .Values.kubecost.plugins.existingCustomSecret.enabled }}
+        {{- if .Values.plugins.existingCustomSecret.enabled }}
         - name: plugins-config
           secret:
-            secretName: {{ .Values.kubecost.plugins.existingCustomSecret.name }}
+            secretName: {{ .Values.plugins.existingCustomSecret.name }}
             items:
-            {{- range $key, $config := .Values.kubecost.plugins.enabledPlugins }}
+            {{- range $key, $config := .Values.plugins.enabledPlugins }}
               - key: {{ $config }}_config.json
                 path: {{ $config }}_config.json
             {{- end }}
@@ -119,19 +119,19 @@ spec:
         {{- if .Values.cloudCost.extraVolumes }}
         {{- toYaml .Values.cloudCost.extraVolumes | nindent 8 }}
         {{- end }}
-      {{- if or (and .Values.kubecost.plugins.enabled .Values.kubecost.plugins.install.enabled ) .Values.global.updateCaTrust.enabled }}                
+      {{- if or (and .Values.plugins.enabled .Values.plugins.install.enabled ) .Values.global.updateCaTrust.enabled }}                
       initContainers:
       - name: plugin-installer
-        image: {{ .Values.kubecost.plugins.install.fullImageName }}
+        image: {{ .Values.plugins.install.fullImageName }}
         command: ["sh", "/install/install_plugins.sh"]
-        {{- with .Values.kubecost.plugins.install.securityContext }}
+        {{- with .Values.plugins.install.securityContext }}
         securityContext: {{- toYaml . | nindent 12 }}
         {{- end }}
         volumeMounts:
           - name: install-script
             mountPath: /install
           - name: plugins-dir
-            mountPath: {{ .Values.kubecost.plugins.folder }}
+            mountPath: {{ .Values.plugins.folder }}
           {{- if .Values.cloudCost.extraVolumeMounts }}
           {{- toYaml .Values.cloudCost.extraVolumeMounts | nindent 10 }}
           {{- end }}
@@ -139,8 +139,8 @@ spec:
       {{- if .Values.global.updateCaTrust.enabled }}
       - name: update-ca-trust
         image: {{ include "kubecost.cloudCost.image" . }}
-        {{- if .Values.kubecost.imagePullPolicy }}
-        imagePullPolicy: {{ .Values.kubecost.imagePullPolicy }}
+        {{- if .Values.cloudCost.imagePullPolicy }}
+        imagePullPolicy: {{ .Values.cloudCost.imagePullPolicy }}
         {{- else }}
         imagePullPolicy: Always
         {{- end }}
@@ -210,13 +210,13 @@ spec:
               subPath: cloud-integration.json
               readOnly: true
           {{- end }}
-            {{- if .Values.kubecost.plugins.enabled }}
-            - mountPath: {{ .Values.kubecost.plugins.folder }}
+            {{- if .Values.plugins.enabled }}
+            - mountPath: {{ .Values.plugins.folder }}
               name: plugins-dir
               readOnly: false
             - name: tmp
               mountPath: /tmp
-            - mountPath: {{ $.Values.kubecost.plugins.folder }}/config
+            - mountPath: {{ $.Values.plugins.folder }}/config
               name: plugins-config
               readOnly: true
             {{- end }}
@@ -234,7 +234,7 @@ spec:
             - name: CONFIG_PATH
               value: /var/configs/
             - name: RESOLUTION_1D_RETENTION
-              value: {{ (quote .Values.kubecost.retention1d) }}
+              value: {{ (quote .Values.cloudCost.retention1d) }}
             - name: CLOUD_COST_REFRESH_RATE_HOURS
               value: {{ .Values.cloudCost.refreshRateHours | default 6 | quote }}
             - name: CLOUD_COST_QUERY_WINDOW_DAYS
@@ -242,7 +242,7 @@ spec:
             - name: CLOUD_COST_RUN_WINDOW_DAYS
               value: {{ .Values.cloudCost.runWindowDays | default 3 | quote }}
             - name: CUSTOM_COST_ENABLED
-              value: {{ .Values.kubecost.plugins.enabled | quote }}
+              value: {{ .Values.plugins.enabled | quote }}
             {{- if .Values.cloudCost.extraEnv }}
             {{- toYaml .Values.cloudCost.extraEnv | nindent 12 }}
             {{- end }}
