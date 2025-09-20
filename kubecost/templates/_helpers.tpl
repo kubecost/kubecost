@@ -129,10 +129,12 @@ RBAC exclusivity check: make sure either simple RBAC or RBAC Teams is configured
 {{- end -}}
 
 {{/*
-Print a warning if PV is enabled AND EKS is detected AND the EBS-CSI driver is not installed. This can be disabled is the installer's RBAC does not allow kube-system access
+Print a warning if PV is enabled AND EKS is detected AND the EBS-CSI driver is not installed.
+Skip the check if CI/CD is enabled and skipSanityChecks is set. Argo CD, for
+example, does not support templating a chart which uses the lookup function.
 */}}
 {{- define "kubecost.eksStorage.check" }}
-{{ if (((.Values.kubecost).eksStorage).check).enabled }}
+{{- if not (and .Values.global.platforms.cicd.enabled .Values.global.platforms.cicd.skipSanityChecks) }}
 {{- $PVsEnabled := (or (.Values.persistentVolume).enabled) }}
 {{- $isEKS := (regexMatch ".*eks.*" (.Capabilities.KubeVersion | quote) )}}
 {{- $isGT22 := (semverCompare ">=1.23-0" .Capabilities.KubeVersion.GitVersion) }}
@@ -462,7 +464,7 @@ kubecost.costEventsAudit.enabled flag for nginx configmap
 {{- end }}
 
 {{- define "kubecost.plugins.enabled" }}
-{{- if (.Values.kubecost.plugins).enabled }}
+{{- if (.Values.plugins).enabled }}
 {{- printf "true" -}}
 {{- else -}}
 {{- printf "false" -}}

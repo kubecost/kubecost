@@ -1,4 +1,4 @@
-{{- if .Values.kubecost.plugins.enabled }}
+{{- if .Values.plugins.enabled }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -7,11 +7,11 @@ metadata:
     {{- include "kubecost.commonLabels" . | nindent 4 }}
 data:
   install_plugins.sh: |-
-    {{- if .Values.kubecost.plugins.install.enabled }}
+    {{- if .Values.plugins.install.enabled }}
       set -ex
-      rm -f {{ .Values.kubecost.plugins.folder }}/bin/*
-      mkdir -p {{ .Values.kubecost.plugins.folder }}/bin
-      cd {{ .Values.kubecost.plugins.folder }}/bin
+      rm -f {{ .Values.plugins.folder }}/bin/*
+      mkdir -p {{ .Values.plugins.folder }}/bin
+      cd {{ .Values.plugins.folder }}/bin
       OSTYPE=$(cat /etc/os-release)
       OS=''
       case "$OSTYPE" in
@@ -29,13 +29,13 @@ data:
         *)         echo "$UNAME_OUTPUT is unsupported" && exit 1 ;;
       esac
 
-      {{- if .Values.kubecost.plugins.version  }}
-      VER={{ .Values.kubecost.plugins.version | quote}}
+      {{- if .Values.plugins.version  }}
+      VER={{ .Values.plugins.version | quote}}
       {{- else }}
       VER=$(curl --silent https://api.github.com/repos/opencost/opencost-plugins/releases/latest | grep ".tag_name" | awk -F\" '{print $4}')
       {{- end }}
       
-      {{- range $pluginName := .Values.kubecost.plugins.enabledPlugins }}
+      {{- range $pluginName := .Values.plugins.enabledPlugins }}
       curl -fsSLO "https://github.com/opencost/opencost-plugins/releases/download/$VER/{{ $pluginName }}.ocplugin.$OS.$ARCH"
       chmod a+rx "{{ $pluginName }}.ocplugin.$OS.$ARCH"
       {{- end }}

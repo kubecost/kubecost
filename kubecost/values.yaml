@@ -507,6 +507,16 @@ frontend:
 ##
 localStore:
   enabled: true
+
+  image:
+    registry: ""  # Default is "icr.io"
+    repository: kubecost/cost-model
+    tag: ""  # Default is to match the Chart.AppVersion
+  fullImageName: ""  # Overrides the default image construction logic.
+  imagePullPolicy: IfNotPresent
+
+  ## Retention values determine for what duration into the past data will be
+  ## kept on the local store pv.
   retention10m: 36
   retention1h: 49
   retention1d: 15
@@ -541,9 +551,6 @@ localStore:
       ## The "helm.sh/resource-policy: keep" annotation is used to prevent the persistent volume from being deleted when uninstalling or moving to a different deployment method.
       # This can be used to allow the agent history to be uploaded to cloud storage when upgrading to Enterprise.
       helm.sh/resource-policy: keep
-
-  ## localStore uses the images set in 'kubecost.image', but can be overridden here:
-  fullImageName: ""
 
 ## Values for the finops-agent sub-chart
 ## Ref: https://github.com/kubecost/finops-agent-chart/
@@ -591,78 +598,39 @@ finops-agent:
         cloudabilityEnvId: ""
         customAzureClientSecret: ""
 
-
-kubecost:
-  image:
-    registry: ""  # Default is "icr.io"
-    repository: kubecost/cost-model
-    tag: ""  # Default is to match the Chart.AppVersion
-
-  ## Override the image name and version for containers that use the aggregator image.
-  ## If not set, the image will be pulled from the registry and repository specified in the image block.
-  ## If set, the fullImageName will be used to pull the image.
-  ## Example:
-  ## fullImageName: gcr.io/kubecost1/cost-model:v3.0.0
-  fullImageName: ""
-
-  imagePullPolicy: IfNotPresent
-
-  # Log level for the cost model container. Options are "trace", "debug", "info", "warn", "error", "fatal", "panic"
-  logLevel: info
-
-  # securityContext:
-  #   readOnlyRootFilesystem: true
-
-  # Retention values determine for what duration into the past data will be retained, ingested and in some cases built
-  retention1d: 91
-  retention1h: 49
-  retention10m: 36
-
-  # Installs Kubecost/OpenCost plugins
-  plugins:
+## Installs Kubecost/OpenCost plugins
+## Ref: https://opencost.io/docs/integrations/plugins/
+##
+plugins:
+  enabled: false
+  install:
     enabled: false
-    install:
-      enabled: false
-      fullImageName: curlimages/curl:latest
-      securityContext:
-        allowPrivilegeEscalation: false
-        seccompProfile:
-          type: RuntimeDefault
-        capabilities:
-          drop:
-          - ALL
-        readOnlyRootFilesystem: true
-        runAsNonRoot: true
-        runAsUser: 1001
-    folder: /opt/opencost/plugin
-
-    # leave this commented to always download most recent version of plugins
-    # version: <INSERT_SPECIFIC_PLUGINS_VERSION>
-
-    # the list of enabled plugins
-    enabledPlugins: []
-      # - datadog
-
-    # pre-existing secret for plugin configuration
-    existingCustomSecret:
-      enabled: false
-      name: ""  # name of the secret containing plugin config
-
-    secretName: kubecost-plugin-secret
-
-    # uncomment this to define plugin configuration via the values file
-    # configs:
-      # datadog: |
-      #   {
-      #   "datadog_site": "<INSERT_DATADOG_SITE>",
-      #   "datadog_api_key": "<INSERT_DATADOG_API_KEY>",
-      #   "datadog_app_key": "<INSERT_DATADOG_APP_KEY>"
-      #   }
-    # NOTES.txt contains a check to see if the EBS-CSI driver is installed.
-    # This can be disabled if the installer's RBAC does not allow kube-system access
-    eksStorage:
-      check:
-        enabled: true
+    fullImageName: curlimages/curl:latest
+    securityContext:
+      allowPrivilegeEscalation: false
+      seccompProfile:
+        type: RuntimeDefault
+      capabilities:
+        drop:
+        - ALL
+      readOnlyRootFilesystem: true
+      runAsNonRoot: true
+      runAsUser: 1001
+  folder: /opt/opencost/plugin
+  version: ""  # By default, the latest version of the plugins will be downloaded
+  enabledPlugins: []
+    # - datadog
+  existingCustomSecret:
+    enabled: false
+    name: ""
+  secretName: kubecost-plugin-secret  # Name of secret to be created if existingCustomSecret is not enabled
+  configs: {}
+    # datadog: |
+    #   {
+    #   "datadog_site": "<INSERT_DATADOG_SITE>",
+    #   "datadog_api_key": "<INSERT_DATADOG_API_KEY>",
+    #   "datadog_app_key": "<INSERT_DATADOG_APP_KEY>"
+    #   }
 
 ## Basic Kubecost ingress, more examples available at https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=installation-ingress-examples
 ##
@@ -869,8 +837,18 @@ forecasting:
 aggregator:
   enabled: true
 
-  ## aggregator uses the image set in 'kubecost.image', but can be overridden here:
-  fullImageName: ""
+  image:
+    registry: ""  # Default is "icr.io"
+    repository: kubecost/cost-model
+    tag: ""  # Default is to match the Chart.AppVersion
+  fullImageName: ""  # Overrides the default image construction logic.
+  imagePullPolicy: IfNotPresent
+
+  ## Retention values determine for what duration into the past data will be
+  ## ingested into Aggregator's database
+  retention1d: 91
+  retention1h: 49
+  retention10m: 36
 
   # Replicas sets the number of Aggregator replicas.
   replicas: 1
@@ -1056,8 +1034,16 @@ heartbeat:
 cloudCost:
   enabled: true
 
-  ## cloudCost uses the images set in 'kubecost.image', but can be overridden here:
-  fullImageName: ""
+  image:
+    registry: ""  # Default is "icr.io"
+    repository: kubecost/cost-model
+    tag: ""  # Default is to match the Chart.AppVersion
+  fullImageName: ""  # Overrides the default image construction logic.
+  imagePullPolicy: IfNotPresent
+
+  ## Retention values determine for what duration into the past data cloud billing data will be
+  ## queried and processed into ETL.
+  retention1d: 91
 
   ## Specify an existing Kubernetes Secret holding the cloud integration information. This Secret must contain
   ## a key with name `cloud-integration.json` and the contents must be in a specific format. It is expected
