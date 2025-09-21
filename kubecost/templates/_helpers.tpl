@@ -4,13 +4,80 @@
 Kubecost 3.0 preconditions
 */}}
 {{- define "kubecost.v3-preconditions" -}}
-  {{- if or .Values.kubecostAggregator .Values.kubecostFrontend -}}
-    {{ fail "\n\n--- Kubecost 3.0 requires configuration changes. Please refer to the documentation for more information. ---" }}
-  {{- end -}}
+  {{/* Federated Storage config migration */}}
   {{- if (.Values.kubecostModel).federatedStorageConfig -}}
-    {{ fail "\n\n--- `.Values.kubecostModel.federatedStorageConfig` is no longer supported. Please use `.Values.global.federatedStorage.config` instead. ---" }}
-  {{- else if (.Values.kubecostModel).federatedStorageConfigSecret -}}
-    {{ fail "\n\n--- `.Values.kubecostModel.federatedStorageConfigSecret` is no longer supported. Please use `.Values.kubecostModel.federatedStorage.existingSecret` instead. ---" }}
+    {{ fail "`.Values.kubecostModel.federatedStorageConfig` is no longer supported. Please use `.Values.global.federatedStorage.config` instead." }}
+  {{- end -}}
+  {{- if (.Values.kubecostModel).federatedStorageConfigSecret -}}
+    {{ fail "`.Values.kubecostModel.federatedStorageConfigSecret` is no longer supported. Please use `.Values.global.federatedStorage.existingSecret` instead." }}
+  {{- end -}}
+  {{- if .Values.federatedETL -}}
+    {{ fail "`.Values.federatedETL` is no longer supported. Please remove this configuration, and use configurations under `.Values.aggregator` or `.Values.finops-agent` instead." }}
+  {{- end -}}
+
+  {{/* Cloud Integration config migration */}}
+  {{- if (.Values.kubecostProductConfigs).cloudIntegrationSecret -}}
+    {{ fail "`.Values.kubecostProductConfigs.cloudIntegrationSecret` is no longer supported. Please use `.Values.cloudCost.cloudIntegrationSecret` instead." }}
+  {{- end -}}
+  {{- if (.Values.kubecostProductConfigs).cloudIntegrationJSON -}}
+    {{ fail "`.Values.kubecostProductConfigs.cloudIntegrationJSON` is no longer supported. Please use `.Values.cloudCost.cloudIntegrationJSON` instead." }}
+  {{- end -}}
+
+  {{/* Component config migration */}}
+  {{- if .Values.kubecostAggregator -}}
+    {{ fail "`.Values.kubecostAggregator` is no longer supported. Please use `.Values.aggregator` instead." }}
+  {{- end -}}
+  {{- if .Values.kubecostFrontend -}}
+    {{ fail "`.Values.kubecostFrontend` is no longer supported. Please use `.Values.frontend` instead." }}
+  {{- end -}}
+  {{- if .Values.kubecostModel -}}
+    {{ fail "`.Values.kubecostModel` is no longer supported. Please remove this configuration." }}
+  {{- end -}}
+  {{- if .Values.service -}}
+    {{ fail "`.Values.service` is no longer supported. Service configuration is now handled by `.Values.frontend.service`." }}
+  {{- end -}}
+  {{- if .Values.pricingCsv -}}
+    {{ fail "`.Values.pricingCsv` is no longer supported. Please use `.Values.enterpriseCustomPricing` instead." }}
+  {{- end -}}
+
+  {{/* Removed configurations */}}
+  {{- if .Values.etlUtils -}}
+    {{ fail "`.Values.etlUtils` is no longer supported. Please remove this configuration." }}
+  {{- end -}}
+  {{- if .Values.kubecostMetrics -}}
+    {{ fail "`.Values.kubecostMetrics` is no longer supported. Please remove this configuration." }}
+  {{- end -}}
+
+  {{/* Prometheus and Grafana removal */}}
+  {{- if .Values.prometheus -}}
+    {{ fail "`.Values.prometheus` is no longer supported. Please remove this configuration." }}
+  {{- end -}}
+  {{- if .Values.grafana -}}
+    {{ fail "`.Values.grafana` is no longer supported. Please remove this configuration." }}
+  {{- end -}}
+  {{- if .Values.global.prometheus -}}
+    {{ fail "`.Values.global.prometheus` is no longer supported. Please remove this configuration." }}
+  {{- end -}}
+  {{- if .Values.global.grafana -}}
+    {{ fail "`.Values.global.grafana` is no longer supported. Please remove this configuration." }}
+  {{- end -}}
+  {{- if .Values.global.gmp -}}
+    {{ fail "`.Values.global.gmp` (Google Managed Prometheus) is no longer supported. Please remove this configuration." }}
+  {{- end -}}
+  {{- if .Values.global.amp -}}
+    {{ fail "`.Values.global.amp` (Amazon Managed Prometheus) is no longer supported. Please remove this configuration." }}
+  {{- end -}}
+  {{- if .Values.global.mimirProxy -}}
+    {{ fail "`.Values.global.mimirProxy` (Grafana Mimir Proxy) is no longer supported. Please remove this configuration." }}
+  {{- end -}}
+  {{- if .Values.global.ammsp -}}
+    {{ fail "`.Values.global.ammsp` (Azure Monitor Managed Service) is no longer supported. Please remove this configuration." }}
+  {{- end -}}
+  {{- if .Values.sigV4Proxy -}}
+    {{ fail "`.Values.sigV4Proxy` is no longer supported. Please remove this configuration." }}
+  {{- end -}}
+  {{- if .Values.awsstore -}}
+    {{ fail "`.Values.awsstore` is no longer supported. Please remove this configuration." }}
   {{- end -}}
 {{- end -}}
 
@@ -50,7 +117,6 @@ Kubecost 2.0 preconditions
   {{- if (.Values.podSecurityPolicy).enabled }}
     {{- fail "Kubecost no longer includes PodSecurityPolicy by default. Please take steps to preserve your existing PSPs before attempting the installation/upgrade again with the podSecurityPolicy values removed." }}
   {{- end }}
-
 {{- end -}}
 
 {{/*
