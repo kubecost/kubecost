@@ -1,6 +1,6 @@
 dependencies:
 - name: finops-agent
   repository: https://kubecost.github.io/finops-agent-chart
-  version: 1.0.0-rc.0
-digest: sha256:3328b38c758301dc60806ab5e4171578cf5775fb546de64fbd81eaec171a4a31
-generated: "2025-09-18T13:48:02.82828-07:00"
+  version: 1.0.0-rc.1
+digest: sha256:d22a69292487d811d23c905f05e848d531f35c43ebb9e56aaed4eb1b6d81f271
+generated: "2025-09-21T10:56:52.911498-07:00"
