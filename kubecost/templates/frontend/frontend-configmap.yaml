@@ -1,4 +1,5 @@
 {{- if (.Values.frontend).enabled }}
+{{- if not .Values.frontend.nginxConfigMapName }}
 {{- if .Values.saml.enabled }}
 {{- if .Values.oidc.enabled }}
 {{- fail "SAML and OIDC cannot both be enabled" }}
@@ -7,7 +8,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: nginx-conf
+  name: {{ include "kubecost.frontend.nginxConfigMapName" . }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "kubecost.commonLabels" . | nindent 4 }}
@@ -153,11 +154,9 @@ data:
             try_files $uri $uri/ /index.html;
         }
 {{- end }}
-{{- if .Values.imageVersion }}
-        add_header ETag "{{ $.Values.imageVersion }}";
-{{- else }}
+
         add_header ETag "{{ $.Chart.Version }}";
-{{- end }}
+
 {{- if .Values.frontend.tls }}
 {{- if .Values.frontend.tls.enabled }}
 {{- if .Values.frontend.tls.specifyProtocols }}
@@ -165,20 +164,20 @@ data:
 {{- end }}
         ssl_certificate     /etc/ssl/certs/kc.crt;
         ssl_certificate_key /etc/ssl/certs/kc.key;
-        listen {{ .Values.service.targetPort }} ssl;
+        listen {{ .Values.frontend.service.targetPort }} ssl;
 {{- if .Values.frontend.ipv6.enabled }}
-        listen [::]:{{ .Values.service.targetPort }} ssl;
+        listen [::]:{{ .Values.frontend.service.targetPort }} ssl;
 {{- end }}
 {{- else }}
-        listen {{ .Values.service.targetPort }};
+        listen {{ .Values.frontend.service.targetPort }};
 {{- if .Values.frontend.ipv6.enabled }}
-        listen [::]:{{ .Values.service.targetPort }};
+        listen [::]:{{ .Values.frontend.service.targetPort }};
 {{- end }}
 {{- end }}
 {{- else }}
-        listen {{ .Values.service.targetPort }};
+        listen {{ .Values.frontend.service.targetPort }};
 {{- if .Values.frontend.ipv6.enabled }}
-        listen [::]:{{ .Values.service.targetPort }};
+        listen [::]:{{ .Values.frontend.service.targetPort }};
 {{- end }}
 {{- end }}
         
@@ -443,7 +442,7 @@ data:
 
         location = /model/hideOrphanedResources {
             default_type 'application/json';
-            {{- if .Values.frontend.hideOrphanedResources }}
+            {{- if default false ((.Values.kubecostProductConfigs).hideOrphanedResources) }}
             return 200 '{"hideOrphanedResources": "true"}';
             {{- else }}
             return 200 '{"hideOrphanedResources": "false"}';
@@ -452,7 +451,7 @@ data:
 
         location = /model/hideDiagnostics {
             default_type 'application/json';
-            {{- if .Values.frontend.hideDiagnostics }}
+            {{- if default false ((.Values.kubecostProductConfigs).hideDiagnostics) }}
             return 200 '{"hideDiagnostics": "true"}';
             {{- else }}
             return 200 '{"hideDiagnostics": "false"}';
@@ -476,10 +475,10 @@ data:
         }
 
         {{- if .Values.forecasting.enabled }}
-        location /forecasting {
+        location /model/forecast/ {
             default_type 'application/json';
             proxy_read_timeout          300;
-            proxy_pass http://forecasting/;
+            proxy_pass http://forecasting/forecast/;
             proxy_redirect off;
             proxy_set_header Connection "";
             proxy_set_header  X-Real-IP  $remote_addr;
@@ -507,8 +506,9 @@ data:
                 "forecastingEnabled": "{{ include "kubecost.forecasting.enabled" . }}",
                 "turbonomicEnabled": "{{ include "kubecost.turbonomic.enabled" . }}",
                 "chartVersion": "DEVELOP_BRANCH",
-                "hourlyDataRetention": "{{ (.Values.kubecost.retention1h) }}",
-                "dailyDataRetention": "{{ (.Values.kubecost.retention1d) }}",
+                "tenMinuteDataRetention": "{{ (.Values.aggregator.retention10m) }}",
+                "hourlyDataRetention": "{{ (.Values.aggregator.retention1h) }}",
+                "dailyDataRetention": "{{ (.Values.aggregator.retention1d) }}",
                 "hideDiagnostics": "{{ default false ((.Values.kubecostProductConfigs).hideDiagnostics) }}",
                 "hideOrphanedResources": "{{ default false ((.Values.kubecostProductConfigs).hideOrphanedResources) }}",
                 "hideKubecostActions": "{{ default false ((.Values.kubecostProductConfigs).hideKubecostActions) }}",
@@ -553,4 +553,5 @@ data:
             }';
         }
     }
+{{- end }}
 {{- end }}

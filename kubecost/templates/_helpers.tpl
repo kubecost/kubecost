@@ -4,13 +4,80 @@
 Kubecost 3.0 preconditions
 */}}
 {{- define "kubecost.v3-preconditions" -}}
-  {{- if or .Values.kubecostAggregator .Values.kubecostFrontend -}}
-    {{ fail "\n\n--- Kubecost 3.0 requires configuration changes. Please refer to the documentation for more information. ---" }}
-  {{- end -}}
+  {{/* Federated Storage config migration */}}
   {{- if (.Values.kubecostModel).federatedStorageConfig -}}
-    {{ fail "\n\n--- `.Values.kubecostModel.federatedStorageConfig` is no longer supported. Please use `.Values.global.federatedStorage.config` instead. ---" }}
-  {{- else if (.Values.kubecostModel).federatedStorageConfigSecret -}}
-    {{ fail "\n\n--- `.Values.kubecostModel.federatedStorageConfigSecret` is no longer supported. Please use `.Values.kubecostModel.federatedStorage.existingSecret` instead. ---" }}
+    {{ fail "`.Values.kubecostModel.federatedStorageConfig` is no longer supported. Please use `.Values.global.federatedStorage.config` instead." }}
+  {{- end -}}
+  {{- if (.Values.kubecostModel).federatedStorageConfigSecret -}}
+    {{ fail "`.Values.kubecostModel.federatedStorageConfigSecret` is no longer supported. Please use `.Values.global.federatedStorage.existingSecret` instead." }}
+  {{- end -}}
+  {{- if .Values.federatedETL -}}
+    {{ fail "`.Values.federatedETL` is no longer supported. Please remove this configuration, and use configurations under `.Values.aggregator` or `.Values.finops-agent` instead." }}
+  {{- end -}}
+
+  {{/* Cloud Integration config migration */}}
+  {{- if (.Values.kubecostProductConfigs).cloudIntegrationSecret -}}
+    {{ fail "`.Values.kubecostProductConfigs.cloudIntegrationSecret` is no longer supported. Please use `.Values.cloudCost.cloudIntegrationSecret` instead." }}
+  {{- end -}}
+  {{- if (.Values.kubecostProductConfigs).cloudIntegrationJSON -}}
+    {{ fail "`.Values.kubecostProductConfigs.cloudIntegrationJSON` is no longer supported. Please use `.Values.cloudCost.cloudIntegrationJSON` instead." }}
+  {{- end -}}
+
+  {{/* Component config migration */}}
+  {{- if .Values.kubecostAggregator -}}
+    {{ fail "`.Values.kubecostAggregator` is no longer supported. Please use `.Values.aggregator` instead." }}
+  {{- end -}}
+  {{- if .Values.kubecostFrontend -}}
+    {{ fail "`.Values.kubecostFrontend` is no longer supported. Please use `.Values.frontend` instead." }}
+  {{- end -}}
+  {{- if .Values.kubecostModel -}}
+    {{ fail "`.Values.kubecostModel` is no longer supported. Please remove this configuration." }}
+  {{- end -}}
+  {{- if .Values.service -}}
+    {{ fail "`.Values.service` is no longer supported. Service configuration is now handled by `.Values.frontend.service`." }}
+  {{- end -}}
+  {{- if .Values.pricingCsv -}}
+    {{ fail "`.Values.pricingCsv` is no longer supported. Please use `.Values.enterpriseCustomPricing` instead." }}
+  {{- end -}}
+
+  {{/* Removed configurations */}}
+  {{- if .Values.etlUtils -}}
+    {{ fail "`.Values.etlUtils` is no longer supported. Please remove this configuration." }}
+  {{- end -}}
+  {{- if .Values.kubecostMetrics -}}
+    {{ fail "`.Values.kubecostMetrics` is no longer supported. Please remove this configuration." }}
+  {{- end -}}
+
+  {{/* Prometheus and Grafana removal */}}
+  {{- if .Values.prometheus -}}
+    {{ fail "`.Values.prometheus` is no longer supported. Please remove this configuration." }}
+  {{- end -}}
+  {{- if .Values.grafana -}}
+    {{ fail "`.Values.grafana` is no longer supported. Please remove this configuration." }}
+  {{- end -}}
+  {{- if .Values.global.prometheus -}}
+    {{ fail "`.Values.global.prometheus` is no longer supported. Please remove this configuration." }}
+  {{- end -}}
+  {{- if .Values.global.grafana -}}
+    {{ fail "`.Values.global.grafana` is no longer supported. Please remove this configuration." }}
+  {{- end -}}
+  {{- if .Values.global.gmp -}}
+    {{ fail "`.Values.global.gmp` (Google Managed Prometheus) is no longer supported. Please remove this configuration." }}
+  {{- end -}}
+  {{- if .Values.global.amp -}}
+    {{ fail "`.Values.global.amp` (Amazon Managed Prometheus) is no longer supported. Please remove this configuration." }}
+  {{- end -}}
+  {{- if .Values.global.mimirProxy -}}
+    {{ fail "`.Values.global.mimirProxy` (Grafana Mimir Proxy) is no longer supported. Please remove this configuration." }}
+  {{- end -}}
+  {{- if .Values.global.ammsp -}}
+    {{ fail "`.Values.global.ammsp` (Azure Monitor Managed Service) is no longer supported. Please remove this configuration." }}
+  {{- end -}}
+  {{- if .Values.sigV4Proxy -}}
+    {{ fail "`.Values.sigV4Proxy` is no longer supported. Please remove this configuration." }}
+  {{- end -}}
+  {{- if .Values.awsstore -}}
+    {{ fail "`.Values.awsstore` is no longer supported. Please remove this configuration." }}
   {{- end -}}
 {{- end -}}
 
@@ -42,23 +109,14 @@ Kubecost 2.0 preconditions
     {{- end -}}
   {{- end -}}
 
-  {{/* TODO: update comments and rules for v3 */}}
-  {{- if or ((.Values.saml).rbac).enabled ((.Values.oidc).rbac).enabled -}}
-    {{- if (not (.Values.upgrade).tov3) -}}
-      {{- printf "\n\nSSO with RBAC is enabled.\nNote that Kubecost 3.x has significant architectural changes that need to be TODO...\n\nWhen ready to upgrade, add `--set upgrade.tov3=true`." -}}
-    {{- end -}}
-  {{- end -}}
-
   {{/* Aggregator config reconciliation and common config */}}
   {{- if (not (.Values.aggregator).aggregatorDbStorage) -}}
     {{- fail "In Enterprise configuration, Aggregator DB storage is required" -}}
   {{- end -}}
 
-
   {{- if (.Values.podSecurityPolicy).enabled }}
     {{- fail "Kubecost no longer includes PodSecurityPolicy by default. Please take steps to preserve your existing PSPs before attempting the installation/upgrade again with the podSecurityPolicy values removed." }}
   {{- end }}
-
 {{- end -}}
 
 {{/*
@@ -71,9 +129,12 @@ RBAC exclusivity check: make sure either simple RBAC or RBAC Teams is configured
 {{- end -}}
 
 {{/*
-Print a warning if PV is enabled AND EKS is detected AND the EBS-CSI driver is not installed
+Print a warning if PV is enabled AND EKS is detected AND the EBS-CSI driver is not installed.
+Skip the check if CI/CD is enabled and skipSanityChecks is set. Argo CD, for
+example, does not support templating a chart which uses the lookup function.
 */}}
 {{- define "kubecost.eksStorage.check" }}
+{{- if not (and .Values.global.platforms.cicd.enabled .Values.global.platforms.cicd.skipSanityChecks) }}
 {{- $PVsEnabled := (or (.Values.persistentVolume).enabled) }}
 {{- $isEKS := (regexMatch ".*eks.*" (.Capabilities.KubeVersion | quote) )}}
 {{- $isGT22 := (semverCompare ">=1.23-0" .Capabilities.KubeVersion.GitVersion) }}
@@ -82,6 +143,7 @@ Print a warning if PV is enabled AND EKS is detected AND the EBS-CSI driver is n
 
 ERROR: MISSING EBS-CSI DRIVER WHICH IS REQUIRED ON EKS v1.23+ TO MANAGE PERSISTENT VOLUMES. LEARN MORE HERE: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=installations-amazon-eks-integration
 
+{{- end -}}
 {{- end -}}
 {{- end -}}
 
@@ -402,7 +464,7 @@ kubecost.costEventsAudit.enabled flag for nginx configmap
 {{- end }}
 
 {{- define "kubecost.plugins.enabled" }}
-{{- if (.Values.kubecost.plugins).enabled }}
+{{- if (.Values.plugins).enabled }}
 {{- printf "true" -}}
 {{- else -}}
 {{- printf "false" -}}
@@ -439,7 +501,7 @@ kubecost.costEventsAudit.enabled flag for nginx configmap
   "aggregator/kubecost-cloud-cost-reports-configmap.yaml"
   "aggregator/kubecost-clusters-configmap.yaml"
   "aggregator/kubecost-saved-reports-configmap.yaml"
-  "aggregator/kubecost-smtp-configmap.yaml"
+  "aggregator/kubecost-smtp-secret.yaml"
   "aggregator/saml-configmap.yaml"
   "cloud-cost/cloud-cost-integration-secret.yaml"
   "cluster-controller/cluster-controller-secret.yaml"
@@ -479,16 +541,6 @@ Product key secret name with default fallback
 {{- default "product-key" .Values.kubecostProductConfigs.productKey.secretname -}}
 {{- end -}}
 
-{{/*
-Kubecost image to be used by all apps which run, can be overridden in each apps specific configs
-*/}}
-{{- define "common.imageRegistry" -}}
-  {{- if .Values.global.imageRegistry -}}
-    {{- .Values.global.imageRegistry -}}
-  {{- else -}}
-    {{- .Values.kubecost.image.registry -}}
-  {{- end -}}
-{{- end -}}
 
 {{/*
 federated storage config helpers

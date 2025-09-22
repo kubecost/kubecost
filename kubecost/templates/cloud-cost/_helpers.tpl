@@ -27,15 +27,23 @@ support templating a chart which uses the lookup function.
 {{- end -}}
 {{- end -}}
 
+{{- define "kubecost.cloudCost.imageRegistry" -}}
+  {{- if .Values.cloudCost.image.registry -}}
+    {{- .Values.cloudCost.image.registry -}}
+  {{- else -}}
+    {{- .Values.global.imageRegistry -}}
+  {{- end -}}
+{{- end -}}
+
 {{- define "kubecost.cloudCost.image" }}
   {{- if .Values.cloudCost.fullImageName }}
     {{- .Values.cloudCost.fullImageName }}
-  {{- else if .Values.kubecost.fullImageName }}
-    {{- .Values.kubecost.fullImageName }}
   {{- else if eq "development" .Chart.AppVersion -}}
     gcr.io/kubecost1/cost-model-nightly:latest
+  {{- else if .Values.cloudCost.image.tag -}}
+    {{- include "kubecost.cloudCost.imageRegistry" . }}/{{ .Values.cloudCost.image.repository }}:{{ .Values.cloudCost.image.tag }}
   {{- else -}}
-    {{- include "common.imageRegistry" . }}/{{ .Values.kubecost.image.repository }}:{{ .Values.kubecost.image.tag }}
+    {{- include "kubecost.cloudCost.imageRegistry" . }}/{{ .Values.cloudCost.image.repository }}:{{ $.Chart.AppVersion }}
   {{- end }}
 {{- end }}
 

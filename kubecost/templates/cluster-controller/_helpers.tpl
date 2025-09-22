@@ -6,11 +6,19 @@
 {{- end -}}
 {{- end -}}
 
+{{- define "clusterController.imageRegistry" -}}
+  {{- if .Values.clusterController.image.registry -}}
+    {{- .Values.clusterController.image.registry -}}
+  {{- else -}}
+    {{- .Values.global.imageRegistry -}}
+  {{- end -}}
+{{- end -}}
+
 {{- define "kubecost.clusterController.image" }}
   {{- if .Values.clusterController.fullImageName }}
     {{- .Values.clusterController.fullImageName }}
   {{- else -}}
-    {{- include "common.imageRegistry" . }}/{{ .Values.clusterController.image.repository }}:{{ .Values.clusterController.image.tag }}
+    {{- include "clusterController.imageRegistry" . }}/{{ .Values.clusterController.image.repository }}:{{ .Values.clusterController.image.tag }}
   {{- end }}
 {{- end }}
 
