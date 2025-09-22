@@ -1,0 +1,13 @@
+{{- if .Values.kubecostProductConfigs }}
+{{- if .Values.kubecostProductConfigs.labelMappingConfigs }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "kubecost.fullname" . }}-aggregator-apiconfig
+  labels:
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
+data:
+  apiconfig.json: |-
+    {{- toJson .Values.kubecostProductConfigs.labelMappingConfigs | nindent 4 }}
+{{- end -}}
+{{- end -}}

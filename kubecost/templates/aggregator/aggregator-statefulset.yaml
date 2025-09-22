@@ -79,6 +79,11 @@ spec:
         - name: user-helm-values
           configMap:
             name: {{ include "kubecost.aggregator.cm.helmvalues.name" . }}
+        {{- if .Values.kubecostProductConfigs.labelMappingConfigs }}
+        - name: aggregator-apiconfig
+          configMap:
+            name: {{ include "kubecost.fullname" . }}-aggregator-apiconfig
+        {{- end }}
         - name: federated-storage-config
           secret:
             defaultMode: 420
@@ -308,6 +313,12 @@ spec:
           resources:
             {{- toYaml .Values.aggregator.resources | nindent 12 }}
           volumeMounts:
+          {{- if .Values.kubecostProductConfigs.labelMappingConfigs }}
+            - name: aggregator-apiconfig
+              mountPath: /var/configs/apiconfig.json
+              subPath: apiconfig.json
+              readOnly: true
+           {{- end }}
             - name: persistent-configs
               mountPath: /var/configs
             - name: user-helm-values

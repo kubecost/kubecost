@@ -1243,6 +1243,14 @@ telemetry:
 ## UI. Values in this block override config changes in the Settings UI on pod
 ## restart
 kubecostProductConfigs:
+  labelMappingConfigs:
+    enabled: true
+    owner_label: "example_com_owner"
+    team_label: "example_com_team"
+    product_label: "app_kubernetes_io_name"
+    # Optional external tags for cloud billing joins:
+    owner_external_label: "owner"
+    team_external_label: "team"
   actions:
     # Enable multi-cluster cluster controller actions (v2)
     enabled: false
