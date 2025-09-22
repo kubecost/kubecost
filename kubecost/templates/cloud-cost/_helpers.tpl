@@ -103,11 +103,11 @@ for more information
             "workgroup": "{{ default "primary" (.Values.kubecostProductConfigs).athenaWorkgroup }}",
             "authorizer": {
                 {{- if (.Values.kubecostProductConfigs).masterPayerARN }}
-                "authorizerType": "GCPServiceAccountKey",
+                "authorizerType": "AWSAssumeRole",
                 "roleARN": "{{ .Values.kubecostProductConfigs.masterPayerARN }}"
                 "authorizer" {
                     {{- if  and ((.Values.kubecostProductConfigs).awsServiceKeyName) ((.Values.kubecostProductConfigs).awsServiceKeyPassword) }}
-                    "authorizerType": "GCPServiceAccountKey",
+                    "authorizerType": "AWSAccessKey",
                     "id": "{{ .Values.kubecostProductConfigs.awsServiceKeyName }}",
                     "secret": "{{ .Values.kubecostProductConfigs.awsServiceKeyPassword }}"
                     {{- else }}
@@ -115,18 +115,13 @@ for more information
                     {{- end }}
                 }
                 {{- else if  and ((.Values.kubecostProductConfigs).awsServiceKeyName) ((.Values.kubecostProductConfigs).awsServiceKeyPassword) }}
-                "authorizerType": "GCPServiceAccountKey",
+                "authorizerType": "AWSAccessKey",
                 "id": "{{ .Values.kubecostProductConfigs.awsServiceKeyName }}",
                 "secret": "{{ .Values.kubecostProductConfigs.awsServiceKeyPassword }}"
                 {{- else }}
                 "authorizerType": "AWSServiceAccount",
                 {{- end }}
             }
-
-            {{- if and ((.Values.kubecostProductConfigs).awsServiceKeyName) ((.Values.kubecostProductConfigs).awsServiceKeyPassword) }},
-            "serviceKeyName": "{{ .Values.kubecostProductConfigs.awsServiceKeyName }}",
-            "serviceKeySecret": "{{ .Values.kubecostProductConfigs.awsServiceKeyPassword }}"
-            {{- end }}
         ]
     }
 }
