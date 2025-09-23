@@ -150,7 +150,11 @@ spec:
         {{- end }}
         ports:
         - name: http-server
+        {{- if not (.Values.clusterController).legacyMode }}
+          containerPort: 9732
+        {{- else }}
           containerPort: 9731
+        {{- end }}
         resources:
           {{- toYaml .Values.clusterController.resources | nindent 12 }}
       {{- if .Values.imagePullSecrets }}
