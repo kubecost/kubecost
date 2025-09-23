@@ -11,8 +11,13 @@ spec:
   ports:
     - name: http
       protocol: TCP
+      {{- if not (.Values.clusterController).legacyMode }}
+      port: 9732
+      targetPort: 9732
+      {{- else }}
       port: 9731
       targetPort: 9731
+      {{- end }}
   selector:
     app: {{ template "kubecost.clusterController.name" . }}
 {{- end }}
