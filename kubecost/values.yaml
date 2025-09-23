@@ -556,6 +556,7 @@ localStore:
 ## Ref: https://github.com/kubecost/finops-agent-chart/
 ##
 finops-agent:
+  enabled: true
   agent:
     collectorDataSource:
       enabled: true
