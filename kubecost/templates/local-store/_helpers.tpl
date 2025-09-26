@@ -1,12 +1,8 @@
 {{- define "kubecost.localStore.enabled" -}}
-  {{- if .Values.global.federatedStorage.config -}}
-    {{- "disabled" -}}
-  {{- else if .Values.global.federatedStorage.existingSecret -}}
-    {{- "disabled" -}}
-  {{- else if not .Values.localStore.enabled -}}
-    {{- "disabled" -}}
-  {{- else -}}
+  {{- if .Values.localStore.enabled -}}
     {{- "enabled" -}}
+  {{- else -}}
+    {{- "disabled" -}}
   {{- end -}}
 {{- end -}}
 
