@@ -231,6 +231,8 @@ spec:
             {{- toYaml .Values.cloudCost.extraVolumeMounts | nindent 12 }}
           {{- end }}
           env:
+            - name: APP_NAME
+              value: "cloud-agent"
             - name: CONFIG_PATH
               value: /var/configs/
             - name: RESOLUTION_1D_RETENTION
