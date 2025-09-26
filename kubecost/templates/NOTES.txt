@@ -36,6 +36,6 @@ TROUBLESHOOTING
 ---------------
 
 Having installation issues? View our Troubleshooting Guide:
-https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=troubleshoot-install
+https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=troubleshoot-install
 
 Copyright IBM Corp. 2019-2025
