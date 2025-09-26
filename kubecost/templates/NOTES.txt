@@ -1,4 +1,3 @@
---------------------------------------------------
 {{- include "kubecost.v3-preconditions" . -}}
 {{- include "kubecost.eksStorage.check" . -}}
 {{- include "kubecost.cloudCost.awsAthena.CloudIntegrationCheck" . -}}
@@ -8,21 +7,35 @@
 {{- include "kubecost.clusterId.check" . -}}
 {{- include "kubecost.caCertsSecretConfig.check" . -}}
 {{- include "kubecost.actionsStorageSourceCheck" . -}}
-
+{{- include "kubecost.localStoreClusterIdCheck" . -}}
+================================================================================
+KUBECOST INSTALLATION SUCCESSFUL
+================================================================================
 Kubecost {{ .Chart.Version }} has been successfully installed.
 
-Kubecost 3.x is a major upgrade with breaking changes and new architecture. Please review the release notes for migration details: https://github.com/kubecost/kubecost/releases
+IMPORTANT: Kubecost 3.x is a major upgrade with breaking changes and a new 
+architecture. Please review the release notes for migration details:
+https://github.com/kubecost/kubecost/releases
 
-When pods are Ready, you can enable port-forwarding with the following command:
+QUICK START GUIDE
+-----------------
 
-    kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ include "kubecost.frontend.serviceName" . }} {{ .Values.frontend.service.targetPort }}
+1. Wait for pods to be Ready:
+   kubectl get pods --namespace {{ .Release.Namespace }}
 
-Then, navigate to http://localhost:{{ .Values.frontend.service.targetPort }} in a web browser.
+2. Enable port-forwarding:
+   kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ include "kubecost.frontend.serviceName" . }} {{ .Values.frontend.service.targetPort }}
 
-Please allow 25 minutes for Kubecost to gather metrics. A progress indicator will appear at the top of the UI.
+3. Open your browser and navigate to:
+   http://localhost:{{ .Values.frontend.service.targetPort }}
 
-Having installation issues? View our Troubleshooting Guide at https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=troubleshoot-install
+Note: Allow 25 minutes for Kubecost to gather metrics. A progress indicator 
+will appear at the top of the UI.
 
-{{- include "kubecost.localStoreClusterIdCheck" . -}}
+TROUBLESHOOTING
+---------------
+
+Having installation issues? View our Troubleshooting Guide:
+https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=troubleshoot-install
 
 Copyright IBM Corp. 2019-2025
