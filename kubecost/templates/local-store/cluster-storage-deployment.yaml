@@ -57,6 +57,10 @@ spec:
           {{- else }}
           emptyDir: {}
           {{- end }}
+        - name: federated-storage-config
+          secret:
+            defaultMode: 420
+            secretName: {{ include "kubecost.federatedStorage.secretName" . }}
       containers:
         - name: local-object-store
           image: {{ include "kubecost.localStore.image" . }}
@@ -90,6 +94,10 @@ spec:
           volumeMounts:
             - name: file-storage
               mountPath: /var/configs
+            - name: federated-storage-config
+              mountPath: /var/configs/federated-store.yaml
+              subPath: {{ include "kubecost.federatedStorage.fileName" . }}
+              readOnly: true
           {{- if (.Values.localStore).extraVolumeMounts }}
             {{- toYaml (.Values.localStore).extraVolumeMounts | nindent 4 }}
           {{- end }}
