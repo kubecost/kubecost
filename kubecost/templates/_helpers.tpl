@@ -4,6 +4,11 @@
 Kubecost 3.0 preconditions
 */}}
 {{- define "kubecost.v3-preconditions" -}}
+  {{/* Acknowledgment check for Kubecost 3.0 major upgrade - required for enterprise users */}}
+  {{- if and .Values.kubecostProductConfigs.productKey.enabled (not .Values.global.acknowledged) -}}
+    {{ fail "Kubecost 3.0 contains breaking changes and potential data disruption risks. Review release notes at https://github.com/kubecost/kubecost/releases before proceeding. To acknowledge and proceed, use the flag `--set global.acknowledged=true`" }}
+  {{- end -}}
+
   {{/* Federated Storage config migration */}}
   {{- if (.Values.kubecostModel).federatedStorageConfig -}}
     {{ fail "`.Values.kubecostModel.federatedStorageConfig` is no longer supported. Please use `.Values.global.federatedStorage.config` instead." }}
@@ -586,6 +591,6 @@ NOTE: added kubecostModel for backward compatibility
 
 {{- define "kubecost.localStoreClusterIdCheck" -}}
 {{- if eq (include "kubecost.clusterId" .) "cluster-one" -}}
-{{ printf "WARNING: The clusterId is set to the default value of 'cluster-one'. This is not recommended if you intend to use multi-cluster federation in the future. Please set a globally unique .Values.global.clusterId" }}
+{{ printf "\n\nWARNING: The clusterId is set to the default value of 'cluster-one'. This is not recommended if you intend to use multi-cluster federation in the future. Please set a globally unique .Values.global.clusterId\n\n" }}
 {{- end -}}
 {{- end -}}
