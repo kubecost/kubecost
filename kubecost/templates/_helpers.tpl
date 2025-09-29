@@ -201,7 +201,7 @@ example, does not support templating a chart which uses the lookup function.
 {{- end -}}
 
 {{/*
-Warn users about low storage requests with premium storage classes
+Warn users about low storage requests that may cause PVC failures
 */}}
 {{- define "kubecost.storageClass.warning" -}}
   {{- if and (.Values.aggregator).enabled (semverCompare "<2Gi" .Values.aggregator.persistentConfigsStorage.storageRequest) -}}
@@ -227,21 +227,11 @@ Warn users about low storage requests with premium storage classes
       {{- $actualStorageClass = $storageClass -}}
     {{- end -}}
     
-    {{/* Check if it's a premium storage class */}}
-    {{- $premiumClasses := list "gp3" "gp2" "io1" "io2" "sc1" "st1" "premium" "ssd" "fast-ssd" "ultra-ssd" "high-performance" "premium-ssd" "managed-premium" "managed-ultra" "managed-premium-lrs" "managed-premium-zrs" "managed-premium-grs" "ultra-ssd-lrs" "ultra-ssd-zrs" "ultra-ssd-grs" "premium-lrs" "premium-zrs" "premium-grs" "pd-ssd" "pd-balanced" -}}
-    {{- $isPremium := false -}}
+    {{/* Show generic warning for low storage requests */}}
     {{- if $actualStorageClass -}}
-      {{- range $premiumClasses -}}
-        {{- if contains . $actualStorageClass -}}
-          {{- $isPremium = true -}}
-          {{- break -}}
-        {{- end -}}
-      {{- end -}}
-    {{- end -}}
-    
-    {{/* Show warning if using premium storage class with low storage request */}}
-    {{- if $isPremium -}}
-      {{- printf "\nWARNING: Using premium storage class '%s' with only %s storage request for aggregator.persistentConfigsStorage. Consider increasing to at least 2Gi to avoid failures.\n" $actualStorageClass .Values.aggregator.persistentConfigsStorage.storageRequest -}}
+      {{- printf "\nWARNING: Using storage class '%s' with only %s storage request for aggregator.persistentConfigsStorage. Some storage classes (especially premium/SSD types) have minimum size requirements that may cause PVC creation failures. Consider increasing to at least 2Gi to avoid potential issues.\n" $actualStorageClass .Values.aggregator.persistentConfigsStorage.storageRequest -}}
+    {{- else -}}
+      {{- printf "\nWARNING: Using only %s storage request for aggregator.persistentConfigsStorage. Some storage classes have minimum size requirements that may cause PVC creation failures. Consider increasing to at least 2Gi to avoid potential issues.\n" .Values.aggregator.persistentConfigsStorage.storageRequest -}}
     {{- end -}}
   {{- end -}}
 {{- end -}}
