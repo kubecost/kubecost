@@ -1,6 +1,31 @@
+<div align="center">
+
 # Kubecost Helm Chart
 
-This repository contains the official Helm chart for **Kubecost v3+**, providing cost monitoring and optimization for Kubernetes clusters.
+[![GitHub stars](https://img.shields.io/github/stars/kubecost?style=social)](https://github.com/kubecost/kubecost/stargazers)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Chart Publish](https://github.com/kubecost/release-scripts/actions/workflows/release-kubecost-v3.yaml/badge.svg)]()
+[![Latest Release](https://img.shields.io/github/v/release/kubecost/kubecost)]()  
+
+<div align="left">
+
+## Kubecost
+
+Kubecost gives teams visibility into current and historical Kubernetes spend and resource allocation. These models provide cost transparency in Kubernetes environments that support multiple applications, teams, departments, etc.
+
+To see more on the functionality of the full Kubecost product, please visit the [features page](https://www.apptio.com/products/kubecost/?src=kc-com#features) on our website.
+
+Some of the features of Kubecost include:
+
+- Real-time cost allocation by Kubernetes Service, Deployment, Namespace, label, StatefulSet, DaemonSet, Pod, and container
+- Dynamic asset pricing enabled by integrations with AWS, Azure, and GCP billing APIs
+- Supports on-premises Kubernetes clusters with custom pricing sheets
+- Allocation for in-cluster resources like CPU, GPU, memory, and persistent volumes
+- Allocation for AWS and GCP out-of-cluster resources like RDS instances and S3 buckets with key (optional)
+
+## Getting Started
+
+You can deploy Kubecost on any Kubernetes 1.8+ cluster in a matter of minutes, if not seconds. Visit the [Kubecost docs](https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=installation) for recommended install options. Compared to building from source, installing from Helm is faster and includes all necessary dependencies.
 
 > **Note:** For Kubecost v1 or v2, please refer to the [cost-analyzer repository](https://github.com/kubecost/cost-analyzer) and use the following installation command:
 >
@@ -10,9 +35,7 @@ This repository contains the official Helm chart for **Kubecost v3+**, providing
 >   --namespace kubecost --create-namespace
 > ```
 
-## Quick Start
-
-Install Kubecost using Helm:
+### Install Kubecost using Helm(v3+):
 
 ```sh
 helm install kubecost kubecost \
@@ -21,11 +44,12 @@ helm install kubecost kubecost \
   --set global.clusterId=someclustername
 ```
 
+
 ## Configuration
 
 Kubecost can be configured using a values.yaml file. See the [values.yaml](https://github.com/kubecost/kubecost/blob/develop/kubecost/values.yaml) file for all available configuration options.
 
-To install with a custom values file:
+### To install with a custom values file:
 
 ```sh
 helm install kubecost kubecost \
@@ -36,4 +60,17 @@ helm install kubecost kubecost \
 
 ## Documentation
 
-For detailed configuration options and advanced usage, visit the [Kubecost documentation](https://docs.kubecost.com/).
+For detailed configuration options and advanced usage, visit the [Kubecost documentation](https://www.ibm.com/docs/en/kubecost/self-hosted/3.x).
+
+## Maintainers
+
+**IBM, Inc. All Rights Reserved.**  
+[https://ibm.com](https://ibm.com)
+
+## License
+
+Licensed under the Apache License, Version 2.0 (the "License")
+
+</div>
+
+</div>
