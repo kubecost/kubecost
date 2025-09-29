@@ -62,6 +62,43 @@ helm install kubecost kubecost \
 
 For detailed configuration options and advanced usage, visit the [Kubecost documentation](https://www.ibm.com/docs/en/kubecost/self-hosted/3.x).
 
+## Examples
+
+Below are common installation scenarios.
+
+### 1) Basic install
+```sh
+helm install kubecost kubecost \
+  --repo https://kubecost.github.io/kubecost \
+  --namespace kubecost --create-namespace \
+  --set global.clusterId=<your-cluster-name>
+```
+
+### 2) Install with a custom values file
+Use when you want to override defaults.
+```sh
+helm install kubecost kubecost \
+  --repo https://kubecost.github.io/kubecost \
+  --namespace kubecost --create-namespace \
+  --values values.yaml
+```
+
+### 3) Federated storage (multi‑cluster)
+Refer to the example values and documentation: https://github.com/kubecost/kubecost/blob/develop/examples/federatedStorage/README.md
+
+### 4) Agent‑only mode (secondary clusters)
+Deploy only the lightweight agent to secondary clusters that writes to the federated storage.
+
+Agent‑only examples: https://github.com/kubecost/kubecost/tree/develop/examples/agentOnly
+
+### 5) Uninstall
+Remove the release and associated Kubernetes resources in the namespace.
+```sh
+helm uninstall kubecost --namespace kubecost
+```
+
+Note for GCP installs: a global key with a low limit is provided for evaluation. Supply your own key before moving to production.
+
 ## Maintainers
 
 **IBM, Inc. All Rights Reserved.**  
@@ -70,6 +107,9 @@ For detailed configuration options and advanced usage, visit the [Kubecost docum
 ## License
 
 Licensed under the Apache License, Version 2.0 (the "License")
+
+
+Please reach out with any additional questions by opening a GitHub issue or using our [Kubecost Slack](https://www.apptio.com/products/kubecost/join-slack/?src=kc-com) channel.
 
 </div>
 
