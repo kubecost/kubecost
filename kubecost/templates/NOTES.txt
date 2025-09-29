@@ -8,6 +8,7 @@
 {{- include "kubecost.caCertsSecretConfig.check" . -}}
 {{- include "kubecost.actionsStorageSourceCheck" . -}}
 {{- include "kubecost.localStoreClusterIdCheck" . -}}
+{{- include "kubecost.storageClass.warning" . -}}
 ================================================================================
 KUBECOST INSTALLATION SUCCESSFUL
 ================================================================================

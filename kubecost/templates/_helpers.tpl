@@ -200,6 +200,51 @@ example, does not support templating a chart which uses the lookup function.
 {{- end -}}
 {{- end -}}
 
+{{/*
+Warn users about low storage requests with premium storage classes
+*/}}
+{{- define "kubecost.storageClass.warning" -}}
+  {{- if and (.Values.aggregator).enabled (semverCompare "<2Gi" .Values.aggregator.persistentConfigsStorage.storageRequest) -}}
+    {{- $storageClass := .Values.aggregator.persistentConfigsStorage.storageClass -}}
+    {{- $actualStorageClass := "" -}}
+    
+    {{/* If no storage class specified, try to detect the default one */}}
+    {{- if not $storageClass -}}
+      {{- if not (and .Values.global.platforms.cicd.enabled .Values.global.platforms.cicd.skipSanityChecks) -}}
+        {{- if .Capabilities.APIVersions.Has "storage.k8s.io/v1/StorageClass" -}}
+          {{- $storageClasses := lookup "storage.k8s.io/v1" "StorageClass" "" "" -}}
+          {{- range $storageClasses.items -}}
+            {{- if .metadata.annotations -}}
+              {{- if eq (index .metadata.annotations "storageclass.kubernetes.io/is-default-class") "true" -}}
+                {{- $actualStorageClass = .metadata.name -}}
+                {{- break -}}
+              {{- end -}}
+            {{- end -}}
+          {{- end -}}
+        {{- end -}}
+      {{- end -}}
+    {{- else -}}
+      {{- $actualStorageClass = $storageClass -}}
+    {{- end -}}
+    
+    {{/* Check if it's a premium storage class */}}
+    {{- $premiumClasses := list "gp3" "gp2" "io1" "io2" "sc1" "st1" "premium" "ssd" "fast-ssd" "ultra-ssd" "high-performance" "premium-ssd" "managed-premium" "managed-ultra" "managed-premium-lrs" "managed-premium-zrs" "managed-premium-grs" "ultra-ssd-lrs" "ultra-ssd-zrs" "ultra-ssd-grs" "premium-lrs" "premium-zrs" "premium-grs" "pd-ssd" "pd-balanced" -}}
+    {{- $isPremium := false -}}
+    {{- if $actualStorageClass -}}
+      {{- range $premiumClasses -}}
+        {{- if contains . $actualStorageClass -}}
+          {{- $isPremium = true -}}
+          {{- break -}}
+        {{- end -}}
+      {{- end -}}
+    {{- end -}}
+    
+    {{/* Show warning if using premium storage class with low storage request */}}
+    {{- if $isPremium -}}
+      {{- printf "\nWARNING: Using premium storage class '%s' with only %s storage request for aggregator.persistentConfigsStorage. Consider increasing to at least 2Gi to avoid failures.\n" $actualStorageClass .Values.aggregator.persistentConfigsStorage.storageRequest -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
 
 {{/*
 Actions Storage source contents check. Either the Secret must be specified or the YAML, not both.
