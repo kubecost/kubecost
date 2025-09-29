@@ -933,7 +933,7 @@ aggregator:
 
   persistentConfigsStorage:
     storageClass: ""  # default storage class
-    storageRequest: 50Gi
+    storageRequest: 15Gi
   aggregatorDbStorage:
     storageClass: ""  # default storage class
     storageRequest: 128Gi
