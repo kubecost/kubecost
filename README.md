@@ -1,7 +1,3 @@
-# Kubecost Helm Chart
-
-## Kubecost
-
 Kubecost gives teams visibility into current and historical Kubernetes spend and resource allocation. To see more on the functionality of the full Kubecost product, please visit the [features page](https://www.apptio.com/products/kubecost/) on our website. Some of Kubecost's features include:
 
 - Real-time cost allocation by Kubernetes Service, Deployment, Namespace, label, StatefulSet, DaemonSet, Pod, and container
