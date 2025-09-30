@@ -7,25 +7,20 @@
 [![Chart Publish](https://github.com/kubecost/release-scripts/actions/workflows/release-kubecost-v3.yaml/badge.svg)]()
 [![Latest Release](https://img.shields.io/github/v/release/kubecost/kubecost)]()  
 
-<div align="left">
+</div>
 
 ## Kubecost
 
-Kubecost gives teams visibility into current and historical Kubernetes spend and resource allocation. These models provide cost transparency in Kubernetes environments that support multiple applications, teams, departments, etc.
-
-To see more on the functionality of the full Kubecost product, please visit the [features page](https://www.apptio.com/products/kubecost/?src=kc-com#features) on our website.
-
-Some of the features of Kubecost include:
+Kubecost gives teams visibility into current and historical Kubernetes spend and resource allocation. To see more on the functionality of the full Kubecost product, please visit the [features page](https://www.apptio.com/products/kubecost/) on our website. Some of Kubecost's features include:
 
 - Real-time cost allocation by Kubernetes Service, Deployment, Namespace, label, StatefulSet, DaemonSet, Pod, and container
 - Dynamic asset pricing enabled by integrations with AWS, Azure, and GCP billing APIs
 - Supports on-premises Kubernetes clusters with custom pricing sheets
 - Allocation for in-cluster resources like CPU, GPU, memory, and persistent volumes
-- Allocation for AWS and GCP out-of-cluster resources like RDS instances and S3 buckets with key (optional)
 
 ## Getting Started
 
-You can deploy Kubecost on any Kubernetes 1.8+ cluster in a matter of minutes, if not seconds. Visit the [Kubecost docs](https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=installation) for recommended install options. Compared to building from source, installing from Helm is faster and includes all necessary dependencies.
+You can deploy Kubecost on any Kubernetes cluster in a matter of minutes, if not seconds. Visit the [Kubecost docs](https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=installation) for recommended install options. Compared to building from source, installing from Helm is faster and includes all necessary dependencies.
 
 > **Note:** For Kubecost v1 or v2, please refer to the [cost-analyzer repository](https://github.com/kubecost/cost-analyzer) and use the following installation command:
 >
@@ -111,6 +106,4 @@ Licensed under the Apache License, Version 2.0 (the "License")
 
 Please reach out with any additional questions by opening a GitHub issue or using our [Kubecost Slack](https://www.apptio.com/products/kubecost/join-slack/?src=kc-com) channel.
 
-</div>
 
-</div>
