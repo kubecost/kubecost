@@ -15,7 +15,7 @@ Kubecost {{ .Chart.Version }} has been successfully installed.
 
 IMPORTANT: Kubecost 3.x is a major upgrade with breaking changes and a new 
 architecture. Please review the release notes for migration details:
-https://github.com/kubecost/kubecost/releases
+https://github.com/kubecost/kubecost/releases/tag/v3.0.0
 
 QUICK START GUIDE
 -----------------
