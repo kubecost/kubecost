@@ -1,13 +1,4 @@
-<div align="center">
-
 # Kubecost Helm Chart
-
-[![GitHub stars](https://img.shields.io/github/stars/kubecost?style=social)](https://github.com/kubecost/kubecost/stargazers)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Chart Publish](https://github.com/kubecost/release-scripts/actions/workflows/release-kubecost-v3.yaml/badge.svg)]()
-[![Latest Release](https://img.shields.io/github/v/release/kubecost/kubecost)]()  
-
-</div>
 
 ## Kubecost
 
