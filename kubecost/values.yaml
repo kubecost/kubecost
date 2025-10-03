@@ -695,15 +695,15 @@ networkCosts:
   # Log level for the network cost containers. Options are "trace", "debug", "info", "warn", "error", "fatal", "panic"
   logLevel: info
 
-  # Leader/Follower Kubernetes Watchers: Instead of every network-costs pod running watchers for kubernetes resources, a 
+  # Leader/Follower Kubernetes Watchers: Instead of every network-costs pod running watchers for kubernetes resources, a
   # leader is selected as the designated watcher, and delta updates are sent to every follower pod over http. This option is
   # recommended for large kubernetes clusters to avoid overwhelming the kubernetes API.
-  leaderKubernetesWatcher: false 
+  leaderKubernetesWatcher: false
 
-  # Enabling this option will restrict the pod watchers to only pods that are hosted on the node network-costs in running on. 
-  # This reduces the memory footprint of the pod mapping inside network costs slightly at the cost of classification accuracy 
+  # Enabling this option will restrict the pod watchers to only pods that are hosted on the node network-costs in running on.
+  # This reduces the memory footprint of the pod mapping inside network costs slightly at the cost of classification accuracy
   # on ingress. Note that this option is only applicable when leaderKubernetesWatcher is false
-  hostNodeNetworkMap: false 
+  hostNodeNetworkMap: false
 
   # Port will set both the containerPort and hostPort to this value.
   # These must be identical due to network-costs being run on hostNetwork
