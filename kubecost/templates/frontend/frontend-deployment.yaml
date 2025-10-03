@@ -99,6 +99,11 @@ spec:
         {{- end }}
         {{- end }}
         {{- end }}
+        {{ - if .Values.kubecostProductConfigs.branding }}
+        - name: custom-branding
+          configMap:
+            name: frontend-logo-{{.Release.Name}}
+        {{- end }}
       containers:
         - name: frontend
           image: {{ include "kubecost.frontend.image" . }}
@@ -141,6 +146,14 @@ spec:
             - name: tls
               mountPath: /etc/ssl/certs
             {{- end }}
+            {{- end }}
+            {{- if .Values.kubecostProductConfigs.branding }}
+            - name: custom-branding
+              mountPath: /var/www/static/templated-full-logo
+              subPath: fullLogo
+            - name: custom-branding
+              mountPath: /var/www/static/templated-square-logo
+              subPath: squareLogo
             {{- end }}
           resources:
           {{- toYaml .Values.frontend.resources | nindent 12 }}

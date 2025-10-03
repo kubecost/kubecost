@@ -1,0 +1,13 @@
+{{- if ((.Values.kubecostProductConfigs).branding) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-logo-{{.Release.Name}}
+  labels:
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
+data:
+  fullLogo: |-
+{{- toYaml ((.Values.kubecostProductConfigs).branding).fullLogoDataURI | nindent 4 }}
+  squareLogo: |-
+{{- toYaml ((.Values.kubecostProductConfigs).branding).squareLogoDataURI | nindent 4 }}
+{{- end -}}

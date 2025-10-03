@@ -566,28 +566,6 @@ data:
             return 404;
             {{- end}}
         }
-
-        location /custom-branding/full-logo {
-            {{- if $branding.fullLogoSrc }}
-            proxy_pass {{ $branding.fullLogoSrc }};
-            {{- else if $branding.fullLogoDataURI }}
-            default_type {{$branding.fullLogoContentType }};
-            return 200 "{{$branding.fullLogoDataURI}}";
-            {{- else }}
-            return 404;
-            {{- end }}
-        }
-
-        location /custom-branding/square-logo {
-            {{- if $branding.squareLogoSrc }}
-            proxy_pass {{ $branding.squareLogoSrc }};
-            {{- else if $branding.squareLogoDataURI }}
-            default_type {{$branding.squareLogoContentType }};
-            return 200 "{{$branding.squareLogoDataURI}}";
-            {{- else }}
-            return 404;
-            {{- end }}
-        }
     }
 {{- end }}
 {{- end }}
