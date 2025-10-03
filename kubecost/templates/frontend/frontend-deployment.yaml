@@ -99,7 +99,7 @@ spec:
         {{- end }}
         {{- end }}
         {{- end }}
-        {{- if .Values.kubecostProductConfigs.branding }}
+        {{- if (.Values.kubecostProductConfigs).branding }}
         - name: custom-branding
           configMap:
             name: frontend-logo-{{.Release.Name}}
@@ -147,12 +147,12 @@ spec:
               mountPath: /etc/ssl/certs
             {{- end }}
             {{- end }}
-            {{- if .Values.kubecostProductConfigs.branding.fullLogoExt }}
+            {{- if ((.Values.kubecostProductConfigs).branding).fullLogoExt }}
             - name: custom-branding
               mountPath: /var/www/static/templated-full-logo.{{.Values.kubecostProductConfigs.branding.fullLogoExt}}
               subPath: fullLogo
             {{- end }}
-            {{- if .Values.kubecostProductConfigs.branding.squareLogoExt }}
+            {{- if ((.Values.kubecostProductConfigs).branding).squareLogoExt }}
             - name: custom-branding
               mountPath: /var/www/static/templated-square-logo.{{.Values.kubecostProductConfigs.branding.squareLogoExt}}
               subPath: squareLogo

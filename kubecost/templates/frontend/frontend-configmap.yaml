@@ -567,17 +567,19 @@ data:
             {{- end}}
         }
 
+        {{- $fullLogoExt := default "not-found" (((.Values.kubecostProductConfigs).branding).fullLogoExt)}}
         location /custom-branding/full-logo {
-            {{- if .Values.kubecostProductConfigs.branding.fullLogoExt }}
-                try_files /static/templated-full-logo.{{.Values.kubecostProductConfigs.branding.fullLogoExt}} =404;
+            {{- if ne $fullLogoExt "not-found" }}
+                try_files /static/templated-full-logo.{{$fullLogoExt}} =404;
             {{- else }}
                 return 404;
             {{- end }}
         }
 
+        {{- $squareLogoExt := default "not-found" (((.Values.kubecostProductConfigs).branding).squareLogoExt)}}
         location /custom-branding/square-logo {
-            {{- if .Values.kubecostProductConfigs.branding.squareLogoExt }}
-                try_files /static/templated-full-logo.{{.Values.kubecostProductConfigs.branding.squareLogoExt}} =404;
+            {{- if  ne $squareLogoExt "not-found"}}
+                try_files /static/templated-full-logo.{{$squareLogoExt}} =404;
             {{- else }}
                 return 404;
             {{- end }}
