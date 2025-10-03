@@ -5,9 +5,13 @@ metadata:
   name: frontend-logo-{{.Release.Name}}
   labels:
     {{- include "kubecost.commonLabels" . | nindent 4 }}
-data:
+binaryData:
+{{- if ((.Values.kubecostProductConfigs).branding).fullLogoBase64 }}
   fullLogo: |-
-{{- toYaml ((.Values.kubecostProductConfigs).branding).fullLogoDataURI | nindent 4 }}
+{{- ((.Values.kubecostProductConfigs).branding).fullLogoBase64 | nindent 4 }}
+{{- end }}
+{{- if ((.Values.kubecostProductConfigs).branding).squareLogoBase64 }}
   squareLogo: |-
-{{- toYaml ((.Values.kubecostProductConfigs).branding).squareLogoDataURI | nindent 4 }}
-{{- end -}}
+{{- ((.Values.kubecostProductConfigs).branding).squareLogoBase64 | nindent 4 }}
+{{- end }}
+{{- end }}

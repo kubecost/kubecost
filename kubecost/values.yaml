@@ -1405,14 +1405,12 @@ kubecostProductConfigs:
 #     Azure: []
 
   # branding:
-    # fullLogoAltText: ""
-    # fullLogoSrc: ""
-    # fullLogoDataURI: ""
-    # fullLogoContentType: ""
-    # squareLogoAltText: ""
-    # squareLogoSrc: ""
-    # squareLogoDataURI: ""
-    # squareLogoContentType: ""
+  #   fullLogoAltText: ""
+  #   fullLogoExt: ""
+  #   fullLogoBase64: ""
+  #   squareLogoAltText: ""
+  #   squareLogoExt: ""
+  #   squareLogoBase64: ""
 
 # -- Array of extra K8s manifests to deploy
 ## Note: Supports use of custom Helm templates
