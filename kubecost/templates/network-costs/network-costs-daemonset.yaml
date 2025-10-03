@@ -90,10 +90,8 @@ spec:
         {{- if .Values.networkCosts.healthCheckProbes }}
         {{- toYaml .Values.networkCosts.healthCheckProbes | nindent 8 }}
         {{- end }}
-        {{- if .Values.networkCosts.leaderKubernetesWatcher }}
         - name: USE_LEADER_KUBERNETES_WATCHERS
-          value: {{ (quote .Values.networkCosts.leaderKubernetesWatcher) | default (quote true) }}
-        {{- end }}
+          value: {{ (quote .Values.networkCosts.leaderKubernetesWatcher) | default (quote false) }}
         volumeMounts:
         {{- if .Values.networkCosts.hostProc }}
         - mountPath: {{ .Values.networkCosts.hostProc.mountPath }}
