@@ -77,10 +77,7 @@ spec:
             fieldRef:
               fieldPath: spec.nodeName
         - name: ELECTION_NAMESPACE
-          valueFrom:
-            fieldRef:
-              apiVersion: v1
-              fieldPath: metadata.namespace
+          value: {{ .Release.Namespace }}
         - name: HOST_PORT
           value: {{ (quote .Values.networkCosts.port) | default (quote 3001) }}
         - name: TRAFFIC_LOGGING_ENABLED
