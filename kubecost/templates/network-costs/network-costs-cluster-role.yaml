@@ -17,6 +17,7 @@ rules:
       - get
       - list
       - watch
+  {{- if .Values.networkCosts.leaderKubernetesWatcher }}
   - apiGroups:
       - coordination.k8s.io
     resources:
@@ -25,4 +26,5 @@ rules:
       - create
       - get
       - patch
+  {{- end }}
 {{- end }}
