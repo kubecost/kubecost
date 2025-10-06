@@ -668,12 +668,12 @@ networkCosts:
   ## If not set, the image will be pulled from the registry and repository specified in the image block.
   ## If set, the fullImageName will be used to pull the image.
   ## Example:
-  ## fullImageName: gcr.io/kubecost1/kubecost-network-costs:v0.17.11
+  ## fullImageName: gcr.io/kubecost1/kubecost-network-costs:v0.18.0
   fullImageName: ""
   image:
     registry: ""  # Default is "icr.io"
     repository: kubecost/network-costs
-    tag: v0.17.11
+    tag: v0.18.0
   imagePullPolicy: IfNotPresent
 
   updateStrategy:
@@ -694,6 +694,16 @@ networkCosts:
 
   # Log level for the network cost containers. Options are "trace", "debug", "info", "warn", "error", "fatal", "panic"
   logLevel: info
+
+  # Leader/Follower Kubernetes Watchers: Instead of every network-costs pod running watchers for kubernetes resources, a
+  # leader is selected as the designated watcher, and delta updates are sent to every follower pod over http. This option is
+  # recommended for large kubernetes clusters to avoid overwhelming the kubernetes API.
+  leaderKubernetesWatcher: false
+
+  # Enabling this option will restrict the pod watchers to only pods that are hosted on the node network-costs in running on.
+  # This reduces the memory footprint of the pod mapping inside network costs slightly at the cost of classification accuracy
+  # on ingress. Note that this option is only applicable when leaderKubernetesWatcher is false
+  hostNodeNetworkMap: false
 
   # Port will set both the containerPort and hostPort to this value.
   # These must be identical due to network-costs being run on hostNetwork
