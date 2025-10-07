@@ -76,28 +76,18 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
+        - name: ELECTION_NAMESPACE
+          value: {{ .Release.Namespace }}
         - name: HOST_PORT
           value: {{ (quote .Values.networkCosts.port) | default (quote 3001) }}
         - name: TRAFFIC_LOGGING_ENABLED
           value: {{ (quote .Values.networkCosts.trafficLogging) | default (quote true) }}
         - name: LOG_LEVEL
           value: {{ .Values.networkCosts.logLevel }}
-        {{- if .Values.networkCosts.softMemoryLimit }}
-        - name: GOMEMLIMIT
-          value: {{ .Values.networkCosts.softMemoryLimit }}
-        {{- end }}
-        {{- if .Values.networkCosts.heapMonitor }}
-        {{- if .Values.networkCosts.heapMonitor.enabled }}
-        - name: HEAP_MONITOR_ENABLED
-          value: "true"
-        - name: HEAP_MONITOR_THRESHOLD
-          value: {{ .Values.networkCosts.heapMonitor.threshold }}
-        {{- if .Values.networkCosts.heapMonitor.outFile }}
-        - name: HEAP_MONITOR_OUTPUT
-          value: {{ .Values.networkCosts.heapMonitor.outFile }}
-        {{- end }}
-        {{- end }}
-        {{- end }}
+        - name: USE_LEADER_KUBERNETES_WATCHERS
+          value: {{ (quote .Values.networkCosts.leaderKubernetesWatcher) }}
+        - name: USE_HOST_NODE_NETWORK_MAP
+          value: {{ (quote .Values.networkCosts.hostNodeNetworkMap) }}
         {{- if .Values.networkCosts.healthCheckProbes }}
         {{- toYaml .Values.networkCosts.healthCheckProbes | nindent 8 }}
         {{- end }}
