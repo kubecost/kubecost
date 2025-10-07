@@ -1684,3 +1684,27 @@ for more information
 {{- $tag := last $parts }}
 {{- $tag }}
 {{- end }}
+
+{{- define "kubecost30UpgradeCheck" -}}
+{{- if or (.Values.kubecostModel).federatedStorageConfigSecret (.Values.kubecostModel).federatedStorageConfig }}
+{{- if ne .Values.global.clusterId .Values.prometheus.server.global.external_labels.cluster_id -}}
+{{- fail "\n\n.Values.global.clusterId is required and must match the value of .Values.prometheus.server.global.external_labels.cluster_id" }}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "finops-agent.clusterId" -}}
+{{- if .Values.global.clusterId -}}
+{{ .Values.global.clusterId }}
+{{- else -}}
+{{ fail "\n\nglobal.clusterId is required. Please set .Values.global.clusterId. This must match the value of .Values.prometheus.server.global.external_labels.cluster_id" }}
+{{- end -}}
+{{- end -}}
+
+{{- define "finops-agent.federatedStorageSecretName" -}}
+{{- if (.Values.kubecostModel).federatedStorageConfigSecret -}}
+{{ .Values.kubecostModel.federatedStorageConfigSecret }}
+{{- else -}}
+federated-store
+{{- end -}}
+{{- end -}}

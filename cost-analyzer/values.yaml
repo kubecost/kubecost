@@ -2,9 +2,14 @@
 ##
 
 global:
+  ## This must match the value of .Values.prometheus.server.global.external_labels.cluster_id
+  clusterId: ""
   ## If your DNS server doesn't live in the same zone as Kubecost
   ##
   zone: ""  # cluster.local
+  ## The chartName and currentVersion are used for safety checks only and should not be modified or passed in a Helm values file.
+  chartName: "kubecost"
+  currentVersion: "2.9.0"
 
   ## Kubecost-bundled Prometheus
   ## It is recommended to leave these configurations as-is. If using your own
@@ -349,6 +354,61 @@ global:
 ##
 upgrade:
   toV2: false
+
+finops-agent:
+  ## Kubecost 2.9 is intended to facilitate the upgrade to Kubecost 3.0.
+  ## When upgrading to Kubecost 2.9, the finops-agent is enabled by default.
+  ## This can be disabled if you are not upgrading the cluster to Kubecost 3.0 or do not mind losing a partial day of data.
+  enabled: true
+  agent:
+    collectorDataSource:
+      enabled: true
+      scrapeInterval: 30s
+      networkPort: 3001
+      retention10m: 6
+      retention1h: 3
+      retention1d: 2
+    exporter:
+      emissionInterval: 1m
+    exportIntervals:
+      ## By setting the export intervals to 999 days, the data will not be sent to the bucket for this many days.
+      ## These values should not be modified or passed in a Helm values file.
+      allocation: 999m
+      asset: 999m
+      networkInsight: 999m
+      heartbeat: 5m
+      diagnostics: 10m
+    cloudability:
+      ## Cloudability requires an API key to send data to the cloudability platform
+      enabled: false
+      pathToCloudabilitySecrets: "/opt/cloudability"
+      keyAccessFile: ""
+      keySecretFile: ""
+      envIDFile: ""
+      localWorkingDir: /tmp
+      uploadRegion: us
+      httpsClientTimeout: 60
+      uploadRetryCount: 5
+      outboundProxyInsecure: false
+      parseMetricData: false
+      outboundProxy: ""
+      outboundProxyAuth: ""
+      customS3UploadBucket: ""
+      customS3UploadRegion: ""
+      customAzureBlobContainerName: ""
+      customAzureBlobURL: ""
+      customAzureTenantID: ""
+      customAzureClientID: ""
+      customAzureBlobClientSecretFile: ""
+      emissionInterval: 3m
+
+      secret:
+        create: false
+        existingSecret: ""
+        cloudabilityAccessKey: ""
+        cloudabilitySecretKey: ""
+        cloudabilityEnvId: ""
+        customAzureClientSecret: ""
 
 # generated at http://kubecost.com/install, used for alerts tracking and free trials
 kubecostToken:  # ""

@@ -8,3 +8,8 @@ annotations:
   "artifacthub.io/links": |
     - name: Homepage
       url: https://www.kubecost.com
+dependencies:
+  - name: finops-agent
+    version: "v1.0.2"
+    repository: https://kubecost.github.io/finops-agent-chart
+    condition: finops-agent.enabled
