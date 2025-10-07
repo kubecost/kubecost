@@ -8,16 +8,16 @@ Kubecost strives to support as many versions of Kubernetes as possible. Below is
 
 | Chart Version                  | Kubernetes Min | Kubernetes Max |
 |--------------------------------|----------------|----------------|
-| 2.7                            | 1.22           | 1.32           |
-| 2.8                            | 1.22           | 1.33           |
+| 2.8                            | 1.22           | 1.34           |
+| 3.0                            | 1.29           | 1.34           |
 
 ## Installation
 
 To install the latest version of Kubecost via Helm, run the following command:
 
 ```sh
-helm install kubecost kubecost \
-  --repo https://kubecost.github.io/kubecost \
+helm install kubecost \
+  --repo https://kubecost.github.io/kubecost kubecost \
   --namespace kubecost --create-namespace \
   --set global.clusterId=someclustername
 ```
@@ -41,8 +41,8 @@ helm show values kubecost/kubecost --version 3.0.0
 To install the beta/release candidates pass the `--devel` flag:
 
 ```sh
-helm install kubecost kubecost \
-  --repo https://kubecost.github.io/kubecost \
+helm install kubecost \
+  --repo https://kubecost.github.io/kubecost kubecost \
   --namespace kubecost --create-namespace \
   --devel
 ```
@@ -50,8 +50,8 @@ helm install kubecost kubecost \
 To install the nightly build, use the nightly-helm-chart repository:
 
 ```sh
-helm install nightly kubecost \
-  --repo https://kubecost.github.io/nightly-helm-chart \
+helm install nightly \
+  --repo https://kubecost.github.io/nightly-helm-chart kubecost \
   --namespace kubecost-nightly --create-namespace
 ```
 
