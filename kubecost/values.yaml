@@ -1213,6 +1213,7 @@ clusterController:
   #       }
 
   rbac:
+    # In 3.x, only containerRequestRightSizing is supported, all other features are in progress.
     containerRequestRightSizing: true
     clusterRightSizing: false
     clusterTurndown: false
@@ -1264,10 +1265,10 @@ kubecostProductConfigs:
     # Enable multi-cluster cluster controller actions (v2)
     enabled: false
 
-    ## The Actions feature requires an external storage config.
-    ## By default, will use the same bucket config as set in federatedStorage.config (or global.federatedStorage.existingSecret)
+    ## The Actions feature can optionally use an external storage config that is independent from the federated storage config.
+    ## By default, Actions will use the same bucket config as set in federated storage
 
-    ## A separate bucket config specific to action storage can alternatively be supplied via a Secret or a yaml block
+    ## This independent bucket config can be supplied via a Secret or a yaml block
     ## The name of the Secret containing the bucket config. The contents should be stored under a key named actions-store.yaml
     # storageConfigSecret: actions-store
 
@@ -1306,14 +1307,6 @@ kubecostProductConfigs:
     #         "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
     #         "client_x509_cert_url": ""
     #       }
-
-    ## An optional list of cluster definitions that can be added for multicluster turndown
-    ## actions.
-    # turndownClusters:
-    #   - name: "Cluster A"
-    #     address: http://cluster-a.kubecost.com:9090
-    #   - name: "Cluster B"
-    #     address: http://cluster-b.kubecost.com:9090
 
     ## Actions can reference configuration at a global or cluster-specific level
     # config:
