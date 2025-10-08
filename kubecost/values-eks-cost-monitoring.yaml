@@ -10,12 +10,11 @@ aggregator:
 
 forecasting:
   image:
-    repository: kubecost/kubecost-modeling
-    tag: v0.1.28
+    repository: kubecost/modeling
 
 networkCosts:
   image:
-    repository: kubecost/kubecost-network-costs
+    repository: kubecost/network-costs
 
 clusterController:
   image:
