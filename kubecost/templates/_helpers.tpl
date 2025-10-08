@@ -594,3 +594,12 @@ NOTE: added kubecostModel for backward compatibility
 {{ printf "\n\nWARNING: The clusterId is set to the default value of 'cluster-one'. This is not recommended if you intend to use multi-cluster federation in the future. Please set a globally unique .Values.global.clusterId\n\n" }}
 {{- end -}}
 {{- end -}}
+
+{{/*
+NOTE: Added storage request warning for aggregator config storage
+*/}}
+{{- define "kubecost.aggregatorConfigStorageWarning" -}}
+{{- if and .Values.aggregator.enabled (lt (.Values.aggregator.aggregatorDbStorage.storageRequest | regexFind "[0-9]+" | int) 50) -}}
+{{ printf "\n\nWARNING: Using storage request of %s for aggregator config may be insufficient and can cause the aggregator pod to fail to start depending on your storage class and cluster size. Consider using at least 50Gi by adjusting .Values.aggregator.aggregatorDbStorage.storageRequest based on your requirements.\n\n" .Values.aggregator.aggregatorDbStorage.storageRequest }}
+{{- end -}}
+{{- end -}}
