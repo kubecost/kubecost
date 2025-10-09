@@ -23,7 +23,7 @@ Examples of Federated storage with assumed roles via Helm values are in the agen
 
 ### Primary Cluster
 
-See the example [helmValues-kubecost-primary.yaml](./helmValues-kubecost-primary.yaml) that includes the most common settings that are often customized.
+See the example [helmValues-kubecost-primary.yaml](./federatedStorage/helmValues-kubecost-primary.yaml) that includes the most common settings that are often customized.
 
 When you have your customized values, use the `-f` flag to pass them to the helm install command:
 
