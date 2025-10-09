@@ -2,7 +2,7 @@
 
 > The basic examples provided in this repo are intended for those who have previous experience with the Kubecost Helm chart.
 
-Extensive documentation is available at [<hhttps://www.ibm.com/docs/en/kubecost/self-hosted/3.x>](https://www.ibm.com/docs/en/kubecost/self-hosted/3.x).
+Extensive documentation is available at [https://www.ibm.com/docs/en/kubecost/self-hosted/3.x](https://www.ibm.com/docs/en/kubecost/self-hosted/3.x).
 
 The 3.0 helm chart has been updated to simplify many of the configurations that had been added over time.
 Changes will be required when upgrading from previous versions.
