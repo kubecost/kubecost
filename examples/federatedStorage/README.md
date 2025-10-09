@@ -26,8 +26,18 @@ global:
   ## when using the same cluster names in different regions, we suggest appending the region to the clusterId
   clusterId: globally-unique-cluster-id
   federatedStorage:
+    # A federated storage config can be provided via an existingSecret or via a string in helm values.
+    # If both are provided, the string in helm values take precedence.
     existingSecret: federated-store
+    # config: |-
+    #   type: S3
+    #   config:
+    #     bucket: kubecost-federated-storage
+    #     endpoint: s3.amazonaws.com
+    #     region: us-west-2
 ```
+
+See the below examples for the format of the federated storage config for the different cloud providers.
 
 ### AWS
 

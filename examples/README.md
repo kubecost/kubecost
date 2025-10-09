@@ -15,7 +15,7 @@ To provide the object storage for federated storage, use a managed secret or via
 
 An example of Federated storage with shared-secrets [readme](./federatedStorage/README.md).
 
-Examples of Federated storage with assumed roles via Helm values are in the agentOnly directory, and can be used for the primary as well. [readme](./agentOnly/README.md).
+Examples of Federated storage with assumed roles via Helm values are in the agentOnly directory, and can be used for the primary as well. [agentOnly](./agentOnly/).
 
 ## Install Kubecost
 
