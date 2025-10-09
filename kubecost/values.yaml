@@ -812,7 +812,7 @@ forecasting:
   image:
     registry: ""  # Default is "icr.io"
     repository: kubecost/modeling
-    tag: v0.1.29
+    tag: v0.1.31
   imagePullPolicy: IfNotPresent
 
   # Resource specification block for the forecasting container.
@@ -1158,7 +1158,7 @@ clusterController:
   image:
     registry: ""  # Default is "icr.io"
     repository: kubecost/cluster-controller
-    tag: v0.16.28
+    tag: v0.16.29
   imagePullPolicy: IfNotPresent
   logLevel: info
   extraEnv: []
