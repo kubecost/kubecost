@@ -1404,6 +1404,7 @@ kubecostProductConfigs:
 #     GCP: []
 #     Azure: []
 
+  # Customize the branding, the UI will only honor these values for enterprise licenses
   # branding:
   #   productName: "" # Name to use to refer to the product in messaging
   #   primaryAccentColor: "" # Needs to be legible on #ffffff and #343434 backgrounds
