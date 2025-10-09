@@ -21,23 +21,11 @@ Examples of Federated storage with assumed roles via Helm values are in the agen
 
 > You should never pass the entire [values.yaml](../kubecost/values.yaml) file to the helm install command. These are default values. Adding them to your install command will dramatically increase the complexity when upgrading to future versions. Instead, only pass the values you need to customize from the defaults.
 
-### Primary Cluster
-
-See the example [helmValues-kubecost-primary.yaml](./federatedStorage/helmValues-kubecost-primary.yaml) that includes the most common settings that are often customized.
-
-When you have your customized values, use the `-f` flag to pass them to the helm install command:
-
-```bash
-helm install kubecost \
-  --repo https://kubecost.github.io/kubecost/ kubecost \
-  --namespace kubecost \
-  --create-namespace \
-  -f helmValues-kubecost-primary.yaml
-```
+Consider installing agents first, as the UI will not have value until there is data in the federated storage bucket.
 
 ### Agent Only / Secondary Cluster
 
-> The terms "agent only" and "secondary cluster" are used interchangeably in this documentation.
+> The terms "agent" and "secondary cluster" are used interchangeably in this documentation.
 
 Kubecost 3.x architecture was designed to allow for a single agent configuration to be pushed to all clusters including the primary.
 This is not required, and users can continue to use the same design as previous versions.
@@ -58,4 +46,18 @@ helm install kubecost-agent \
   --namespace kubecost-agent \
   --create-namespace \
   -f helmValues-kubecost-agentOnly.yaml
+```
+
+### Primary Cluster
+
+See the example [helmValues-kubecost-primary.yaml](./federatedStorage/helmValues-kubecost-primary.yaml) that includes the most common settings that are often customized.
+
+When you have your customized values, use the `-f` flag to pass them to the helm install command:
+
+```bash
+helm install kubecost \
+  --repo https://kubecost.github.io/kubecost/ kubecost \
+  --namespace kubecost \
+  --create-namespace \
+  -f helmValues-kubecost-primary.yaml
 ```
