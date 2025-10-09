@@ -1405,6 +1405,8 @@ kubecostProductConfigs:
 #     Azure: []
 
   # branding:
+  #   productName: "" # Name to use to refer to the product in messaging
+  #   primaryAccentColor: "" # Needs to be legible on #ffffff and #343434 backgrounds
   #   fullLogoAltText: ""
   #   fullLogoExt: ""
   #   fullLogoBase64: ""
