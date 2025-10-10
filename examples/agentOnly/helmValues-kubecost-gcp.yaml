@@ -30,3 +30,5 @@ forecasting:
   enabled: false
 finops-agent:
   enabled: true
+localStore:
+  enabled: false
