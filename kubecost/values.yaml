@@ -1431,4 +1431,4 @@ extraObjects: []
 basicHealth:
   registry: docker.io
   repository: alpine/k8s
-  tag: 1.33.4
+  tag: 1.34.1
