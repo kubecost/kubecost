@@ -31,18 +31,12 @@ jobs:
       - name: Set up chart-testing
         uses: helm/chart-testing-action@v2.7.0
 
-      - name: Add finops-agent-chart
-        uses: actions/checkout@v5
-        with:
-          repository: kubecost/finops-agent-chart
-          ref: main
-          path: finops-agent-chart
-
       # Lint all chart values including those in the ci directory.
       - name: Run chart-testing (lint)
         run: |
           helm repo add finops-agent-chart https://kubecost.github.io/finops-agent-chart
           helm repo update
+          helm dependency build kubecost/
           ct lint --chart-dirs=kubecost/ --charts kubecost/ --validate-maintainers=false
 
       # Run `helm template` on the main values file plus all those in the ci directory.
