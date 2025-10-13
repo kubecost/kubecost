@@ -197,8 +197,6 @@ jobs:
       matrix:
         cluster:
         - distribution: eks
-          version: v1.30
-        - distribution: eks
           version: v1.31
         - distribution: eks
           version: v1.32
