@@ -8,9 +8,9 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
 
   # Uncomment this if you need to actively test this workflow from a PR draft
-  pull_request:
-    branches:
-      - develop
+  # pull_request:
+  #   branches:
+  #     - develop
 
 # Prevents multiple runs of the same workflow on the same branch from executing 
 # simultaneously. Saves resources.
