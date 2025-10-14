@@ -2,7 +2,7 @@
 
 This guide contains tips on setting up a development environment for the Kubecost Helm chart.
 
-> [!IMPORTANT]  
+> [!IMPORTANT]
 > Following some of these steps may involve billing charges by GitHub for either an individual account or organization.
 
 ## Developing with Codespaces and Devcontainers
@@ -75,3 +75,19 @@ For the `values.yaml` file, these are the design decisions we make:
 For Helm chart templates, these are the design decisions we make:
 
 - Avoid using the [`default`](https://helm.sh/docs/chart_template_guide/functions_and_pipelines/#using-the-default-function) function in templates. Instead, explicitly define the configuration and its default value in the `values.yaml` file.
+
+## Pre-commit hooks
+
+This repository uses [pre-commit](https://pre-commit.com/) to run checks on the codebase. The checks are run automatically when you commit your changes. The checks are also run when you push your changes to the remote repository.
+
+To install the pre-commit hooks, run the following command:
+
+```sh
+pre-commit install
+```
+
+To run the checks manually, run the following command:
+
+```sh
+pre-commit run --all-files
+```
