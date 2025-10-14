@@ -80,6 +80,18 @@ For Helm chart templates, these are the design decisions we make:
 
 This repository uses [pre-commit](https://pre-commit.com/) to run checks on the codebase. The checks are run automatically when you commit your changes. The checks are also run when you push your changes to the remote repository.
 
+If you do not have pre-commit installed, you can install it using the following command:
+
+```sh
+brew install pre-commit
+```
+
+Or using pipx:
+
+```sh
+pipx install pre-commit
+```
+
 To install the pre-commit hooks, run the following command:
 
 ```sh
