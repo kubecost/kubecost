@@ -403,6 +403,22 @@ teams:
 ## While this is here to assist for backward compatibility- it is not officially supported. Consider using a service mesh for proxy setup.
 ## Ref: https://www.oreilly.com/library/view/security-with-go/9781788627917/5ea6a02b-3d96-44b1-ad3c-6ab60fcbbe4f.xhtml
 ##
+## You must also set the finops-agent systemProxy values independently.
+## Please merge these values below with the finops-agent values for your release.
+# finops-agent:
+#   extraEnvVars:
+#   - name: HTTP_PROXY
+#     value: httpProxyUrl
+#   - name: http_proxy
+#     value: httpProxyUrl
+#   - name: HTTPS_PROXY
+#     value: httpsProxyUrl
+#   - name: https_proxy
+#     value: httpsProxyUrl
+#   - name: NO_PROXY
+#     value: noProxy
+#   - name: no_proxy
+#     value: noProxy
 systemProxy:
   enabled: false
   httpProxyUrl: ""
