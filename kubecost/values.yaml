@@ -949,7 +949,7 @@ aggregator:
     storageClass: ""  # default storage class. NFS is not supported.
     storageRequest: 128Gi
   resources:
-    ## Consider setting a limit after a baseline has been established  
+    ## Consider setting a limit after a baseline has been established
     limits: {}
       # memory: ""
       # cpu: ""
