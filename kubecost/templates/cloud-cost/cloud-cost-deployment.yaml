@@ -119,7 +119,7 @@ spec:
         {{- if .Values.cloudCost.extraVolumes }}
         {{- toYaml .Values.cloudCost.extraVolumes | nindent 8 }}
         {{- end }}
-      {{- if or (and .Values.plugins.enabled .Values.plugins.install.enabled ) .Values.global.updateCaTrust.enabled }}                
+      {{- if or (and .Values.plugins.enabled .Values.plugins.install.enabled ) .Values.global.updateCaTrust.enabled }}
       initContainers:
       - name: plugin-installer
         image: {{ .Values.plugins.install.fullImageName }}

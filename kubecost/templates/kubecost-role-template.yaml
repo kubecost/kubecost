@@ -24,7 +24,3 @@ rules:
       - update
       - patch
       - delete
-  
-
-
-

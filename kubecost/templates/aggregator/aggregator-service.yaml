@@ -16,8 +16,8 @@ spec:
   ports:
     - name: tcp-api
       port: 9004
-      targetPort: 9004  
-    {{- if or .Values.saml.enabled .Values.oidc.enabled}}    
+      targetPort: 9004
+    {{- if or .Values.saml.enabled .Values.oidc.enabled}}
     - name: tcp-api-rbac
       port: 9008
       targetPort: 9008

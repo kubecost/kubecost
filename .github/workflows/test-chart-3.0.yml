@@ -12,7 +12,7 @@ on:
   #   branches:
   #     - develop
 
-# Prevents multiple runs of the same workflow on the same branch from executing 
+# Prevents multiple runs of the same workflow on the same branch from executing
 # simultaneously. Saves resources.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -107,10 +107,10 @@ jobs:
           helm dependency build
           helm install --wait --wait-for-jobs kubecost . -n kubecost
 
-      - name: Wait for ready 
+      - name: Wait for ready
         run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/instance=kubecost --timeout=120s
-      
-      - name: gather debug info - install 
+
+      - name: gather debug info - install
         if: failure()
         run: |
           kubectl get pods -n kubecost
@@ -121,7 +121,7 @@ jobs:
           kubectl -n kubecost describe pods
           kubectl -n kubecost logs -l app.kubernetes.io/instance=kubecost
 
-      - name: Run Helm tests 
+      - name: Run Helm tests
         run: helm test -n kubecost kubecost
 
       - name: gather debug info - test
@@ -205,12 +205,12 @@ jobs:
       - name: Populate federated storage config secret
         run: |
           sed -i "s|FEDERATED_STORAGE_CONFIG_YAML|${{ secrets.FEDERATED_STORAGE_CONFIG_YAML }}|" .github/ci-files/federatedStorageConfigSecret.yaml
-      
+
       - name: Create kubecost Namespace and test files
         run: |
           kubectl create ns kubecost
           kubectl -n kubecost create -f .github/ci-files
-  
+
       # Install the chart with OCP values and check results.
       - name: Install Kubecost chart with OCP values
         working-directory: ./kubecost
@@ -226,9 +226,9 @@ jobs:
           --set clusterController.enabled=true \
           --set clusterController.storageConfigSecret=actions-bucket-config \
 
-      - name: Wait for ready 
+      - name: Wait for ready
         run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/instance=kubecost --timeout=120s
-      - name: Run Helm tests 
+      - name: Run Helm tests
         run: helm test -n kubecost kubecost
       - name: Remove Cluster
         id: remove-cluster
@@ -280,9 +280,9 @@ jobs:
           helm dependency build
           helm install --wait --wait-for-jobs kubecost . -n kubecost -f values-eks-cost-monitoring.yaml
 
-      - name: Wait for ready 
+      - name: Wait for ready
         run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/instance=kubecost --timeout=120s
-      - name: Run Helm tests 
+      - name: Run Helm tests
         run: helm test -n kubecost kubecost
       - name: Remove Cluster
         id: remove-cluster

@@ -54,5 +54,3 @@ app.kubernetes.io/name: {{ include "kubecost.localStore.fullname" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app: {{ include "kubecost.localStore.fullname" . }}
 {{- end }}
-
-

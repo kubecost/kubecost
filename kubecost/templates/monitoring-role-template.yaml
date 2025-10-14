@@ -6,7 +6,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
   name: {{ template "kubecost.fullname" . }}-reader
 rules:
-  - apiGroups: 
+  - apiGroups:
       - ''
     resources:
       - "pods"

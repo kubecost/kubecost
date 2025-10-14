@@ -11,4 +11,3 @@ data:
   crrs-reports.json: '{{ toJson .Values.global.containerRequestRightSizingReports.reports }}'
 {{- end -}}
 {{- end -}}
-

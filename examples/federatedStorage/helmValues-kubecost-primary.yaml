@@ -31,7 +31,7 @@ cloudCost:
   enabled: true
 forecasting:
   enabled: true
-## The finops-agent can be installed with the primary, or it can be disabled to allow for a global 
+## The finops-agent can be installed with the primary, or it can be disabled to allow for a global
 ## agent deployment that is consistent across all clusters.
 finops-agent:
   enabled: true

@@ -138,7 +138,7 @@ data:
             error_page 401 = /login;
             try_files $uri $uri/ /index.html;
         }
-        
+
         # need to be served outside of the auth middleware
         location /healthz {
             add_header 'Content-Type' 'text/plain';
@@ -180,7 +180,7 @@ data:
         listen [::]:{{ .Values.frontend.service.targetPort }};
 {{- end }}
 {{- end }}
-        
+
         location /model/ {
             proxy_connect_timeout       {{ .Values.frontend.timeoutSeconds | default 300 }};
             proxy_send_timeout          {{ .Values.frontend.timeoutSeconds | default 300 }};
@@ -282,7 +282,7 @@ data:
             proxy_connect_timeout       180;
             proxy_send_timeout          180;
             proxy_read_timeout          180;
-            proxy_pass http://aggregator/login;  
+            proxy_pass http://aggregator/login;
             proxy_redirect off;
             proxy_http_version 1.1;
             proxy_set_header Connection "";
@@ -306,7 +306,7 @@ data:
             proxy_connect_timeout       180;
             proxy_send_timeout          180;
             proxy_read_timeout          180;
-            proxy_pass http://aggregator/login;      
+            proxy_pass http://aggregator/login;
             proxy_redirect off;
             proxy_http_version 1.1;
             proxy_set_header Connection "";
@@ -540,7 +540,7 @@ data:
                 "code": 200,
                 "status": "success",
                 "data": {
-               
+
                     "defaultIdle": "{{ .Values.kubecostProductConfigs.defaultIdle }}",
                     "currencyCode": "{{ .Values.kubecostProductConfigs.currencyCode }}",
                     "negotiatedDiscount": "{{ .Values.kubecostProductConfigs.negotiatedDiscount }}",

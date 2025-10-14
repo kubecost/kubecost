@@ -55,7 +55,7 @@ body:
         Please provide any and all manifests needed to reproduce your issue.
         GitHub supports [syntax highlighting](https://docs.github.com/en/github/writing-on-github/working-with-advanced-formatting/creating-and-highlighting-code-blocks#syntax-highlighting) with code blocks.
       value: |-
-        1. 
+        1.
     validations:
       required: true
   - type: textarea

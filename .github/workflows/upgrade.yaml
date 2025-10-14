@@ -73,7 +73,7 @@ jobs:
           version: v0.23.0
           node_image: kindest/node:v1.28.9
           kubectl_version: v1.28.9
-  
+
       # Install the chart with default values and check results.
       - name: Install Kubecost chart
         run: |
@@ -81,16 +81,16 @@ jobs:
           helm repo update
           helm install --wait --wait-for-jobs kubecost kubecost/cost-analyzer -n kubecost --create-namespace --version ${{ matrix.target }}
 
-      - name: Wait for ready 
+      - name: Wait for ready
         run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/name=cost-analyzer --timeout=120s
 
-      - name: Run Helm tests 
+      - name: Run Helm tests
         run: helm test -n kubecost kubecost
 
       - name: Upgrade to current working version
         run: helm upgrade kubecost -n kubecost cost-analyzer/ --wait
 
-      - name: Wait for ready 
+      - name: Wait for ready
         run: |
           kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/name=cost-analyzer --timeout=120s
           kubectl -n kubecost get pods

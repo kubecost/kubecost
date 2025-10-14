@@ -9,7 +9,7 @@ enterpriseCustomPricing:
   # correct configMapName and location.URI, respectively.
   #
   #   kubectl create configmap -n kubecost kubecost-enterprise-pricing --from-file pricing.csv
-  # 
+  #
   configMapName: kubecost-enterprise-pricing
   # The file name (e.g. pricing.csv) needs to match the file name used to make the ConfigMap (above)
   location:

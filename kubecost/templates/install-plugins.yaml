@@ -34,7 +34,7 @@ data:
       {{- else }}
       VER=$(curl --silent https://api.github.com/repos/opencost/opencost-plugins/releases/latest | grep ".tag_name" | awk -F\" '{print $4}')
       {{- end }}
-      
+
       {{- range $pluginName := .Values.plugins.enabledPlugins }}
       curl -fsSLO "https://github.com/opencost/opencost-plugins/releases/download/$VER/{{ $pluginName }}.ocplugin.$OS.$ARCH"
       chmod a+rx "{{ $pluginName }}.ocplugin.$OS.$ARCH"
