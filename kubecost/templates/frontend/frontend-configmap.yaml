@@ -559,8 +559,9 @@ data:
             {{- if $branding}}
             default_type 'application/json';
             return 200 '{
-                productName: "{{ $branding.productName }}"
-                primaryAccentColor: "{{ $branding.primaryAccentColor }}"
+                productName: "{{ $branding.productName }}",
+                footerHTML: "{{ $branding.footerHTML }}",
+                primaryAccentColor: "{{ $branding.primaryAccentColor }}",
                 fullLogoAltText: "{{ $branding.fullLogoAltText }}",
                 squareLogoAltText: "{{ $branding.squareLogoAltText }}"
             }';
