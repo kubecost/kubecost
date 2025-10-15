@@ -8,10 +8,10 @@ aggregator:
   enabled: true
   ## use fast IOPS storage for the aggregator db and persistent configs.
   persistentConfigsStorage:
-    storageClass: ""  # default storage class
+    storageClass: ""  # default storage class. Using the same storage class as the aggregator db storage is recommended for node placement concerns.
     storageRequest: 1Gi  # may need to be increased if the storage class requires a certain size per IOPS
   aggregatorDbStorage:
-    storageClass: ""  # default storage class
+    storageClass: ""  # default storage class. NFS is not supported.
     storageRequest: 128Gi
   resources:
     ## Consider setting a limit after a baseline has been established
