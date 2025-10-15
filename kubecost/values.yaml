@@ -1404,17 +1404,17 @@ kubecostProductConfigs:
 #     GCP: []
 #     Azure: []
 
-  # Customize the branding, the UI will only honor these values for enterprise licenses
+  # Customize the branding, the UI will only honor these values for custom enterprise licenses
   # branding:
   #   productName: "" # Name to use to refer to the product in messaging
   #   footerHTML: "" # HTML to use on the footer
   #   primaryAccentColor: "" # Needs to be legible on #ffffff and #343434 backgrounds
-  #   fullLogoAltText: ""
-  #   fullLogoExt: ""
-  #   fullLogoBase64: ""
-  #   squareLogoAltText: ""
-  #   squareLogoExt: ""
-  #   squareLogoBase64: ""
+  #   fullLogoBase64: "" # base64 encoded binary asset to use as the full logo, used in the nav bar when the nav is expanded
+  #   fullLogoExt: "" # the extension of the full logo
+  #   fullLogoAltText: "" # alt text to apply to the img tags for the full logo
+  #   squareLogoBase64: "" # base64 encoded binary asset to use for the square logo, used in the collapsed nav as well as empty and loading states
+  #   squareLogoExt: "" # the extension of the square logo
+  #   squareLogoAltText: "" # alt text to apply to the img tags for the square logo
 
 # -- Array of extra K8s manifests to deploy
 ## Note: Supports use of custom Helm templates
