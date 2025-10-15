@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: frontend-logo-{{.Release.Name}}
+  name: {{ template "kubecost.frontend.logoConfigMapName" . }}
   labels:
     {{- include "kubecost.commonLabels" . | nindent 4 }}
 binaryData:

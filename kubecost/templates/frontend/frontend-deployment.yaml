@@ -102,7 +102,7 @@ spec:
         {{- if (.Values.kubecostProductConfigs).branding }}
         - name: custom-branding
           configMap:
-            name: frontend-logo-{{.Release.Name}}
+            name: {{ template "kubecost.frontend.logoConfigMapName" . }}
         {{- end }}
       containers:
         - name: frontend
