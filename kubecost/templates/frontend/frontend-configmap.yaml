@@ -582,7 +582,7 @@ data:
         {{- $squareLogoExt := default "not-found" (((.Values.kubecostProductConfigs).branding).squareLogoExt)}}
         location /custom-branding/square-logo {
             {{- if  ne $squareLogoExt "not-found"}}
-                try_files /static/templated-full-logo.{{$squareLogoExt}} =404;
+                try_files /static/templated-square-logo.{{$squareLogoExt}} =404;
             {{- else }}
                 return 404;
             {{- end }}
