@@ -602,6 +602,15 @@ finops-agent:
     collectorDataSource:
       enabled: true
       scrapeInterval: 30s
+      ## Retention values are for the agent's local store only and do not affect Kubecost history.
+      ## These can be increased, but will require more memory.
+      retention10m: 6
+      retention1h: 3
+      retention1d: 2
+    exporter:
+      ## Emission interval is the interval at which the agent will emit metrics to the object storage.
+      ## This can be increased to reduce the number of object (versions) written to the object storage when versioning is enabled.
+      emissionInterval: 1m
     cloudability:
       ## Cloudability requires an API key to send data to the cloudability platform
       enabled: false
