@@ -1224,8 +1224,9 @@ clusterController:
   #       }
 
   rbac:
-    # In 3.x, only containerRequestRightSizing is supported, all other features are in progress.
+    # In 3.x, only containerRequestRightSizing and resourceQuotaRightSizing are supported, all other features are in progress.
     containerRequestRightSizing: true
+    resourceQuotaRightSizing: true
     clusterRightSizing: false
     clusterTurndown: false
     namespaceTurndown: false
