@@ -42,7 +42,7 @@ global:
     prometheusServerEndpoint: http://localhost:8085/
     gmpProxy:
       enabled: false
-      image: gke.gcr.io/prometheus-engine/frontend:v0.15.3-gke.0
+      image: gke.gcr.io/prometheus-engine/frontend:v0.15.4-gke.0
       imagePullPolicy: IfNotPresent
       name: gmp-proxy
       port: 8085
@@ -976,7 +976,7 @@ prometheus:
       rollingUpdate: null
     image:
       repository: quay.io/prometheus/prometheus
-      tag: v3.4.2
+      tag: v3.6.0
       pullPolicy: IfNotPresent
     priorityClassName: ""
     prefixURL: ""
@@ -1211,7 +1211,7 @@ prometheus:
       name: configmap-reload
       image:
         repository: quay.io/prometheus-operator/prometheus-config-reloader
-        tag: v0.82.2
+        tag: v0.86.1
         pullPolicy: IfNotPresent
       extraArgs: {}
       extraVolumeDirs: []
@@ -1224,7 +1224,7 @@ prometheus:
       name: configmap-reload
       image:
         repository: quay.io/prometheus-operator/prometheus-config-reloader
-        tag: v0.82.2
+        tag: v0.86.1
         pullPolicy: IfNotPresent
       extraArgs: {}
       extraVolumeDirs: []
@@ -1629,7 +1629,7 @@ forecasting:
   fullImageName: ""
   image:
     repository: gcr.io/kubecost1/kubecost-modeling
-    tag: v0.1.28
+    tag: v0.1.31
   imagePullPolicy: IfNotPresent
 
   # Resource specification block for the forecasting container.
@@ -2163,7 +2163,7 @@ grafana:
     failureThreshold: 10
   image:
     repository: grafana/grafana
-    tag: 12.0.2
+    tag: 12.2.0
     pullPolicy: IfNotPresent
     # pullSecrets:
   securityContext: {}
@@ -2209,7 +2209,7 @@ grafana:
   sidecar:
     image:
       repository: ghcr.io/kiwigrid/k8s-sidecar
-      tag: 1.30.3
+      tag: 1.30.11
       pullPolicy: IfNotPresent
     resources: {}
     dashboards:
@@ -2567,4 +2567,4 @@ extraObjects: []
 
 # -- Optional override for the image used for the basic health test container
 # basicHealth:
-#   fullImageName: alpine/k8s:1.26.9
+#   fullImageName: badouralix/curl-jq:alpine
