@@ -1,0 +1,21 @@
+federatedETL:
+  agentOnly: true
+prometheus:
+  server:
+    global:
+      external_labels:
+        cluster_id: YOUR_CLUSTER_ID
+kubecostModel:
+  federatedStorageConfig: |-
+      type: S3
+      config:
+        bucket: YOUR_BUCKET_NAME
+        endpoint: s3.amazonaws.com
+        region: us-west-2
+        # access_key: YOUR_ACCESS_KEY
+        # secret_key: YOUR_SECRET_KEY
+  federatedStorageConfigSecret: ""
+# serviceAccount:
+#   create: false  # default is true
+#   name: ""
+#   annotations: {}

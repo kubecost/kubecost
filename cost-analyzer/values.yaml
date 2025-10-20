@@ -360,6 +360,34 @@ finops-agent:
   ## When upgrading to Kubecost 2.9, the finops-agent is enabled by default.
   ## This can be disabled if you are not upgrading the cluster to Kubecost 3.0 or do not mind losing a partial day of data.
   enabled: true
+  serviceAccount:
+    create: true
+    name: ""  ## recommended to use the same service account as .Values.serviceAccount.name
+    automountServiceAccountToken: true
+    annotations: {}
+  persistence:
+    ## @param persistence.enabled Enable FinOps Agent data persistence for WAL and other local data
+    ##
+    enabled: true
+    ## @param persistence.existingClaim A manually managed Persistent Volume and Claim
+    ## If defined, PVC must be created manually before volume will be bound
+    ## The value is evaluated as a template
+    ##
+    existingClaim: ""
+    ## @param persistence.storageClass PVC Storage Class for the FinOps Agent data volume
+    ## If defined, storageClassName: <storageClass>
+    ## If set to "-", storageClassName: "", which disables dynamic provisioning
+    ## If undefined (the default) or set to null, no storageClassName spec is
+    ## set, choosing the default provisioner.
+    ##
+    storageClass: ""
+    ## @param persistence.accessModes Persistent Volume Access Modes
+    ##
+    accessModes:
+    - ReadWriteOnce
+    ## @param persistence.size PVC Storage Request for the FinOps Agent data volume
+    ##
+    size: 8Gi
   agent:
     collectorDataSource:
       enabled: true
@@ -381,34 +409,6 @@ finops-agent:
     cloudability:
       ## Cloudability requires an API key to send data to the cloudability platform
       enabled: false
-      pathToCloudabilitySecrets: "/opt/cloudability"
-      keyAccessFile: ""
-      keySecretFile: ""
-      envIDFile: ""
-      localWorkingDir: /tmp
-      uploadRegion: us
-      httpsClientTimeout: 60
-      uploadRetryCount: 5
-      outboundProxyInsecure: false
-      parseMetricData: false
-      outboundProxy: ""
-      outboundProxyAuth: ""
-      customS3UploadBucket: ""
-      customS3UploadRegion: ""
-      customAzureBlobContainerName: ""
-      customAzureBlobURL: ""
-      customAzureTenantID: ""
-      customAzureClientID: ""
-      customAzureBlobClientSecretFile: ""
-      emissionInterval: 3m
-
-      secret:
-        create: false
-        existingSecret: ""
-        cloudabilityAccessKey: ""
-        cloudabilitySecretKey: ""
-        cloudabilityEnvId: ""
-        customAzureClientSecret: ""
 
 # generated at http://kubecost.com/install, used for alerts tracking and free trials
 kubecostToken:  # ""
