@@ -400,8 +400,25 @@ teams:
 ## Adds the HTTP_PROXY, HTTPS_PROXY, and NO_PROXY environment variables to all
 ## containers. Typically used in environments that have firewall rules which
 ## prevent kubecost from accessing cloud provider resources.
+## While this example is provided, testing is limited.
 ## Ref: https://www.oreilly.com/library/view/security-with-go/9781788627917/5ea6a02b-3d96-44b1-ad3c-6ab60fcbbe4f.xhtml
 ##
+## You must also set the finops-agent systemProxy values independently.
+## Please merge these values below with the finops-agent values for your release.
+# finops-agent:
+#   extraEnvVars:
+#   - name: HTTP_PROXY
+#     value: httpProxyUrl
+#   - name: http_proxy
+#     value: httpProxyUrl
+#   - name: HTTPS_PROXY
+#     value: httpsProxyUrl
+#   - name: https_proxy
+#     value: httpsProxyUrl
+#   - name: NO_PROXY
+#     value: noProxy
+#   - name: no_proxy
+#     value: noProxy
 systemProxy:
   enabled: false
   httpProxyUrl: ""
@@ -558,52 +575,45 @@ localStore:
       # This can be used to allow the agent history to be uploaded to cloud storage when upgrading to Enterprise.
       helm.sh/resource-policy: keep
 
-## Values for the finops-agent sub-chart
-## Ref: https://github.com/kubecost/finops-agent-chart/
-##
+## Below are a subset of values for the finops-agent sub-chart that are most commonly changed.
+## See https://github.com/kubecost/finops-agent-chart/
+## for a complete list of values.
 finops-agent:
   enabled: true
+  persistence:
+    ## @param persistence.enabled Enable FinOps Agent data persistence for WAL and other local data
+    ##
+    enabled: true
+    ## @param persistence.existingClaim A manually managed Persistent Volume and Claim
+    ## If defined, PVC must be created manually before volume will be bound
+    ## The value is evaluated as a template
+    ##
+    existingClaim: ""
+    ## @param persistence.storageClass PVC Storage Class for the FinOps Agent data volume
+    ## If defined, storageClassName: <storageClass>
+    ## If set to "-", storageClassName: "", which disables dynamic provisioning
+    ## If undefined (the default) or set to null, no storageClassName spec is
+    ## set, choosing the default provisioner.
+    ##
+    storageClass: ""
+    size: 8Gi
+
   agent:
     collectorDataSource:
       enabled: true
       scrapeInterval: 30s
-      networkPort: 3001
+      ## Retention values are for the agent's local store only and do not affect Kubecost history.
+      ## These can be increased, but will require more memory.
       retention10m: 6
       retention1h: 3
       retention1d: 2
     exporter:
+      ## Emission interval is the interval at which the agent will emit metrics to the object storage.
+      ## This can be increased to reduce the number of object (versions) written to the object storage when versioning is enabled.
       emissionInterval: 1m
     cloudability:
       ## Cloudability requires an API key to send data to the cloudability platform
       enabled: false
-      pathToCloudabilitySecrets: "/opt/cloudability"
-      keyAccessFile: ""
-      keySecretFile: ""
-      envIDFile: ""
-      localWorkingDir: /tmp
-      uploadRegion: us
-      httpsClientTimeout: 60
-      uploadRetryCount: 5
-      outboundProxyInsecure: false
-      parseMetricData: false
-      outboundProxy: ""
-      outboundProxyAuth: ""
-      customS3UploadBucket: ""
-      customS3UploadRegion: ""
-      customAzureBlobContainerName: ""
-      customAzureBlobURL: ""
-      customAzureTenantID: ""
-      customAzureClientID: ""
-      customAzureBlobClientSecretFile: ""
-      emissionInterval: 3m
-
-      secret:
-        create: false
-        existingSecret: ""
-        cloudabilityAccessKey: ""
-        cloudabilitySecretKey: ""
-        cloudabilityEnvId: ""
-        customAzureClientSecret: ""
 
 ## Installs Kubecost/OpenCost plugins
 ## Ref: https://opencost.io/docs/integrations/plugins/
@@ -812,7 +822,7 @@ forecasting:
   image:
     registry: ""  # Default is "icr.io"
     repository: kubecost/modeling
-    tag: v0.1.29
+    tag: v0.1.31
   imagePullPolicy: IfNotPresent
 
   # Resource specification block for the forecasting container.
@@ -940,14 +950,15 @@ aggregator:
   collections:
     cache:
       enabled: true
-
+  ## use fast IOPS storage for the aggregator db and persistent configs.
   persistentConfigsStorage:
-    storageClass: ""  # default storage class
-    storageRequest: 10Gi
+    storageClass: ""  # default storage class. Using the same storage class as the aggregator db storage is recommended for node placement concerns.
+    storageRequest: 10Gi # may need to be increased if the storage class requires a certain size per IOPS
   aggregatorDbStorage:
-    storageClass: ""  # default storage class
+    storageClass: ""  # default storage class. NFS is not supported.
     storageRequest: 128Gi
   resources:
+    ## Consider setting a limit after a baseline has been established
     limits: {}
         # memory: ""
         # cpu: ""
@@ -1158,7 +1169,7 @@ clusterController:
   image:
     registry: ""  # Default is "icr.io"
     repository: kubecost/cluster-controller
-    tag: v0.16.28
+    tag: v0.16.29
   imagePullPolicy: IfNotPresent
   logLevel: info
   extraEnv: []
@@ -1407,6 +1418,18 @@ kubecostProductConfigs:
 #     GCP: []
 #     Azure: []
 
+  # Customize the branding, the UI will only honor these values for custom enterprise licenses
+  # branding:
+  #   productName: "" # Name to use to refer to the product in messaging
+  #   footerHTML: "" # HTML to use on the footer
+  #   primaryAccentColor: "" # Needs to be legible on #ffffff and #343434 backgrounds
+  #   fullLogoBase64: "" # base64 encoded binary asset to use as the full logo, used in the nav bar when the nav is expanded
+  #   fullLogoExt: "" # the extension of the full logo
+  #   fullLogoAltText: "" # alt text to apply to the img tags for the full logo
+  #   squareLogoBase64: "" # base64 encoded binary asset to use for the square logo, used in the collapsed nav as well as empty and loading states
+  #   squareLogoExt: "" # the extension of the square logo
+  #   squareLogoAltText: "" # alt text to apply to the img tags for the square logo
+
 # -- Array of extra K8s manifests to deploy
 ## Note: Supports use of custom Helm templates
 extraObjects: []
@@ -1430,5 +1453,5 @@ extraObjects: []
 # -- Optional override for the image used for the basic health test container
 basicHealth:
   registry: docker.io
-  repository: alpine/k8s
-  tag: 1.33.4
+  repository: alpine/curl
+  tag: 8.14.1
