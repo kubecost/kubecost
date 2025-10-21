@@ -949,8 +949,8 @@ aggregator:
     storageRequest: 128Gi
   resources:
     limits: {}
-      # memory: ""
-      # cpu: ""
+        # memory: ""
+        # cpu: ""
     requests:
       memory: 3Gi
       cpu: 100m
