@@ -1,0 +1,40 @@
+global:
+  ## clusterId is used to identify the cluster in the FinOps Agent
+  ## when using the same cluster names in different regions, we suggest appending the region to the clusterId
+  clusterId: globally-unique-cluster-id
+  federatedStorage:
+    existingSecret: federated-store
+aggregator:
+  enabled: true
+  ## use fast IOPS storage for the aggregator db and persistent configs.
+  persistentConfigsStorage:
+    storageClass: ""  # default storage class. Using the same storage class as the aggregator db storage is recommended for node placement concerns.
+    storageRequest: 1Gi  # may need to be increased if the storage class requires a certain size per IOPS
+  aggregatorDbStorage:
+    storageClass: ""  # default storage class. NFS is not supported.
+    storageRequest: 128Gi
+  resources:
+    ## Consider setting a limit after a baseline has been established
+    limits: {}
+      # memory: ""
+      # cpu: ""
+    requests:
+      memory: 3Gi
+      cpu: 100m
+clusterController:
+  enabled: true  # optional, automated rightsizing of containers
+networkCosts:
+  enabled: true  # optional, daemonset- improves network cost allocations to the correct pod
+frontend:
+  enabled: true
+cloudCost:
+  enabled: true
+forecasting:
+  enabled: true
+## The finops-agent can be installed with the primary, or it can be disabled to allow for a global 
+## agent deployment that is consistent across all clusters.
+finops-agent:
+  enabled: true
+## The localStore should be disabled when using federated storage as it is not used
+localStore:
+  enabled: false

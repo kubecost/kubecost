@@ -121,6 +121,7 @@ spec:
         {{- end }}
       {{- if or (and .Values.plugins.enabled .Values.plugins.install.enabled ) .Values.global.updateCaTrust.enabled }}                
       initContainers:
+      {{- if and .Values.plugins.enabled .Values.plugins.install.enabled }}
       - name: plugin-installer
         image: {{ .Values.plugins.install.fullImageName }}
         command: ["sh", "/install/install_plugins.sh"]
@@ -166,6 +167,7 @@ spec:
           {{- if .Values.cloudCost.extraVolumeMounts }}
           {{- toYaml .Values.cloudCost.extraVolumeMounts | nindent 10 }}
           {{- end }}
+      {{- end}}
       {{- end}}
       containers:
         - name: cloud-cost
