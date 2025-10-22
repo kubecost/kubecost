@@ -170,8 +170,8 @@ RBAC exclusivity check: make sure either simple RBAC or RBAC Teams is configured
 Federated Storage source contents check. Either the Secret must be specified or the JSON, not both.
 */}}
 {{- define "federatedStorageSourceCheck" -}}
-  {{- if and (.Values.kubecostModel).federatedStorageConfigSecret (.Values.kubecostModel).federatedStorageConfig -}}
-    {{- fail "\nkubecostkubecostModel.federatedStorageConfigSecret and kubecostModel.federatedStorageConfig are mutually exclusive. Please specify only one." -}}
+  {{- if and (.Values.global).federatedStorageConfigSecret (.Values.global).federatedStorageConfig -}}
+    {{- fail "\global.federatedStorageConfigSecret and global.federatedStorageConfig are mutually exclusive. Please specify only one." -}}
   {{- end -}}
 {{- end -}}
 
@@ -191,16 +191,21 @@ ERROR: MISSING EBS-CSI DRIVER WHICH IS REQUIRED ON EKS v1.23+ TO MANAGE PERSISTE
 {{- end -}}
 
 {{/*
-Verify a cluster_id is set in the Prometheus global config
+3.0 upgrade prep- moving clusterId to 3.0 location from prometheus label
 */}}
 {{- define "clusterIDCheck" -}}
-  {{- if or (.Values.kubecostModel).federatedStorageConfigSecret (.Values.kubecostModel).federatedStorageConfig }}
-    {{- if not .Values.prometheus.server.clusterIDConfigmap }}
-      {{- if eq .Values.prometheus.server.global.external_labels.cluster_id "cluster-one" }}
-        {{- fail "\n\nWhen using multi-cluster Kubecost, you must specify a unique `.Values.prometheus.server.global.external_labels.cluster_id` for each cluster.\nNote this must be set even if you are using your own Prometheus or another identifier.\n" -}}
-      {{- end -}}
-    {{- end -}}
-  {{- end -}}
+{{- if ne ((((.Values.prometheus.server).global).external_labels).cluster_id) "cluster-one" }}
+{{- fail "\n\nKubecost 2.9.x is intended as a prerequisite to upgrade to 3.0.\nIn kubecost 2.9, the location of the cluster_id configuration has changed.\n\nPlease set global.clusterId and remove .Values.prometheus.server.global.external_labels.cluster_id\nFor more information, see: TODO: link to 2.9 examples" }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+3.0 upgrade prep- require global federated store for 2.9
+*/}}
+{{- define "mustHaveGlobalFederatedStoreCheck" -}}
+{{- if and (not (.Values.global.federatedStorageConfigSecret)) (not (.Values.global.federatedStorageConfig)) }}
+{{- fail "\n\nMissing global federated-store\nKubecost 2.9.x is only intended as a prerequisite to upgrade to 3.0.\nPlease set a global federated store.\nSee examples at: TODO: link to 2.9 examples.\nIf you do not have a federated store (single cluster Kubecost configurations), please see TODO." -}}
+{{- end -}}
 {{- end -}}
 
 {{/*
@@ -225,24 +230,6 @@ support templating a chart which uses the lookup function.
   {{- $secret := lookup "v1" "Secret" .Release.Namespace .Values.kubecostProductConfigs.cloudIntegrationSecret }}
   {{- if or (not $secret) (not (index $secret.data "cloud-integration.json")) }}
     {{- fail (printf "The cloud integration secret '%s' does not exist or does not contain the expected key 'cloud-integration.json'\nIf you are using `--dry-run`, please add `--dry-run=server`. This requires Helm 3.13+." .Values.kubecostProductConfigs.cloudIntegrationSecret) }}
-  {{- end }}
-{{- end -}}
-{{- end -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Verify the federated storage config secret exists with the expected key.
-Skip the check if CI/CD is enabled and skipSanityChecks is set. Argo CD, for
-example, does not support templating a chart which uses the lookup function.
-*/}}
-{{- define "federatedStorageConfigSecretCheck" -}}
-{{- if (.Values.kubecostModel).federatedStorageConfigSecret }}
-{{- if not (and .Values.global.platforms.cicd.enabled .Values.global.platforms.cicd.skipSanityChecks) }}
-{{-  if .Capabilities.APIVersions.Has "v1/Secret" }}
-  {{- $secret := lookup "v1" "Secret" .Release.Namespace .Values.kubecostModel.federatedStorageConfigSecret }}
-  {{- if or (not $secret) (not (index $secret.data "federated-store.yaml")) }}
-    {{- fail (printf "The federated storage config secret '%s' does not exist or does not contain the expected key 'federated-store.yaml'" .Values.kubecostModel.federatedStorageConfigSecret) }}
   {{- end }}
 {{- end -}}
 {{- end -}}
@@ -1062,17 +1049,8 @@ Begin Kubecost 2.0 templates
       mountPath: /var/configs/turbonomic
     {{- end }}
   env:
-    {{- if and (.Values.prometheus.server.global.external_labels.cluster_id) (not .Values.prometheus.server.clusterIDConfigmap) }}
     - name: CLUSTER_ID
-      value: {{ .Values.prometheus.server.global.external_labels.cluster_id }}
-    {{- end }}
-    {{- if .Values.prometheus.server.clusterIDConfigmap }}
-    - name: CLUSTER_ID
-      valueFrom:
-        configMapKeyRef:
-          name: {{ .Values.prometheus.server.clusterIDConfigmap }}
-          key: CLUSTER_ID
-    {{- end }}
+      value: {{ .Values.global.clusterId }}
     {{- if and ((.Values.kubecostProductConfigs).productKey).mountPath (eq (include "aggregator.deployMethod" .) "statefulset") }}
     - name: PRODUCT_KEY_MOUNT_PATH
       value: {{ .Values.kubecostProductConfigs.productKey.mountPath }}
@@ -1685,19 +1663,12 @@ for more information
 {{- $tag }}
 {{- end }}
 
-{{- define "kubecost30UpgradeCheck" -}}
-{{- if or (.Values.kubecostModel).federatedStorageConfigSecret (.Values.kubecostModel).federatedStorageConfig }}
-{{- if ne .Values.global.clusterId .Values.prometheus.server.global.external_labels.cluster_id -}}
-{{- fail "\n\n.Values.global.clusterId is required and must match the value of .Values.prometheus.server.global.external_labels.cluster_id" }}
-{{- end -}}
-{{- end -}}
-{{- end -}}
 
 {{- define "finops-agent.clusterId" -}}
 {{- if .Values.global.clusterId -}}
 {{ .Values.global.clusterId }}
 {{- else -}}
-{{ fail "\n\nglobal.clusterId is required. Please set .Values.global.clusterId. This must match the value of .Values.prometheus.server.global.external_labels.cluster_id" }}
+{{ fail "\n\nKubecost 2.9.x is intended as a prerequisite to upgrade to 3.0.\nglobal.clusterId is required. Please set .Values.global.clusterId. This key replaces the previous key used: .Values.prometheus.server.global.external_labels.cluster_id\nFor more information, see: TODO: link to 2.9 examples" }}
 {{- end -}}
 {{- end -}}
 

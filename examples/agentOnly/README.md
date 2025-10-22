@@ -1,4 +1,4 @@
-# Kubecost 2.x prep before upgrading to 3.0
+# Multi-cluster guide: Kubecost 2.x prep before upgrading to 3.0
 
 Kubecost 3.0 introduces a new agent that removes the dependency on Prometheus. Because of this, steps must be taken to prevent a partial day's loss when upgrading. If the steps below are not followed, the data of the current day (UTC) prior to the upgrade will be lost when upgrading.
 
@@ -15,9 +15,7 @@ There are two values that will need to be modified before upgrading to 2.9, whic
 1. Move the old `prometheus.server.global.external_labels.cluster_id` to `global.clusterId`
 2. Move the federated storage configuration from the `kubecostModel` section to the `global` section.
 3. If your existing Kubecost deployment uses an assumed role (opposed to an IAM user/key), you will need to configure the finops-agent to use the existing service account. In the values provided, uncomment the `serviceAccount` and `finops-agent` sections and set the `name` to the name of the service account used by the cost-analyzer pod.
-
 ![settings migration]](settings-migration-2.9.png)
-
 4. Upgrade to 2.9.x
 
 ```bash

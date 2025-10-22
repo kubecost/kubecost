@@ -11,7 +11,7 @@
 {{- include "clusterIDCheck" . -}}
 {{- include "kubeRBACProxyBearerTokenCheck" . -}}
 {{- include "caCertsSecretConfigCheck" . -}}
-{{- include "kubecost30UpgradeCheck" . -}}
+{{- include "mustHaveGlobalFederatedStoreCheck" . -}}
 
 {{- $servicePort := .Values.service.port | default 9090 }}
 Kubecost {{ .Chart.Version }} has been successfully installed.
