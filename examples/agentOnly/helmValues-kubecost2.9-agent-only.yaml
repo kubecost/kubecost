@@ -19,8 +19,8 @@ global:
 ## Below- note that serviceAccount and finops-agent are top level keys (no space before them).
 # serviceAccount:  ## used by cost-analyzer
 #   create: false
-#   name: ""
-#   annotations: {}
+#   name: ""  ## keep existing values
+#   annotations: {}  ## keep existing values
 # finops-agent:  ## used by finops-agent
 #   serviceAccount:
 #     create: false
