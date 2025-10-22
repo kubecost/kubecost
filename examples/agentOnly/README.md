@@ -1,10 +1,10 @@
 # Multi-cluster guide: Kubecost 2.x prep before upgrading to 3.0
 
-Kubecost 3.0 introduces a new agent that removes the dependency on Prometheus. Because of this, steps must be taken to prevent a partial day's loss when upgrading. If the steps below are not followed, the data of the current day (UTC) prior to the upgrade will be lost when upgrading.
+Kubecost 3.0 introduces a new agent that removes the dependency on Prometheus. Because of this, steps must be taken to prevent a partial-day data-loss when upgrading. If the steps below are not followed, the data of the current day (UTC) prior to the upgrade will be lost when upgrading.
 
 For net new clusters, this 2.9 release is not required, though it will work.
 
-> Note: the primary cluster often runs the agent in the same namespace, the values here can also be used for this configuration.
+> Note: the primary cluster often runs the agent (cost-analyzer) in the same namespace, the values here can also be used for this configuration.
 
 ## Procedure
 
@@ -25,7 +25,7 @@ helm upgrade kubecost -n kubecost \
 ```
 
 5. Verify that all pods are running, including a new finops-agent pod.
-6. The agent must run for 2 days before upgrading to 3.x. You can run 2.9 for as long as you want, though more PVC storage may be needed if running for longer than 30 days.
+6. The finops-agent must run for 2 days before upgrading to 3.x. You can run 2.9 for as long as needed, though more PVC storage may be required if running for longer than 30 days.
 
 For more information on the 3.0 upgrade process see [https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=installation](IBM docs)
 Note that by following the above process, a parallel installation will not be needed.
