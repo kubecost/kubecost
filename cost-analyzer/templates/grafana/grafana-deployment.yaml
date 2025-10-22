@@ -113,6 +113,8 @@ spec:
           volumeMounts:
             - name: sc-dashboard-volume
               mountPath: {{ .Values.grafana.sidecar.dashboards.folder | quote }}
+            - name: tmp
+              mountPath: /tmp
       {{- end}}
       {{- if .Values.grafana.sidecar.datasources.enabled }}
         - name: {{ template "grafana.name" . }}-sc-datasources
@@ -247,6 +249,8 @@ spec:
 {{ toYaml . | indent 8 }}
     {{- end }}
       volumes:
+        - name: tmp
+          emptyDir: {}
         - name: config
           configMap:
             name: {{ template "grafana.fullname" . }}
