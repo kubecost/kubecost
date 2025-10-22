@@ -67,6 +67,6 @@ rules:
   {{- if .Values.clusterController.rbac.resourceQuotaRightSizing }}
   - apiGroups: [ '' ]
     resources: [ 'resourcequotas' ]
-    verbs: [ 'get', 'create', 'patch' ]
+    verbs: [ 'get', 'list', 'create', 'patch' ]
   {{- end }}
 {{- end }}
