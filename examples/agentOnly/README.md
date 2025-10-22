@@ -1,6 +1,6 @@
 # Multi-cluster guide: Kubecost 2.x prep before upgrading to 3.0
 
-Kubecost 3.0 introduces a new agent that removes the dependency on Prometheus. Because of this, steps must be taken to prevent a partial-day data-loss when upgrading. If the steps below are not followed, the data of the current day (UTC) prior to the upgrade will be lost when upgrading.
+Kubecost 3.0 introduces a new agent that removes the dependency on Prometheus. Because of this, steps must be taken to prevent a partial-day data gap when upgrading. If the steps below are not followed, the data of the current day (UTC) prior to the upgrade may not be captured after the upgrade.
 
 For net new clusters, this 2.9 release is not required, though it will work.
 
