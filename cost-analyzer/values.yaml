@@ -2,8 +2,22 @@
 ##
 
 global:
-  ## This must match the value of .Values.prometheus.server.global.external_labels.cluster_id
+  ## clusterId is required and must match the previous value of .Values.prometheus.server.global.external_labels.cluster_id, which must be removed.
   clusterId: ""
+  federatedStorage:
+    config: ""
+    # A federated storage config can be provided via an existingSecret or via a string in helm values.
+    # If both are provided, the string in helm values take precedence.
+    # Example:
+    #   config: |-
+    #     type: S3
+    #     config:
+    #       bucket: ibm-kubecost-unified-agent-demo-data
+    #       endpoint: s3.amazonaws.com
+    #       region: us-west-2
+    #       access_key: xxx
+    #       secret_key: xxx
+    existingSecret: ""
   ## If your DNS server doesn't live in the same zone as Kubecost
   ##
   zone: ""  # cluster.local
@@ -688,7 +702,7 @@ kubecostModel:
   ## The name of the Secret containing a bucket config for Federated storage.
   ## The contents should be stored under a key named federated-store.yaml.
   ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-long-term-storage-configuration
-  # federatedStorageConfigSecret: federated-store
+  # federatedStorage.existingSecret: federated-store
 
   ## Federated storage config can be supplied via a secret or the yaml block
   ## below when using the block below, only a single provider is supported,
@@ -959,11 +973,7 @@ prometheus:
           regex: (?i)(.*dcgm-exporter.*|.*dcgm-exporter.*|.*dcgm-exporter.*)
 
   server:
-    # If clusterIDConfigmap is defined, instead use user-generated configmap with key CLUSTER_ID
-    # to use as unique cluster ID in kubecost cost-analyzer deployment.
-    # This overrides the cluster_id set in prometheus.server.global.external_labels.
-    # NOTE: This does not affect the external_labels set in prometheus config.
-    # clusterIDConfigmap: cluster-id-configmap
+    # in kubecost 2.9, the cluster_id is set by global.clusterId
 
     ## Provide a full name override for the Prometheus server.
     # fullnameOverride: ""
@@ -990,7 +1000,7 @@ prometheus:
       scrape_timeout: 60s
       evaluation_interval: 1m
       external_labels:
-        cluster_id: cluster-one  # Each cluster should have a unique ID
+        cluster_id: cluster-one  # This is no longer used in kubecost 2.9
     remoteWrite: {}
     remoteRead: {}
     extraArgs:

@@ -5,7 +5,6 @@
 {{- include "cloudIntegrationSecretCheck" . -}}
 {{- include "gcpCloudIntegrationCheck" . -}}
 {{- include "azureCloudIntegrationCheck" . -}}
-{{- include "federatedStorageConfigSecretCheck" . -}}
 {{- include "federatedStorageSourceCheck" . -}}
 {{- include "prometheusRetentionCheck" . -}}
 {{- include "clusterIDCheck" . -}}
@@ -29,4 +28,3 @@ Please allow 25 minutes for Kubecost to gather metrics. A progress indicator wil
 Having installation issues? View our Troubleshooting Guide at https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=troubleshoot-install
 
 {{- include "kubecostV2-3-notices" . -}}
-{{- include "federatedStorageCheck" . -}}

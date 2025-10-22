@@ -104,14 +104,6 @@ Kubecost 2.0 preconditions
   {{- end }}
 {{- end -}}
 
-{{- define "federatedStorageCheck" -}}
-  {{- if or (.Values.federatedETL).federatedStore (.Values.kubecostModel).federatedStorageConfig }}
-    {{- if and (not (eq (include "aggregator.deployMethod" .) "statefulset")) (not (.Values.federatedETL).agentOnly) }}
-      {{- printf "\n\n***Configuration issue detected:***\nWhen a federated store is provided, Kubecost should either be running as agentOnly or as a statefulset.\n.Values.federatedETL.agentOnly=true\nOr\n.Values.kubecostAggregator.deployMethod=statefulset\n***" }}
-    {{- end }}
-  {{- end }}
-{{- end }}
-
 {{- define "cloudIntegrationFromProductConfigs" }}
   {
     {{- if ((.Values.kubecostProductConfigs).athenaBucketName) }}
@@ -170,8 +162,8 @@ RBAC exclusivity check: make sure either simple RBAC or RBAC Teams is configured
 Federated Storage source contents check. Either the Secret must be specified or the JSON, not both.
 */}}
 {{- define "federatedStorageSourceCheck" -}}
-  {{- if and (.Values.global).federatedStorageConfigSecret (.Values.global).federatedStorageConfig -}}
-    {{- fail "\global.federatedStorageConfigSecret and global.federatedStorageConfig are mutually exclusive. Please specify only one." -}}
+  {{- if and (.Values.global).federatedStorage.existingSecret (.Values.global).federatedStorageConfig -}}
+    {{- fail "\nglobal.federatedStorage.existingSecret and global.federatedStorage.config are mutually exclusive. Please specify only one." -}}
   {{- end -}}
 {{- end -}}
 
@@ -203,7 +195,7 @@ ERROR: MISSING EBS-CSI DRIVER WHICH IS REQUIRED ON EKS v1.23+ TO MANAGE PERSISTE
 3.0 upgrade prep- require global federated store for 2.9
 */}}
 {{- define "mustHaveGlobalFederatedStoreCheck" -}}
-{{- if and (not (.Values.global.federatedStorageConfigSecret)) (not (.Values.global.federatedStorageConfig)) }}
+{{- if and (not (.Values.global.federatedStorage.existingSecret)) (not (.Values.global.federatedStorage.config)) }}
 {{- fail "\n\nMissing global federated-store\nKubecost 2.9.x is only intended as a prerequisite to upgrade to 3.0.\nPlease set a global federated store.\nSee examples at: TODO: link to 2.9 examples.\nIf you do not have a federated store (single cluster Kubecost configurations), please see TODO." -}}
 {{- end -}}
 {{- end -}}
@@ -932,11 +924,9 @@ Begin Kubecost 2.0 templates
   volumeMounts:
     - name: persistent-configs
       mountPath: /var/configs
-    {{- if or (.Values.kubecostModel).federatedStorageConfigSecret (.Values.kubecostModel).federatedStorageConfig }}
     - name: federated-storage-config
       mountPath: /var/configs/etl
       readOnly: true
-    {{- end }}
     {{- if and .Values.persistentVolume.dbPVEnabled (eq (include "aggregator.deployMethod" .) "singlepod") }}
     - name: persistent-db
       mountPath: /var/db
@@ -1124,9 +1114,6 @@ Begin Kubecost 2.0 templates
     # If this isn't set, we pretty much have to be in a read only state,
     # initialization will probably fail otherwise.
     - name: ETL_BUCKET_CONFIG
-      {{- if and (not .Values.kubecostModel.federatedStorageConfigSecret) (not .Values.kubecostModel.federatedStorageConfig) }}
-      value: /var/configs/etl/object-store.yaml
-      {{- else }}
       value: /var/configs/etl/federated-store.yaml
     - name: FEDERATED_STORE_CONFIG
       value: /var/configs/etl/federated-store.yaml
@@ -1140,7 +1127,6 @@ Begin Kubecost 2.0 templates
       value: {{ .Values.ingestionConfigmapName }}
     {{- end }}
     {{- end }}
-      {{- end }}
     {{- end }}
     - name: LOG_LEVEL
       value: {{ .Values.kubecostAggregator.logLevel }}
@@ -1325,7 +1311,7 @@ Begin Kubecost 2.0 templates
   volumeMounts:
     - name: persistent-configs
       mountPath: /var/configs
-  {{- if or (.Values.kubecostModel).federatedStorageConfigSecret (.Values.kubecostModel).federatedStorageConfig }}
+  {{- if or (.Values.global).federatedStorage.existingSecret (.Values.global).federatedStorageConfig }}
     - name: federated-storage-config
       mountPath: /var/configs/etl/federated
       readOnly: true
@@ -1358,7 +1344,7 @@ Begin Kubecost 2.0 templates
   env:
     - name: CONFIG_PATH
       value: /var/configs/
-    {{- if or .Values.kubecostModel.federatedStorageConfigSecret .Values.kubecostModel.federatedStorageConfig }}
+    {{- if or .Values.global.federatedStorage.existingSecret .Values.global.federatedStorage.config }}
     - name: FEDERATED_STORE_CONFIG
       value: /var/configs/etl/federated/federated-store.yaml
     - name: FEDERATED_CLUSTER
@@ -1457,7 +1443,7 @@ Groups is only used when using simple RBAC.
 Backups configured flag for nginx configmap
 */}}
 {{- define "dataBackupConfigured" -}}
-  {{- if or (.Values.kubecostModel).federatedStorageConfigSecret (.Values.kubecostModel).federatedStorageConfig -}}
+  {{- if or (.Values.global).federatedStorage.existingSecret (.Values.global).federatedStorageConfig -}}
     {{- printf "true" -}}
   {{- else -}}
     {{- printf "false" -}}
@@ -1489,7 +1475,7 @@ are both running, and when the federated storage config is present.
 */}}
 {{- define "multiClusterDiagnosticsPrimaryEnabled" -}}
 {{- if and .Values.diagnostics.enabled .Values.diagnostics.primary.enabled -}}
-  {{- if or .Values.kubecostModel.federatedStorageConfigSecret .Values.kubecostModel.federatedStorageConfig -}}
+  {{- if or .Values.global.federatedStorage.existingSecret .Values.global.federatedStorage.config -}}
     {{- printf "true" -}}
   {{- else -}}
     {{- printf "false" -}}
@@ -1673,8 +1659,8 @@ for more information
 {{- end -}}
 
 {{- define "finops-agent.federatedStorageSecretName" -}}
-{{- if (.Values.kubecostModel).federatedStorageConfigSecret -}}
-{{ .Values.kubecostModel.federatedStorageConfigSecret }}
+{{- if (.Values.global).federatedStorage.existingSecret -}}
+{{ .Values.global.federatedStorage.existingSecret }}
 {{- else -}}
 federated-store
 {{- end -}}

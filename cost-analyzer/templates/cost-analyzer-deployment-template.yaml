@@ -117,11 +117,11 @@ spec:
         - name: cache
           emptyDir: { }
         {{- end }}
-        {{- if or .Values.kubecostModel.federatedStorageConfigSecret .Values.kubecostModel.federatedStorageConfig }}
+        {{- if or .Values.global.federatedStorage.existingSecret .Values.global.federatedStorage.config }}
         - name: federated-storage-config
           secret:
            defaultMode: 420
-           secretName: {{ .Values.kubecostModel.federatedStorageConfigSecret | default "federated-store" }}
+           secretName: {{ .Values.global.federatedStorage.existingSecret | default "federated-store" }}
         {{- end }}
         {{- if .Values.global.updateCaTrust.enabled }}
         - name: ca-certs-secret
@@ -641,7 +641,7 @@ spec:
             - name: persistent-db
               mountPath: /var/db
             {{- end }}
-            {{- if or .Values.kubecostModel.federatedStorageConfigSecret .Values.kubecostModel.federatedStorageConfig }}
+            {{- if or .Values.global.federatedStorage.existingSecret .Values.global.federatedStorage.config }}
             - name: federated-storage-config
               mountPath: /var/configs/etl/federated
               readOnly: true
@@ -919,11 +919,11 @@ spec:
               value: "https://71964476292e4087af8d5072afe43abd@o394722.ingest.sentry.io/5245431"
             {{- end }}
             {{- end }}
-            {{- if or .Values.kubecostModel.federatedStorageConfigSecret .Values.kubecostModel.federatedStorageConfig }}
+            {{- if or .Values.global.federatedStorage.existingSecret .Values.global.federatedStorage.config }}
             - name: FEDERATED_STORE_CONFIG
               value: "/var/configs/etl/federated/federated-store.yaml"
             {{- end }}
-            {{- if or .Values.federatedETL.federatedCluster .Values.kubecostModel.federatedStorageConfigSecret .Values.kubecostModel.federatedStorageConfig }}
+            {{- if or .Values.federatedETL.federatedCluster .Values.global.federatedStorage.existingSecret .Values.global.federatedStorage.config }}
             - name: FEDERATED_CLUSTER
               {{- if eq .Values.federatedETL.readOnlyPrimary true }}
               value: "false"
@@ -1101,7 +1101,7 @@ spec:
             - name: DIAGNOSTICS_RUN_IN_COST_MODEL
               value: "false"
             {{- /* Cannot run MultiClusterDiagnostics in the cost-model container without federated-store config */}}
-            {{- else if and (empty .Values.kubecostModel.federatedStorageConfigSecret) (not .Values.kubecostModel.federatedStorageConfig) }}
+            {{- else if and (empty .Values.global.federatedStorage.existingSecret) (not .Values.global.federatedStorage.config) }}
             - name: DIAGNOSTICS_RUN_IN_COST_MODEL
               value: "false"
             {{- else if .Values.diagnostics.deployment.enabled }}

@@ -63,12 +63,12 @@ spec:
       restartPolicy: Always
       serviceAccountName: {{ template "cloudCost.serviceAccountName" . }}
       volumes:
-        {{- if or .Values.kubecostModel.federatedStorageConfigSecret .Values.kubecostModel.federatedStorageConfig }}
+        {{- if or .Values.global.federatedStorage.existingSecret .Values.global.federatedStorage.config }}
         - name: federated-storage-config
           secret:
             defaultMode: 420
-            {{- if .Values.kubecostModel.federatedStorageConfigSecret }}
-            secretName: {{ .Values.kubecostModel.federatedStorageConfigSecret }}
+            {{- if .Values.global.federatedStorage.existingSecret }}
+            secretName: {{ .Values.global.federatedStorage.existingSecret }}
             {{- else }}
             secretName: federated-store
             {{- end }}
