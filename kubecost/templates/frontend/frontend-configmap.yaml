@@ -124,7 +124,11 @@ data:
         location = /custom_504.html {
             internal;
         }
-
+        location /healthz {
+            add_header 'Content-Type' 'text/plain';
+            return 200 "healthy\n";
+            access_log off;
+        }
 {{- if or .Values.saml.enabled .Values.oidc.enabled }}
 
         add_header Cache-Control "max-age=0";
@@ -139,12 +143,6 @@ data:
             try_files $uri $uri/ /index.html;
         }
         
-        # need to be served outside of the auth middleware
-        location /healthz {
-            add_header 'Content-Type' 'text/plain';
-            return 200 "healthy\n";
-            access_log off;
-        }
         location = /teamsError.html { }
         location = /images/kubecost-logo.svg { }
 
