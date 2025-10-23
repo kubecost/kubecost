@@ -124,11 +124,13 @@ data:
         location = /custom_504.html {
             internal;
         }
+        # Needs to be served outside of the auth middleware
         location /healthz {
             add_header 'Content-Type' 'text/plain';
             return 200 "healthy\n";
             access_log off;
         }
+
 {{- if or .Values.saml.enabled .Values.oidc.enabled }}
 
         add_header Cache-Control "max-age=0";
