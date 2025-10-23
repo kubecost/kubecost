@@ -484,7 +484,7 @@ spec:
             {{- end }}
             - name: READ_ONLY
               value: {{ (quote .Values.readonly) | default (quote false) }}
-            {{- include "common.systemProxy" . }}
+            {{- include "common.systemProxy" . | nindent 12 }}
             {{- if ((.Values.kubecostProductConfigs).carbonEstimates) }}
             - name: CARBON_ESTIMATES_ENABLED
               value: "true"

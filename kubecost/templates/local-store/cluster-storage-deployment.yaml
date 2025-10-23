@@ -114,7 +114,7 @@ spec:
             - name: {{ $key | quote }}
               value: {{ $value | quote }}
             {{- end }}
-            {{- include "common.systemProxy" . }}
+            {{- include "common.systemProxy" . | indent 12 }}
     {{- if .Values.imagePullSecrets }}
       imagePullSecrets:
       {{- range $.Values.imagePullSecrets }}
