@@ -415,9 +415,9 @@ finops-agent:
     exportIntervals:
       ## By setting the export intervals to 999 days, the data will not be sent to the bucket for this many days.
       ## These values should not be modified or passed in a Helm values file.
-      allocation: 999m
-      asset: 999m
-      networkInsight: 999m
+      allocation: 999d
+      asset: 999d
+      networkInsight: 999d
       heartbeat: 5m
       diagnostics: 10m
     cloudability:
