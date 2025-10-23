@@ -382,19 +382,19 @@ enabled only version to the output .r
 
 {{- define "common.systemProxy" -}}
 {{- if .Values.systemProxy.enabled }}
-    - name: HTTP_PROXY
-      value: {{ .Values.systemProxy.httpProxyUrl }}
-    - name: http_proxy
-      value: {{ .Values.systemProxy.httpProxyUrl }}
-    - name: HTTPS_PROXY
-      value: {{ .Values.systemProxy.httpsProxyUrl }}
-    - name: https_proxy
-      value: {{ .Values.systemProxy.httpsProxyUrl }}
-    - name: NO_PROXY
-      value: {{ .Values.systemProxy.noProxy }}
-    - name: no_proxy
-      value: {{ .Values.systemProxy.noProxy }}
-    {{- end }}
+- name: HTTP_PROXY
+  value: {{ .Values.systemProxy.httpProxyUrl }}
+- name: http_proxy
+  value: {{ .Values.systemProxy.httpProxyUrl }}
+- name: HTTPS_PROXY
+  value: {{ .Values.systemProxy.httpsProxyUrl }}
+- name: https_proxy
+  value: {{ .Values.systemProxy.httpsProxyUrl }}
+- name: NO_PROXY
+  value: {{ .Values.systemProxy.noProxy }}
+- name: no_proxy
+  value: {{ .Values.systemProxy.noProxy }}
+{{- end }}
 {{- end -}}
 
 {{/*
