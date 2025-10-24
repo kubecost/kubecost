@@ -1,6 +1,10 @@
 # Kubecost Helm chart
 
-This is the official Helm chart for [Kubecost](https://www.kubecost.com/), an enterprise-grade application to monitor and manage Kubernetes spend. Please see the [website](https://www.kubecost.com/) for more details on what Kubecost can do for you and the official documentation [here](https://docs.kubecost.com/), or contact [team-kubecost@wwpdl.vnet.ibm.com](mailto:team-kubecost@wwpdl.vnet.ibm.com) for assistance.
+This is the 2.9.x branch of the Kubecost Helm chart. This release is designed facilitate seamless upgrades to 3.0 for any user with a federated storage configuration.
+
+There are no new features in 2.9 compared to the 2.8, other than the addition of a read-only finops-agent that will begin to collect metrics with the intent of upgrading to 3.0.
+ 
+See [./examples](./examples) for more information on how to use this version.
 
 ## Version Support
 
@@ -17,6 +21,8 @@ While the below versions may work with the given versions of Kubernetes, Kubecos
 | 2.4                            | 1.22           | 1.31           |
 | 2.5                            | 1.22           | 1.32           |
 | 2.6                            | 1.22           | 1.32           |
+| 2.8                            | 1.30           | 1.34           |
+| 2.9                            | 1.30           | 1.34           |
 
 ## Installation
 
