@@ -1,8 +1,8 @@
 # Kubecost Helm chart
 
-This is the 2.9.x branch of the Kubecost Helm chart. This release is designed facilitate seamless upgrades to 3.0 for any user with a federated storage configuration.
+This is the v2.9 branch of the Kubecost Helm chart. This release is designed to facilitate seamless upgrades to v3.0. A federated storage configuration is required when installing v2.9.
 
-There are no new features in 2.9 compared to the 2.8, other than the addition of a read-only finops-agent that will begin to collect metrics with the intent of upgrading to 3.0.
+There are no new features in v2.9 compared to v2.8 other than the addition of a finops-agent container that will begin collecting metrics in preparation for a seamless upgrade to 3.0.
  
 See [./examples](./examples) for more information on how to use this version.
 
