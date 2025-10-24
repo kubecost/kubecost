@@ -187,7 +187,7 @@ ERROR: MISSING EBS-CSI DRIVER WHICH IS REQUIRED ON EKS v1.23+ TO MANAGE PERSISTE
 */}}
 {{- define "clusterIDCheck" -}}
 {{- if ne ((((.Values.prometheus.server).global).external_labels).cluster_id) "cluster-one" }}
-{{- fail "\n\nKubecost 2.9.x is intended as a prerequisite to upgrade to 3.0.\nIn kubecost 2.9, the location of the cluster_id configuration has changed.\n\nPlease set global.clusterId and remove .Values.prometheus.server.global.external_labels.cluster_id\nFor more information, see: TODO: link to 2.9 examples" }}
+{{- fail "\n\nKubecost 2.9.x is only used for preparing agents to upgrade to 3.0.\nIn kubecost 2.9, the location of the cluster_id configuration has changed.\n\nPlease set global.clusterId and remove .Values.prometheus.server.global.external_labels.cluster_id\nFor more information, see: https://github.com/kubecost/cost-analyzer/tree/v2.9/examples" }}
 {{- end -}}
 {{- end -}}
 
@@ -196,7 +196,7 @@ ERROR: MISSING EBS-CSI DRIVER WHICH IS REQUIRED ON EKS v1.23+ TO MANAGE PERSISTE
 */}}
 {{- define "mustHaveGlobalFederatedStoreCheck" -}}
 {{- if and (not (.Values.global.federatedStorage.existingSecret)) (not (.Values.global.federatedStorage.config)) }}
-{{- fail "\n\nMissing global federated-store\nKubecost 2.9.x is only intended as a prerequisite to upgrade to 3.0.\nPlease set a global federated store.\nSee examples at: TODO: link to 2.9 examples.\nIf you do not have a federated store (single cluster Kubecost configurations), please see TODO." -}}
+{{- fail "\n\nMissing global federated-store\nNOTE: Kubecost 2.9.x is only used for preparing agents to upgrade to 3.0.\nPlease set a global federated store.\nSee examples at: https://github.com/kubecost/cost-analyzer/tree/v2.9/examples.\n" -}}
 {{- end -}}
 {{- end -}}
 
@@ -1655,7 +1655,7 @@ for more information
 {{ .Values.global.clusterId }}
 {{- else -}}
 {{ include "mustHaveGlobalFederatedStoreCheck" . }}
-{{ fail "\n\nKubecost 2.9.x is intended as a prerequisite to upgrade to 3.0.\nglobal.clusterId is required. Please set .Values.global.clusterId. This key replaces the previous key used: .Values.prometheus.server.global.external_labels.cluster_id\nFor more information, see: TODO: link to 2.9 examples" }}
+{{ fail "\n\nKubecost 2.9.x is intended as a prerequisite to upgrade to 3.0.\nglobal.clusterId is required. Please set .Values.global.clusterId. This key replaces the previous key used: .Values.prometheus.server.global.external_labels.cluster_id\nFor more information, see: https://github.com/kubecost/cost-analyzer/tree/v2.9/examples" }}
 {{- end -}}
 {{- end -}}
 
