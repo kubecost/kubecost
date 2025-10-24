@@ -2,9 +2,11 @@
 
 Kubecost 3.0 introduces a new agent that removes the dependency on Prometheus. Because of this, steps must be taken to prevent a partial-day data gap when upgrading. If the steps below are not followed, the data of the current day (UTC) prior to the upgrade may not be captured after the upgrade.
 
-For net new clusters, this 2.9 release is not required, though it will work.
+For net new clusters, this 2.9 release has no value- just proceed with the 3.0 install.
 
-> Note: the primary cluster often runs the agent (cost-analyzer) in the same namespace, the values here can also be used for this configuration.
+> The 3.0 agent uses a metrics format that is compatible with Kubecost 2.8+, but the diagnostics have changed and a 2.8+ primary will simply ingnore the diagnostic data.
+
+> Note: the primary cluster often runs the agent (cost-analyzer) in the same namespace, the values here can also be used for this configuration. Though a universal agent configuration may be preferable. Please contact your Customer Success Manager for more information on this.
 
 ## Procedure
 
