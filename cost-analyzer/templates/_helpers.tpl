@@ -1642,16 +1642,6 @@ for more information
 {{- $tag }}
 {{- end }}
 
-
-{{- define "finops-agent.clusterId" -}}
-{{- if .Values.global.clusterId -}}
-{{ .Values.global.clusterId }}
-{{- else -}}
-{{ include "mustHaveGlobalFederatedStoreCheck" . }}
-{{ fail "\n\nKubecost 2.9.x is intended as a prerequisite to upgrade to 3.0.\nglobal.clusterId is required. Please set .Values.global.clusterId. This key replaces the previous key used: .Values.prometheus.server.global.external_labels.cluster_id\nFor more information, see: https://github.com/kubecost/cost-analyzer/tree/v2.9/examples" }}
-{{- end -}}
-{{- end -}}
-
 {{- define "finops-agent.federatedStorageSecretName" -}}
 {{- if (.Values.global).federatedStorage.existingSecret -}}
 {{ .Values.global.federatedStorage.existingSecret }}
