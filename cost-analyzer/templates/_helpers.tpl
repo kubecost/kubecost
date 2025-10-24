@@ -183,15 +183,6 @@ ERROR: MISSING EBS-CSI DRIVER WHICH IS REQUIRED ON EKS v1.23+ TO MANAGE PERSISTE
 {{- end -}}
 
 {{/*
-3.0 upgrade prep- moving clusterId to 3.0 location from prometheus label
-*/}}
-{{- define "clusterIDCheck" -}}
-{{- if ne ((((.Values.prometheus.server).global).external_labels).cluster_id) "cluster-one" }}
-{{- fail "\n\nKubecost 2.9.x is only used for preparing agents to upgrade to 3.0.\nIn kubecost 2.9, the location of the cluster_id configuration has changed.\n\nPlease set global.clusterId and remove .Values.prometheus.server.global.external_labels.cluster_id\nFor more information, see: https://github.com/kubecost/cost-analyzer/tree/v2.9/examples" }}
-{{- end -}}
-{{- end -}}
-
-{{/*
 3.0 upgrade prep- require global federated store for 2.9
 */}}
 {{- define "mustHaveGlobalFederatedStoreCheck" -}}
@@ -1666,5 +1657,17 @@ for more information
 {{ .Values.global.federatedStorage.existingSecret }}
 {{- else -}}
 federated-store
+{{- end -}}
+{{- end -}}
+
+{{- define "kc29FailConditions" -}}
+{{- if ne ((((.Values.prometheus.server).global).external_labels).cluster_id) "cluster-one" }}
+{{- fail "\n\nKubecost 2.9.x is only used for preparing agents to upgrade to 3.0.\nIn kubecost 2.9, the location of the cluster_id configuration has changed.\n\nPlease set global.clusterId and remove .Values.prometheus.server.global.external_labels.cluster_id\nFor more information, see: https://github.com/kubecost/cost-analyzer/tree/v2.9/examples" }}
+{{- end -}}
+{{- if (.Values.kubecostModel.federatedStorageConfigSecret) -}}
+{{ fail "\n\nKKubecost 2.9.x is only used for preparing agents to upgrade to 3.0.\nThis key is no longer used and must be removed: .Values.kubecostModel.federatedStorageConfigSecret\nFor more information, see: https://github.com/kubecost/cost-analyzer/tree/v2.9/examples" }}
+{{- end -}}
+{{- if (.Values.kubecostModel.federatedStorageConfig) -}}
+{{ fail "\n\nKubecost 2.9.x is only used for preparing agents to upgrade to 3.0.\nThis key is no longer used and must be removed: .Values.kubecostModel.federatedStorageConfig\nFor more information, see: https://github.com/kubecost/cost-analyzer/tree/v2.9/examples" }}
 {{- end -}}
 {{- end -}}
