@@ -23,7 +23,6 @@ global:
   zone: ""  # cluster.local
   ## The chartName and currentVersion are used for safety checks only and should not be modified or passed in a Helm values file.
   chartName: "kubecost"
-  currentVersion: "2.9.0"
 
   ## Kubecost-bundled Prometheus
   ## It is recommended to leave these configurations as-is. If using your own
