@@ -924,9 +924,11 @@ Begin Kubecost 2.0 templates
   volumeMounts:
     - name: persistent-configs
       mountPath: /var/configs
+    {{- if or (.Values.global).federatedStorage.existingSecret (.Values.global).federatedStorageConfig }}
     - name: federated-storage-config
-      mountPath: /var/configs/etl
+      mountPath: /var/configs/etl/federated
       readOnly: true
+    {{- end }}
     {{- if and .Values.persistentVolume.dbPVEnabled (eq (include "aggregator.deployMethod" .) "singlepod") }}
     - name: persistent-db
       mountPath: /var/db
