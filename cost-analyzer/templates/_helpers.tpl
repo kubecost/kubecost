@@ -1660,4 +1660,7 @@ federated-store
 {{- if (.Values.kubecostModel.federatedStorageConfig) -}}
 {{ fail "\n\nKubecost 2.9.x is only used for preparing agents to upgrade to 3.0.\nThis key is no longer used and must be removed: .Values.kubecostModel.federatedStorageConfig\nFor more information, see: https://github.com/kubecost/cost-analyzer/tree/v2.9/examples" }}
 {{- end -}}
+{{- if (.Values.prometheus.server.clusterIDConfigmap) --}}
+{{ fail "\n\nKubecost 2.9.x is only used for preparing agents to upgrade to 3.0.\nThis key is no longer used and must be removed: .Values.prometheus.server.clusterIDConfigmap\nFor more information, see: https://github.com/kubecost/cost-analyzer/tree/v2.9/examples" }}
+{{- end -}}
 {{- end -}}
