@@ -375,7 +375,7 @@ finops-agent:
   enabled: true
   serviceAccount:
     create: true
-    name: ""  ## recommended to use the same service account as .Values.serviceAccount.name
+    name: ""  # Set this to the same value as `.Values.serviceAccount.name` if you have attached an IAM role to your ServiceAccount.
     automountServiceAccountToken: true
     annotations: {}
   persistence:
