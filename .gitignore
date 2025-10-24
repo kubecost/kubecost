@@ -5,6 +5,5 @@
 .dist
 .manifest
 .kubeconfig
-cost-analyzer/charts/*.tgz
 gke_gcloud_auth_plugin_cache
 temp/
