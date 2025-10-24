@@ -699,50 +699,6 @@ kubecostModel:
   # For deploying kubecost in a cluster that does not self-monitor
   etlReadOnlyMode: false
 
-  ## The name of the Secret containing a bucket config for Federated storage.
-  ## The contents should be stored under a key named federated-store.yaml.
-  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-long-term-storage-configuration
-  # federatedStorage.existingSecret: federated-store
-
-  ## Federated storage config can be supplied via a secret or the yaml block
-  ## below when using the block below, only a single provider is supported,
-  ## others are for example purposes.
-  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-long-term-storage-configuration
-  # federatedStorageConfig: |-
-  #   # AWS EXAMPLE
-  #   type: S3
-  #   config:
-  #     bucket: kubecost-federated-storage-bucket
-  #     endpoint: s3.amazonaws.com
-  #     region: us-east-1
-  #     # best practice is to use pod identities to access AWS resources. Otherwise it is possible to use an access_key and secret_key
-  #     access_key: "<your-access-key>"
-  #     secret_key: "<your-secret-key>"
-  #   # AZURE EXAMPLE
-  #   type: AZURE
-  #   config:
-  #     storage_account: ""
-  #     storage_account_key: ""
-  #     container: ""
-  #     max_retries: 0
-  #   # GCP EXAMPLE
-  #   type: GCS
-  #   config:
-  #     bucket: kubecost-federated-storage-bucket
-  #     service_account: |-
-  #       {
-  #         "type": "service_account",
-  #         "project_id": "...",
-  #         "private_key_id": "...",
-  #         "private_key": "...",
-  #         "client_email": "...",
-  #         "client_id": "...",
-  #         "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-  #         "token_uri": "https://oauth2.googleapis.com/token",
-  #         "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-  #         "client_x509_cert_url": ""
-  #       }
-
   # Installs Kubecost/OpenCost plugins
   plugins:
     enabled: false
