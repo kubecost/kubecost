@@ -1665,7 +1665,7 @@ federated-store
 {{- fail "\n\nKubecost 2.9.x is only used for preparing agents to upgrade to 3.0.\nIn kubecost 2.9, the location of the cluster_id configuration has changed.\n\nPlease set global.clusterId and remove .Values.prometheus.server.global.external_labels.cluster_id\nFor more information, see: https://github.com/kubecost/cost-analyzer/tree/v2.9/examples" }}
 {{- end -}}
 {{- if (.Values.kubecostModel.federatedStorageConfigSecret) -}}
-{{ fail "\n\nKKubecost 2.9.x is only used for preparing agents to upgrade to 3.0.\nThis key is no longer used and must be removed: .Values.kubecostModel.federatedStorageConfigSecret\nFor more information, see: https://github.com/kubecost/cost-analyzer/tree/v2.9/examples" }}
+{{ fail "\n\nKubecost 2.9.x is only used for preparing agents to upgrade to 3.0.\nThis key is no longer used and must be removed: .Values.kubecostModel.federatedStorageConfigSecret\nFor more information, see: https://github.com/kubecost/cost-analyzer/tree/v2.9/examples" }}
 {{- end -}}
 {{- if (.Values.kubecostModel.federatedStorageConfig) -}}
 {{ fail "\n\nKubecost 2.9.x is only used for preparing agents to upgrade to 3.0.\nThis key is no longer used and must be removed: .Values.kubecostModel.federatedStorageConfig\nFor more information, see: https://github.com/kubecost/cost-analyzer/tree/v2.9/examples" }}
