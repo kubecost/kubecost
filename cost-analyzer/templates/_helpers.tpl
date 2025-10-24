@@ -1642,13 +1642,6 @@ for more information
 {{- $tag }}
 {{- end }}
 
-{{- define "finops-agent.federatedStorageSecretName" -}}
-{{- if (.Values.global).federatedStorage.existingSecret -}}
-{{ .Values.global.federatedStorage.existingSecret }}
-{{- else -}}
-federated-store
-{{- end -}}
-{{- end -}}
 
 {{- define "kc29FailConditions" -}}
 {{- if ne ((((.Values.prometheus.server).global).external_labels).cluster_id) "cluster-one" }}
