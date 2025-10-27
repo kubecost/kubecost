@@ -22,5 +22,5 @@ aggregator:
     requests:
       cpu: 500m
       memory: 2Gi
-finops-agent:
+finopsAgent:
   enabled: false

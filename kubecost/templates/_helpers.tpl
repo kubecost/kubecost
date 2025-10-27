@@ -17,13 +17,13 @@ Kubecost 3.0 preconditions
     {{ fail "`.Values.kubecostModel.federatedStorageConfigSecret` is no longer supported. Please use `.Values.global.federatedStorage.existingSecret` instead." }}
   {{- end -}}
   {{- if (.Values.federatedETL).federatedCluster -}}
-    {{ fail "`.Values.federatedETL.federatedCluster` is no longer supported. Please use `.Values.finops-agent.enabled=true` instead if you want to push this cluster's metrics to the federated storage." }}
+    {{ fail "`.Values.federatedETL.federatedCluster` is no longer supported. Please use `.Values.finopsAgent.enabled=true` instead if you want to push this cluster's metrics to the federated storage." }}
   {{- end -}}
   {{- if (.Values.federatedETL).agentOnly -}}
     {{ fail "`.Values.federatedETL.agentOnly` is no longer supported. Please use `.Values.aggregator.enabled=false` instead. You may also choose to disable the frontend, cloudcost, and forecasting components." }}
   {{- end -}}
   {{- if (.Values.federatedETL).readOnlyPrimary -}}
-    {{ fail "`.Values.federatedETL.readOnlyPrimary` is no longer supported. Please use `.Values.finops-agent.enabled=false` instead if you don't want to push this cluster's metrics to the federated storage." }}
+    {{ fail "`.Values.federatedETL.readOnlyPrimary` is no longer supported. Please use `.Values.finopsAgent.enabled=false` instead if you don't want to push this cluster's metrics to the federated storage." }}
   {{- end -}}
   {{- if .Values.federatedETL -}}
     {{ fail "`.Values.federatedETL` is no longer supported. Please remove this configuration." }}
