@@ -70,7 +70,7 @@ spec:
             {{- if .Values.global.federatedStorage.existingSecret }}
             secretName: {{ .Values.global.federatedStorage.existingSecret }}
             {{- else }}
-            secretName: federated-store
+            secretName: {{ include "kubecost.federatedStorage.secretName" . }}
             {{- end }}
         {{- end }}
         {{- if (.Values.kubecostProductConfigs).cloudIntegrationSecret }}

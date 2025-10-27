@@ -80,6 +80,8 @@ spec:
         {{- $etlBackupBucketSecret := "" }}
         {{- if .Values.global.federatedStorage.existingSecret }}
             {{- $etlBackupBucketSecret = .Values.global.federatedStorage.existingSecret }}
+        {{- else }}
+           {{- $etlBackupBucketSecret = include "kubecost.federatedStorage.secretName" . }}
         {{- end }}
         {{- if or $etlBackupBucketSecret .Values.global.federatedStorage.config }}
         {{- if or .Values.global.federatedStorage.existingSecret .Values.global.federatedStorage.config }}
@@ -89,7 +91,7 @@ spec:
             {{- if .Values.global.federatedStorage.existingSecret }}
             secretName: {{ .Values.global.federatedStorage.existingSecret }}
             {{- else }}
-            secretName: federated-store
+            secretName: {{ include "kubecost.federatedStorage.secretName" . }}
             {{- end }}
         {{- end }}
         - name: etl-bucket-config
