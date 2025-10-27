@@ -7,3 +7,4 @@
 .kubeconfig
 gke_gcloud_auth_plugin_cache
 temp/
+cost-analyzer/charts/*.tgz
