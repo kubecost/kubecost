@@ -1647,6 +1647,9 @@ for more information
 {{- if ne ((((.Values.prometheus.server).global).external_labels).cluster_id) "cluster-one" }}
 {{- fail "\n\nKubecost 2.9.x is only used for preparing agents to upgrade to 3.0.\nIn kubecost 2.9, the location of the cluster_id configuration has changed.\n\nPlease set global.clusterId and remove .Values.prometheus.server.global.external_labels.cluster_id\nFor more information, see: https://github.com/kubecost/cost-analyzer/tree/v2.9/examples" }}
 {{- end -}}
+{{- if not (.Values.finopsAgent.enabled) -}}
+{{- fail "\n\nKubecost 2.9.x is only used for preparing agents to upgrade to 3.0.\nPlease set, finopsAgent.enabled=true" -}}
+{{- end -}}
 {{- if (.Values.kubecostModel.federatedStorageConfigSecret) -}}
 {{ fail "\n\nKubecost 2.9.x is only used for preparing agents to upgrade to 3.0.\nThis key is no longer used and must be removed: .Values.kubecostModel.federatedStorageConfigSecret\nFor more information, see: https://github.com/kubecost/cost-analyzer/tree/v2.9/examples" }}
 {{- end -}}
