@@ -368,9 +368,9 @@ global:
 upgrade:
   toV2: false
 
-finopsAgent:
+finopsagent:
   ## Kubecost 2.9 is intended to facilitate the upgrade to Kubecost 3.0.
-  ## When upgrading to Kubecost 2.9, the finopsAgent is enabled by default.
+  ## When upgrading to Kubecost 2.9, the finopsagent is enabled by default.
   ## This can be disabled if you are not upgrading the cluster to Kubecost 3.0 or do not mind losing a partial day of data.
   enabled: true
   serviceAccount:

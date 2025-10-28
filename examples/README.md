@@ -16,7 +16,7 @@ There are two values that will need to be modified before upgrading to 2.9, whic
 
 1. Move the old `prometheus.server.global.external_labels.cluster_id` to `global.clusterId`
 2. Move the federated storage configuration from the `kubecostModel` section to the `global` section.
-3. If your existing Kubecost deployment uses an assumed role (opposed to an IAM user/key), you will need to configure the finops-agent to use the existing service account. In the values provided, uncomment the `serviceAccount` and `finopsAgent` sections and set the `name` to the name of the service account used by the cost-analyzer pod.
+3. The finops agent will need to write and read access to the bucket. If your existing Kubecost deployment uses an assumed role (opposed to an IAM user/key), you will need to configure the finops-agent to use the existing service account. In the values provided, uncomment the `serviceAccount` and `finopsagent` sections and set the `name` to the name of the service account used by the cost-analyzer pod.
 ![upgrade-values-2.9](settings-migration.png)
 4. Upgrade to 2.9.x
 

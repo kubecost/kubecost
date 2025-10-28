@@ -21,8 +21,8 @@ While the below versions may work with the given versions of Kubernetes, Kubecos
 | 2.4                            | 1.22           | 1.31           |
 | 2.5                            | 1.22           | 1.32           |
 | 2.6                            | 1.22           | 1.32           |
-| 2.8                            | 1.30           | 1.34           |
-| 2.9                            | 1.30           | 1.34           |
+| 2.8                            | 1.22           | 1.34           |
+| 2.9                            | 1.29           | 1.34           |
 
 ## Installation
 
