@@ -1672,3 +1672,23 @@ federated storage config helpers
     {{- .Release.Name }}-federated-storage-config
   {{- end }}
 {{- end -}}
+
+{{- define "kubecost.imagePullSecrets" -}}
+{{- if .Values.imagePullSecrets }}
+imagePullSecrets:
+{{ range $.Values.imagePullSecrets }}
+  - name: {{ .name }}
+{{ end }}
+{{- else if .Values.global.imagePullSecrets }}
+imagePullSecrets:
+{{ range $.Values.global.imagePullSecrets }}
+  - name: {{ . }}
+{{ end }}
+{{- end -}}
+{{- end -}}
+
+{{- define "kubecost.v3-postconditions" -}}
+{{- if .Values.imagePullSecrets }}
+{{ printf "\nWARNING .Values.imagePullSecrets has been deprecated. Please use .Values.global.imagePullSecrets instead.\nThe finops-agent will only use the global.imagePullSecrets\n" }}
+{{- end -}}
+{{- end -}}

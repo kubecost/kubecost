@@ -18,6 +18,9 @@ global:
     #       access_key: xxx
     #       secret_key: xxx
     existingSecret: ""
+  ## Kubecost 2.9 adds support for global.imagePullSecrets and this is the recommended method for this setting
+  # imagePullSecrets:
+  # - PULL_SECRET_NAME
   ## If your DNS server doesn't live in the same zone as Kubecost
   ##
   zone: ""  # cluster.local
