@@ -594,3 +594,13 @@ NOTE: added kubecostModel for backward compatibility
 {{ printf "\n\nWARNING: The clusterId is set to the default value of 'cluster-one'. This is not recommended if you intend to use multi-cluster federation in the future. Please set a globally unique .Values.global.clusterId\n\n" }}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Prior to kubecost 3.0.3, the finops-agent had a hyphen. It was removed in 3.0.3.
+This will block upgrades until the new value is used, which very few would have changed.
+*/}}
+{{- define "kubecost.finopsAgentCheck" -}}
+{{- if index .Values "finops-agent" }}
+  {{ fail "\nThe helm values for finops-agent have been updated.\nPlease change the finops-agent: key in your helm values to finopsAgent:" }}
+{{- end -}}
+{{- end -}}
