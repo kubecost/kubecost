@@ -23,7 +23,7 @@ cloudCost:
   enabled: false
 forecasting:
   enabled: false
-finops-agent:
+finopsagent:
   enabled: true
 localStore:
   enabled: false
