@@ -20,6 +20,6 @@ clusterController:
   image:
     repository: kubecost/cluster-controller
 
-finops-agent:
+finopsagent:
   image:
     repository: kubecost/agent
