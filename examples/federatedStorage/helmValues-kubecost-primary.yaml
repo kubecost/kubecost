@@ -31,9 +31,9 @@ cloudCost:
   enabled: true
 forecasting:
   enabled: true
-## The finops-agent can be installed with the primary, or it can be disabled to allow for a global 
+## The finopsagent can be installed with the primary, or it can be disabled to allow for a global 
 ## agent deployment that is consistent across all clusters.
-finops-agent:
+finopsagent:
   enabled: true
 ## The localStore should be disabled when using federated storage as it is not used
 localStore:
