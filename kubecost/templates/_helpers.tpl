@@ -17,13 +17,13 @@ Kubecost 3.0 preconditions
     {{ fail "`.Values.kubecostModel.federatedStorageConfigSecret` is no longer supported. Please use `.Values.global.federatedStorage.existingSecret` instead." }}
   {{- end -}}
   {{- if (.Values.federatedETL).federatedCluster -}}
-    {{ fail "`.Values.federatedETL.federatedCluster` is no longer supported. Please use `.Values.finopsAgent.enabled=true` instead if you want to push this cluster's metrics to the federated storage." }}
+    {{ fail "`.Values.federatedETL.federatedCluster` is no longer supported. Please use `.Values.finopsagent.enabled=true` instead if you want to push this cluster's metrics to the federated storage." }}
   {{- end -}}
   {{- if (.Values.federatedETL).agentOnly -}}
     {{ fail "`.Values.federatedETL.agentOnly` is no longer supported. Please use `.Values.aggregator.enabled=false` instead. You may also choose to disable the frontend, cloudcost, and forecasting components." }}
   {{- end -}}
   {{- if (.Values.federatedETL).readOnlyPrimary -}}
-    {{ fail "`.Values.federatedETL.readOnlyPrimary` is no longer supported. Please use `.Values.finopsAgent.enabled=false` instead if you don't want to push this cluster's metrics to the federated storage." }}
+    {{ fail "`.Values.federatedETL.readOnlyPrimary` is no longer supported. Please use `.Values.finopsagent.enabled=false` instead if you don't want to push this cluster's metrics to the federated storage." }}
   {{- end -}}
   {{- if .Values.federatedETL -}}
     {{ fail "`.Values.federatedETL` is no longer supported. Please remove this configuration." }}
@@ -599,8 +599,8 @@ NOTE: added kubecostModel for backward compatibility
 Prior to kubecost 3.0.3, the finops-agent had a hyphen. It was removed in 3.0.3.
 This will block upgrades until the new value is used, which very few would have changed.
 */}}
-{{- define "kubecost.finopsAgentCheck" -}}
+{{- define "kubecost.finopsagentCheck" -}}
 {{- if index .Values "finops-agent" }}
-  {{ fail "\nThe helm values for finops-agent have been updated.\nPlease change the finops-agent: key in your helm values to finopsAgent:" }}
+  {{ fail "\nThe helm values for finops-agent have been updated.\nPlease change the finops-agent: key in your helm values to finopsagent:" }}
 {{- end -}}
 {{- end -}}
