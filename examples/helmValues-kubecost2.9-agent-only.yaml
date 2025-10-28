@@ -16,12 +16,12 @@ global:
 
 ## When using assumed roles to access the bucket, the same service account that is used
 ## by the cost-analyzer pod can be used for the new finops-agent.
-## Below- note that serviceAccount and finops-agent are top level keys (no space before them).
+## Below- note that serviceAccount and finopsagent are top level keys (no space before them).
 # serviceAccount:  ## used by cost-analyzer
 #   create: false
 #   name: ""  ## keep existing values
 #   annotations: {}  ## keep existing values
-# finops-agent:  ## used by finops-agent
+# finopsagent:  ## used by finopsagent
 #   serviceAccount:
 #     create: false
 #     name: ""
