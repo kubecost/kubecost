@@ -576,7 +576,7 @@ localStore:
       helm.sh/resource-policy: keep
 
 ## Below are a subset of values for the finopsAgent sub-chart that are most commonly changed.
-## See https://github.com/kubecost/finopsAgent-chart/
+## See https://github.com/kubecost/finops-agent-chart/
 ## for a complete list of values.
 finopsAgent:
   enabled: true
