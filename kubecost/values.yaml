@@ -426,7 +426,9 @@ systemProxy:
   noProxy: ""
 
 ## Image pull secrets to apply to all resources
-##
+## Note that this format is different that what is used in global.imagePullSecrets for backwards compatibility.
+## When both are set, imagePullSecrets will be used (and not global.imagePullSecrets).
+## The below key will not be used for the finops-agent. Consider using global.imagePullSecrets instead.
 imagePullSecrets: []
 # - name: "image-pull-secret"
 

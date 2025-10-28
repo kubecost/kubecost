@@ -604,3 +604,17 @@ This will block upgrades until the new value is used, which very few would have 
   {{ fail "\nThe helm values for finops-agent have been updated.\nPlease change the finops-agent: key in your helm values to finopsagent:" }}
 {{- end -}}
 {{- end -}}
+
+{{- define "kubecost.imagePullSecrets" -}}
+{{- if .Values.imagePullSecrets }}
+imagePullSecrets:
+{{ range $.Values.imagePullSecrets }}
+  - name: {{ .name }}
+{{ end }}
+{{- else if .Values.global.imagePullSecrets }}
+imagePullSecrets:
+{{ range $.Values.global.imagePullSecrets }}
+  - name: {{ . }}
+{{ end }}
+{{- end -}}
+{{- end -}}
