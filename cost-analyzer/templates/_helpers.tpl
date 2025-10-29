@@ -940,7 +940,7 @@ Begin Kubecost 2.0 templates
       # of the init container that gives everything under /var/configs 777.
       mountPath: /var/configs/waterfowl
       {{- if .Values.kubecostAggregator.useDBv3 }}
-      # mount the clickhouse directories on the same PV as the duckdb, 
+      # mount the clickhouse directories on the same PV as the duckdb,
       # this way they can seamlessly share the same PV before, during, and after the upgrade
     - name: aggregator-db-storage
       mountPath: /var/lib/clickhouse
@@ -1671,4 +1671,24 @@ federated storage config helpers
   {{- else -}}
     {{- .Release.Name }}-federated-storage-config
   {{- end }}
+{{- end -}}
+
+{{- define "kubecost.imagePullSecrets" -}}
+{{- if .Values.global.imagePullSecrets }}
+imagePullSecrets:
+{{ range $.Values.global.imagePullSecrets }}
+  - name: {{ . }}
+{{ end }}
+{{- else if .Values.imagePullSecrets }}
+imagePullSecrets:
+{{ range $.Values.imagePullSecrets }}
+  - name: {{ .name }}
+{{ end }}
+{{- end -}}
+{{- end -}}
+
+{{- define "kubecost.v3-postconditions" -}}
+{{- if .Values.imagePullSecrets }}
+{{ printf "\nWARNING .Values.imagePullSecrets has been deprecated. Please use .Values.global.imagePullSecrets instead.\nThe finops-agent will only use the global.imagePullSecrets\n" }}
+{{- end -}}
 {{- end -}}

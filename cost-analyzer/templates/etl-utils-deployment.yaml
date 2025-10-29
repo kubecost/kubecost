@@ -108,12 +108,7 @@ spec:
               value: {{ $value | quote }}
             {{- end }}
 
-    {{- if .Values.imagePullSecrets }}
-      imagePullSecrets:
-      {{- range $.Values.imagePullSecrets }}
-        - name: {{ .name }}
-      {{- end }}
-    {{- end }}
+      {{- include "kubecost.imagePullSecrets" . | nindent 6 }}
       {{- with .Values.etlUtils.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

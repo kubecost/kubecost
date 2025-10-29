@@ -184,12 +184,7 @@ spec:
       {{- end}}
       containers:
         {{- include "aggregator.cloudCost.containerTemplate" . | nindent 8 }}
-    {{- if .Values.imagePullSecrets }}
-      imagePullSecrets:
-      {{- range $.Values.imagePullSecrets }}
-        - name: {{ .name }}
-      {{- end }}
-    {{- end }}
+      {{- include "kubecost.imagePullSecrets" . | nindent 6 }}
       {{- if .Values.kubecostAggregator.priority }}
       {{- if .Values.kubecostAggregator.priority.enabled }}
       {{- if .Values.kubecostAggregator.priority.name }}

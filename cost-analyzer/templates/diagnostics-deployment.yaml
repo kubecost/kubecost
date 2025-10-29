@@ -82,12 +82,6 @@ spec:
           {{- else }}
           imagePullPolicy: Always
           {{- end }}
-          {{- if .Values.imagePullSecrets }}
-          imagePullSecrets:
-            {{- range $.Values.imagePullSecrets }}
-            - name: {{ .name }}
-            {{- end }}
-          {{- end }}
           {{- if .Values.diagnostics.deployment.containerSecurityContext }}
           securityContext:
             {{- toYaml .Values.diagnostics.deployment.containerSecurityContext | nindent 12 }}
@@ -182,6 +176,6 @@ spec:
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-
+      {{- include "kubecost.imagePullSecrets" . | nindent 6 }}
 {{- end }}
 {{- end }}
