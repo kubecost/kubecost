@@ -7,7 +7,6 @@
 {{- include "kubecost.clusterId.check" . -}}
 {{- include "kubecost.caCertsSecretConfig.check" . -}}
 {{- include "kubecost.actionsStorageSourceCheck" . -}}
-{{- include "kubecost.localStoreClusterIdCheck" . -}}
 {{- include "kubecost.finopsagentCheck" . -}}
 ================================================================================
 KUBECOST INSTALLATION SUCCESSFUL
@@ -40,3 +39,6 @@ Having installation issues? View our Troubleshooting Guide:
 https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=troubleshoot-install
 
 Copyright IBM Corp. 2019-2025
+
+{{- include "kubecost.localStoreClusterIdCheck" . -}}
+{{- include "kubecost.v3-postconditions" . -}}
