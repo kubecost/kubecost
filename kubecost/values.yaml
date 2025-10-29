@@ -425,8 +425,10 @@ systemProxy:
   httpsProxyUrl: ""
   noProxy: ""
 
-## Image pull secrets to apply to all resources
-##
+## deprecated: this image pull secret (on the root level) is for backwards compatibility.
+## Note that this format is different that what is used in global.imagePullSecrets
+## When both are set, global.imagePullSecrets will be used (and not this block below).
+## The below key will not be used for the finops-agent pod. Consider using global.imagePullSecrets instead.
 imagePullSecrets: []
 # - name: "image-pull-secret"
 
