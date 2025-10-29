@@ -606,15 +606,15 @@ This will block upgrades until the new value is used, which very few would have 
 {{- end -}}
 
 {{- define "kubecost.imagePullSecrets" -}}
-{{- if .Values.imagePullSecrets }}
-imagePullSecrets:
-{{ range $.Values.imagePullSecrets }}
-  - name: {{ .name }}
-{{ end }}
-{{- else if .Values.global.imagePullSecrets }}
+{{- if .Values.global.imagePullSecrets }}
 imagePullSecrets:
 {{ range $.Values.global.imagePullSecrets }}
   - name: {{ . }}
+{{ end }}
+{{- else if .Values.imagePullSecrets }}
+imagePullSecrets:
+{{ range $.Values.imagePullSecrets }}
+  - name: {{ .name }}
 {{ end }}
 {{- end -}}
 {{- end -}}
