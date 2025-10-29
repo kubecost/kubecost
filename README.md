@@ -6,6 +6,17 @@ There are no new features in v2.9 compared to v2.8 other than the addition of a 
  
 See [./examples](./examples) for more information on how to use this version.
 
+All agents must run version 2.9 for at least 2 days before upgrading to v3.0.
+
+Of note, the Kubecost 3.0 chart is stored in a different repo than 2.x. To install version 2.9, you will need to use the 2.x legacy chart location.
+
+```sh
+helm upgrade kubecost -n kubecost \
+  --repo https://kubecost.github.io/cost-analyzer/ cost-analyzer
+  -f new-2.9x-values.yaml
+```
+
+
 ## Version Support
 
 Kubecost strives to support as many versions of Kubernetes as possible. Below is the version support matrix which has been tested. Versions outside of the stated range may still work but are untested.
