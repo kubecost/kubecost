@@ -5,3 +5,4 @@
 .dist
 .manifest
 .kubeconfig
+temp/
