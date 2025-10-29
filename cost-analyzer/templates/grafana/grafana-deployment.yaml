@@ -70,6 +70,8 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           volumeMounts:
+            - name: tmp
+              mountPath: /tmp
             - name: config
               mountPath: "/etc/grafana/download_dashboards.sh"
               subPath: download_dashboards.sh
@@ -134,6 +136,8 @@ spec:
           resources:
             {{ toYaml .Values.grafana.sidecar.resources | indent 12 }}
           volumeMounts:
+            - name: tmp
+              mountPath: /tmp
             - name: sc-datasources-volume
               mountPath: "/etc/grafana/provisioning/datasources"
       {{- end}}
@@ -145,6 +149,8 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           volumeMounts:
+            - name: tmp
+              mountPath: /tmp
             - name: config
               mountPath: "/etc/grafana/grafana.ini"
               subPath: grafana.ini
