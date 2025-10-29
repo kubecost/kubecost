@@ -18,6 +18,10 @@ global:
     #       access_key: xxx
     #       secret_key: xxx
     existingSecret: ""
+  ## Kubecost 2.9 adds support for global.imagePullSecrets and this is the recommended method for this setting
+  imagePullSecrets: []
+  # - PULL_SECRET_NAME
+
   ## If your DNS server doesn't live in the same zone as Kubecost
   ##
   zone: ""  # cluster.local
@@ -368,9 +372,9 @@ global:
 upgrade:
   toV2: false
 
-finops-agent:
+finopsagent:
   ## Kubecost 2.9 is intended to facilitate the upgrade to Kubecost 3.0.
-  ## When upgrading to Kubecost 2.9, the finops-agent is enabled by default.
+  ## When upgrading to Kubecost 2.9, the finopsagent is enabled by default.
   ## This can be disabled if you are not upgrading the cluster to Kubecost 3.0 or do not mind losing a partial day of data.
   enabled: true
   serviceAccount:
@@ -575,6 +579,10 @@ systemProxy:
   httpsProxyUrl: ""
   noProxy: ""
 
+# deprecated: this image pull secret (on the root level) is for backwards compatibility.
+## Note that this format is different that what is used in global.imagePullSecrets
+## When both are set, global.imagePullSecrets will be used (and not this block below).
+## The below key will not be used for the finops-agent pod. Consider using global.imagePullSecrets instead.
 # imagePullSecrets:
 # - name: "image-pull-secret"
 

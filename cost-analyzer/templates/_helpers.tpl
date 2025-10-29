@@ -940,7 +940,7 @@ Begin Kubecost 2.0 templates
       # of the init container that gives everything under /var/configs 777.
       mountPath: /var/configs/waterfowl
       {{- if .Values.kubecostAggregator.useDBv3 }}
-      # mount the clickhouse directories on the same PV as the duckdb, 
+      # mount the clickhouse directories on the same PV as the duckdb,
       # this way they can seamlessly share the same PV before, during, and after the upgrade
     - name: aggregator-db-storage
       mountPath: /var/lib/clickhouse
@@ -1647,6 +1647,9 @@ for more information
 {{- if ne ((((.Values.prometheus.server).global).external_labels).cluster_id) "cluster-one" }}
 {{- fail "\n\nKubecost 2.9.x is only used for preparing agents to upgrade to 3.0.\nIn kubecost 2.9, the location of the cluster_id configuration has changed.\n\nPlease set global.clusterId and remove .Values.prometheus.server.global.external_labels.cluster_id\nFor more information, see: https://github.com/kubecost/cost-analyzer/tree/v2.9/examples" }}
 {{- end -}}
+{{- if not (.Values.finopsagent.enabled) -}}
+{{- fail "\n\nKubecost 2.9.x is only used for preparing agents to upgrade to 3.0.\nPlease set, finopsagent.enabled=true" -}}
+{{- end -}}
 {{- if (.Values.kubecostModel.federatedStorageConfigSecret) -}}
 {{ fail "\n\nKubecost 2.9.x is only used for preparing agents to upgrade to 3.0.\nThis key is no longer used and must be removed: .Values.kubecostModel.federatedStorageConfigSecret\nFor more information, see: https://github.com/kubecost/cost-analyzer/tree/v2.9/examples" }}
 {{- end -}}
@@ -1668,4 +1671,24 @@ federated storage config helpers
   {{- else -}}
     {{- .Release.Name }}-federated-storage-config
   {{- end }}
+{{- end -}}
+
+{{- define "kubecost.imagePullSecrets" -}}
+{{- if .Values.global.imagePullSecrets }}
+imagePullSecrets:
+{{ range $.Values.global.imagePullSecrets }}
+  - name: {{ . }}
+{{ end }}
+{{- else if .Values.imagePullSecrets }}
+imagePullSecrets:
+{{ range $.Values.imagePullSecrets }}
+  - name: {{ .name }}
+{{ end }}
+{{- end -}}
+{{- end -}}
+
+{{- define "kubecost.v3-postconditions" -}}
+{{- if .Values.imagePullSecrets }}
+{{ printf "\nWARNING .Values.imagePullSecrets has been deprecated. Please use .Values.global.imagePullSecrets instead.\nThe finops-agent will only use the global.imagePullSecrets\n" }}
+{{- end -}}
 {{- end -}}
