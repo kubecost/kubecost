@@ -591,7 +591,7 @@ NOTE: added kubecostModel for backward compatibility
 
 {{- define "kubecost.localStoreClusterIdCheck" -}}
 {{- if eq (include "kubecost.clusterId" .) "cluster-one" -}}
-{{ printf "\n\nWARNING: The clusterId is set to the default value of 'cluster-one'. This is not recommended if you intend to use multi-cluster federation in the future. Please set a globally unique .Values.global.clusterId\n\n" }}
+{{ printf "\n\nWARNING: The clusterId is set to the default value of 'cluster-one'. This is not recommended if you intend to use multi-cluster federation in the future. Please set a globally unique .Values.global.clusterId\n" }}
 {{- end -}}
 {{- end -}}
 
@@ -602,5 +602,25 @@ This will block upgrades until the new value is used, which very few would have 
 {{- define "kubecost.finopsagentCheck" -}}
 {{- if index .Values "finops-agent" }}
   {{ fail "\nThe helm values for finops-agent have been updated.\nPlease change the finops-agent: key in your helm values to finopsagent:" }}
+{{- end -}}
+{{- end -}}
+
+{{- define "kubecost.imagePullSecrets" -}}
+{{- if .Values.global.imagePullSecrets }}
+imagePullSecrets:
+{{ range $.Values.global.imagePullSecrets }}
+  - name: {{ . }}
+{{ end }}
+{{- else if .Values.imagePullSecrets }}
+imagePullSecrets:
+{{ range $.Values.imagePullSecrets }}
+  - name: {{ .name }}
+{{ end }}
+{{- end -}}
+{{- end -}}
+
+{{- define "kubecost.v3-postconditions" -}}
+{{- if .Values.imagePullSecrets }}
+{{ printf "\nWARNING .Values.imagePullSecrets has been deprecated. Please use .Values.global.imagePullSecrets instead.\nThe finops-agent will only use the global.imagePullSecrets\n" }}
 {{- end -}}
 {{- end -}}

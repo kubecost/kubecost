@@ -40,12 +40,7 @@ spec:
         {{- toYaml .Values.networkCosts.additionalLabels | nindent 8 }}
         {{- end }}
     spec:
-    {{- if .Values.imagePullSecrets }}
-      imagePullSecrets:
-      {{- range $.Values.imagePullSecrets }}
-        - name: {{ .name }}
-      {{- end }}
-    {{- end }}
+      {{- include "kubecost.imagePullSecrets" . | nindent 6 }}
       hostNetwork: true
       serviceAccountName: {{ template "kubecost.networkCosts.name" . }}
       containers:

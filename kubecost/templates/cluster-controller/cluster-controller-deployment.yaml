@@ -157,12 +157,7 @@ spec:
         {{- end }}
         resources:
           {{- toYaml .Values.clusterController.resources | nindent 12 }}
-      {{- if .Values.imagePullSecrets }}
-      imagePullSecrets:
-        {{- range $.Values.imagePullSecrets }}
-        - name: {{ .name }}
-        {{- end }}
-      {{- end }}
+      {{- include "kubecost.imagePullSecrets" . | nindent 6 }}
       serviceAccount: {{ include "kubecost.clusterController.name" . }}
       serviceAccountName: {{ include "kubecost.clusterController.name" . }}
       {{- with .Values.clusterController.tolerations }}

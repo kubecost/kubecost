@@ -186,12 +186,7 @@ spec:
           securityContext:
           {{- toYaml .Values.global.containerSecuritycontext | nindent 12 }}
           {{- end }}
-    {{- if .Values.imagePullSecrets }}
-      imagePullSecrets:
-      {{- range $.Values.imagePullSecrets }}
-        - name: {{ .name }}
-      {{- end }}
-    {{- end }}
+      {{- include "kubecost.imagePullSecrets" . | nindent 6 }}
       {{- if .Values.frontend.priority }}
       {{- if .Values.frontend.priority.enabled }}
       {{- if gt (len .Values.frontend.priority.name) 0 }}
