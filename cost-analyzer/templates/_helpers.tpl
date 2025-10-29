@@ -940,7 +940,7 @@ Begin Kubecost 2.0 templates
       # of the init container that gives everything under /var/configs 777.
       mountPath: /var/configs/waterfowl
       {{- if .Values.kubecostAggregator.useDBv3 }}
-      # mount the clickhouse directories on the same PV as the duckdb, 
+      # mount the clickhouse directories on the same PV as the duckdb,
       # this way they can seamlessly share the same PV before, during, and after the upgrade
     - name: aggregator-db-storage
       mountPath: /var/lib/clickhouse
