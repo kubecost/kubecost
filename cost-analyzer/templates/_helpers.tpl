@@ -1033,7 +1033,7 @@ Begin Kubecost 2.0 templates
     {{- end }}
   env:
     - name: CLUSTER_ID
-      value: {{ .Values.global.clusterId }}
+      value: {{ include "kubecost.clusterId" . }}
     {{- if and ((.Values.kubecostProductConfigs).productKey).mountPath (eq (include "aggregator.deployMethod" .) "statefulset") }}
     - name: PRODUCT_KEY_MOUNT_PATH
       value: {{ .Values.kubecostProductConfigs.productKey.mountPath }}
@@ -1690,5 +1690,13 @@ imagePullSecrets:
 {{- define "kubecost.v3-postconditions" -}}
 {{- if .Values.imagePullSecrets }}
 {{ printf "\nWARNING .Values.imagePullSecrets has been deprecated. Please use .Values.global.imagePullSecrets instead.\nThe finops-agent will only use the global.imagePullSecrets\n" }}
+{{- end -}}
+{{- end -}}
+
+{{- define "kubecost.clusterId" -}}
+{{- if (.Values.global.clusterId) -}}
+{{ .Values.global.clusterId }}
+{{- else -}}
+{{ fail "Please set global.clusterId" }}
 {{- end -}}
 {{- end -}}
