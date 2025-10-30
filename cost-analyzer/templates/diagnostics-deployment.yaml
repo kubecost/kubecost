@@ -1,10 +1,6 @@
 {{- if and .Values.diagnostics.enabled .Values.diagnostics.deployment.enabled }}
 {{- if or .Values.global.federatedStorage.existingSecret .Values.global.federatedStorage.config -}}
 
-{{- if eq .Values.prometheus.server.global.external_labels.cluster_id "cluster-one" }}
-{{- fail "Error: The 'cluster_id' is set to default 'cluster-one'. Please update so that the diagnostics service can uniquely identify data coming from this cluster." }}
-{{- end }}
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -97,17 +93,8 @@ spec:
               mountPath: /var/configs/etl
               readOnly: true
           env:
-            {{- if and (.Values.prometheus.server.global.external_labels.cluster_id) (not .Values.prometheus.server.clusterIDConfigmap) }}
             - name: CLUSTER_ID
-              value: {{ .Values.prometheus.server.global.external_labels.cluster_id }}
-            {{- end }}
-            {{- if .Values.prometheus.server.clusterIDConfigmap }}
-            - name: CLUSTER_ID
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ .Values.prometheus.server.clusterIDConfigmap }}
-                  key: CLUSTER_ID
-            {{- end }}
+              value: {{ include "kubecost.clusterId" . }}
             - name: FEDERATED_STORE_CONFIG
               value: /var/configs/etl/federated-store.yaml
             - name: DIAGNOSTICS_RUN_IN_COST_MODEL
