@@ -1644,9 +1644,6 @@ for more information
 
 
 {{- define "kc29FailConditions" -}}
-{{- if ne ((((.Values.prometheus.server).global).external_labels).cluster_id) "cluster-one" }}
-{{- fail "\n\nKubecost 2.9.x is only used for preparing agents to upgrade to 3.0.\nIn kubecost 2.9, the location of the cluster_id configuration has changed.\n\nPlease set global.clusterId and remove .Values.prometheus.server.global.external_labels.cluster_id\nFor more information, see: https://github.com/kubecost/cost-analyzer/tree/v2.9/examples" }}
-{{- end -}}
 {{- if not (.Values.finopsagent.enabled) -}}
 {{- fail "\n\nKubecost 2.9.x is only used for preparing agents to upgrade to 3.0.\nPlease set, finopsagent.enabled=true" -}}
 {{- end -}}
@@ -1694,9 +1691,9 @@ imagePullSecrets:
 {{- end -}}
 
 {{- define "kubecost.clusterId" -}}
-{{- if (.Values.global.clusterId) -}}
+{{- if eq (.Values.global.clusterId) (.Values.prometheus.server.global.external_labels.cluster_id) -}}
 {{ .Values.global.clusterId }}
 {{- else -}}
-{{ fail "Please set global.clusterId" }}
+{{ fail "\n\nKubecost 2.9.x is only used for preparing agents to upgrade to 3.0.\nIn kubecost 2.9, cluster_id is set in two places.\nFor more information, see: https://github.com/kubecost/cost-analyzer/tree/v2.9/examples" }}
 {{- end -}}
 {{- end -}}
