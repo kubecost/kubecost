@@ -915,7 +915,7 @@ Begin Kubecost 2.0 templates
   volumeMounts:
     - name: persistent-configs
       mountPath: /var/configs
-    {{- if or (.Values.global).federatedStorage.existingSecret (.Values.global).federatedStorageConfig }}
+    {{- if or (.Values.global).federatedStorage.existingSecret (.Values.global).federatedStorage.config }}
     - name: federated-storage-config
       mountPath: /var/configs/etl
       readOnly: true
