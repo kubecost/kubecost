@@ -162,7 +162,7 @@ RBAC exclusivity check: make sure either simple RBAC or RBAC Teams is configured
 Federated Storage source contents check. Either the Secret must be specified or the JSON, not both.
 */}}
 {{- define "federatedStorageSourceCheck" -}}
-  {{- if and (.Values.global).federatedStorage.existingSecret (.Values.global).federatedStorageConfig -}}
+  {{- if and (.Values.global).federatedStorage.existingSecret (.Values.global).federatedStorage.config -}}
     {{- fail "\nglobal.federatedStorage.existingSecret and global.federatedStorage.config are mutually exclusive. Please specify only one." -}}
   {{- end -}}
 {{- end -}}
@@ -1304,7 +1304,7 @@ Begin Kubecost 2.0 templates
   volumeMounts:
     - name: persistent-configs
       mountPath: /var/configs
-  {{- if or (.Values.global).federatedStorage.existingSecret (.Values.global).federatedStorageConfig }}
+  {{- if or (.Values.global).federatedStorage.existingSecret (.Values.global).federatedStorage.config }}
     - name: federated-storage-config
       mountPath: /var/configs/etl/federated
       readOnly: true
@@ -1436,7 +1436,7 @@ Groups is only used when using simple RBAC.
 Backups configured flag for nginx configmap
 */}}
 {{- define "dataBackupConfigured" -}}
-  {{- if or (.Values.global).federatedStorage.existingSecret (.Values.global).federatedStorageConfig -}}
+  {{- if or (.Values.global).federatedStorage.existingSecret (.Values.global).federatedStorage.config -}}
     {{- printf "true" -}}
   {{- else -}}
     {{- printf "false" -}}
