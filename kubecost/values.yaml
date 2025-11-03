@@ -141,7 +141,7 @@ global:
   ## Kubecost Budget and Budget Actions
   ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=ui-budgets
   ##
-  budgets:
+  budget:
     enabled: false  # If true, overwrites budget parameters set through UI
     budgetsConfig:
       - name: "Example Budget 0"
@@ -164,9 +164,9 @@ global:
             emails:
               - "budget-alert@example.com"
             # slackWebhooks:
-            #   - "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX"
+            #   - "https://hooks.slack.com/services/***********/***********/**********************"
             # msTeamsWebhooks:
-            #   - "https://xxxxx.webhook.office.com/webhookb2/XXXXXXXXXXXXXXXXXXXXXXXX/IncomingWebhook/XXXXXXXXXXXXXXXXXXXXXXXX"
+            #   - "https://xxxxx.webhook.office.com/webhookb2"
 
   ## Globally set annotations and labels
   ##
