@@ -166,7 +166,7 @@ global:
             # slackWebhooks:
             #   - "https://hooks.slack.com/services/***********/***********/**********************"
             # msTeamsWebhooks:
-            #   - "https://xxxxx.webhook.office.com/webhookb2"
+            #   - "https://xxxxx.webhook.office.com"
 
   ## Globally set annotations and labels
   ##
