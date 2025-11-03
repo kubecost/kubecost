@@ -138,6 +138,36 @@ global:
         #   - property: "service"
         #     value: "service1" # corresponds to a value to filter cloud cost aggregate by service data on.
 
+  ## Kubecost Budget and Budget Actions
+  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=ui-budgets
+  ##
+  budgets:
+    enabled: false  # If true, overwrites budget parameters set through UI
+    budgetsConfig:
+      - name: "Example Budget 0"
+        budgetType: "allocations" # allocations, asset, cloud or collections
+        interval: "weekly" # weekly or monthly
+        intervalDay: 1 # 1-7, 1 is Monday when interval is weekly. 1-31, when interval is monthly.
+        spendLimit: 50 # in USD
+        values:
+          cluster:
+            - "cluster-one"
+          # namespace:
+          #   - "namespace-one"
+          #   - "namespace-two"
+          # label:
+          #   - "label-one:value-one"
+          #   - "label-two:value-two"
+        actions:
+          - amount: 0
+            percentage: 50
+            emails:
+              - "budget-alert@example.com"
+            # slackWebhooks:
+            #   - "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX"
+            # msTeamsWebhooks:
+            #   - "https://xxxxx.webhook.office.com/webhookb2/XXXXXXXXXXXXXXXXXXXXXXXX/IncomingWebhook/XXXXXXXXXXXXXXXXXXXXXXXX"
+
   ## Globally set annotations and labels
   ##
   podAnnotations: {}

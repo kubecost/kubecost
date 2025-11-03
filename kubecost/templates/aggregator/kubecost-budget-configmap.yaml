@@ -1,0 +1,13 @@
+{{- if .Values.global.budget }}
+{{- if .Values.global.budget.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{default "budget-configs" .Values.budgetConfigmapName }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
+data:
+  budgets.json: '{{ toJson .Values.global.budget.budgetsConfig }}'
+{{- end -}}
+{{- end -}}
