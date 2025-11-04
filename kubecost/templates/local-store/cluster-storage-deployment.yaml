@@ -115,12 +115,7 @@ spec:
               value: {{ $value | quote }}
             {{- end }}
             {{- include "common.systemProxy" . | indent 12 }}
-    {{- if .Values.imagePullSecrets }}
-      imagePullSecrets:
-      {{- range $.Values.imagePullSecrets }}
-        - name: {{ .name }}
-      {{- end }}
-    {{- end }}
+      {{- include "kubecost.imagePullSecrets" . | nindent 6 }}
       {{- with (.Values.localStore).nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

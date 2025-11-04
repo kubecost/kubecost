@@ -404,8 +404,8 @@ teams:
 ## Ref: https://www.oreilly.com/library/view/security-with-go/9781788627917/5ea6a02b-3d96-44b1-ad3c-6ab60fcbbe4f.xhtml
 ##
 ## You must also set the finops-agent systemProxy values independently.
-## Please merge these values below with the finops-agent values for your release.
-# finops-agent:
+## Please merge these values below with the finopsagent: values for your release.
+# finopsagent:
 #   extraEnvVars:
 #   - name: HTTP_PROXY
 #     value: httpProxyUrl
@@ -425,8 +425,10 @@ systemProxy:
   httpsProxyUrl: ""
   noProxy: ""
 
-## Image pull secrets to apply to all resources
-##
+## deprecated: this image pull secret (on the root level) is for backwards compatibility.
+## Note that this format is different that what is used in global.imagePullSecrets
+## When both are set, global.imagePullSecrets will be used (and not this block below).
+## The below key will not be used for the finops-agent pod. Consider using global.imagePullSecrets instead.
 imagePullSecrets: []
 # - name: "image-pull-secret"
 
@@ -575,11 +577,14 @@ localStore:
       # This can be used to allow the agent history to be uploaded to cloud storage when upgrading to Enterprise.
       helm.sh/resource-policy: keep
 
-## Below are a subset of values for the finops-agent sub-chart that are most commonly changed.
+## Below are a subset of values for the finopsagent sub-chart that are most commonly changed.
 ## See https://github.com/kubecost/finops-agent-chart/
 ## for a complete list of values.
-finops-agent:
+finopsagent:
   enabled: true
+  # serviceAccount:
+  #   create: true
+  #   name: finops-agent
   persistence:
     ## @param persistence.enabled Enable FinOps Agent data persistence for WAL and other local data
     ##

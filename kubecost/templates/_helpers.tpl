@@ -17,13 +17,13 @@ Kubecost 3.0 preconditions
     {{ fail "`.Values.kubecostModel.federatedStorageConfigSecret` is no longer supported. Please use `.Values.global.federatedStorage.existingSecret` instead." }}
   {{- end -}}
   {{- if (.Values.federatedETL).federatedCluster -}}
-    {{ fail "`.Values.federatedETL.federatedCluster` is no longer supported. Please use `.Values.finops-agent.enabled=true` instead if you want to push this cluster's metrics to the federated storage." }}
+    {{ fail "`.Values.federatedETL.federatedCluster` is no longer supported. Please use `.Values.finopsagent.enabled=true` instead if you want to push this cluster's metrics to the federated storage." }}
   {{- end -}}
   {{- if (.Values.federatedETL).agentOnly -}}
     {{ fail "`.Values.federatedETL.agentOnly` is no longer supported. Please use `.Values.aggregator.enabled=false` instead. You may also choose to disable the frontend, cloudcost, and forecasting components." }}
   {{- end -}}
   {{- if (.Values.federatedETL).readOnlyPrimary -}}
-    {{ fail "`.Values.federatedETL.readOnlyPrimary` is no longer supported. Please use `.Values.finops-agent.enabled=false` instead if you don't want to push this cluster's metrics to the federated storage." }}
+    {{ fail "`.Values.federatedETL.readOnlyPrimary` is no longer supported. Please use `.Values.finopsagent.enabled=false` instead if you don't want to push this cluster's metrics to the federated storage." }}
   {{- end -}}
   {{- if .Values.federatedETL -}}
     {{ fail "`.Values.federatedETL` is no longer supported. Please remove this configuration." }}
@@ -591,6 +591,36 @@ NOTE: added kubecostModel for backward compatibility
 
 {{- define "kubecost.localStoreClusterIdCheck" -}}
 {{- if eq (include "kubecost.clusterId" .) "cluster-one" -}}
-{{ printf "\n\nWARNING: The clusterId is set to the default value of 'cluster-one'. This is not recommended if you intend to use multi-cluster federation in the future. Please set a globally unique .Values.global.clusterId\n\n" }}
+{{ printf "\n\nWARNING: The clusterId is set to the default value of 'cluster-one'. This is not recommended if you intend to use multi-cluster federation in the future. Please set a globally unique .Values.global.clusterId\n" }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Prior to kubecost 3.0.3, the finops-agent had a hyphen. It was removed in 3.0.3.
+This will block upgrades until the new value is used, which very few would have changed.
+*/}}
+{{- define "kubecost.finopsagentCheck" -}}
+{{- if index .Values "finops-agent" }}
+  {{ fail "\nThe helm values for finops-agent have been updated.\nPlease change the finops-agent: key in your helm values to finopsagent:" }}
+{{- end -}}
+{{- end -}}
+
+{{- define "kubecost.imagePullSecrets" -}}
+{{- if .Values.global.imagePullSecrets }}
+imagePullSecrets:
+{{ range $.Values.global.imagePullSecrets }}
+  - name: {{ . }}
+{{ end }}
+{{- else if .Values.imagePullSecrets }}
+imagePullSecrets:
+{{ range $.Values.imagePullSecrets }}
+  - name: {{ .name }}
+{{ end }}
+{{- end -}}
+{{- end -}}
+
+{{- define "kubecost.v3-postconditions" -}}
+{{- if .Values.imagePullSecrets }}
+{{ printf "\nWARNING .Values.imagePullSecrets has been deprecated. Please use .Values.global.imagePullSecrets instead.\nThe finops-agent will only use the global.imagePullSecrets\n" }}
 {{- end -}}
 {{- end -}}

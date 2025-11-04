@@ -15,5 +15,5 @@ aggregator:
 cloudCost:
   enabled: true
   cloudIntegrationSecret: cloud-integration
-finops-agent:
+finopsagent:
   enabled: false
