@@ -208,7 +208,7 @@ spec:
         {{- if ((.Values.kubecostProductConfigs).actions).config }}
         - name: actions-config
           configMap:
-            name: actions-config
+            name: {{ include "kubecost.actions.configMapName" . }}
         {{- end }}
       {{- if ((.Values.kubecostProductConfigs).actions).enabled }}
         {{- if and (not (((.Values.kubecostProductConfigs).actions).storageConfigSecret)) (not (((.Values.kubecostProductConfigs).actions).storageConfig)) }}

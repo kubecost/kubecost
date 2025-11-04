@@ -68,3 +68,11 @@ app: aggregator
   {{ default (printf "smtp-configs-%s" .Release.Name | trunc 63 | trimSuffix "-") .Values.smtpConfigmapName }}
 {{- end -}}
 {{- end -}}
+
+{{- define "kubecost.actions.configMapName" -}}
+{{- if ((.Values.kubecostProductConfigs).actions).configMapName -}}
+  {{- ((.Values.kubecostProductConfigs).actions).configMapName -}}
+{{- else -}}
+{{ printf "actions-config-%s" .Release.Name | trunc 63 | trimSuffix "-" }}
+{{- end -}}
+{{- end -}}
