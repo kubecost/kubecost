@@ -1351,31 +1351,31 @@ kubecostProductConfigs:
   ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=ui-budgets
   ##
   budgets:
-    enabled: false  # If true, adds the budgets present in budgetsConfig to the list of budgets in the Kubecost UI
+    configmapName: ""
     budgetsConfig:
-    - name: "Example Budget 0"
-      budgetType: "allocations"  # allocations, asset, cloud or collections
-      interval: "weekly"  # weekly or monthly
-      intervalDay: 1  # 1-7, 1 is Monday when interval is weekly. 1-31, when interval is monthly.
-      spendLimit: 50  # in USD
-      values:
-        cluster:
-        - "cluster-one"
-        # namespace:
-        #   - "namespace-one"
-        #   - "namespace-two"
-        # label:
-        #   - "label-one:value-one"
-        #   - "label-two:value-two"
-      actions:
-      - amount: 0
-        percentage: 50
-        emails:
-        - "budget-alert@example.com"
-        # slackWebhooks:
-        #   - "https://hooks.slack.com/services/***********/***********/**********************"
-        # msTeamsWebhooks:
-        #   - "https://xxxxx.webhook.office.com"
+    # - name: "Example Budget 0"
+    #   budgetType: "allocations"  # allocations, asset, cloud or collections
+    #   interval: "weekly"  # weekly or monthly
+    #   intervalDay: 1  # 1-7, 1 is Monday when interval is weekly. 1-31, when interval is monthly.
+    #   spendLimit: 50  # in USD
+    #   values:
+    #     cluster:
+    #     - "cluster-one"
+    #     # namespace:
+    #     #   - "namespace-one"
+    #     #   - "namespace-two"
+    #     # label:
+    #     #   - "label-one:value-one"
+    #     #   - "label-two:value-two"
+    #   actions:
+    #   - amount: 0
+    #     percentage: 50
+    #     emails:
+    #     - "budget-alert@example.com"
+    #     # slackWebhooks:
+    #     #   - "https://hooks.slack.com/services/***********/***********/**********************"
+    #     # msTeamsWebhooks:
+    #     #   - "https://xxxxx.webhook.office.com"
 
   ## The cluster profile represents a predefined set of parameters to use when calculating savings.
   ## Possible values are: [ development, production, high-availability ]

@@ -454,9 +454,9 @@ spec:
             - name: SMTP_CONFIGMAP_NAME
               value: {{ .Values.smtpConfigmapName }}
             {{- end }}
-            {{- if .Values.budgetsConfigmapName }}
+            {{- if .Values.kubecostProductConfigs.budgets.configmapName }}
             - name: BUDGETS_CONFIGMAP_NAME
-              value: {{ .Values.budgetsConfigmapName }}
+              value: {{ .Values.kubecostProductConfigs.budgets.configmapName }}
             {{- end }}
             {{- if (gt (int .Values.aggregator.numDBCopyPartitions) 0) }}
             - name: NUM_DB_COPY_CHUNKS

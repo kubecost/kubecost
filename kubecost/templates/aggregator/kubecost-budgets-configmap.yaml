@@ -1,13 +1,15 @@
 {{- if .Values.kubecostProductConfigs.budgets }}
-{{- if .Values.kubecostProductConfigs.budgets.enabled }}
+{{- if .Values.kubecostProductConfigs.budgets.budgetsConfig }}
+{{- if (gt (len .Values.kubecostProductConfigs.budgets.budgetsConfig) 0) }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{default "budgets-configs" .Values.budgetsConfigmapName }}
+  name: {{default "budgets-configs" .Values.kubecostProductConfigs.budgets.configmapName }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "kubecost.commonLabels" . | nindent 4 }}
 data:
   budgets.json: '{{ toJson .Values.kubecostProductConfigs.budgets.budgetsConfig }}'
+{{- end -}}
 {{- end -}}
 {{- end -}}
