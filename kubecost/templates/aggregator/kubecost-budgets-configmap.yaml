@@ -1,4 +1,4 @@
-{{- if and ((.Values.kubecostProductConfigs).budgets).budgetsConfig (gt (len .Values.kubecostProductConfigs.budgets.budgetsConfig) 0) }}
+{{- if ((.Values.kubecostProductConfigs).budgets).budgetsConfig }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
