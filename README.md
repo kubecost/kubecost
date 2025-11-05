@@ -20,10 +20,10 @@ In order to upgrade from Kubecost 2.x to 3.x, it is recommended that all agents 
 
 ### Key changes in 3.0
 
-| Version | Database | Metrics Source | Automated Savings |
-|---------|----------|----------------|------------------|
-| 2.x     | DuckDB | Prometheus | Primary cluster only |
-| 3.0     | ClickHouse | Direct  | All clusters |
+| Version | Database | Metrics Source |
+|---------|----------|----------------|
+| 2.x     | DuckDB | Prometheus |
+| 3.0     | ClickHouse | Direct  |
 
 Due to the new database, a complete re-ingestion of data will begin as soon as 3.x is installed. This will take anywhere from 20 minutes to 2 days to complete depending on the size of the dataset and performance of the storage backing the Persistent Volume. During this time, the UI will be available, but will show a progress indicator. Data will be imported from today and going backwards in time until the full history is available.
 
