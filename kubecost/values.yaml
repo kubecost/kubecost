@@ -39,7 +39,7 @@ global:
     existingSecret: ""
     apiKey: ""
   ## @param global.imageRegistry The image registry used for all images in this chart and subcharts
-  imageRegistry: "icr.io"
+  imageRegistry: icr.io
   ## E.g.
   ## imagePullSecrets:
   ##   - myRegistryKeySecretName
@@ -337,6 +337,7 @@ oidc:
   skipOnlineTokenValidation: false  # If true, validate JWT claims locally
   useClientSecretPost: false  # If true, only use client_secret_post method. Otherwise attempt to send the secret in both the header and the body.
   hostedDomain: ""  # Optional, blocks access to the auth domain specified in the hd claim of the provider ID token
+  useIDToken: false  # If true, use ID token for authentication. Otherwise, use access token. Set it to true if your identity providers communicate a user's group in the id_token (e.g. Entra ID).
   rbac:
     enabled: false
     # groups:
@@ -582,6 +583,11 @@ localStore:
 ## for a complete list of values.
 finopsagent:
   enabled: true
+  image:
+    repository: ibm-finops/agent
+  #   registry: ""  # Default is "icr.io"
+  #   tag: ""  # Default is set in Chart.yaml
+  # fullImageName: ""  # fullImageName If set, will override the image registry, repo/name and tag.
   # serviceAccount:
   #   create: true
   #   name: finops-agent
