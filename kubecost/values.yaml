@@ -39,7 +39,7 @@ global:
     existingSecret: ""
     apiKey: ""
   ## @param global.imageRegistry The image registry used for all images in this chart and subcharts
-  imageRegistry: "icr.io"
+  imageRegistry: icr.io
   ## E.g.
   ## imagePullSecrets:
   ##   - myRegistryKeySecretName
@@ -583,6 +583,11 @@ localStore:
 ## for a complete list of values.
 finopsagent:
   enabled: true
+  image:
+    repository: ibm-finops/agent
+  #   registry: ""  # Default is "icr.io"
+  #   tag: ""  # Default is set in Chart.yaml
+  # fullImageName: ""  # fullImageName If set, will override the image registry, repo/name and tag.
   # serviceAccount:
   #   create: true
   #   name: finops-agent
