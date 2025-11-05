@@ -23,4 +23,4 @@ jobs:
         with:
           fail: true
           debug: false
-          args: --verbose --include-fragments --no-progress --base . -E './**/*.md' './**/*.yaml' './**/*.yml'
+          args: --verbose --include-fragments --no-progress -E './**/*.md' './**/*.yaml' './**/*.yml'
