@@ -39,7 +39,7 @@ global:
     existingSecret: ""
     apiKey: ""
   ## @param global.imageRegistry The image registry used for all images in this chart and subcharts
-  imageRegistry: "icr.io"
+  imageRegistry: "709825985650.dkr.ecr.us-east-1.amazonaws.com"
   ## E.g.
   ## imagePullSecrets:
   ##   - myRegistryKeySecretName
@@ -1442,9 +1442,3 @@ extraObjects: []
 #             host: kubecost.kubecost.svc.cluster.local
 #             port:
 #               number: 80
-
-# -- Optional override for the image used for the basic health test container
-basicHealth:
-  registry: docker.io
-  repository: alpine/curl
-  tag: 8.14.1

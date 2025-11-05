@@ -1,21 +1,7 @@
-{{- include "kubecost.v3-preconditions" . -}}
-{{- include "kubecost.eksStorage.check" . -}}
-{{- include "kubecost.cloudCost.awsAthena.CloudIntegrationCheck" . -}}
-{{- include "kubecost.cloudCost.gcpBigQuery.CloudIntegrationCheck" . -}}
-{{- include "kubecost.cloudCost.azureStorage.CloudIntegrationCheck" . -}}
-{{- include "kubecost.federatedStorage.secret.check" . -}}
-{{- include "kubecost.clusterId.check" . -}}
-{{- include "kubecost.caCertsSecretConfig.check" . -}}
-{{- include "kubecost.actionsStorageSourceCheck" . -}}
-{{- include "kubecost.finopsagentCheck" . -}}
 ================================================================================
-KUBECOST INSTALLATION SUCCESSFUL
+KUBECOST add-on INSTALLATION SUCCESSFUL
 ================================================================================
-Kubecost {{ .Chart.Version }} has been successfully installed.
-
-IMPORTANT: Kubecost 3.x is a major upgrade with breaking changes and a new 
-architecture. Please review the release notes for migration details:
-https://github.com/kubecost/kubecost/releases/tag/v3.0.0
+Kubecost add-on {{ .Chart.Version }} has been successfully installed.
 
 QUICK START GUIDE
 -----------------
@@ -39,6 +25,3 @@ Having installation issues? View our Troubleshooting Guide:
 https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=troubleshoot-install
 
 Copyright IBM Corp. 2019-2025
-
-{{- include "kubecost.localStoreClusterIdCheck" . -}}
-{{- include "kubecost.v3-postconditions" . -}}
