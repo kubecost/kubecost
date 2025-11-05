@@ -6,15 +6,17 @@ This repository contains the Helm chart templates for the development of [Kubeco
 
 Kubecost strives to support as many versions of Kubernetes as possible. Below is the version support matrix which has been tested. Versions outside of the stated range may still work but are untested.
 
-| Chart Version | Kubernetes Min | Kubernetes Max | Notes |
-|---------------|----------------|----------------|-------|
-| 2.8           | 1.22           | 1.34           | Final feature release of Kubecost 2.x       |
-| 2.9           | 1.22           | 1.34           | Intermediate step to upgrade to 3.x |
-| 3.0           | 1.29           | 1.34           | First release of Kubecost 3.x       |
+| Chart Version | Kubernetes Min | Kubernetes Max | Notes                                 |
+|---------------|----------------|----------------|---------------------------------------|
+| 2.8           | 1.22           | 1.34           | Final feature release of Kubecost 2.x |
+| 2.9           | 1.22           | 1.34           | Intermediate step to upgrade to 3.x   |
+| 3.0           | 1.29           | 1.34           | First release of Kubecost 3.x         |
 
 ### Migration path from 2.x to 3.x
 
 In order to upgrade from Kubecost 2.x to 3.x, it is recommended that all agents be updated to 2.9 for two days prior to upgrading to 3.0. See <https://github.com/kubecost/kubecost/tree/v2.9/examples> for how to upgrade to 2.9 before upgrading to 3.0.
+
+> Note: With the exception of the diagnostics compatibility section below, the agent data is backwards compatible with Kubecost 2.x. Which means there is flexibility in the order of upgrades. For example, the primary does not need to be upgraded first, though it is recommended to do so.
 
 ### Key changes in 3.0
 
