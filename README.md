@@ -8,7 +8,7 @@ Kubecost strives to support as many versions of Kubernetes as possible. Below is
 
 | Chart Version | Kubernetes Min | Kubernetes Max | Notes |
 |---------------|----------------|----------------|-------|
-| 2.8           | 1.22           | 1.34           | Final release of Kubecost 2.x       |
+| 2.8           | 1.22           | 1.34           | Final feature release of Kubecost 2.x       |
 | 2.9           | 1.22           | 1.34           | Intermediate step to upgrade to 3.x |
 | 3.0           | 1.29           | 1.34           | First release of Kubecost 3.x       |
 
