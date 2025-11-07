@@ -664,7 +664,7 @@ plugins:
     #   "datadog_app_key": "<INSERT_DATADOG_APP_KEY>"
     #   }
 
-## Basic Kubecost ingress, more examples available in docs 
+## Basic Kubecost ingress, more examples available in docs
 ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=installation-ingress-examples
 ##
 ingress:
