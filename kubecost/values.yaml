@@ -1059,7 +1059,7 @@ aggregator:
           - __meta_kubernetes_namespace
         targetLabel: namespace
 
-## Kubecost Multi-cluster Heatbeat and Diagnostics
+## Kubecost Multi-cluster Heartbeat and Diagnostics
 ## Each agent cluster sends its diagnostic data to a storage bucket. Data is
 ## deleted after the specified retention period.
 ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=cluster-multi-diagnostics
