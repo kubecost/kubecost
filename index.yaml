@@ -6,8 +6,28 @@ entries:
         - name: Homepage
           url: https://www.kubecost.com
     apiVersion: v2
+    appVersion: 3.0.4-rc.1
+    created: "2025-11-11T19:46:02.283492443Z"
+    dependencies:
+    - alias: finopsagent
+      condition: finopsagent.enabled
+      name: finops-agent
+      repository: https://kubecost.github.io/finops-agent-chart
+      version: v1.0.3
+    description: Kubecost Helm chart - monitor your cloud costs!
+    digest: bc3d54c5cdabb7b48a47044a2a1703fc26f0887f001e31fdac7aaf8d2ebcb8c7
+    icon: https://raw.githubusercontent.com/kubecost/.github/9602bea0c06773da66ba43cb9ce5e1eb2b797c32/kubecost_logo.png
+    name: kubecost
+    urls:
+    - kubecost-3.0.4-rc.1.tgz
+    version: 3.0.4-rc.1
+  - annotations:
+      artifacthub.io/links: |
+        - name: Homepage
+          url: https://www.kubecost.com
+    apiVersion: v2
     appVersion: 3.0.4-rc.0
-    created: "2025-11-09T20:06:54.550123274Z"
+    created: "2025-11-11T19:46:02.27703071Z"
     dependencies:
     - alias: finopsagent
       condition: finopsagent.enabled
@@ -27,7 +47,7 @@ entries:
           url: https://www.kubecost.com
     apiVersion: v2
     appVersion: 3.0.3
-    created: "2025-11-09T20:06:54.544941331Z"
+    created: "2025-11-11T19:46:02.271846195Z"
     dependencies:
     - alias: finopsagent
       condition: finopsagent.enabled
@@ -47,7 +67,7 @@ entries:
           url: https://www.kubecost.com
     apiVersion: v2
     appVersion: 3.0.3-rc.1
-    created: "2025-11-09T20:06:54.53813732Z"
+    created: "2025-11-11T19:46:02.265112432Z"
     dependencies:
     - alias: finopsagent
       condition: finopsagent.enabled
@@ -67,7 +87,7 @@ entries:
           url: https://www.kubecost.com
     apiVersion: v2
     appVersion: 3.0.3-rc.0
-    created: "2025-11-09T20:06:54.531739562Z"
+    created: "2025-11-11T19:46:02.258559609Z"
     dependencies:
     - condition: finops-agent.enabled
       name: finops-agent
@@ -86,7 +106,7 @@ entries:
           url: https://www.kubecost.com
     apiVersion: v2
     appVersion: 3.0.2
-    created: "2025-11-09T20:06:54.526665431Z"
+    created: "2025-11-11T19:46:02.253459571Z"
     dependencies:
     - condition: finops-agent.enabled
       name: finops-agent
@@ -105,7 +125,7 @@ entries:
           url: https://www.kubecost.com
     apiVersion: v2
     appVersion: 3.0.1
-    created: "2025-11-09T20:06:54.519883261Z"
+    created: "2025-11-11T19:46:02.24670729Z"
     dependencies:
     - condition: finops-agent.enabled
       name: finops-agent
@@ -124,7 +144,7 @@ entries:
           url: https://www.kubecost.com
     apiVersion: v2
     appVersion: 3.0.0
-    created: "2025-11-09T20:06:54.513471084Z"
+    created: "2025-11-11T19:46:02.240236006Z"
     dependencies:
     - condition: finops-agent.enabled
       name: finops-agent
@@ -143,7 +163,7 @@ entries:
           url: https://www.kubecost.com
     apiVersion: v2
     appVersion: 3.0.0-rc.6
-    created: "2025-11-09T20:06:54.508303878Z"
+    created: "2025-11-11T19:46:02.234834035Z"
     dependencies:
     - condition: finops-agent.enabled
       name: finops-agent
@@ -162,7 +182,7 @@ entries:
           url: https://www.kubecost.com
     apiVersion: v2
     appVersion: 3.0.0-rc.5
-    created: "2025-11-09T20:06:54.501608301Z"
+    created: "2025-11-11T19:46:02.227863174Z"
     dependencies:
     - condition: finops-agent.enabled
       name: finops-agent
@@ -181,7 +201,7 @@ entries:
           url: https://www.kubecost.com
     apiVersion: v2
     appVersion: 3.0.0-rc.4
-    created: "2025-11-09T20:06:54.495192776Z"
+    created: "2025-11-11T19:46:02.221112866Z"
     dependencies:
     - condition: finops-agent.enabled
       name: finops-agent
@@ -200,7 +220,7 @@ entries:
           url: https://www.kubecost.com
     apiVersion: v2
     appVersion: 3.0.0-rc.3
-    created: "2025-11-09T20:06:54.490129546Z"
+    created: "2025-11-11T19:46:02.216087778Z"
     dependencies:
     - condition: finops-agent.enabled
       name: finops-agent
@@ -219,7 +239,7 @@ entries:
           url: https://www.kubecost.com
     apiVersion: v2
     appVersion: 3.0.0-rc.2
-    created: "2025-11-09T20:06:54.483389565Z"
+    created: "2025-11-11T19:46:02.20912419Z"
     dependencies:
     - condition: finops-agent.enabled
       name: finops-agent
@@ -238,7 +258,7 @@ entries:
           url: https://www.kubecost.com
     apiVersion: v2
     appVersion: 3.0.0-rc.1
-    created: "2025-11-09T20:06:54.476974194Z"
+    created: "2025-11-11T19:46:02.202702Z"
     dependencies:
     - condition: finops-agent.enabled
       name: finops-agent
@@ -257,7 +277,7 @@ entries:
           url: https://www.kubecost.com
     apiVersion: v2
     appVersion: 3.0.0-rc.0
-    created: "2025-11-09T20:06:54.471478944Z"
+    created: "2025-11-11T19:46:02.197511794Z"
     dependencies:
     - condition: finops-agent.enabled
       name: finops-agent
@@ -270,4 +290,4 @@ entries:
     urls:
     - kubecost-3.0.0-rc.0.tgz
     version: 3.0.0-rc.0
-generated: "2025-11-09T20:06:54.464471661Z"
+generated: "2025-11-11T19:46:02.190504152Z"
