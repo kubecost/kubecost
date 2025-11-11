@@ -1236,6 +1236,7 @@ clusterController:
 
   rbac:
     # In 3.x, only containerRequestRightSizing and resourceQuotaRightSizing are supported, all other features are in progress.
+    # The below settings allow the cluster controller to perform actions on the cluster.
     containerRequestRightSizing: true
     resourceQuotaRightSizing: true
     clusterRightSizing: false
@@ -1286,8 +1287,29 @@ telemetry:
 kubecostProductConfigs:
   actions:
     # Enable multi-cluster cluster controller actions (v2)
-    enabled: false
-
+    enabled: true
+    ## Actions can reference configuration at a global or cluster-specific level
+    config:
+      global:
+        containerRequestRightSizing:
+          enabled: false
+    ## Define cluster-specific action configuration, where top-level keys are cluster names
+    #   clusters: # Define cluster-specific action configuration, where top-level keys are cluster names
+    #     cluster-1:
+    #       containerRequestRightSizing:
+    #         enabled: false
+    #     cluster-2:
+    #       containerRequestRightSizing:
+    #         enabled: false
+    #   actions:
+    #     containerRequestRightSizing:
+    #       resize-my-cluster:
+    #           cpu: true
+    #           enabled: true
+    #           filter: "cluster:\"my-cluster\""
+    #           memory: true
+    #           profile: "Development"
+    #           rightSizingWindow: "24h"
     ## The Actions feature can optionally use an external storage config that is independent from the federated storage config.
     ## By default, Actions will use the same bucket config as set in federated storage
 
@@ -1330,28 +1352,6 @@ kubecostProductConfigs:
     #         "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
     #         "client_x509_cert_url": ""
     #       }
-
-    ## Actions can reference configuration at a global or cluster-specific level
-    # config:
-    #   global: # Define global action configuration
-    #     containerRequestRightSizing:
-    #       enabled: true
-    #   clusters: # Define cluster-specific action configuration, where top-level keys are cluster names
-    #     cluster-1:
-    #       containerRequestRightSizing:
-    #         enabled: false
-    #     cluster-2:
-    #       containerRequestRightSizing:
-    #         enabled: false
-    #   actions:
-    #     containerRequestRightSizing:
-    #       resize-my-cluster:
-    #           cpu: true
-    #           enabled: true
-    #           filter: "cluster:\"my-cluster\""
-    #           memory: true
-    #           profile: "Development"
-    #           rightSizingWindow: "24h"
 
   ## Kubecost Budgets and Budgets Actions
   ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=ui-budgets

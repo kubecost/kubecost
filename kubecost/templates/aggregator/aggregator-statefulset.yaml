@@ -205,7 +205,7 @@ spec:
           configMap:
             name: {{ .Values.enterpriseCustomPricing.configMapName }}
         {{- end }}
-        {{- if ((.Values.kubecostProductConfigs).actions).config }}
+        {{- if .Values.kubecostProductConfigs.actions.config.enabled }}
         - name: actions-config
           configMap:
             name: {{ include "kubecost.actions.configMapName" . }}
@@ -393,7 +393,7 @@ spec:
             - name: kubecost-enterprise-pricing
               mountPath: /var/configs/enterprise-pricing
             {{- end }}
-            {{- if ((.Values.kubecostProductConfigs).actions).config }}
+            {{- if .Values.kubecostProductConfigs.actions.config.enabled }}
             - name: actions-config
               mountPath: /var/configs/actions
             {{- end }}
