@@ -474,6 +474,11 @@ data:
             return 200 '{"aggregatorEnabled": "true"}';
         }
 
+        location /model/enableDeploymentGuide {
+            default_type 'application/json';
+            return 200 '{"enableDeploymentGuide": {{ .Values.deploymentGuide.enabled | quote }} }';
+        }
+
         {{- if .Values.forecasting.enabled }}
         location /model/forecast/ {
             default_type 'application/json';
