@@ -206,7 +206,7 @@ global:
       skipSanityChecks: false  # If true, skip all sanity/existence checks for resources like Secrets.
 
   ## Kubecost Integrations
-  ## Ref: 
+  ## Ref:
   ## Turbonomic: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=configuration-kubecost-turbonomic-integration
   ## Postgres: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=configuration-kubecost-postgres-integration
   ##
