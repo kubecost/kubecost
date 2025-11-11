@@ -1473,6 +1473,10 @@ kubecostProductConfigs:
   #   squareLogoExt: "" # the extension of the square logo
   #   squareLogoAltText: "" # alt text to apply to the img tags for the square logo
 
+# Enable to display the deployment guide in the Kubecost UI for installing the FinOps Agent when provisioning via advanced containers
+deploymentGuide:
+  enabled: false
+
 # -- Array of extra K8s manifests to deploy
 ## Note: Supports use of custom Helm templates
 extraObjects: []
