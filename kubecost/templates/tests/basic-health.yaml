@@ -36,10 +36,14 @@ spec:
       - -c
       - |
         set -x
-        svc="{{ .Release.Name }}-frontend"
-        echo "Getting current Kubecost state."
-        curl -vvv http://${svc}:9090/model/healthz
-        response=$(curl -sL -w "%{http_code}" http://${svc}:9090/model/healthz)
+        {{- if .Values.frontend.enabled }}
+        # Primary cluster: use frontend service
+        svc="{{ include "kubecost.frontend.serviceName" . }}"
+        port="9090"
+        path="/model/healthz"
+        echo "Getting current Kubecost state from frontend service."
+        curl -vvv http://${svc}:${port}${path}
+        response=$(curl -sL -w "%{http_code}" http://${svc}:${port}${path})
         if [ "$response" -eq 200 ]; then
           echo "Got Kubecost 200 on healthz. Successful."
           exit 0
@@ -47,3 +51,22 @@ spec:
           echo "Failed to fetch Kubecost 200 on healthz. Response code was $response"
           exit 1
         fi
+        {{- else if .Values.finopsagent.enabled }}
+        # Agent cluster: use finopsagent service
+        svc="{{ .Release.Name }}-finopsagent"
+        port="80"
+        path="/healthz"
+        echo "Getting current FinOps Agent state from finopsagent service."
+        curl -vvv http://${svc}:${port}${path}
+        response=$(curl -sL -w "%{http_code}" http://${svc}:${port}${path})
+        if [ "$response" -eq 200 ]; then
+          echo "Got FinOps Agent 200 on healthz. Successful."
+          exit 0
+        else
+          echo "Failed to fetch FinOps Agent 200 on healthz. Response code was $response"
+          exit 1
+        fi
+        {{- else }}
+        echo "Frontend and finopsagent are both disabled. Skipping health check."
+        exit 0
+        {{- end }}
