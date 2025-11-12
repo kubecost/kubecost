@@ -480,10 +480,10 @@ data:
         }
 
         {{- if .Values.forecasting.enabled }}
-        location /model/forecast/ {
+        location /forecasting/ {
             default_type 'application/json';
-            proxy_read_timeout          300;
-            proxy_pass http://forecasting/forecast/;
+            proxy_read_timeout 300;
+            proxy_pass http://forecasting/;
             proxy_redirect off;
             proxy_set_header Connection "";
             proxy_set_header  X-Real-IP  $remote_addr;
@@ -510,7 +510,7 @@ data:
                 "clusterControllerEnabled": "{{ include "kubecost.clusterController.enabled" . }}",
                 "forecastingEnabled": "{{ include "kubecost.forecasting.enabled" . }}",
                 "turbonomicEnabled": "{{ include "kubecost.turbonomic.enabled" . }}",
-                "chartVersion": "3.0.4-rc.1",
+                "chartVersion": "3.0.5-rc.0",
                 "tenMinuteDataRetention": "{{ (.Values.aggregator.retention10m) }}",
                 "hourlyDataRetention": "{{ (.Values.aggregator.retention1h) }}",
                 "dailyDataRetention": "{{ (.Values.aggregator.retention1d) }}",
