@@ -833,7 +833,7 @@ forecasting:
   image:
     registry: ""  # Default is "icr.io"
     repository: kubecost/modeling
-    tag: v0.1.31
+    tag: v0.1.33
   imagePullPolicy: IfNotPresent
 
   # Resource specification block for the forecasting container.
@@ -1472,6 +1472,10 @@ kubecostProductConfigs:
   #   squareLogoBase64: "" # base64 encoded binary asset to use for the square logo, used in the collapsed nav as well as empty and loading states
   #   squareLogoExt: "" # the extension of the square logo
   #   squareLogoAltText: "" # alt text to apply to the img tags for the square logo
+
+# Enable to display the deployment guide in the Kubecost UI for installing the FinOps Agent when provisioning via advanced containers
+deploymentGuide:
+  enabled: false
 
 # -- Array of extra K8s manifests to deploy
 ## Note: Supports use of custom Helm templates

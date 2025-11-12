@@ -474,11 +474,16 @@ data:
             return 200 '{"aggregatorEnabled": "true"}';
         }
 
-        {{- if .Values.forecasting.enabled }}
-        location /model/forecast/ {
+        location /model/enableDeploymentGuide {
             default_type 'application/json';
-            proxy_read_timeout          300;
-            proxy_pass http://forecasting/forecast/;
+            return 200 '{"enableDeploymentGuide": {{ .Values.deploymentGuide.enabled | quote }} }';
+        }
+
+        {{- if .Values.forecasting.enabled }}
+        location /forecasting/ {
+            default_type 'application/json';
+            proxy_read_timeout 300;
+            proxy_pass http://forecasting/;
             proxy_redirect off;
             proxy_set_header Connection "";
             proxy_set_header  X-Real-IP  $remote_addr;
