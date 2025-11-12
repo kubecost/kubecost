@@ -480,10 +480,10 @@ data:
         }
 
         {{- if .Values.forecasting.enabled }}
-        location /model/forecast/ {
+        location /forecasting/ {
             default_type 'application/json';
-            proxy_read_timeout          300;
-            proxy_pass http://forecasting/forecast/;
+            proxy_read_timeout 300;
+            proxy_pass http://forecasting/;
             proxy_redirect off;
             proxy_set_header Connection "";
             proxy_set_header  X-Real-IP  $remote_addr;
