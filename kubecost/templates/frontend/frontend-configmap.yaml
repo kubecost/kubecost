@@ -567,7 +567,7 @@ data:
                 "productName": "{{ $branding.productName }}",
                 "footerHTML": "{{ $branding.footerHTML }}",
                 "primaryAccentColor": "{{ $branding.primaryAccentColor }}",
-                "font": "{{ $branding.font }}"
+                "font": "{{ $branding.font }}",
                 "fullLogoAltText": "{{ $branding.fullLogoAltText }}",
                 "squareLogoAltText": "{{ $branding.squareLogoAltText }}"
             }';
