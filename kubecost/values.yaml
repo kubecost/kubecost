@@ -1287,7 +1287,7 @@ telemetry:
 kubecostProductConfigs:
   actions:
     # Enable multi-cluster cluster controller actions (v2)
-    enabled: true
+    enabled: false
     ## Actions can reference configuration at a global or cluster-specific level
     config:
       global:
