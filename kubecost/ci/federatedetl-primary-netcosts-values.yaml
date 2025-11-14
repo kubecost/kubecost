@@ -7,7 +7,7 @@ global:
 serviceAccount:  # this example uses AWS IRSA, which creates a service account with rights to the s3 bucket. If using keys+secrets in the federated storage, set create: true
   create: true
 networkCosts:
-  # optional, see: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-network-cost
+  # optional, see: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=configuration-network-cost
   enabled: true
   config:
     services:

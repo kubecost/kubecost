@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: actions-config
+  name: {{ include "kubecost.actions.configMapName" . }}
   labels:
     {{- include "kubecost.commonLabels" . | nindent 4 }}
 data:

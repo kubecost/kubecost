@@ -208,7 +208,7 @@ spec:
         {{- if ((.Values.kubecostProductConfigs).actions).config }}
         - name: actions-config
           configMap:
-            name: actions-config
+            name: {{ include "kubecost.actions.configMapName" . }}
         {{- end }}
       {{- if ((.Values.kubecostProductConfigs).actions).enabled }}
         {{- if and (not (((.Values.kubecostProductConfigs).actions).storageConfigSecret)) (not (((.Values.kubecostProductConfigs).actions).storageConfig)) }}
@@ -624,6 +624,10 @@ spec:
             {{- if (.Values.kubecostProductConfigs).currencyCode }}
             - name: DISPLAY_CURRENCY
               value: {{ (.Values.kubecostProductConfigs).currencyCode }}
+            {{- end }}
+            {{- if .Values.deploymentGuide.enabled }}
+            - name: ENABLE_DEPLOYMENT_GUIDE
+              value: "true"
             {{- end }}
             {{- if .Values.aggregator.extraEnv -}}
             {{- toYaml .Values.aggregator.extraEnv | nindent 12 }}

@@ -474,11 +474,16 @@ data:
             return 200 '{"aggregatorEnabled": "true"}';
         }
 
-        {{- if .Values.forecasting.enabled }}
-        location /model/forecast/ {
+        location /model/enableDeploymentGuide {
             default_type 'application/json';
-            proxy_read_timeout          300;
-            proxy_pass http://forecasting/forecast/;
+            return 200 '{"enableDeploymentGuide": {{ .Values.deploymentGuide.enabled | quote }} }';
+        }
+
+        {{- if .Values.forecasting.enabled }}
+        location /forecasting/ {
+            default_type 'application/json';
+            proxy_read_timeout 300;
+            proxy_pass http://forecasting/;
             proxy_redirect off;
             proxy_set_header Connection "";
             proxy_set_header  X-Real-IP  $remote_addr;
@@ -505,7 +510,7 @@ data:
                 "clusterControllerEnabled": "{{ include "kubecost.clusterController.enabled" . }}",
                 "forecastingEnabled": "{{ include "kubecost.forecasting.enabled" . }}",
                 "turbonomicEnabled": "{{ include "kubecost.turbonomic.enabled" . }}",
-                "chartVersion": "3.0.3",
+                "chartVersion": "3.0.5-rc.1",
                 "tenMinuteDataRetention": "{{ (.Values.aggregator.retention10m) }}",
                 "hourlyDataRetention": "{{ (.Values.aggregator.retention1h) }}",
                 "dailyDataRetention": "{{ (.Values.aggregator.retention1d) }}",
@@ -551,6 +556,42 @@ data:
                     "shareTenancyCosts": "{{ .Values.kubecostProductConfigs.shareTenancyCosts }}"
                 }
             }';
+        }
+
+        # Branding Routes
+        {{- $branding := .Values.kubecostProductConfigs.branding}}
+        location /custom-branding/info {
+            {{- if $branding}}
+            default_type 'application/json';
+            return 200 '{
+                "productName": "{{ $branding.productName }}",
+                "footerHTML": "{{ $branding.footerHTML }}",
+                "primaryAccentColor": "{{ $branding.primaryAccentColor }}",
+                "font": "{{ $branding.font }}",
+                "fullLogoAltText": "{{ $branding.fullLogoAltText }}",
+                "squareLogoAltText": "{{ $branding.squareLogoAltText }}"
+            }';
+            {{- else }}            
+            return 404;
+            {{- end}}
+        }
+
+        {{- $fullLogoExt := default "not-found" (((.Values.kubecostProductConfigs).branding).fullLogoExt)}}
+        location /custom-branding/full-logo {
+            {{- if ne $fullLogoExt "not-found" }}
+                try_files /static/templated-full-logo.{{$fullLogoExt}} =404;
+            {{- else }}
+                return 404;
+            {{- end }}
+        }
+
+        {{- $squareLogoExt := default "not-found" (((.Values.kubecostProductConfigs).branding).squareLogoExt)}}
+        location /custom-branding/square-logo {
+            {{- if  ne $squareLogoExt "not-found"}}
+                try_files /static/templated-square-logo.{{$squareLogoExt}} =404;
+            {{- else }}
+                return 404;
+            {{- end }}
         }
     }
 {{- end }}
