@@ -203,7 +203,7 @@ spec:
         {{- if .Values.global.integrations.turbonomic.enabled }}
         - name: turbonomic-credentials
           secret:
-            secretName: kubecost-integrations-turbonomic
+            secretName: {{ template "kubecost.turbonomic.secretName" . }}
         {{- end }}
         {{- if .Values.global.updateCaTrust.enabled }}
         - name: ca-certs-secret

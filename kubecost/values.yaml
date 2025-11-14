@@ -296,6 +296,7 @@ global:
       role: ""               # Role that the OAuth Client was created with (e.g. ADMINISTRATOR, SITE_ADMIN, etc.)
       host: ""               # URL to your turbonomic API. EG: https://turbonomic.example.com/
       insecureClient: false  # Do not verify certificate
+      secretName: ""  # Name of K8s secret where the turbonomic credentials are stored instead of directly passing the configs via helm values. Ensure the credentials are stored in a key named "turbonomic-credentials.json" in the secret.
     postgres:
       enabled: false
       runInterval: "12h"      # How frequently to run the integration.

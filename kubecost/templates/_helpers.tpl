@@ -1684,3 +1684,10 @@ for more information
 {{- $tag := last $parts }}
 {{- $tag }}
 {{- end }}
+
+{{- define "kubecost.turbonomic.secretName" -}}
+{{- if .Values.global.integrations.turbonomic.secretName -}}
+{{- .Values.global.integrations.turbonomic.secretName -}}
+{{- else -}}
+{{- printf "%s-turbonomic" .Release.Name | trunc 63 | trimSuffix "-"-}}
+{{- end -}}
