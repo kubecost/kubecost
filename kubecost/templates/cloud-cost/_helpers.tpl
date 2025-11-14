@@ -89,7 +89,7 @@ app: {{ include "kubecost.cloudCost.name" . }}
 {{- define "kubecost.cloudCost.awsAthena.CloudIntegrationJSON" }}
 Kubecost 3.x requires a change to the method that cloud-provider billing integrations are configured.
 Please use this output to create a cloud-integration.json config. See:
-<https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=installation-cloud-billing-integrations>
+<https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=installation-cloud-billing-integrations>
 for more information
 
 {
@@ -136,7 +136,7 @@ for more information
 {{- define "kubecost.cloudCost.gcpBigQuery.CloudIntegrationJSON" }}
 Kubecost 3.x requires a change to the method that cloud-provider billing integrations are configured.
 Please use this output to create a cloud-integration.json config. See:
-<https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=installation-cloud-billing-integrations>
+<https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=installation-cloud-billing-integrations>
 for more information
 
 {
@@ -166,7 +166,7 @@ for more information
 
 Kubecost 3.x requires a change to the method that cloud-provider billing integrations are configured.
 Please use this output to create a cloud-integration.json config. See:
-<https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=installation-cloud-billing-integrations>
+<https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=installation-cloud-billing-integrations>
 for more information
 
 {
