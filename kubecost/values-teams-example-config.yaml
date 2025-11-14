@@ -1,7 +1,7 @@
 # This is a example config for teams. 
 # This can also be done in the UI, the example here is for IaC purposes
 # The groups below are not passed to Kubecost by default, they need to be configured in the identity provider (IdP)
-# See https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=ui-teams for more information
+# See https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=ui-teams for more information
 
 # SAML or OIDC must be enabled
 saml:
