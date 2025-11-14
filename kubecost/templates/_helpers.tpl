@@ -1689,5 +1689,6 @@ for more information
 {{- if .Values.global.integrations.turbonomic.secretName -}}
 {{- .Values.global.integrations.turbonomic.secretName -}}
 {{- else -}}
-{{- printf "%s-turbonomic" .Release.Name | trunc 63 | trimSuffix "-"-}}
+{{- printf "%s-turbonomic" .Release.Name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
 {{- end -}}
