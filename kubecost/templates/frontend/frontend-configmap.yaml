@@ -62,11 +62,11 @@ data:
         {{- else }}
         {{- /* Standard Mode: Single upstream server */}}
         {{- if .Values.frontend.useDefaultFqdn }}
-        server {{ .Release.Name }}-aggregator.{{ .Release.Namespace }}.svc.cluster.local:9004;
+            server {{ .Release.Name }}-aggregator.{{ .Release.Namespace }}.svc.cluster.local:9004;
         {{- else if (.Values.frontend.aggregator).fqdn }}
-        server {{ .Values.frontend.aggregator.fqdn }};
+            server {{ .Values.frontend.aggregator.fqdn }};
         {{- else }}
-        server {{ .Release.Name }}-aggregator.{{ .Release.Namespace }}:9004;
+            server {{ .Release.Name }}-aggregator.{{ .Release.Namespace }}:9004;
         {{- end }}
         {{- end }}
     }
