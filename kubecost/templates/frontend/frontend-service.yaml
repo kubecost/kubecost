@@ -16,12 +16,8 @@ metadata:
 spec:
   selector:
     {{- include "kubecost.frontend.selectorLabels" . | nindent 4 }}
-{{- if .Values.service -}}
 {{- if .Values.frontend.service.type }}
   type: "{{ .Values.frontend.service.type }}"
-{{- else }}
-  type: ClusterIP
-{{- end }}
 {{- else }}
   type: ClusterIP
 {{- end }}
