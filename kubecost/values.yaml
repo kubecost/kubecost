@@ -450,6 +450,7 @@ frontend:
     registry: ""  # Default is "icr.io"
     repository: kubecost/frontend
     tag: ""  # Default is to match the Chart.AppVersion
+  upstreamAggregatorConfiguration: ""
 
   imagePullPolicy: IfNotPresent
 
