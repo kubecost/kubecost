@@ -2,6 +2,8 @@
 
 The following table lists commonly used configuration parameters for the Kubecost Helm chart and their default values. Please see the [values file](values.yaml) for the complete set of definable values.
 
+Additionally, see the root of the chart for examples of commonly changed values ("values-*.yaml").
+
 | Parameter                                                                          | Description                                                                                                                                                  | Default                                               |
 |------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------|
 | `ingress.enabled`                                                                  | If true, Ingress will be created                                                                                                                             | `false`                                               |
