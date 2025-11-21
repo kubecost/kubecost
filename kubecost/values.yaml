@@ -450,6 +450,7 @@ frontend:
     registry: ""  # Default is "icr.io"
     repository: kubecost/frontend
     tag: ""  # Default is to match the Chart.AppVersion
+  upstreamAggregatorConfiguration: ""
 
   imagePullPolicy: IfNotPresent
 
@@ -906,11 +907,7 @@ aggregator:
   # stagingEmptyDirSizeLimit changes how large the "staging"
   # /var/configs/waterfowl emptyDir is. It only takes effect in StatefulSet
   # configurations of Aggregator, other configurations are unaffected.
-  #
-  # It should be set to approximately 8x the size of the largest bingen file in
-  # object storage. For example, if your largest bingen file is a daily
-  # Allocation file with size 300MiB, this value should be set to approximately
-  # 2400Mi. In most environments, the default should suffice.
+
   stagingEmptyDirSizeLimit: 2Gi
 
   # this is the number of partitions the datastore is split into for copying
