@@ -1,0 +1,32 @@
+## There are 4 persistent volumes that are created when using default settings.
+## When installing on a cluster that does not have a default storage class, you will need to set the storageClass for each of the persistent volumes.
+## In the values below, "gp3" is used as an example. All other values are the defaults.
+
+## When not using federated storage, the long-term metrics are stored in the localStore.
+localStore:
+  persistentVolume:
+    storageClass: gp3
+    size: 32Gi
+    ## Note that setting enabled to false means all data will be lost out on pod restart unless using federated storage.
+    enabled: true
+
+## short-term (<2 days) metrics are stored by the finops agent.
+finopsagent:
+  persistence:
+    storageClass: gp3
+    size: 8Gi
+    enabled: true
+
+aggregator:
+  ## The aggregator pod has 2 PVCs and will need to be in the same availability zone unless using multi-zone storage.
+  ## Storage classes that have 'volumeBindingMode: WaitForFirstConsumer' will do this automatically.
+  ## Settings and reports created via the UI are stored in the persistentConfigs volume.
+  persistentConfigsStorage:
+    storageClass: gp3
+    ## If using high iops storage, the storageRequest may need to be increased to meet the provider's minimum ratio for gb/iops.
+    storageRequest: 1Gi
+  aggregatorDbStorage:
+    ## IOPS performance of the aggregatorDbStorage will have significant impact on the performance of queries.
+    ## block storage is REQUIRED for the aggregatorDbStorage. NFS/file is not supported.
+    storageClass: gp3
+    storageRequest: 128Gi
