@@ -46,7 +46,10 @@ global:
   ##   - myRegistryKeySecretName
   ##
   imagePullSecrets: []
-  ## If your DNS server doesn't live in the same zone as Kubecost
+  ## @param global.defaultStorageClass The default storage class to use, unless overridden by the storageClass parameter in the finopsagent, aggregator, or localStore blocks.
+  ##
+  defaultStorageClass: ""
+  ## @param global.zone The zone to use for the finops agent
   ##
   zone: ""  # cluster.local
   ## Compatibility adaptations for Kubernetes platforms
