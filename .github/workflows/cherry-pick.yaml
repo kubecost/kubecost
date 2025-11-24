@@ -22,10 +22,10 @@ jobs:
       )
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Check out actions code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: kubecost/github-actions
           path: ./github-actions
