@@ -17,12 +17,10 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  {{- if or .Values.localStore.persistentVolume.storageClass .Values.global.defaultStorageClass}}
   {{- if .Values.localStore.persistentVolume.storageClass }}
   storageClassName: {{ .Values.localStore.persistentVolume.storageClass }}
-  {{- else }}
+  {{- else if .Values.global.defaultStorageClass }}
   storageClassName: {{ .Values.global.defaultStorageClass }}
-  {{- end }}
   {{- end }}
   resources:
     requests:
