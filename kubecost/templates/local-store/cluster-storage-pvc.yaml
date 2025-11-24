@@ -19,7 +19,9 @@ spec:
     - ReadWriteOnce
   {{- if .Values.localStore.persistentVolume.storageClass }}
   storageClassName: {{ .Values.localStore.persistentVolume.storageClass }}
-  {{ end }}
+  {{- else if .Values.global.defaultStorageClass }}
+  storageClassName: {{ .Values.global.defaultStorageClass }}
+  {{- end }}
   resources:
     requests:
       storage: {{ .Values.localStore.persistentVolume.size }}

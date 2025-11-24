@@ -28,7 +28,11 @@ spec:
       name: aggregator-db-storage
     spec:
       accessModes: [ "ReadWriteOnce" ]
+      {{- if .Values.aggregator.aggregatorDbStorage.storageClass }}
       storageClassName: {{ .Values.aggregator.aggregatorDbStorage.storageClass }}
+      {{- else if .Values.global.defaultStorageClass }}
+      storageClassName: {{ .Values.global.defaultStorageClass }}
+      {{- end }}
       resources:
         requests:
           storage:  {{ .Values.aggregator.aggregatorDbStorage.storageRequest }}
@@ -41,7 +45,11 @@ spec:
       name: persistent-configs
     spec:
       accessModes: [ "ReadWriteOnce" ]
+      {{- if .Values.aggregator.persistentConfigsStorage.storageClass }}
       storageClassName: {{ .Values.aggregator.persistentConfigsStorage.storageClass }}
+      {{- else if .Values.global.defaultStorageClass }}
+      storageClassName: {{ .Values.global.defaultStorageClass }}
+      {{- end }}
       resources:
         requests:
           storage: {{ .Values.aggregator.persistentConfigsStorage.storageRequest }}
