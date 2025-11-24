@@ -13,7 +13,7 @@ jobs:
   linkChecker:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       ## Recursively check all markdown and yaml files for broken links
       ## Ref: https://github.com/lycheeverse/lychee#commandline-parameters
