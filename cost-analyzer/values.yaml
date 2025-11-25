@@ -1846,6 +1846,11 @@ kubecostAggregator:
     ## Define environment variables for cloud cost
     # env: {}
 
+    ## Set additional environment variables for the cloud cost
+    # extraEnv:
+    # - name: SOME_VARIABLE
+    #   value: "some_value"
+
     ## Define extra volumes for the cloud cost pod
     # extraVolumes: []
 
