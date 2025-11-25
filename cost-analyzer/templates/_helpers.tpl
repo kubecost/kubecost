@@ -1400,6 +1400,9 @@ Begin Kubecost 2.0 templates
     - name: {{ $key | quote }}
       value: {{ $value | quote }}
     {{- end }}
+    {{- if .Values.kubecostAggregator.cloudCost.extraEnv -}}
+    {{- toYaml .Values.kubecostAggregator.cloudCost.extraEnv | nindent 4 }}
+    {{- end }}
     {{- if .Values.systemProxy.enabled }}
     - name: HTTP_PROXY
       value: {{ .Values.systemProxy.httpProxyUrl }}
