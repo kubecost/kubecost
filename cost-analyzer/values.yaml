@@ -916,7 +916,7 @@ prometheus:
       rollingUpdate: null
     image:
       repository: quay.io/prometheus/prometheus
-      tag: v3.6.0
+      tag: v3.7.2
       pullPolicy: IfNotPresent
     priorityClassName: ""
     prefixURL: ""
@@ -1445,7 +1445,7 @@ networkCosts:
   enabled: false
   image:
     repository: gcr.io/kubecost1/kubecost-network-costs
-    tag: v0.17.11
+    tag: v0.18.0
   imagePullPolicy: IfNotPresent
   updateStrategy:
     type: RollingUpdate
@@ -2108,7 +2108,7 @@ grafana:
     failureThreshold: 10
   image:
     repository: grafana/grafana
-    tag: 12.2.0
+    tag: 12.2.1
     pullPolicy: IfNotPresent
     # pullSecrets:
   securityContext: {}
@@ -2154,7 +2154,7 @@ grafana:
   sidecar:
     image:
       repository: ghcr.io/kiwigrid/k8s-sidecar
-      tag: 1.30.11
+      tag: 1.30.9
       pullPolicy: IfNotPresent
     resources: {}
     dashboards:

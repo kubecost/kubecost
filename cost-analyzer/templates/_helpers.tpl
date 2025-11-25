@@ -1335,7 +1335,7 @@ Begin Kubecost 2.0 templates
   {{- end }}
   args: ["cloud-cost"]
   ports:
-    - name: tcp-api
+    - name: cloud-cost
       containerPort: 9005
       protocol: TCP
   resources:
