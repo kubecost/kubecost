@@ -1,0 +1,17 @@
+{{- if ((.Values.kubecostProductConfigs).branding) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "kubecost.frontend.logoConfigMapName" . }}
+  labels:
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
+binaryData:
+{{- if ((.Values.kubecostProductConfigs).branding).fullLogoBase64 }}
+  fullLogo: |-
+{{- ((.Values.kubecostProductConfigs).branding).fullLogoBase64 | nindent 4 }}
+{{- end }}
+{{- if ((.Values.kubecostProductConfigs).branding).squareLogoBase64 }}
+  squareLogo: |-
+{{- ((.Values.kubecostProductConfigs).branding).squareLogoBase64 | nindent 4 }}
+{{- end }}
+{{- end }}

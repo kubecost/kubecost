@@ -51,13 +51,23 @@ data:
         text/x-component
         text/x-cross-domain-policy;
 
+    {{- if (.Values.frontend.upstreamAggregatorConfiguration) }}
+    # Resolver for runtime DNS resolution
+    resolver 127.0.0.11;
+    {{- end }}
+
     upstream aggregator {
-        {{- if .Values.frontend.useDefaultFqdn }}
-        server {{ .Release.Name }}-aggregator.{{ .Release.Namespace }}.svc.cluster.local:9004;
-        {{- else if (.Values.frontend.aggregator).fqdn }}
-        server {{ .Values.frontend.aggregator.fqdn }};
+        {{- if (.Values.frontend.upstreamAggregatorConfiguration) }}
+            {{- tpl .Values.frontend.upstreamAggregatorConfiguration . | nindent 8 }}
         {{- else }}
-        server {{ .Release.Name }}-aggregator.{{ .Release.Namespace }}:9004;
+        {{- /* Standard Mode: Single upstream server */}}
+        {{- if .Values.frontend.useDefaultFqdn }}
+            server {{ .Release.Name }}-aggregator.{{ .Release.Namespace }}.svc.cluster.local:9004;
+        {{- else if (.Values.frontend.aggregator).fqdn }}
+            server {{ .Values.frontend.aggregator.fqdn }};
+        {{- else }}
+            server {{ .Release.Name }}-aggregator.{{ .Release.Namespace }}:9004;
+        {{- end }}
         {{- end }}
     }
 
@@ -182,15 +192,28 @@ data:
 {{- end }}
         
         location /model/ {
+            {{- if (.Values.frontend.upstreamAggregatorConfiguration) }}
+            # Shorter timeout for faster failover when backup server is configured
+            proxy_connect_timeout       2s;
+            proxy_send_timeout          {{ .Values.frontend.timeoutSeconds | default 300 }};
+            proxy_read_timeout          {{ .Values.frontend.timeoutSeconds | default 300 }};
+            {{- else }}
             proxy_connect_timeout       {{ .Values.frontend.timeoutSeconds | default 300 }};
             proxy_send_timeout          {{ .Values.frontend.timeoutSeconds | default 300 }};
             proxy_read_timeout          {{ .Values.frontend.timeoutSeconds | default 300 }};
+            {{- end }}
             proxy_pass http://aggregator/;
             proxy_redirect off;
             proxy_http_version 1.1;
             proxy_set_header Connection "";
             proxy_set_header  X-Real-IP  $remote_addr;
             proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
+            {{- if (.Values.frontend.upstreamAggregatorConfiguration) }}
+            # Enable failover to next upstream server on errors/timeouts
+            proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
+            proxy_next_upstream_tries 2;
+            proxy_next_upstream_timeout 0;
+            {{- end }}
             {{- if .Values.frontend.extraModelConfigs }}
             {{- .Values.frontend.extraModelConfigs | toString | nindent 12 -}}
             {{- end }}
@@ -474,11 +497,16 @@ data:
             return 200 '{"aggregatorEnabled": "true"}';
         }
 
-        {{- if .Values.forecasting.enabled }}
-        location /model/forecast/ {
+        location /model/enableDeploymentGuide {
             default_type 'application/json';
-            proxy_read_timeout          300;
-            proxy_pass http://forecasting/forecast/;
+            return 200 '{"enableDeploymentGuide": {{ .Values.deploymentGuide.enabled | quote }} }';
+        }
+
+        {{- if .Values.forecasting.enabled }}
+        location /forecasting/ {
+            default_type 'application/json';
+            proxy_read_timeout 300;
+            proxy_pass http://forecasting/;
             proxy_redirect off;
             proxy_set_header Connection "";
             proxy_set_header  X-Real-IP  $remote_addr;
@@ -505,7 +533,7 @@ data:
                 "clusterControllerEnabled": "{{ include "kubecost.clusterController.enabled" . }}",
                 "forecastingEnabled": "{{ include "kubecost.forecasting.enabled" . }}",
                 "turbonomicEnabled": "{{ include "kubecost.turbonomic.enabled" . }}",
-                "chartVersion": "3.0.3",
+                "chartVersion": "3.0.5",
                 "tenMinuteDataRetention": "{{ (.Values.aggregator.retention10m) }}",
                 "hourlyDataRetention": "{{ (.Values.aggregator.retention1h) }}",
                 "dailyDataRetention": "{{ (.Values.aggregator.retention1d) }}",
@@ -551,6 +579,42 @@ data:
                     "shareTenancyCosts": "{{ .Values.kubecostProductConfigs.shareTenancyCosts }}"
                 }
             }';
+        }
+
+        # Branding Routes
+        {{- $branding := .Values.kubecostProductConfigs.branding}}
+        location /custom-branding/info {
+            {{- if $branding}}
+            default_type 'application/json';
+            return 200 '{
+                "productName": "{{ $branding.productName }}",
+                "footerHTML": "{{ $branding.footerHTML }}",
+                "primaryAccentColor": "{{ $branding.primaryAccentColor }}",
+                "font": "{{ $branding.font }}",
+                "fullLogoAltText": "{{ $branding.fullLogoAltText }}",
+                "squareLogoAltText": "{{ $branding.squareLogoAltText }}"
+            }';
+            {{- else }}            
+            return 404;
+            {{- end}}
+        }
+
+        {{- $fullLogoExt := default "not-found" (((.Values.kubecostProductConfigs).branding).fullLogoExt)}}
+        location /custom-branding/full-logo {
+            {{- if ne $fullLogoExt "not-found" }}
+                try_files /static/templated-full-logo.{{$fullLogoExt}} =404;
+            {{- else }}
+                return 404;
+            {{- end }}
+        }
+
+        {{- $squareLogoExt := default "not-found" (((.Values.kubecostProductConfigs).branding).squareLogoExt)}}
+        location /custom-branding/square-logo {
+            {{- if  ne $squareLogoExt "not-found"}}
+                try_files /static/templated-square-logo.{{$squareLogoExt}} =404;
+            {{- else }}
+                return 404;
+            {{- end }}
         }
     }
 {{- end }}

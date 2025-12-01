@@ -49,3 +49,14 @@ Create the nginx config map name with fallback logic.
   {{- printf "nginx-conf-%s" .Release.Name | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Create the branding config map name with fallback logic.
+*/}}
+{{- define "kubecost.frontend.logoConfigMapName" -}}
+{{- if ((.Values.kubecostProductConfigs).branding).configmap -}}
+  {{- ((.Values.kubecostProductConfigs).branding).configmap  -}}
+{{- else -}}
+  {{ printf "frontend-logo-%s" .Release.Name | trunc 63 | trimSuffix "-" }}
+{{- end -}}
+{{- end -}}

@@ -1,8 +1,8 @@
 apiVersion: v2
-appVersion: "3.0.3"
+appVersion: "3.0.5"
 description: Kubecost Helm chart - monitor your cloud costs!
 name: kubecost
-version: "3.0.3"
+version: "3.0.5"
 icon: https://raw.githubusercontent.com/kubecost/.github/9602bea0c06773da66ba43cb9ce5e1eb2b797c32/kubecost_logo.png
 annotations:
   "artifacthub.io/links": |
@@ -11,6 +11,6 @@ annotations:
 dependencies:
   - name: finops-agent
     alias: finopsagent
-    version: "v1.0.3"
+    version: "v1.0.5"
     repository: https://kubecost.github.io/finops-agent-chart
     condition: finopsagent.enabled

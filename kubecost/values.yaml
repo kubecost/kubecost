@@ -9,7 +9,8 @@ global:
   ## @param global.federatedStorage.existingSecret The name of an existing secret to use for the federated storage config. Note, you cannot set both `config` and `existingSecret`.
   ## The name of the Secret containing a bucket config for federated storage.
   ## The contents should be stored under a key named storage-config.yaml by default.
-  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-long-term-federated-storage-configuration
+  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=cluster-long-term-storage-configuration
+  ##
   federatedStorage:
     config: ""
     # A federated storage config can be provided via an existingSecret or via a string in helm values.
@@ -59,7 +60,7 @@ global:
       adaptSecurityContext: auto
 
   ## Kubecost Alerting
-  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=ui-alerts
+  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=ui-alerts
   ##
   notifications:
     # alertConfigs:
@@ -82,7 +83,7 @@ global:
   chartName: "kubecost"
 
   ## Kubecost Saved Reports
-  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=ui-reports
+  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=ui-reports
   ##
   savedReports:
     enabled: false  # If true, overwrites report parameters set through UI
@@ -94,7 +95,7 @@ global:
         idle: "separate"
         rate: "cumulative"
         accumulate: false   # daily resolution
-        filters:            # Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=filter-parameters-v2
+        filters:            # Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=directory-filter-parameters-v2
           - key: "cluster"
             operator: ":"
             value: "dev"
@@ -105,7 +106,7 @@ global:
         idle: "share"
         rate: "monthly"
         accumulate: false
-        filters:              # Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=filter-parameters-v2
+        filters:              # Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=directory-filter-parameters-v2
           - key: "namespace"
             operator: "!:"
             value: "kubecost"
@@ -206,7 +207,7 @@ global:
       skipSanityChecks: false  # If true, skip all sanity/existence checks for resources like Secrets.
 
   ## Kubecost Integrations
-  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=kubecost-postgres-integration
+  ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=configuration-kubecost-postgres-integration
   ##
   integrations:
     turbonomic:
@@ -228,7 +229,7 @@ global:
 
       ## Configure what Postgres table to write to, and what parameters to pass
       ## when querying Kubecost's APIs. Ensure all parameters are enclosed in
-      ## quotes. Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=kubecost-api-directory
+      ## quotes. Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=kubecost-api-directory
       queryConfigs:
         allocations: []
           # - databaseTable: "kubecost_allocation_data"
@@ -264,7 +265,7 @@ fullnameOverride: ""
 #   app.kubernetes.io/name: kubecost
 
 ## Kubecost Enterprise Custom Pricing (enterprise key required)
-## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-enterprise-custom-pricing
+## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=configuration-csv-pricing
 ##
 enterpriseCustomPricing:
   # Enabled the feature by setting this flag to "true". If enabled, the feature
@@ -283,7 +284,7 @@ enterpriseCustomPricing:
     URI: /var/configs/enterprise-pricing/pricing.csv
 
 ## Kubecost SAML (enterprise key required)
-## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-user-management-saml
+## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=configuration-user-management-saml
 ##
 saml:
   enabled: false
@@ -321,7 +322,7 @@ saml:
     #       - "editor"
 
 ## Kubecost OIDC (enterprise key required)
-## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-user-management-ssooidc
+## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=configuration-user-management-oidc
 ##
 oidc:
   enabled: false
@@ -337,6 +338,7 @@ oidc:
   skipOnlineTokenValidation: false  # If true, validate JWT claims locally
   useClientSecretPost: false  # If true, only use client_secret_post method. Otherwise attempt to send the secret in both the header and the body.
   hostedDomain: ""  # Optional, blocks access to the auth domain specified in the hd claim of the provider ID token
+  useIDToken: false  # If true, use ID token for authentication. Otherwise, use access token. Set it to true if your identity providers communicate a user's group in the id_token (e.g. Entra ID).
   rbac:
     enabled: false
     # groups:
@@ -358,7 +360,7 @@ oidc:
     #       - "editor"
 
 ## Kubecost Teams (enterprise key required)
-## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=ui-teams
+## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=ui-teams
 ##
 teams:
   teamsConfigMapName: ""  # Name of the ConfigMap containing the teams configuration, if manually created, which overrides any other configured teams
@@ -419,11 +421,12 @@ teams:
 #     value: noProxy
 #   - name: no_proxy
 #     value: noProxy
+##
 systemProxy:
   enabled: false
   httpProxyUrl: ""
   httpsProxyUrl: ""
-  noProxy: ""
+  noProxy: "localhost, 127.0.0.1"  # localhost and 127.0.0.1 are required to communicate with ClickHouse when systemProxy is enabled.
 
 ## deprecated: this image pull secret (on the root level) is for backwards compatibility.
 ## Note that this format is different that what is used in global.imagePullSecrets
@@ -447,6 +450,7 @@ frontend:
     registry: ""  # Default is "icr.io"
     repository: kubecost/frontend
     tag: ""  # Default is to match the Chart.AppVersion
+  upstreamAggregatorConfiguration: ""
 
   imagePullPolicy: IfNotPresent
 
@@ -577,11 +581,18 @@ localStore:
       # This can be used to allow the agent history to be uploaded to cloud storage when upgrading to Enterprise.
       helm.sh/resource-policy: keep
 
-## Below are a subset of values for the finopsagent sub-chart that are most commonly changed.
-## See https://github.com/kubecost/finops-agent-chart/
-## for a complete list of values.
+## FinOps Agent
+## Collects kubernetes metrics and sends them to storage. Below are a subset of
+## values from the finopsagent subchart that are most commonly changed.
+## Ref: https://github.com/kubecost/finops-agent-chart/blob/main/charts/finops-agent/values.yaml
+##
 finopsagent:
   enabled: true
+  image:
+    repository: ibm-finops/agent
+  #   registry: ""  # Default is "icr.io"
+  #   tag: ""  # Default is set in Chart.yaml
+  # fullImageName: ""  # fullImageName If set, will override the image registry, repo/name and tag.
   # serviceAccount:
   #   create: true
   #   name: finops-agent
@@ -654,14 +665,15 @@ plugins:
     #   "datadog_app_key": "<INSERT_DATADOG_APP_KEY>"
     #   }
 
-## Basic Kubecost ingress, more examples available at https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=installation-ingress-examples
+## Basic Kubecost ingress, more examples available in docs
+## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=installation-ingress-examples
 ##
 ingress:
   enabled: false
   # className: "nginx"
-  labels:
+  labels: {}
     # kubernetes.io/tls-acme: "true"
-  annotations:
+  annotations: {}
     # cert-manager.io/cluster-issuer: letsencrypt-http
     # kubernetes.io/tls-acme: "true"
   paths: ["/"]  # There's no need to route specifically to the pods-- we have an nginx deployed that handles routing
@@ -674,7 +686,7 @@ ingress:
   #      - kubecost.local
 
 ## Optional daemonset to more accurately attribute network costs to the correct workload
-## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-network-cost
+## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=configuration-network-cost
 ##
 networkCosts:
   enabled: true
@@ -683,12 +695,12 @@ networkCosts:
   ## If not set, the image will be pulled from the registry and repository specified in the image block.
   ## If set, the fullImageName will be used to pull the image.
   ## Example:
-  ## fullImageName: gcr.io/kubecost1/kubecost-network-costs:v0.18.0
+  ## fullImageName: gcr.io/kubecost1/kubecost-network-costs:v0.18.1
   fullImageName: ""
   image:
     registry: ""  # Default is "icr.io"
     repository: kubecost/network-costs
-    tag: v0.18.0
+    tag: v0.18.1
   imagePullPolicy: IfNotPresent
 
   updateStrategy:
@@ -723,7 +735,7 @@ networkCosts:
   # Port will set both the containerPort and hostPort to this value.
   # These must be identical due to network-costs being run on hostNetwork
   port: 3001
-  # this daemonset can use significant resources on large clusters: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=dashboard-network-traffic-cost-allocation
+  # this daemonset can use significant resources on large clusters: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=dashboard-network-traffic-cost-allocation
   resources:
     limits:  # remove the limits by setting cpu: null
       cpu: 500m  # can be less, will depend on cluster size
@@ -813,7 +825,7 @@ networkCosts:
 
 ## Kubecost Forecasting forecasts future cost patterns based on historical
 ## patterns observed by Kubecost.
-## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=forecasting
+## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=forecasting
 ##
 forecasting:
   enabled: true
@@ -827,7 +839,7 @@ forecasting:
   image:
     registry: ""  # Default is "icr.io"
     repository: kubecost/modeling
-    tag: v0.1.31
+    tag: v0.1.33
   imagePullPolicy: IfNotPresent
 
   # Resource specification block for the forecasting container.
@@ -864,7 +876,7 @@ forecasting:
     failureThreshold: 200
 
 ## The Kubecost Aggregator is the primary query backend for Kubecost
-## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=federation-kubecost-aggregator
+## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=federation-kubecost-aggregator
 ##
 aggregator:
   enabled: true
@@ -1048,15 +1060,14 @@ aggregator:
           - __meta_kubernetes_namespace
         targetLabel: namespace
 
-## Kubecost Multi-cluster Diagnostics
-## A single view into the health of all agent clusters. Each agent cluster sends
-## its diagnostic data to a storage bucket.
-## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=cluster-multi-diagnostics
-## retention: deletes data beyond specified retention period
+## Kubecost Multi-cluster Heartbeat and Diagnostics
+## Each agent cluster sends its diagnostic data to a storage bucket. Data is
+## deleted after the specified retention period.
+## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=cluster-multi-diagnostics
+##
 diagnostics:
   enabled: true
   retention: 30d
-
 heartbeat:
   enabled: true
   retention: 30d
@@ -1156,7 +1167,7 @@ cloudCost:
   extraVolumeMounts: []
 
 ## Kubecost Cluster Controller for Automated Right Sizing and Turndown
-## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=configuration-cluster-controller
+## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=configuration-cluster-controller
 ##
 clusterController:
   enabled: true
@@ -1169,12 +1180,12 @@ clusterController:
   ## If not set, the image will be pulled from the registry and repository specified in the image block.
   ## If set, the fullImageName will be used to pull the image.
   ## Example:
-  ## fullImageName: gcr.io/kubecost1/cluster-controller:v0.16.20
+  ## fullImageName: gcr.io/kubecost1/cluster-controller:v0.16.30
   fullImageName: ""
   image:
     registry: ""  # Default is "icr.io"
     repository: kubecost/cluster-controller
-    tag: v0.16.29
+    tag: v0.16.30
   imagePullPolicy: IfNotPresent
   logLevel: info
   extraEnv: []
@@ -1236,8 +1247,8 @@ clusterController:
     namespaceTurndown: false
 
 ## Kubecost Bug Reports
-## k8s role bindings to be able to access pods/logs limited to .Release.Namespace
-## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=capture-bug-report
+## Enables k8s role bindings to access pods/logs limited to .Release.Namespace
+## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=install-capture-bug-report
 ##
 reporting:
   logCollection: true
@@ -1265,17 +1276,20 @@ costEventsAudit:
 
 ## Disable updates to kubecost from the frontend UI and via POST request
 ## This feature is considered beta, enterprise users should use teams:
-## https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=ui-teams
+## https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=ui-teams
 # readonly: false
 
-# Enables or disables the sending of anonymized telemetry data to help
-# improve Kubecost.
+## Enables or disables the sending of anonymized telemetry data to help
+## improve Kubecost.
+## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=telemetry
+##
 telemetry:
   enabled: true
 
 ## These configs can also be set from the Settings page in the Kubecost product
 ## UI. Values in this block override config changes in the Settings UI on pod
 ## restart
+##
 kubecostProductConfigs:
   actions:
     # Enable multi-cluster cluster controller actions (v2)
@@ -1398,7 +1412,7 @@ kubecostProductConfigs:
   hideBellIcon: true  # Deprecated in v2.7. Default is true, which hides the bell icon in the top right corner of the UI. The new diagnostics is top level in left nav. Change to false to restore the bell icon.
   hideTeams: false
 
-#   savingsProfiles: # Define custom profiles used in the Right-Size Container Request savings card. Supported parameters are explained in https://www.ibm.com/docs/en/kubecost/self-hosted/2.x?topic=apis-container-request-right-sizing-recommendation-api.
+#   savingsProfiles: # Define custom profiles used in the Right-Size Container Request savings card. Supported parameters are explained in https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=apis-container-request-right-sizing-recommendation-api.
 #     requestSizing:
 #     - name: "custom1"
 #       algorithmCPU: "max"
@@ -1422,6 +1436,23 @@ kubecostProductConfigs:
 #     AWS: []
 #     GCP: []
 #     Azure: []
+
+  # Customize the branding, the UI will only honor these values for custom enterprise licenses
+  # branding:
+  #   productName: "" # Name to use to refer to the product in messaging
+  #   footerHTML: "" # HTML to use on the footer
+  #   primaryAccentColor: "" # Needs to be legible on #ffffff and #343434 backgrounds
+  #   font: "" # Either not set or set to 'ibm'
+  #   fullLogoBase64: "" # base64 encoded binary asset to use as the full logo, used in the nav bar when the nav is expanded
+  #   fullLogoExt: "" # the extension of the full logo
+  #   fullLogoAltText: "" # alt text to apply to the img tags for the full logo
+  #   squareLogoBase64: "" # base64 encoded binary asset to use for the square logo, used in the collapsed nav as well as empty and loading states
+  #   squareLogoExt: "" # the extension of the square logo
+  #   squareLogoAltText: "" # alt text to apply to the img tags for the square logo
+
+# Enable to display the deployment guide in the Kubecost UI for installing the FinOps Agent when provisioning via advanced containers
+deploymentGuide:
+  enabled: false
 
 # -- Array of extra K8s manifests to deploy
 ## Note: Supports use of custom Helm templates

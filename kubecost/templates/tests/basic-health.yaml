@@ -1,0 +1,72 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: basic-health
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    {{- include "kubecost.test.annotations" . | nindent 4 }}
+  labels:
+    app: basic-health
+    app.kubernetes.io/name: basic-health
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  automountServiceAccountToken: false
+  restartPolicy: Never
+  securityContext:
+    seccompProfile:
+      type: RuntimeDefault
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 3000
+    fsGroup: 2000
+  containers:
+  - name: test-kubecost
+    image: {{ .Values.basicHealth.registry }}/{{ .Values.basicHealth.repository }}:{{ .Values.basicHealth.tag }}
+    securityContext:
+      privileged: false
+      capabilities:
+        drop:
+        - ALL
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+    command:
+      - /bin/sh
+    args:
+      - -c
+      - |
+        set -x
+        {{- if .Values.frontend.enabled }}
+        # Primary cluster: use frontend service
+        svc="{{ include "kubecost.frontend.serviceName" . }}"
+        port="9090"
+        path="/model/healthz"
+        echo "Getting current Kubecost state from frontend service."
+        curl -vvv http://${svc}:${port}${path}
+        response=$(curl -sL -w "%{http_code}" http://${svc}:${port}${path})
+        if [ "$response" -eq 200 ]; then
+          echo "Got Kubecost 200 on healthz. Successful."
+          exit 0
+        else
+          echo "Failed to fetch Kubecost 200 on healthz. Response code was $response"
+          exit 1
+        fi
+        {{- else if .Values.finopsagent.enabled }}
+        # Agent cluster: use finopsagent service
+        svc="{{ .Release.Name }}-finopsagent"
+        port="80"
+        path="/healthz"
+        echo "Getting current FinOps Agent state from finopsagent service."
+        curl -vvv http://${svc}:${port}${path}
+        response=$(curl -sL -w "%{http_code}" http://${svc}:${port}${path})
+        if [ "$response" -eq 200 ]; then
+          echo "Got FinOps Agent 200 on healthz. Successful."
+          exit 0
+        else
+          echo "Failed to fetch FinOps Agent 200 on healthz. Response code was $response"
+          exit 1
+        fi
+        {{- else }}
+        echo "Frontend and finopsagent are both disabled. Skipping health check."
+        exit 0
+        {{- end }}
