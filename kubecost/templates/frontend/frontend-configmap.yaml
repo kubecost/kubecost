@@ -437,6 +437,14 @@ data:
             proxy_set_header  X-Real-IP  $remote_addr;
             proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
         }
+        location = /model/cloud/config/test {
+            proxy_read_timeout          {{ .Values.frontend.timeoutSeconds | default 300 }};
+            proxy_pass http://cloudCost/cloud/config/test;
+            proxy_redirect off;
+            proxy_set_header Connection "";
+            proxy_set_header  X-Real-IP  $remote_addr;
+            proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
+        }
         location = /model/cloudCost/integration/validate {
             proxy_read_timeout          {{ .Values.frontend.timeoutSeconds | default 300 }};
             proxy_pass http://cloudCost/cloudCost/integration/validate;
