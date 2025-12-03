@@ -515,6 +515,8 @@ spec:
             - name: HEARTBEAT_RETENTION
               value: {{ .Values.heartbeat.retention | quote }}
             {{- end }}
+            - name: API_CONFIGMAP_NAME
+              value: "api-configs"
             {{- if (.Values.aggregator).standardDiscount }}
             {{- if .Values.ingestionConfigmapName }}
             - name: INGESTION_CONFIGMAP_NAME

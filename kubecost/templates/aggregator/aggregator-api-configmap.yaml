@@ -1,0 +1,22 @@
+{{- if (.Values.aggregator).enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "api-configs" # TODO: This should be adjustable
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
+data:
+  {{- if .Values.kubecostProductConfigs.labelMappingConfigs.enabled }}
+  owner_label: {{ .Values.kubecostProductConfigs.labelMappingConfigs.owner_label }}
+  team_label: {{ .Values.kubecostProductConfigs.labelMappingConfigs.team_label }}
+  department_label: {{ .Values.kubecostProductConfigs.labelMappingConfigs.department_label }}
+  product_label: {{ .Values.kubecostProductConfigs.labelMappingConfigs.product_label }}
+  environment_label: {{ .Values.kubecostProductConfigs.labelMappingConfigs.environment_label }}
+  {{- end }}
+  sharedOverhead: {{ .Values.kubecostProductConfigs.sharedOverhead }}
+  sharedNamespaces: {{ .Values.kubecostProductConfigs.sharedNamespaces }} 
+  sharedLabelNames: {{ .Values.kubecostProductConfigs.sharedLabelNames }}
+  sharedLabelValues: {{ .Values.kubecostProductConfigs.sharedLabelValues }}
+  shareTenancyCosts: {{ .Values.kubecostProductConfigs.shareTenancyCosts  }}
+{{- end -}}
