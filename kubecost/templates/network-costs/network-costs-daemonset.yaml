@@ -121,9 +121,17 @@ spec:
       tolerations:
 {{ toYaml .Values.networkCosts.tolerations | indent 8 }}
     {{- end }}
-      {{- with .Values.networkCosts.affinity }}
+      {{- if .Values.networkCosts.useDefaultAffinity }}
       affinity:
-        {{- toYaml . | nindent 8 }}
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: topology.kubernetes.io/region
+                operator: Exists
+        {{- else }}
+      affinity:
+        {{- toYaml .Values.networkCosts.affinity | nindent 8 }}
       {{- end }}
       volumes:
       {{- if .Values.networkCosts.config }}

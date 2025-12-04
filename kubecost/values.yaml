@@ -814,6 +814,10 @@ networkCosts:
       #      - "20.0.0.0/8"
 
   tolerations: []
+  ## useDefaultAffinity: if true, the affinity will be set to a nodeAffinity that will only schedule
+  ## networkCosts pods to run on nodes that have a topology.kubernetes.io/region label.
+  ## If false, the affinity will be set to the affinity provided in the affinity block.
+  useDefaultAffinity: true
   affinity: {}
   service:
     annotations: {}
