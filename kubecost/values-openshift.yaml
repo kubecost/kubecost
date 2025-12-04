@@ -1,8 +1,22 @@
-# This Helm values file is a modified version of `values.yaml`.
+# This Helm values file is a modified version of the defaults in `values.yaml` that are specific to OpenShift (OCP) clusters.
 # This file is meant to be used by users deploying Kubecost to OpenShift (OCP) clusters. For more configuration options, see `values.yaml`.
 global:
   # Platforms is a higher-level abstraction for platform-specific values and settings.
   platforms:
-    # Deploying to OpenShift (OCP) requires enabling this option.
+    ## Deploying to OpenShift (OCP) requires enabling this option.
     openshift:
       enabled: true  # Deploy Kubecost to OpenShift.
+      route:
+        enabled: false  # Create an OpenShift Route.
+        annotations: {}  # Add annotations to the Route.
+        # host: kubecost.apps.okd4.example.com  # Add a custom host for your Route.
+
+      ## Create Security Context Constraint resources for the DaemonSets requiring additional privileges.
+      scc:
+        networkCosts: true  # Creates an SCC for Kubecost network-costs. This requires network-costs be enabled.
+        clusterController: true  # Creates an SCC for Kubecost Cluster Controller. This requires clusterController be enabled.
+      ## When OpenShift is enabled, the following securityContext will be applied to all resources unless they define their own.
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
