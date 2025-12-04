@@ -1350,12 +1350,18 @@ kubecostProductConfigs:
     #   global: # Define global action configuration
     #     containerRequestRightSizing:
     #       enabled: true
+    #     resourceQuotaRightSizing:
+    #       enabled: true
     #   clusters: # Define cluster-specific action configuration, where top-level keys are cluster names
     #     cluster-1:
     #       containerRequestRightSizing:
     #         enabled: false
+    #       resourceQuotaRightSizing:
+    #         enabled: false
     #     cluster-2:
     #       containerRequestRightSizing:
+    #         enabled: false
+    #       resourceQuotaRightSizing:
     #         enabled: false
     #   actions:
     #     containerRequestRightSizing:
