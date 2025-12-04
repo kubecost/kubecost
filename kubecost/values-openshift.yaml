@@ -1,7 +1,7 @@
-# This Helm values file is a modified version of the defaults in `values.yaml` that are specific to OpenShift (OCP) clusters.
-# This file is meant to be used by users deploying Kubecost to OpenShift (OCP) clusters. For more configuration options, see `values.yaml`.
+## This Helm values file is a modified version of the defaults in `values.yaml` that are specific to OpenShift (OCP) clusters.
+## This file is meant to be used by users deploying Kubecost to OpenShift (OCP) clusters. For more configuration options, see `values.yaml`.
 global:
-  # Platforms is a higher-level abstraction for platform-specific values and settings.
+  ## Platforms is a higher-level abstraction for platform-specific values and settings.
   platforms:
     ## Deploying to OpenShift (OCP) requires enabling this option.
     openshift:
