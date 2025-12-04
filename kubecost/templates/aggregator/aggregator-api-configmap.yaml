@@ -7,6 +7,8 @@ metadata:
   labels:
     {{- include "kubecost.commonLabels" . | nindent 4 }}
 data:
+  currencyCode: {{ .Values.kubecostProductConfigs.currencyCode | quote }}
+  defaultIdle: {{ .Values.kubecostProductConfigs.defaultIdle | quote }}
   {{- if .Values.kubecostProductConfigs.labelMappingConfigs.enabled }}
   owner_label: {{ .Values.kubecostProductConfigs.labelMappingConfigs.owner_label | quote }}
   team_label: {{ .Values.kubecostProductConfigs.labelMappingConfigs.team_label | quote }}
