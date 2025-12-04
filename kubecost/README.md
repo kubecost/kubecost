@@ -26,45 +26,28 @@ Additionally, see the root of the chart for examples of commonly changed values 
 | `frontend.model.fqdn`                                                      | Customize the upstream model FQDN                                                                                                                            | `computed in terms of the service name and namespace` |
 | `clusterController.fqdn`                                                           | Customize the upstream cluster controller FQDN                                                                                                               | `computed in terms of the service name and namespace` |
 
-## Adjusting Log Output
-
-You can adjust the log output by using the `logLevel` Helm value and/or the `LOG_FORMAT` environment variable.
-
-### Adjusting Log Level
-
-Adjusting the log level increases or decreases the level of verbosity written to the logs. The `logLevel` property accepts the following values:
-
-* `trace`
-* `debug`
-* `info`
-* `warn`
-* `error`
-* `fatal`
-
-### Adjusting Log Format
-
-Adjusting the log format changes the format in which the logs are output making it easier for log aggregators to parse and display logged messages. The `LOG_FORMAT` environment variable accepts the values `JSON`, for a structured output, and `pretty` for a nice, human-readable output.
-
-| Value  | Output                                                                                                                     |
-|--------|----------------------------------------------------------------------------------------------------------------------------|
-| `JSON`   | `{"level":"info","time":"2006-01-02T15:04:05.999999999Z07:00","message":"Starting cost-model (git commit \"1.91.0-rc.0\")"}` |
-| `pretty` | `2006-01-02T15:04:05.999999999Z07:00 INF Starting cost-model (git commit "1.91.0-rc.0")`                                     |
-
 ## Testing
 
 To perform local testing:
 
-* install locally [kind](https://github.com/kubernetes-sigs/kind) according to documentation.
-* install locally [ct](https://github.com/helm/chart-testing) according to documentation.
-* create local cluster using `kind` \
-use image version from <https://github.com/kubernetes-sigs/kind/releases> e.g. `kindest/node:v1.25.11@sha256:227fa11ce74ea76a0474eeefb84cb75d8dad1b08638371ecf0e86259b35be0c8`
+* Any test cluster works, e.g. [kind](https://github.com/kubernetes-sigs/kind)
+* Use chart-testing to run ct (below) [ct](https://github.com/helm/chart-testing)
 
-```shell
-kind create cluster --image kindest/node:v1.25.11@sha256:227fa11ce74ea76a0474eeefb84cb75d8dad1b08638371ecf0e86259b35be0c8
-```
+* perform chart-testing
 
-* perform ct execution
+This will install kubecost in a chart-testing namespace and run the tests. Note that some clusters may not support all features, in the example below we disable network costs.
 
 ```sh
-ct install  --chart-dirs="." --charts="."
+ct lint-and-install \
+    --chart-dirs=./kubecost \
+    --charts=./kubecost \
+    --validate-maintainers=false \
+    --namespace=kubecost-chart-testing \
+    --helm-extra-set-args "--set networkCosts.enabled=false --create-namespace"
+```
+
+If successful, you should see the following output:
+
+```sh
+All charts linted and installed successfully
 ```
