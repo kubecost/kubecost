@@ -637,6 +637,7 @@ finopsagent:
       enabled: false
 
     kubecost:
+      projectID: ""
       awsSpotDataBucket: ""
       awsSpotDataPrefix: ""
       awsSpotDataRegion: ""
