@@ -636,6 +636,29 @@ finopsagent:
       ## Cloudability requires an API key to send data to the cloudability platform
       enabled: false
 
+    kubecost:
+      awsSpotDataBucket: ""
+      awsSpotDataPrefix: ""
+      awsSpotDataRegion: ""
+      customPrices:
+        enabled: false
+        CPU: ""
+        GPU: ""
+        RAM: ""
+        spotCPU: ""
+        spotGPU: ""
+        spotRAM: ""
+        storage: ""
+        internetNetworkEgress: ""
+        regionNetworkEgress: ""
+        zoneNetworkEgress: ""
+      discount: ""
+      negotiatedDiscount: ""
+      gpuLabel: ""
+      gpuLabelValue: ""
+      spotLabel: ""
+      spotLabelValue: ""
+
 ## Installs Kubecost/OpenCost plugins
 ## Ref: https://opencost.io/docs/integrations/plugins/
 ##
