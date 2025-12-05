@@ -129,6 +129,8 @@ spec:
             - matchExpressions:
               - key: topology.kubernetes.io/region
                 operator: Exists
+              - key: topology.kubernetes.io/zone
+                operator: Exists
         {{- else }}
       affinity:
         {{- toYaml .Values.networkCosts.affinity | nindent 8 }}
