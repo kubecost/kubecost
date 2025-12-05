@@ -821,12 +821,10 @@ networkCosts:
   ##     effect: NoSchedule
   ## to tolerate specific taints, use the following:
   ## tolerations:
-  ##   - operator: Exists
+  ##   - operator: Equal
   ##     effect: NoSchedule
   ##     key: "key"
   ##     value: "value"
-  ##     operator: Equal
-  ##     effect: NoSchedule
   tolerations: []
   affinity: {}
   service:
