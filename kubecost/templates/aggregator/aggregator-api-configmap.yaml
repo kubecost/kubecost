@@ -7,15 +7,11 @@ metadata:
   labels:
     {{- include "kubecost.commonLabels" . | nindent 4 }}
 data:
-  currencyCode: {{ .Values.kubecostProductConfigs.currencyCode | quote }}
-  defaultIdle: {{ .Values.kubecostProductConfigs.defaultIdle | quote }}
-  {{- if .Values.kubecostProductConfigs.labelMappingConfigs.enabled }}
   owner_label: {{ .Values.kubecostProductConfigs.labelMappingConfigs.owner_label | quote }}
   team_label: {{ .Values.kubecostProductConfigs.labelMappingConfigs.team_label | quote }}
   department_label: {{ .Values.kubecostProductConfigs.labelMappingConfigs.department_label | quote }}
   product_label: {{ .Values.kubecostProductConfigs.labelMappingConfigs.product_label | quote }}
   environment_label: {{ .Values.kubecostProductConfigs.labelMappingConfigs.environment_label | quote }}
-  {{- end }}
   sharedOverhead: {{ .Values.kubecostProductConfigs.sharedOverhead | quote }}
   sharedNamespaces: {{ .Values.kubecostProductConfigs.sharedNamespaces | quote }}
   sharedLabelNames: {{ .Values.kubecostProductConfigs.sharedLabelNames | quote }}
