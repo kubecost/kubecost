@@ -33,8 +33,6 @@ To perform local testing:
 * Any test cluster works, e.g. [kind](https://github.com/kubernetes-sigs/kind)
 * Use chart-testing to run ct (below) [ct](https://github.com/helm/chart-testing)
 
-* perform chart-testing
-
 This will install kubecost in a chart-testing namespace and run the tests. Note that some clusters may not support all features, in the example below we disable network costs.
 
 ```sh
