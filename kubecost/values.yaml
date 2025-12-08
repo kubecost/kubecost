@@ -826,7 +826,18 @@ networkCosts:
   ##     key: "key"
   ##     value: "value"
   tolerations: []
-  affinity: {}
+  ## networkCosts requires that the node has topology.kubernetes.io/region and topology.kubernetes.io/zone labels.
+  ## The below nodeAffinity policy will prevent the pods from running on any node that does not have both labels.
+  ## to override this, set affinity: ""
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: topology.kubernetes.io/region
+            operator: Exists
+          - key: topology.kubernetes.io/zone
+            operator: Exists
   service:
     annotations: {}
     labels: {}
