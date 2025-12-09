@@ -837,8 +837,31 @@ networkCosts:
       #      - "15.128.15.2"
       #      - "20.0.0.0/8"
 
+  ## Network costs is a daemonset and may need to be scheduled on nodes with specific taints.
+  ## If monitoring the network costs for workloads on nodes with specific taints, add the tolerations here.
+  ## to tolerate all taints, use the following:
+  ## tolerations:
+  ##   - operator: Exists
+  ##     effect: NoSchedule
+  ## to tolerate specific taints, use the following:
+  ## tolerations:
+  ##   - operator: Equal
+  ##     effect: NoSchedule
+  ##     key: "key"
+  ##     value: "value"
   tolerations: []
-  affinity: {}
+  ## networkCosts requires that the node has topology.kubernetes.io/region and topology.kubernetes.io/zone labels.
+  ## The below nodeAffinity policy will prevent the pods from running on any node that does not have both labels.
+  ## to override this, set affinity: ""
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: topology.kubernetes.io/region
+            operator: Exists
+          - key: topology.kubernetes.io/zone
+            operator: Exists
   service:
     annotations: {}
     labels: {}

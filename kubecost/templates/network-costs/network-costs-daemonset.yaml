@@ -121,10 +121,8 @@ spec:
       tolerations:
 {{ toYaml .Values.networkCosts.tolerations | indent 8 }}
     {{- end }}
-      {{- with .Values.networkCosts.affinity }}
       affinity:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- toYaml .Values.networkCosts.affinity | nindent 8 }}
       volumes:
       {{- if .Values.networkCosts.config }}
       - name: network-costs-config
