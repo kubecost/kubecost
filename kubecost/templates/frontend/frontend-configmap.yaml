@@ -570,13 +570,13 @@ data:
             ';
         }
 
+        # TODO: Remove this endpoint. All these configs will become available in the backend's `/model/getApiConfigs` and `/model/setApiConfigs`. They will also be configured in a ConfigMap. https://github.com/kubecost/kubecost/pull/4472.
         location = /model/getConfigs {
             default_type 'application/json';
             return 200 '{
                 "code": 200,
                 "status": "success",
                 "data": {
-               
                     "defaultIdle": "{{ .Values.kubecostProductConfigs.defaultIdle }}",
                     "currencyCode": "{{ .Values.kubecostProductConfigs.currencyCode }}",
                     "negotiatedDiscount": "{{ .Values.kubecostProductConfigs.negotiatedDiscount }}",
