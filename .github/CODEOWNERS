@@ -8,4 +8,4 @@
 
 # Require team-sre approval for frontend configmap changes
 # there are upstream impacts to changes here, please work with the team to verify your change
-kubecost/templates/frontend/frontend-configmap.yaml @mittal-ishaan @ameijer @jessegoodier @nealormsbee @cpetersen5 @thomasvn @cliffcolvin 
+kubecost/templates/frontend/frontend-configmap.yaml @kubecost/sre
