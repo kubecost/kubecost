@@ -1,0 +1,11 @@
+# GitHub CODEOWNERS file
+# This file defines individuals or teams that are responsible for code in this repository.
+# Code owners are automatically requested for review when someone opens a pull request
+# that modifies code that they own.
+#
+# For more information, see:
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Require team-sre approval for frontend configmap changes
+# there are upstream impacts to changes here, please work with the team to verify your change
+kubecost/templates/frontend/frontend-configmap.yaml @mittal-ishaan @ameijer @jessegoodier @nealormsbee @cpetersen5 @thomasvn @cliffcolvin 
