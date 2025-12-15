@@ -1224,9 +1224,12 @@ cloudCost:
 ##
 clusterController:
   enabled: true
+  serviceAccount:
+    create: true
+    annotations: {}
 
-  # Enables legacy mode for cluster controller actions (v1)
-  # Only used with kubecost versions < 3.0.0
+  ## Enables legacy mode for cluster controller actions (v1)
+  ## Only used with kubecost versions < 3.0.0
   legacyMode: false
 
   ## Override the image name and version for the cluster controller.
