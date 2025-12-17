@@ -636,6 +636,30 @@ finopsagent:
       ## Cloudability requires an API key to send data to the cloudability platform
       enabled: false
 
+    kubecost:
+      projectID: ""
+      awsSpotDataBucket: ""
+      awsSpotDataPrefix: ""
+      awsSpotDataRegion: ""
+      customPrices:
+        enabled: false
+        CPU: ""
+        GPU: ""
+        RAM: ""
+        spotCPU: ""
+        spotGPU: ""
+        spotRAM: ""
+        storage: ""
+        internetNetworkEgress: ""
+        regionNetworkEgress: ""
+        zoneNetworkEgress: ""
+      discount: ""
+      negotiatedDiscount: ""
+      gpuLabel: ""
+      gpuLabelValue: ""
+      spotLabel: ""
+      spotLabelValue: ""
+
 ## Installs Kubecost/OpenCost plugins
 ## Ref: https://opencost.io/docs/integrations/plugins/
 ##
@@ -813,8 +837,31 @@ networkCosts:
       #      - "15.128.15.2"
       #      - "20.0.0.0/8"
 
+  ## Network costs is a daemonset and may need to be scheduled on nodes with specific taints.
+  ## If monitoring the network costs for workloads on nodes with specific taints, add the tolerations here.
+  ## to tolerate all taints, use the following:
+  ## tolerations:
+  ##   - operator: Exists
+  ##     effect: NoSchedule
+  ## to tolerate specific taints, use the following:
+  ## tolerations:
+  ##   - operator: Equal
+  ##     effect: NoSchedule
+  ##     key: "key"
+  ##     value: "value"
   tolerations: []
-  affinity: {}
+  ## networkCosts requires that the node has topology.kubernetes.io/region and topology.kubernetes.io/zone labels.
+  ## The below nodeAffinity policy will prevent the pods from running on any node that does not have both labels.
+  ## to override this, set affinity: ""
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: topology.kubernetes.io/region
+            operator: Exists
+          - key: topology.kubernetes.io/zone
+            operator: Exists
   service:
     annotations: {}
     labels: {}
@@ -1177,21 +1224,24 @@ cloudCost:
 ##
 clusterController:
   enabled: true
+  serviceAccount:
+    create: true
+    annotations: {}
 
-  # Enables legacy mode for cluster controller actions (v1)
-  # Only used with kubecost versions < 3.0.0
+  ## Enables legacy mode for cluster controller actions (v1)
+  ## Only used with kubecost versions < 3.0.0
   legacyMode: false
 
   ## Override the image name and version for the cluster controller.
   ## If not set, the image will be pulled from the registry and repository specified in the image block.
   ## If set, the fullImageName will be used to pull the image.
   ## Example:
-  ## fullImageName: gcr.io/kubecost1/cluster-controller:v0.16.30
+  ## fullImageName: gcr.io/kubecost1/cluster-controller:v0.16.32
   fullImageName: ""
   image:
     registry: ""  # Default is "icr.io"
     repository: kubecost/cluster-controller
-    tag: v0.16.30
+    tag: v0.16.32
   imagePullPolicy: IfNotPresent
   logLevel: info
   extraEnv: []
@@ -1350,12 +1400,18 @@ kubecostProductConfigs:
     #   global: # Define global action configuration
     #     containerRequestRightSizing:
     #       enabled: true
+    #     resourceQuotaRightSizing:
+    #       enabled: true
     #   clusters: # Define cluster-specific action configuration, where top-level keys are cluster names
     #     cluster-1:
     #       containerRequestRightSizing:
     #         enabled: false
+    #       resourceQuotaRightSizing:
+    #         enabled: false
     #     cluster-2:
     #       containerRequestRightSizing:
+    #         enabled: false
+    #       resourceQuotaRightSizing:
     #         enabled: false
     #   actions:
     #     containerRequestRightSizing:
@@ -1406,13 +1462,22 @@ kubecostProductConfigs:
   # cloudAccountMapping:
   #   EXAMPLE_ACCOUNT_ID: EXAMPLE_ACCOUNT_NAME
 
-  currencyCode: "USD"  # Official support for USD, AUD, BRL, CAD, CHF, CNY, DKK, EUR, GBP, IDR, INR, JPY, NOK, PLN, SEK
-  negotiatedDiscount: ""   # Custom negotiated cloud provider discount
+  ## Kubecost settings surfaced to the frontend
+  ##
+  labelMappingConfigs:        # Names of k8s labels or annotations used to designate different allocation concepts
+    owner_label: "owner"
+    team_label: "team"
+    department_label: "dept"
+    product_label: "product"
+    environment_label: "env"
+  sharedNamespaces: ""        # Namespaces with shared workloads, example value: "kube-system\,ingress-nginx\,kubecost\,monitoring"
+  sharedLabelNames: ""
+  sharedLabelValues: ""       # Default shared label values, e.g., "app:prometheus"
+  sharedOverhead: 0           # Value representing a fixed external cost per month to be distributed among aggregations.
+  shareTenancyCosts: true     # Enable or disable sharing costs such as cluster management fees
+  currencyCode: "USD"         # Official support for USD, AUD, BRL, CAD, CHF, CNY, DKK, EUR, GBP, IDR, INR, JPY, NOK, PLN, SEK
+  negotiatedDiscount: ""      # Custom negotiated cloud provider discount
   defaultIdle: false
-  sharedNamespaces: ""  # Namespaces with shared workloads, example value: "kube-system\,ingress-nginx\,kubecost\,monitoring"
-  sharedLabelValues: ""  # Default shared label values, e.g., "app:prometheus"
-  sharedOverhead: 0  # Value representing a fixed external cost per month to be distributed among aggregations.
-  shareTenancyCosts: true  # Enable or disable sharing costs such as cluster management fees (defaults to "true" on Settings page)
 
   ## Apply Enterprise product license
   productKey:

@@ -437,6 +437,14 @@ data:
             proxy_set_header  X-Real-IP  $remote_addr;
             proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
         }
+        location = /model/cloud/config/test {
+            proxy_read_timeout          {{ .Values.frontend.timeoutSeconds | default 300 }};
+            proxy_pass http://cloudCost/cloud/config/test;
+            proxy_redirect off;
+            proxy_set_header Connection "";
+            proxy_set_header  X-Real-IP  $remote_addr;
+            proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
+        }
         location = /model/cloudCost/integration/validate {
             proxy_read_timeout          {{ .Values.frontend.timeoutSeconds | default 300 }};
             proxy_pass http://cloudCost/cloudCost/integration/validate;
@@ -562,13 +570,13 @@ data:
             ';
         }
 
+        # TODO: Remove this endpoint. All these configs will become available in the backend's `/model/getApiConfigs` and `/model/setApiConfigs`. They will also be configured in a ConfigMap. https://github.com/kubecost/kubecost/pull/4472.
         location = /model/getConfigs {
             default_type 'application/json';
             return 200 '{
                 "code": 200,
                 "status": "success",
                 "data": {
-               
                     "defaultIdle": "{{ .Values.kubecostProductConfigs.defaultIdle }}",
                     "currencyCode": "{{ .Values.kubecostProductConfigs.currencyCode }}",
                     "negotiatedDiscount": "{{ .Values.kubecostProductConfigs.negotiatedDiscount }}",

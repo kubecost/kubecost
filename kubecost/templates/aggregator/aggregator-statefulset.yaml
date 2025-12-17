@@ -515,6 +515,10 @@ spec:
             - name: HEARTBEAT_RETENTION
               value: {{ .Values.heartbeat.retention | quote }}
             {{- end }}
+            {{- if .Values.kubecostProductConfigs.apiConfigMapName }}
+            - name: API_CONFIGMAP_NAME
+              value: {{ .Values.kubecostProductConfigs.apiConfigMapName }}
+            {{- end }}
             {{- if (.Values.aggregator).standardDiscount }}
             {{- if .Values.ingestionConfigmapName }}
             - name: INGESTION_CONFIGMAP_NAME
