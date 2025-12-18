@@ -53,7 +53,7 @@ spec:
         - name: file-storage
           {{- if ((.Values.localStore).persistentVolume).enabled }}
           persistentVolumeClaim:
-            claimName: {{ default ((.Values.localStore).persistentVolume).existingClaim ( include "kubecost.localStore.fullname" . ) }}
+            claimName: {{ include "kubecost.localStore.pvcName" . }}
           {{- else }}
           emptyDir: {}
           {{- end }}
