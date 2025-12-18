@@ -505,9 +505,9 @@ data:
             return 200 '{"aggregatorEnabled": "true"}';
         }
 
-        location /model/enableDeploymentGuide {
+        location /model/isSaaSDeployment {
             default_type 'application/json';
-            return 200 '{"enableDeploymentGuide": {{ .Values.deploymentGuide.enabled | quote }} }';
+            return 200 '{"saasDeployment": {{ .Values.saasDeployment | quote }} }';
         }
 
         {{- if .Values.forecasting.enabled }}
