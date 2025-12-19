@@ -641,8 +641,8 @@ spec:
             - name: DISPLAY_CURRENCY
               value: {{ (.Values.kubecostProductConfigs).currencyCode }}
             {{- end }}
-            {{- if .Values.deploymentGuide.enabled }}
-            - name: ENABLE_DEPLOYMENT_GUIDE
+            {{- if .Values.saasDeployment }}
+            - name: SAAS_DEPLOYMENT
               value: "true"
             {{- end }}
             {{- if .Values.aggregator.extraEnv -}}
