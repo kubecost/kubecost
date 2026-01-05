@@ -1,0 +1,264 @@
+## Example Configuration: In-Place Pod Resize
+## This file demonstrates a production-ready configuration for in-place pod resize actions
+## Copy and customize this file for your environment
+##
+
+global:
+  clusterId: production-cluster
+
+## Cluster Controller Configuration
+## The cluster controller executes resize actions on the cluster
+##
+clusterController:
+  enabled: true
+  
+  ## Set to true for Kubecost versions < 3.0
+  legacyMode: false
+  
+  ## RBAC permissions for in-place pod resize
+  rbac:
+    containerRequestRightSizing: true
+    resourceQuotaRightSizing: true
+    inPlacePodResize: true
+    clusterRightSizing: false
+    clusterTurndown: false
+    namespaceTurndown: false
+  
+  ## Legacy mode action configuration (Kubecost < 3.0)
+  ## Comment out if using Actions v2 below
+  # actionConfigs:
+  #   inPlacePodResize:
+  #     enabled: true
+  #     minKubernetesVersion: "1.33"
+  #     resizeWindow: "24h"
+  #     targetUtilization:
+  #       cpu: 0.7
+  #       memory: 0.8
+  #     resizePolicy:
+  #       cpu: NotRequired
+  #       memory: RestartContainer
+  #     dryRun: false
+  #     filters:
+  #       - namespace: "production"
+  #         labels:
+  #           resize-enabled: "true"
+  #     retryStrategy:
+  #       maxRetries: 3
+  #       backoffMultiplier: 2
+  #       initialDelaySeconds: 30
+  #     validation:
+  #       checkNodeCapacity: true
+  #       checkResourceQuotas: true
+  #       checkPodDisruptionBudgets: true
+  #       minCPUMillicores: 100
+  #       maxCPUMillicores: 8000
+  #       minMemoryMiB: 128
+  #       maxMemoryMiB: 16384
+
+## Kubecost Product Configuration
+## Multi-cluster actions configuration (Kubecost 3.0+)
+##
+kubecostProductConfigs:
+  actions:
+    ## Enable multi-cluster actions
+    enabled: true
+    
+    ## Optional: Use separate storage for actions
+    ## By default, uses the same bucket as federated storage
+    # storageConfigSecret: actions-store
+    
+    ## Action configuration
+    config:
+      ## Global configuration applies to all clusters
+      global:
+        inPlacePodResize:
+          enabled: true
+          minKubernetesVersion: "1.33"
+          
+          ## Default resize policies
+          ## NotRequired: Apply without restart (CPU)
+          ## RestartContainer: Restart to apply (Memory)
+          defaultResizePolicy:
+            cpu: NotRequired
+            memory: RestartContainer
+          
+          ## Retry strategy for deferred resizes
+          retryStrategy:
+            maxRetries: 3
+            backoffMultiplier: 2
+            initialDelaySeconds: 30
+          
+          ## Validation checks before resize
+          validation:
+            checkNodeCapacity: true
+            checkResourceQuotas: true
+            checkPodDisruptionBudgets: true
+            minCPUMillicores: 100
+            maxCPUMillicores: 8000
+            minMemoryMiB: 128
+            maxMemoryMiB: 16384
+          
+          ## Priority handling for deferred resizes
+          priorityHandling:
+            enabled: true
+            respectPriorityClass: true
+            minPriorityValue: 0
+          
+          ## Monitoring configuration
+          monitoring:
+            enabled: true
+            metricsPort: 9090
+            metricsPath: "/metrics"
+      
+      ## Cluster-specific configuration
+      ## Override global settings per cluster
+      clusters:
+        production-cluster:
+          inPlacePodResize:
+            enabled: true
+            minKubernetesVersion: "1.35"
+            ## More conservative settings for production
+            defaultResizePolicy:
+              cpu: NotRequired
+              memory: RestartContainer
+            retryStrategy:
+              maxRetries: 5
+              backoffMultiplier: 2
+              initialDelaySeconds: 60
+        
+        staging-cluster:
+          inPlacePodResize:
+            enabled: true
+            minKubernetesVersion: "1.33"
+            ## More aggressive settings for staging
+            defaultResizePolicy:
+              cpu: NotRequired
+              memory: RestartContainer
+            retryStrategy:
+              maxRetries: 3
+              backoffMultiplier: 1.5
+              initialDelaySeconds: 30
+        
+        development-cluster:
+          inPlacePodResize:
+            enabled: false
+      
+      ## Specific resize actions
+      ## Define named actions with custom configurations
+      actions:
+        inPlacePodResize:
+          ## Production backend services
+          production-backend-resize:
+            enabled: true
+            filter: 'cluster:"production-cluster",namespace:"backend",label[tier]:"api"'
+            resizeWindow: "24h"
+            targetUtilization:
+              cpu: 0.7
+              memory: 0.8
+            resizePolicy:
+              cpu: NotRequired
+              memory: RestartContainer
+            dryRun: false
+            priorityThreshold: "high-priority"
+            validation:
+              checkNodeCapacity: true
+              checkResourceQuotas: true
+              checkPodDisruptionBudgets: true
+              minCPUMillicores: 500
+              maxCPUMillicores: 4000
+              minMemoryMiB: 512
+              maxMemoryMiB: 8192
+          
+          ## Production frontend services
+          production-frontend-resize:
+            enabled: true
+            filter: 'cluster:"production-cluster",namespace:"frontend"'
+            resizeWindow: "24h"
+            targetUtilization:
+              cpu: 0.6
+              memory: 0.75
+            resizePolicy:
+              cpu: NotRequired
+              memory: RestartContainer
+            dryRun: false
+            priorityThreshold: "medium-priority"
+            validation:
+              checkNodeCapacity: true
+              checkResourceQuotas: true
+              checkPodDisruptionBudgets: true
+              minCPUMillicores: 250
+              maxCPUMillicores: 2000
+              minMemoryMiB: 256
+              maxMemoryMiB: 4096
+          
+          ## Staging environment - more aggressive
+          staging-all-workloads:
+            enabled: true
+            filter: 'cluster:"staging-cluster"'
+            resizeWindow: "12h"
+            targetUtilization:
+              cpu: 0.8
+              memory: 0.85
+            resizePolicy:
+              cpu: NotRequired
+              memory: RestartContainer
+            dryRun: false
+            validation:
+              checkNodeCapacity: true
+              checkResourceQuotas: true
+              minCPUMillicores: 100
+              maxCPUMillicores: 4000
+              minMemoryMiB: 128
+              maxMemoryMiB: 8192
+          
+          ## CPU-only optimization for batch jobs
+          batch-jobs-cpu-resize:
+            enabled: true
+            filter: 'cluster:"production-cluster",namespace:"batch",label[job-type]:"processing"'
+            resizeWindow: "6h"
+            targetUtilization:
+              cpu: 0.75
+            resizePolicy:
+              cpu: NotRequired
+            dryRun: false
+            validation:
+              checkNodeCapacity: true
+              minCPUMillicores: 1000
+              maxCPUMillicores: 8000
+
+## Service Account Configuration
+##
+serviceAccount:
+  create: true
+  annotations:
+    ## Add cloud provider annotations if using workload identity
+    # eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/kubecost-role
+    # azure.workload.identity/client-id: "12345678-1234-1234-1234-123456789012"
+    # iam.gke.io/gcp-service-account: kubecost@project-id.iam.gserviceaccount.com
+
+## Prometheus Configuration
+## Required for metrics collection
+##
+prometheus:
+  server:
+    enabled: true
+  
+  ## ServiceMonitor for Prometheus Operator
+  serviceMonitor:
+    enabled: true
+    additionalLabels:
+      release: prometheus
+
+## Network Costs
+## Optional: Enable for network cost tracking
+##
+networkCosts:
+  enabled: false
+
+## Cloud Cost Integration
+## Optional: Enable for cloud cost data
+##
+cloudCost:
+  enabled: false
+
+# Made with Bob

@@ -1,0 +1,248 @@
+name: Test In-Place Pod Resize
+
+on:
+  pull_request:
+    paths:
+      - 'kubecost/templates/cluster-controller/cluster-controller-inplace-resize-config.yaml'
+      - 'kubecost/templates/cluster-controller/cluster-controller-cluster-role.yaml'
+      - 'kubecost/ci/inplace-resize-*.yaml'
+      - 'kubecost/values.yaml'
+      - 'kubecost/values-inplace-resize-example.yaml'
+      - '.github/workflows/test-inplace-resize.yaml'
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'kubecost/templates/cluster-controller/cluster-controller-inplace-resize-config.yaml'
+      - 'kubecost/templates/cluster-controller/cluster-controller-cluster-role.yaml'
+      - 'kubecost/ci/inplace-resize-*.yaml'
+      - 'kubecost/values.yaml'
+      - 'kubecost/values-inplace-resize-example.yaml'
+
+jobs:
+  lint-and-template:
+    name: Lint and Template In-Place Resize
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.14.0
+
+      - name: Lint Chart
+        run: |
+          helm lint kubecost
+
+      - name: Template with CPU-only resize
+        run: |
+          helm template test-release kubecost \
+            -f kubecost/ci/inplace-resize-cpu-values.yaml \
+            --debug > /tmp/cpu-resize-output.yaml
+          echo "✓ CPU-only resize template rendered successfully"
+
+      - name: Template with Memory resize
+        run: |
+          helm template test-release kubecost \
+            -f kubecost/ci/inplace-resize-memory-values.yaml \
+            --debug > /tmp/memory-resize-output.yaml
+          echo "✓ Memory resize template rendered successfully"
+
+      - name: Template with Combined resize
+        run: |
+          helm template test-release kubecost \
+            -f kubecost/ci/inplace-resize-combined-values.yaml \
+            --debug > /tmp/combined-resize-output.yaml
+          echo "✓ Combined resize template rendered successfully"
+
+      - name: Validate RBAC Permissions
+        run: |
+          # Check CPU resize RBAC
+          if grep -q "resources: \['pods', 'pods/status'\]" /tmp/cpu-resize-output.yaml && \
+             grep -q "verbs: \['get', 'list', 'watch', 'patch'\]" /tmp/cpu-resize-output.yaml; then
+            echo "✓ RBAC permissions for CPU resize are correct"
+          else
+            echo "✗ RBAC permissions for CPU resize are missing or incorrect"
+            exit 1
+          fi
+          
+          # Check memory resize RBAC
+          if grep -q "resources: \['pods', 'pods/status'\]" /tmp/memory-resize-output.yaml && \
+             grep -q "verbs: \['get', 'list', 'watch', 'patch'\]" /tmp/memory-resize-output.yaml; then
+            echo "✓ RBAC permissions for memory resize are correct"
+          else
+            echo "✗ RBAC permissions for memory resize are missing or incorrect"
+            exit 1
+          fi
+
+      - name: Validate ConfigMap Structure
+        run: |
+          # Check CPU resize ConfigMap
+          if grep -q "kind: ConfigMap" /tmp/cpu-resize-output.yaml && \
+             grep -q "cluster-controller-inplace-resize-config" /tmp/cpu-resize-output.yaml && \
+             grep -q "binaryData:" /tmp/cpu-resize-output.yaml; then
+            echo "✓ ConfigMap structure for CPU resize is correct"
+          else
+            echo "✗ ConfigMap structure for CPU resize is invalid"
+            exit 1
+          fi
+          
+          # Check memory resize ConfigMap
+          if grep -q "kind: ConfigMap" /tmp/memory-resize-output.yaml && \
+             grep -q "cluster-controller-inplace-resize-config" /tmp/memory-resize-output.yaml && \
+             grep -q "binaryData:" /tmp/memory-resize-output.yaml; then
+            echo "✓ ConfigMap structure for memory resize is correct"
+          else
+            echo "✗ ConfigMap structure for memory resize is invalid"
+            exit 1
+          fi
+
+      - name: Validate Labels
+        run: |
+          if grep -q "app.kubernetes.io/component: cluster-controller" /tmp/cpu-resize-output.yaml && \
+             grep -q "kubecost.com/action-type: inplace-pod-resize" /tmp/cpu-resize-output.yaml; then
+            echo "✓ Labels are applied correctly"
+          else
+            echo "✗ Expected labels not found"
+            exit 1
+          fi
+
+      - name: Upload Rendered Templates
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rendered-templates
+          path: /tmp/*-resize-output.yaml
+          retention-days: 7
+
+  validate-yaml:
+    name: Validate YAML Syntax
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.14.0
+
+      - name: Install yamllint
+        run: |
+          pip install yamllint
+
+      - name: Render and Validate Templates
+        run: |
+          for values_file in kubecost/ci/inplace-resize-*.yaml; do
+            echo "Testing $values_file"
+            helm template test-release kubecost -f "$values_file" > /tmp/output.yaml
+            yamllint -d relaxed /tmp/output.yaml
+            echo "✓ $values_file passed YAML validation"
+          done
+
+  conformance-test:
+    name: Kubernetes Conformance Test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        k8s-version:
+          - v1.29.0
+          - v1.30.0
+          - v1.31.0
+          - v1.32.0
+          - v1.33.0
+          - v1.34.0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.14.0
+
+      - name: Install kubeconform
+        run: |
+          wget https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz
+          tar xf kubeconform-linux-amd64.tar.gz
+          sudo mv kubeconform /usr/local/bin/
+
+      - name: Validate Against Kubernetes ${{ matrix.k8s-version }}
+        run: |
+          for values_file in kubecost/ci/inplace-resize-*.yaml; do
+            echo "Validating $values_file against Kubernetes ${{ matrix.k8s-version }}"
+            helm template test-release kubecost -f "$values_file" | \
+              kubeconform -kubernetes-version ${{ matrix.k8s-version }} -strict -summary
+          done
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.14.0
+
+      - name: Render Templates
+        run: |
+          helm template test-release kubecost \
+            -f kubecost/ci/inplace-resize-combined-values.yaml \
+            > /tmp/rendered.yaml
+
+      - name: Run Checkov Security Scan
+        uses: bridgecrewio/checkov-action@master
+        with:
+          file: /tmp/rendered.yaml
+          framework: kubernetes
+          soft_fail: true
+
+      - name: Check for Privileged Containers
+        run: |
+          if grep -q "privileged: true" /tmp/rendered.yaml; then
+            echo "✗ Privileged containers detected"
+            exit 1
+          else
+            echo "✓ No privileged containers found"
+          fi
+
+      - name: Check for Host Network
+        run: |
+          if grep -q "hostNetwork: true" /tmp/rendered.yaml; then
+            echo "⚠ Host network usage detected - verify if necessary"
+          else
+            echo "✓ No host network usage"
+          fi
+
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [lint-and-template, validate-yaml, conformance-test, security-scan]
+    if: always()
+    steps:
+      - name: Check Test Results
+        run: |
+          if [ "${{ needs.lint-and-template.result }}" == "success" ] && \
+             [ "${{ needs.validate-yaml.result }}" == "success" ] && \
+             [ "${{ needs.conformance-test.result }}" == "success" ] && \
+             [ "${{ needs.security-scan.result }}" == "success" ]; then
+            echo "✓ All tests passed!"
+            exit 0
+          else
+            echo "✗ Some tests failed"
+            echo "Lint and Template: ${{ needs.lint-and-template.result }}"
+            echo "Validate YAML: ${{ needs.validate-yaml.result }}"
+            echo "Conformance Test: ${{ needs.conformance-test.result }}"
+            echo "Security Scan: ${{ needs.security-scan.result }}"
+            exit 1
+          fi
+
+# Made with Bob

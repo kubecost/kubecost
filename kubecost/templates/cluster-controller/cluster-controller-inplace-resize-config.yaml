@@ -1,0 +1,18 @@
+{{- if and (.Values.clusterController).enabled (.Values.clusterController).legacyMode }}
+{{- if .Values.clusterController.actionConfigs.inPlacePodResize }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-controller-inplace-resize-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
+    app.kubernetes.io/component: cluster-controller
+    kubecost.com/action-type: inplace-pod-resize
+binaryData:
+  config: |
+{{- toJson .Values.clusterController.actionConfigs.inPlacePodResize | b64enc | nindent 4 }}
+{{- end }}
+{{- end }}
+
+# Made with Bob

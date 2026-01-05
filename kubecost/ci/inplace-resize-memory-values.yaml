@@ -1,0 +1,48 @@
+## CI Test Values: In-Place Pod Resize - Memory with Restart
+## Tests memory resize with container restart (RestartContainer policy)
+##
+
+global:
+  clusterId: test-inplace-resize-memory
+
+clusterController:
+  enabled: true
+  legacyMode: true
+  
+  rbac:
+    containerRequestRightSizing: true
+    resourceQuotaRightSizing: true
+    inPlacePodResize: true
+    clusterRightSizing: false
+    clusterTurndown: false
+    namespaceTurndown: false
+  
+  actionConfigs:
+    inPlacePodResize:
+      enabled: true
+      minKubernetesVersion: "1.33"
+      resizeWindow: "2h"
+      targetUtilization:
+        memory: 0.8
+      resizePolicy:
+        memory: RestartContainer
+      dryRun: false
+      filters:
+        - namespace: "kube-system"
+          excludeLabels:
+            critical: "true"
+      retryStrategy:
+        maxRetries: 5
+        backoffMultiplier: 2
+        initialDelaySeconds: 60
+      validation:
+        checkNodeCapacity: true
+        checkResourceQuotas: true
+        minMemoryMiB: 128
+        maxMemoryMiB: 16384
+
+kubecostProductConfigs:
+  actions:
+    enabled: false
+
+# Made with Bob

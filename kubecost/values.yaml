@@ -1299,6 +1299,7 @@ clusterController:
     # In 3.x, only containerRequestRightSizing and resourceQuotaRightSizing are supported, all other features are in progress.
     containerRequestRightSizing: true
     resourceQuotaRightSizing: true
+    inPlacePodResize: false
     clusterRightSizing: false
     clusterTurndown: false
     namespaceTurndown: false
@@ -1402,17 +1403,32 @@ kubecostProductConfigs:
     #       enabled: true
     #     resourceQuotaRightSizing:
     #       enabled: true
+    #     inPlacePodResize:
+    #       enabled: true
+    #       minKubernetesVersion: "1.33"
+    #       defaultResizePolicy:
+    #         cpu: NotRequired
+    #         memory: RestartContainer
+    #       retryStrategy:
+    #         maxRetries: 3
+    #         backoffMultiplier: 2
+    #         initialDelaySeconds: 30
     #   clusters: # Define cluster-specific action configuration, where top-level keys are cluster names
     #     cluster-1:
     #       containerRequestRightSizing:
     #         enabled: false
     #       resourceQuotaRightSizing:
     #         enabled: false
+    #       inPlacePodResize:
+    #         enabled: false
     #     cluster-2:
     #       containerRequestRightSizing:
     #         enabled: false
     #       resourceQuotaRightSizing:
     #         enabled: false
+    #       inPlacePodResize:
+    #         enabled: true
+    #         minKubernetesVersion: "1.35"
     #   actions:
     #     containerRequestRightSizing:
     #       resize-my-cluster:
@@ -1422,6 +1438,19 @@ kubecostProductConfigs:
     #           memory: true
     #           profile: "Development"
     #           rightSizingWindow: "24h"
+    #     inPlacePodResize:
+    #       production-workload-resize:
+    #         enabled: true
+    #         filter: "cluster:\"production\",namespace:\"default\""
+    #         resizeWindow: "24h"
+    #         targetUtilization:
+    #           cpu: 0.7
+    #           memory: 0.8
+    #         resizePolicy:
+    #           cpu: NotRequired
+    #           memory: RestartContainer
+    #         dryRun: false
+    #         priorityThreshold: "high-priority"
 
   ## Kubecost Budgets and Budgets Actions
   ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=ui-budgets

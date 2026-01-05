@@ -1,0 +1,43 @@
+## CI Test Values: In-Place Pod Resize - CPU Only
+## Tests CPU resize without container restart (NotRequired policy)
+##
+
+global:
+  clusterId: test-inplace-resize-cpu
+
+clusterController:
+  enabled: true
+  legacyMode: true
+  
+  rbac:
+    containerRequestRightSizing: true
+    resourceQuotaRightSizing: true
+    inPlacePodResize: true
+    clusterRightSizing: false
+    clusterTurndown: false
+    namespaceTurndown: false
+  
+  actionConfigs:
+    inPlacePodResize:
+      enabled: true
+      minKubernetesVersion: "1.33"
+      resizeWindow: "1h"
+      targetUtilization:
+        cpu: 0.7
+      resizePolicy:
+        cpu: NotRequired
+      dryRun: false
+      filters:
+        - namespace: "default"
+          labels:
+            app: "test-app"
+      retryStrategy:
+        maxRetries: 3
+        backoffMultiplier: 2
+        initialDelaySeconds: 30
+
+kubecostProductConfigs:
+  actions:
+    enabled: false
+
+# Made with Bob

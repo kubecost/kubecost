@@ -1,0 +1,64 @@
+## CI Test Values: In-Place Pod Resize - Combined CPU and Memory
+## Tests both CPU and memory resize with different policies
+##
+
+global:
+  clusterId: test-inplace-resize-combined
+
+clusterController:
+  enabled: true
+  legacyMode: true
+  
+  rbac:
+    containerRequestRightSizing: true
+    resourceQuotaRightSizing: true
+    inPlacePodResize: true
+    clusterRightSizing: false
+    clusterTurndown: false
+    namespaceTurndown: false
+  
+  actionConfigs:
+    inPlacePodResize:
+      enabled: true
+      minKubernetesVersion: "1.33"
+      resizeWindow: "24h"
+      targetUtilization:
+        cpu: 0.7
+        memory: 0.8
+      resizePolicy:
+        cpu: NotRequired
+        memory: RestartContainer
+      dryRun: false
+      filters:
+        - namespace: "production"
+          labels:
+            tier: "backend"
+        - namespace: "staging"
+          labels:
+            tier: "frontend"
+      retryStrategy:
+        maxRetries: 3
+        backoffMultiplier: 2
+        initialDelaySeconds: 30
+      validation:
+        checkNodeCapacity: true
+        checkResourceQuotas: true
+        checkPodDisruptionBudgets: true
+        minCPUMillicores: 100
+        maxCPUMillicores: 8000
+        minMemoryMiB: 128
+        maxMemoryMiB: 16384
+      priorityHandling:
+        enabled: true
+        respectPriorityClass: true
+        minPriorityValue: 0
+      monitoring:
+        enabled: true
+        metricsPort: 9090
+        metricsPath: "/metrics"
+
+kubecostProductConfigs:
+  actions:
+    enabled: false
+
+# Made with Bob

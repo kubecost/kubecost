@@ -91,6 +91,20 @@ helm install nightly \
   --namespace kubecost-nightly --create-namespace
 ```
 
+## Features
+
+### In-Place Pod Resize (New in 3.1+)
+
+Kubecost now supports Kubernetes in-place pod resize for dynamic resource optimization without pod recreation. This feature enables:
+
+- **Zero-downtime CPU adjustments**: Modify CPU resources without restarting containers
+- **Controlled memory updates**: Adjust memory with optional container restarts
+- **Cost optimization**: Right-size workloads based on actual usage patterns
+
+**Requirements**: Kubernetes v1.33+ with `InPlacePodVerticalScaling` feature gate enabled (default in v1.35+)
+
+For detailed configuration and usage, see the [In-Place Pod Resize Documentation](docs/inplace-pod-resize.md).
+
 ## Uninstall
 
 Uninstall the chart:

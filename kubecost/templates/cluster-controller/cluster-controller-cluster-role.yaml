@@ -19,6 +19,23 @@ rules:
     resources: ['cronjobs']
     verbs: ['get', 'patch']
   {{- end }}
+  {{- if .Values.clusterController.rbac.inPlacePodResize }}
+  - apiGroups: ['']
+    resources: ['pods', 'pods/status']
+    verbs: ['get', 'list', 'watch', 'patch']
+  - apiGroups: ['apps']
+    resources: ['deployments', 'statefulsets', 'daemonsets', 'replicasets']
+    verbs: ['get', 'list', 'watch']
+  - apiGroups: ['batch']
+    resources: ['jobs', 'cronjobs']
+    verbs: ['get', 'list', 'watch']
+  - apiGroups: ['']
+    resources: ['nodes']
+    verbs: ['get', 'list']
+  - apiGroups: ['']
+    resources: ['resourcequotas']
+    verbs: ['get', 'list']
+  {{- end }}
   {{- if .Values.clusterController.rbac.clusterRightSizing }}
   - apiGroups: ['']
     resources: ['configmaps']
