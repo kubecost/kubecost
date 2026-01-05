@@ -24,7 +24,9 @@ spec:
     matchLabels:
     {{- include "kubecost.aggregator.selectorLabels" . | nindent 6 }}
   volumeClaimTemplates:
-  - metadata:
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
       name: aggregator-db-storage
     spec:
       accessModes: [ "ReadWriteOnce" ]
@@ -36,7 +38,9 @@ spec:
       resources:
         requests:
           storage:  {{ .Values.aggregator.aggregatorDbStorage.storageRequest }}
-  - metadata:
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
       # In the StatefulSet config, Aggregator should not share any filesystem
       # state with the cost-model to maintain independence and improve
       # stability (in the event of bad file-locking state). Still, there is
