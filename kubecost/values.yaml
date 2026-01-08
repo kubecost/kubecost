@@ -1213,6 +1213,14 @@ cloudCost:
   extraVolumes: []
   extraVolumeMounts: []
 
+  ## Persistent storage for cloud cost configs
+  ## Settings and configurations created via the UI are stored in the persistentConfigs volume.
+  persistentConfigsStorage:
+    enabled: true
+    storageClass: ""  # Uses global.defaultStorageClass if not specified
+    size: 1Gi
+    existingClaim: ""  # Optional: use an existing PVC instead of creating a new one
+
 ## Kubecost Cluster Controller for Automated Right Sizing and Turndown
 ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=configuration-cluster-controller
 ##

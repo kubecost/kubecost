@@ -1,7 +1,4 @@
 {{- if .Values.cloudCost.enabled }}
-{{- /*
-  TODO add a pvc for persistent configs and maybe a warning if both the pv and secret are not enabled
-*/}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -68,10 +65,21 @@ spec:
               - key: cloud-integration.json
                 path: cloud-integration.json
         {{- end }}
-        {{- /* The cloud costs deployment does not need persistence.
-            The name is for compatibility with single-pod install. */}}
+        {{- if and ((.Values.cloudCost).persistentConfigsStorage).enabled }}
+        {{- if ((.Values.cloudCost).persistentConfigsStorage).existingClaim }}
+        - name: persistent-configs
+          persistentVolumeClaim:
+            claimName: {{ .Values.cloudCost.persistentConfigsStorage.existingClaim }}
+        {{- else }}
+        - name: persistent-configs
+          persistentVolumeClaim:
+            claimName: {{ include "kubecost.cloudCost.fullname" . }}-persistent-configs
+        {{- end }}
+        {{- else }}
+        {{- /* Fallback to emptyDir when persistent storage is disabled */}}
         - name: persistent-configs
           emptyDir: {}
+        {{- end }}
         {{- if .Values.plugins.enabled  }}
         {{- if .Values.plugins.install.enabled}}
         - name: install-script
