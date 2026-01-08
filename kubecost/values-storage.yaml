@@ -35,3 +35,12 @@ aggregator:
     ## block storage is REQUIRED for the aggregatorDbStorage. NFS/file is not supported.
     storageClass: ""
     storageRequest: 128Gi
+
+cloudCost:
+  ## Persistent storage for cloud cost configs
+  ## Settings and configurations created via the UI are stored in the persistentConfigs volume.
+  persistentConfigsStorage:
+    enabled: true
+    storageClass: ""  # Uses global.defaultStorageClass if not specified
+    storageRequest: 1Gi
+    existingClaim: ""  # Optional: use an existing PVC instead of creating a new one
