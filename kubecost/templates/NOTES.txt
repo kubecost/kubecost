@@ -8,6 +8,7 @@
 {{- include "kubecost.caCertsSecretConfig.check" . -}}
 {{- include "kubecost.actionsStorageSourceCheck" . -}}
 {{- include "kubecost.finopsagentCheck" . -}}
+{{- include "kubecost.cloudCost.persistentStorage.check" . -}}
 ================================================================================
 KUBECOST INSTALLATION SUCCESSFUL
 ================================================================================
