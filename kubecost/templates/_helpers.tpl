@@ -477,6 +477,25 @@ kubecost.costEventsAudit.enabled flag for nginx configmap
   {{- end }}
 {{- end }}
 
+{{/*
+Check if cloud cost persistent storage is disabled and warn user
+*/}}
+{{- define "kubecost.cloudCost.persistentStorage.check" }}
+{{- if .Values.cloudCost.enabled }}
+{{- if not ((.Values.cloudCost).persistentConfigsStorage).enabled }}
+{{- if not (or .Values.cloudCost.cloudIntegrationSecret .Values.cloudCost.cloudIntegrationJSON .Values.kubecostProductConfigs.cloudIntegrationJSON .Values.kubecostProductConfigs.cloudIntegrationSecret) }}
+
+WARNING: Cloud Cost persistent storage is disabled and no cloud integration secret is configured.
+Cloud cost configuration data may be lost on pod restart.
+To resolve this, either:
+  1. Enable persistent storage: cloudCost.persistentConfigsStorage.enabled=true (recommended)
+  2. Configure a cloud integration secret to store configurations externally
+
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+
 {{- define "kubecost.plugins.enabled" }}
 {{- if (.Values.plugins).enabled }}
 {{- printf "true" -}}

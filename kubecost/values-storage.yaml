@@ -1,0 +1,46 @@
+## There are 4 persistent volumes that are created when using default settings.
+## When installing on a cluster that does not have a default storage class, you will need to set the storageClass for each of the persistent volumes.
+## This can be done with the global.defaultStorageClass or the storageClass parameter in the finopsagent, aggregator, or localStore blocks.
+## The values below are the defaults that are used if not overridden - this file is just a summary of what is in ./values.yaml
+
+## global.defaultStorageClass will set the default storage class to use, unless overridden by the storageClass parameter in the finopsagent, aggregator, or localStore blocks.
+global:
+  defaultStorageClass: ""
+
+## When not using federated storage, the long-term metrics are stored in the localStore.
+localStore:
+  persistentVolume:
+    storageClass: ""
+    size: 32Gi
+    ## Note that setting enabled to false means all data will be lost out on pod restart unless using federated storage.
+    enabled: true
+
+## short-term (<2 days) metrics are stored by the finops agent.
+finopsagent:
+  persistence:
+    storageClass: ""
+    size: 8Gi
+    enabled: true
+
+aggregator:
+  ## The aggregator pod has 2 PVCs and will need to be in the same availability zone unless using multi-zone storage.
+  ## Storage classes that have 'volumeBindingMode: WaitForFirstConsumer' will do this automatically.
+  ## Settings and reports created via the UI are stored in the persistentConfigs volume.
+  persistentConfigsStorage:
+    storageClass: ""
+    ## If using high iops storage, the storageRequest may need to be increased to meet the provider's minimum ratio for gb/iops.
+    storageRequest: 1Gi
+  aggregatorDbStorage:
+    ## IOPS performance of the aggregatorDbStorage will have significant impact on the performance of queries.
+    ## block storage is REQUIRED for the aggregatorDbStorage. NFS/file is not supported.
+    storageClass: ""
+    storageRequest: 128Gi
+
+cloudCost:
+  ## Persistent storage for cloud cost configs
+  ## Settings and configurations created via the UI are stored in the persistentConfigs volume.
+  persistentConfigsStorage:
+    enabled: true
+    storageClass: ""  # Uses global.defaultStorageClass if not specified
+    storageRequest: 1Gi
+    existingClaim: ""  # Optional: use an existing PVC instead of creating a new one
