@@ -916,7 +916,7 @@ prometheus:
       rollingUpdate: null
     image:
       repository: quay.io/prometheus/prometheus
-      tag: v3.7.2
+      tag: v3.9.1
       pullPolicy: IfNotPresent
     priorityClassName: ""
     prefixURL: ""
@@ -1569,7 +1569,7 @@ forecasting:
   fullImageName: ""
   image:
     repository: gcr.io/kubecost1/kubecost-modeling
-    tag: v0.1.31
+    tag: v0.1.34
   imagePullPolicy: IfNotPresent
 
   # Resource specification block for the forecasting container.
@@ -2108,7 +2108,7 @@ grafana:
     failureThreshold: 10
   image:
     repository: grafana/grafana
-    tag: 12.2.1
+    tag: 12.3.1
     pullPolicy: IfNotPresent
     # pullSecrets:
   securityContext: {}
@@ -2154,7 +2154,7 @@ grafana:
   sidecar:
     image:
       repository: ghcr.io/kiwigrid/k8s-sidecar
-      tag: 1.30.9
+      tag: 2.2.3
       pullPolicy: IfNotPresent
     resources: {}
     dashboards:
