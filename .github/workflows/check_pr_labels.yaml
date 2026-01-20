@@ -26,7 +26,7 @@ jobs:
           token: ${{ secrets.GH_PAT }}
 
       - id: check-labels
-        uses: ./github-actions/required-labels-action
+        uses: ./github-actions/github-action-required-labels
         with:
           mode: minimum
           count: 1
