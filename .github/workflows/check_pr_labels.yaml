@@ -17,8 +17,16 @@ jobs:
     name: Check labels
     runs-on: ubuntu-latest
     steps:
+      - name: Check out actions code
+        uses: actions/checkout@v6
+        with:
+          repository: kubecost/github-actions
+          path: ./github-actions
+          ref: main
+          token: ${{ secrets.GH_PAT }}
+
       - id: check-labels
-        uses: .github-actions/github-action-required-labels
+        uses: ./github-actions/required-labels-action
         with:
           mode: minimum
           count: 1
