@@ -503,7 +503,6 @@ spec:
               value: {{ .Values.heartbeat.enabled | quote }}
             - name: HEARTBEAT_RETENTION
               value: {{ .Values.heartbeat.retention | quote }}
-            {{- end }}
             {{- if (.Values.aggregator).standardDiscount }}
             {{- if .Values.ingestionConfigmapName }}
             - name: INGESTION_CONFIGMAP_NAME
