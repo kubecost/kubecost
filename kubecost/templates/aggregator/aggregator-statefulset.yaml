@@ -495,15 +495,12 @@ spec:
             {{- end }}
             - name: CUSTOM_COST_ENABLED
               value: {{ .Values.plugins.enabled | quote }}
-            {{- if .Values.diagnostics.enabled }}
             - name: DIAGNOSTICS_ENABLED
-              value: "true"
+              value: {{ .Values.diagnostics.enabled | quote }}
             - name: DIAGNOSTICS_RETENTION
               value: {{ .Values.diagnostics.retention | quote }}
-            {{- end }}
-            {{- if .Values.heartbeat.enabled }}
             - name: HEARTBEAT_ENABLED
-              value: "true"
+              value: {{ .Values.heartbeat.enabled | quote }}
             - name: HEARTBEAT_RETENTION
               value: {{ .Values.heartbeat.retention | quote }}
             {{- end }}
