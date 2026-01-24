@@ -729,7 +729,7 @@ networkCosts:
   image:
     registry: ""  # Default is "icr.io"
     repository: kubecost/network-costs
-    tag: v0.18.2
+    tag: v0.18.3
   imagePullPolicy: IfNotPresent
 
   updateStrategy:
@@ -764,6 +764,15 @@ networkCosts:
   # Port will set both the containerPort and hostPort to this value.
   # These must be identical due to network-costs being run on hostNetwork
   port: 3001
+
+  # Refresh interval for route table updates (e.g., "10m", "600s")
+  # Default: 600s (10 minutes)
+  routeRefreshInterval: "600s"
+
+  # Refresh interval for conntrack entry collection (e.g., "5s", "10s")
+  # Default: 5s
+  conntrackRefreshInterval: "5s"
+
   # this daemonset can use significant resources on large clusters: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=dashboard-network-traffic-cost-allocation
   resources:
     limits:  # remove the limits by setting cpu: null
@@ -836,6 +845,32 @@ networkCosts:
       #    ips:
       #      - "15.128.15.2"
       #      - "20.0.0.0/8"
+
+  ## Storage configuration for NAT gateway traffic logs
+  ## Used when NAT gateway traffic detection is enabled to access VPC flow logs
+  ## Example for S3:
+  ##   storageConfig:
+  ##     type: S3
+  ##     config:
+  ##       bucket: my-flow-logs-bucket
+  ##       endpoint: s3.amazonaws.com
+  ##       region: us-west-2
+  ##       access_key: my-access-key
+  ##       secret_key: my-secret-key
+  storageConfig: {}
+
+  ## NAT Gateway configuration
+  ## Enables detection and labeling of traffic passing through NAT gateways
+  ## Example for AWS:
+  ##   natGatewayConfig:
+  ##     enabled: true
+  ##     aws:
+  ##       cluster-name: my-cluster
+  ##       access_key: my-access-key
+  ##       secret_key: my-secret-key
+  ##       aws_sdk_auth: false
+  ##     refresh-interval: "10m"
+  natGatewayConfig: {}
 
   ## Network costs is a daemonset and may need to be scheduled on nodes with specific taints.
   ## If monitoring the network costs for workloads on nodes with specific taints, add the tolerations here.
