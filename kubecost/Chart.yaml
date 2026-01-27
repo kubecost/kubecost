@@ -11,6 +11,6 @@ annotations:
 dependencies:
   - name: finops-agent
     alias: finopsagent
-    version: "v1.0.8"
+    version: "v1.0.10"
     repository: https://kubecost.github.io/finops-agent-chart
     condition: finopsagent.enabled
