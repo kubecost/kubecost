@@ -1524,8 +1524,8 @@ kubecostProductConfigs:
   hideTeams: false
   hideCloudCosts: false
 
-#   savingsProfiles: # Define custom profiles used in the Right-Size Container Request savings card. Supported parameters are explained in https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=apis-container-request-right-sizing-recommendation-api.
-#     requestSizing:
+#   savingsProfiles: # Define custom profiles for Savings Insights/Actions
+#     requestSizing: # Supported parameters are explained in https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=apis-container-request-right-sizing-recommendation-api-v2
 #     - name: "custom1"
 #       algorithmCPU: "max"
 #       algorithmRAM: "max"
@@ -1540,6 +1540,21 @@ kubecostProductConfigs:
 #       quantileRAM: 0.95
 #       targetUtilizationCPU: 0.50
 #       targetUtilizationRAM: 0.50
+#     resourceQuotaSizing: # Supported parameters are explained in https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=apis-resource-quota
+#     - name: "custom1"
+#       cpuRequestMetric: "request.max"
+#       cpuRequestHeadroom: 0.25
+#       ramRequestMetric: "request.max"
+#       ramRequestHeadroom: 0.25
+#       cpuLimitMetric: "limit.max"
+#       cpuLimitHeadroom: 0.5
+#       ramLimitMetric: "limit.max"
+#       ramLimitHeadroom: 0.5
+#     - name: "custom2"
+#       cpuRequestMetric: "request.p95"
+#       cpuRequestHeadroom: 0.5
+#       ramRequestMetric: "request.p95"
+#       ramRequestHeadroom: 0.5
 #   savingsRecommendationsAllowLists: # Define select list of instance types to be evaluated in computing Savings Recommendations
 #     AWS: []
 #     GCP: []
