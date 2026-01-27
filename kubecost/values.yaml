@@ -399,6 +399,7 @@ teams:
     #       value: cluster-one
     #     assetFilters: []
     #     cloudCostFilters: []
+    #     resourceQuotaFilters: []
     #   claims:
     #     NameID: email@domain.com
 
