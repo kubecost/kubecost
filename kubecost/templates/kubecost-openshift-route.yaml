@@ -3,6 +3,7 @@ apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
   name: {{ include "kubecost.fullname" . }}-route
+  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "kubecost.commonLabels" . | nindent 4 }}
   {{- with .Values.global.platforms.openshift.route.annotations }}
