@@ -187,7 +187,7 @@ ERROR: MISSING EBS-CSI DRIVER WHICH IS REQUIRED ON EKS v1.23+ TO MANAGE PERSISTE
 */}}
 {{- define "mustHaveGlobalFederatedStoreCheck" -}}
 {{- if and (not (.Values.global.federatedStorage.existingSecret)) (not (.Values.global.federatedStorage.config)) }}
-{{- fail "\n\nMissing global federated-store\nNOTE: Kubecost 2.9.x is only used for preparing agents to upgrade to 3.0.\nPlease set a global federated store.\nSee examples at: https://github.com/kubecost/cost-analyzer/tree/v2.9/examples.\n" -}}
+{{- fail "\n\nError: Missing global federated-store. Please set a global federated-store. See examples at: https://github.com/kubecost/kubecost/tree/v2.9/examples.\nNOTE: Kubecost v2.9 is only used for preparing agents to upgrade to v3.0." -}}
 {{- end -}}
 {{- end -}}
 
@@ -1697,6 +1697,6 @@ imagePullSecrets:
 {{- if eq (.Values.global.clusterId) (.Values.prometheus.server.global.external_labels.cluster_id) -}}
 {{ .Values.global.clusterId }}
 {{- else -}}
-{{ fail "\n\nKubecost 2.9.x is only used for preparing agents to upgrade to 3.0.\nIn kubecost 2.9, cluster_id is set in two places.\nFor more information, see: https://github.com/kubecost/cost-analyzer/tree/v2.9/examples" }}
+{{ fail "\n\nError: Cluster ID is set in two places and do not match. Please ensure `.Values.global.clusterId` matches `.Values.prometheus.server.global.external_labels.cluster_id`. See examples at: https://github.com/kubecost/kubecost/tree/v2.9/examples.\nNOTE: Kubecost v2.9 is only used for preparing agents to upgrade to v3.0."}}
 {{- end -}}
 {{- end -}}
