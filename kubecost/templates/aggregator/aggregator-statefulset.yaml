@@ -209,9 +209,11 @@ spec:
           emptyDir: {}
         {{- end }}
         {{- if (.Values.enterpriseCustomPricing).enabled }}
+        {{- if (.Values.enterpriseCustomPricing).configMapName }}
         - name: kubecost-enterprise-pricing
           configMap:
             name: {{ .Values.enterpriseCustomPricing.configMapName }}
+        {{- end }}
         {{- end }}
         {{- if ((.Values.kubecostProductConfigs).actions).config }}
         - name: actions-config
@@ -398,8 +400,10 @@ spec:
               readOnly: false
             {{- end }}
             {{- if (.Values.enterpriseCustomPricing).enabled }}
+            {{- if (.Values.enterpriseCustomPricing).configMapName }}
             - name: kubecost-enterprise-pricing
               mountPath: /var/configs/enterprise-pricing
+            {{- end }}
             {{- end }}
             {{- if ((.Values.kubecostProductConfigs).actions).config }}
             - name: actions-config
@@ -626,8 +630,10 @@ spec:
             {{- if (.Values.enterpriseCustomPricing).enabled }}
             - name: ENTERPRISE_CUSTOM_PRICING_ENABLED
               value: "true"
+            {{- if ((.Values.enterpriseCustomPricing).location).URI }}
             - name: ENTERPRISE_CUSTOM_PRICING_CSV_LOCATION_URI
               value: {{ (quote .Values.enterpriseCustomPricing.location.URI) }}
+            {{- end }}
             - name: ENTERPRISE_CUSTOM_PRICING_APPLY_RETROACTIVELY
               value: "true"
             {{- end }}
