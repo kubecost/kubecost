@@ -51,7 +51,7 @@ spec:
       # a need to "mount" ConfigMap files (using the watcher) to a file system;
       # that's what this per-replica Volume is used for.
       name: persistent-configs
-      {{- with .Values.aggregator.aggregatorDbStorage.annotations }}
+      {{- with .Values.aggregator.persistentConfigsStorage.annotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
