@@ -60,10 +60,10 @@ support templating a chart which uses the lookup function.
 {{- end -}}
 
 {{- define "kubecost.cloudCost.serviceAccountName" -}}
-{{- if .Values.cloudCost.serviceAccountName -}}
-    {{ .Values.cloudCost.serviceAccountName }}
+{{- if .Values.cloudCost.serviceAccount.name -}}
+    {{ .Values.cloudCost.serviceAccount.name }}
 {{- else -}}
-    {{ template "kubecost.serviceAccountName" . }}
+    {{ include "kubecost.cloudCost.fullname" . }}
 {{- end -}}
 {{- end -}}
 

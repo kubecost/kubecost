@@ -1209,11 +1209,6 @@ cloudCost:
     ## Optionally specify an existing service account name to use instead of creating one
     name: ""
 
-  ## By default, the cloud cost pod will use the same service account as the aggregator pod.
-  ## This can be overridden to use a different service account.
-  ## DEPRECATED: Use serviceAccount.name instead
-  serviceAccountName: ""
-
   readinessProbe:
     enabled: true
     initialDelaySeconds: 10
