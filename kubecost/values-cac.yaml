@@ -1,0 +1,31 @@
+# Sample values.yaml file for Cloudability Advanced Containers (CAC) users who
+# want to run Cluster Controller and Network Costs
+
+global:
+  clusterId: ""  # MUST MATCH THE CLUSTERID SET IN THE FINOPS AGENT CHART
+  federatedStorage:
+    # This is the default kubernetes secret name of the finops agent's federated
+    # storage config. This can be overridden or a config can be provided via
+    # string.
+    existingSecret: "ibm-finops-agent-federated-storage-config"
+    config: ""
+
+clusterController:
+  enabled: true
+networkCosts:
+  enabled: true
+
+# The below values should not be modified when using Cloudability Advanced
+# Containers (CAC)
+finopsagent:
+  enabled: false
+aggregator:
+  enabled: false
+frontend:
+  enabled: false
+localStore:
+  enabled: false
+forecasting:
+  enabled: false
+cloudCost:
+  enabled: false

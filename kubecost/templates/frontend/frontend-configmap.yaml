@@ -554,9 +554,12 @@ data:
                 "hideCloudIntegrationsUI": "{{ default false ((.Values.kubecostProductConfigs).hideCloudIntegrationsUI) }}",
                 "hideBellIcon": "{{ default true ((.Values.kubecostProductConfigs).hideBellIcon) }}",
                 "hideTeams": "{{ default false ((.Values.kubecostProductConfigs).hideTeams) }}",
+                "hideCloudCosts": "{{ default false ((.Values.kubecostProductConfigs).hideCloudCosts)}}",
                 "legacyModeEnabled": "{{ .Values.aggregator.legacyMode }}",
                 "clusterId": "{{ include "kubecost.clusterId" . }}",
-                "defaultSavingsProfile": "{{ .Values.kubecostProductConfigs.clusterProfile }}"
+                "defaultSavingsProfile": "{{ .Values.kubecostProductConfigs.clusterProfile }}",
+                "defaultIdle": "{{ .Values.kubecostProductConfigs.defaultIdle }}",
+                "currencyCode": "{{ .Values.kubecostProductConfigs.currencyCode }}"
                 }
             ';
         }
