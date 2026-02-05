@@ -620,7 +620,7 @@ This will block upgrades until the new value is used, which very few would have 
 */}}
 {{- define "kubecost.finopsagentCheck" -}}
 {{- if index .Values "finops-agent" }}
-  {{ fail "\nThe helm values for finops-agent have been updated.\nPlease change the finops-agent: key in your helm values to finopsagent:\nIf you are using helm with a local repo clone, be sure to run\nhelm dependency build ./kubecost\nbefore installing or upgrading.\n" }}
+  {{ fail "\nThe helm values for finops-agent have been updated.\nPlease change the finops-agent: key in your helm values to finopsagent:\nIf you are using helm with a local repo clone, be sure to run\nhelm dependency update kubecost/\nbefore installing or upgrading.\n" }}
 {{- end -}}
 {{- end -}}
 
