@@ -1208,6 +1208,9 @@ cloudCost:
     annotations: {}
     ## Optionally specify an existing service account name to use instead of creating one
     name: ""
+    ## When using a unique cloud-cost service account, set this to false
+    ## Default is true for backward compatibility
+    useSharedServiceAccount: true
 
   readinessProbe:
     enabled: true

@@ -62,6 +62,8 @@ support templating a chart which uses the lookup function.
 {{- define "kubecost.cloudCost.serviceAccountName" -}}
 {{- if .Values.cloudCost.serviceAccount.name -}}
     {{ .Values.cloudCost.serviceAccount.name }}
+{{- else if .Values.cloudCost.serviceAccount.useSharedServiceAccount -}}
+    {{ template "kubecost.serviceAccountName" . }}
 {{- else -}}
     {{ include "kubecost.cloudCost.fullname" . }}
 {{- end -}}
