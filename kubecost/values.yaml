@@ -619,7 +619,9 @@ finopsagent:
     ##
     storageClass: ""
     size: 8Gi
-
+    annotations:
+      ## The "helm.sh/resource-policy: keep" annotation is used to prevent the persistent volume from being deleted when uninstalling or moving to a different deployment method.
+      helm.sh/resource-policy: keep
   agent:
     collectorDataSource:
       enabled: true
@@ -1023,11 +1025,17 @@ aggregator:
     storageClass: ""
     ## If using high iops storage, the storageRequest may need to be increased to meet the provider's minimum ratio for gb/iops.
     storageRequest: 1Gi
+    annotations:
+      ## The "helm.sh/resource-policy: keep" annotation is used to prevent the persistent volume from being deleted when uninstalling or moving to a different deployment method.
+      helm.sh/resource-policy: keep
   aggregatorDbStorage:
     ## IOPS performance of the aggregatorDbStorage will have significant impact on the performance of queries.
     ## block storage is REQUIRED for the aggregatorDbStorage. NFS/file is not supported.
     storageClass: ""
     storageRequest: 128Gi
+    annotations:
+      ## The "helm.sh/resource-policy: keep" annotation is used to prevent the persistent volume from being deleted when uninstalling or moving to a different deployment method.
+      helm.sh/resource-policy: keep
   resources:
     ## Consider setting a limit after a baseline has been established
     limits: {}
@@ -1227,6 +1235,9 @@ cloudCost:
     storageClass: ""  # Uses global.defaultStorageClass if not specified
     size: 1Gi
     existingClaim: ""  # Optional: use an existing PVC instead of creating a new one
+    annotations:
+      ## The "helm.sh/resource-policy: keep" annotation is used to prevent the persistent volume from being deleted when uninstalling or moving to a different deployment method.
+      helm.sh/resource-policy: keep
 
 ## Kubecost Cluster Controller for Automated Right Sizing and Turndown
 ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=configuration-cluster-controller
