@@ -10,8 +10,11 @@ metadata:
     {{- with .Values.localStore.persistentVolume.labels }}
       {{- toYaml . | nindent 4 }}
     {{- end }}
-  {{- with .Values.localStore.persistentVolume.annotations }}
   annotations:
+  {{- with .Values.localStore.persistentVolume.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.global.annotations }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
