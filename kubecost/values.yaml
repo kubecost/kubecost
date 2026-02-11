@@ -1037,19 +1037,20 @@ aggregator:
       ## The "helm.sh/resource-policy: keep" annotation is used to prevent the persistent volume from being deleted when uninstalling or moving to a different deployment method.
       helm.sh/resource-policy: keep
 
-  # useDeployment controls whether the Aggregator runs as a Deployment instead of a StatefulSet
-  # When set to true, the Aggregator uses emptyDir volumes instead of PersistentVolumes
-  # WARNING: Using Deployment mode means data will be lost on pod restart
-  # Only use Deployment mode for testing or when using external storage (e.g., federated storage)
-  # Default: false (uses StatefulSet with PersistentVolumes)
-  useDeployment: false
+  # useEmptyDir controls whether the Aggregator uses emptyDir volumes instead of PersistentVolumeClaims
+  # When set to true, the StatefulSet will use emptyDir volumes for both aggregator-db-storage and persistent-configs
+  # WARNING: Using emptyDir means data will be lost on pod restart
+  # This is useful when your StorageClass is not compatible with ClickHouse (e.g., S3-backed storage)
+  # or when using external storage solutions like federated storage
+  # Default: false (uses PersistentVolumeClaims)
+  useEmptyDir: false
 
   # emptyDirDbStorageSizeLimit sets the size limit for the database storage emptyDir volume
-  # Only applies when useDeployment is set to true
+  # Only applies when useEmptyDir is set to true
   emptyDirDbStorageSizeLimit: 128Gi
 
   # emptyDirPersistentConfigsSizeLimit sets the size limit for the persistent configs emptyDir volume
-  # Only applies when useDeployment is set to true
+  # Only applies when useEmptyDir is set to true
   emptyDirPersistentConfigsSizeLimit: 1Gi
 
   resources:

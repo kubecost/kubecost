@@ -1,4 +1,4 @@
-{{- if and (.Values.aggregator).enabled (not (.Values.aggregator.useDeployment)) }}
+{{- if (.Values.aggregator).enabled }}
 
 apiVersion: apps/v1
 kind: StatefulSet
@@ -23,6 +23,7 @@ spec:
   selector:
     matchLabels:
     {{- include "kubecost.aggregator.selectorLabels" . | nindent 6 }}
+  {{- if not .Values.aggregator.useEmptyDir }}
   volumeClaimTemplates:
   - apiVersion: v1
     kind: PersistentVolumeClaim
@@ -32,7 +33,7 @@ spec:
         {{- with .Values.global.annotations }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
-        {{- with .Values.aggregator.aggregatorDbStorage.annotations }}      
+        {{- with .Values.aggregator.aggregatorDbStorage.annotations }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
@@ -71,6 +72,7 @@ spec:
       resources:
         requests:
           storage: {{ .Values.aggregator.persistentConfigsStorage.storageRequest }}
+  {{- end }}
   template:
     metadata:
       labels:
@@ -99,6 +101,14 @@ spec:
     {{- end }}
       serviceAccountName: {{ template "kubecost.aggregator.serviceAccountName" . }}
       volumes:
+        {{- if .Values.aggregator.useEmptyDir }}
+        - name: aggregator-db-storage
+          emptyDir:
+            sizeLimit: {{ .Values.aggregator.emptyDirDbStorageSizeLimit | default "128Gi" }}
+        - name: persistent-configs
+          emptyDir:
+            sizeLimit: {{ .Values.aggregator.emptyDirPersistentConfigsSizeLimit | default "1Gi" }}
+        {{- end }}
         - name: aggregator-staging
           emptyDir:
             sizeLimit: {{ .Values.aggregator.stagingEmptyDirSizeLimit }}
