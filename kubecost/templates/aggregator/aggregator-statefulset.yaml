@@ -29,7 +29,7 @@ spec:
     metadata:
       name: aggregator-db-storage
       annotations:
-      {{- if "kubecost.lastPVCAnnotations.aggregator-db-storage" -}}
+      {{- if "kubecost.lastPVCAnnotations.aggregator-db-storage" }}
         {{- include "kubecost.lastPVCAnnotations.aggregator-db-storage" . | nindent 8 }}
       {{- else -}}
         {{- with .Values.global.annotations }}
@@ -38,7 +38,7 @@ spec:
         {{- with .Values.aggregator.aggregatorDbStorage.annotations }}      
           {{- toYaml . | nindent 8 }}
         {{- end }}
-      {{- end -}}
+      {{- end }}
     spec:
       accessModes: [ "ReadWriteOnce" ]
       {{- if .Values.aggregator.aggregatorDbStorage.storageClass }}
@@ -59,7 +59,7 @@ spec:
       # that's what this per-replica Volume is used for.
       name: persistent-configs
       annotations:
-      {{- if "kubecost.lastPVCAnnotations.persistent-configs"-}}
+      {{- if "kubecost.lastPVCAnnotations.persistent-configs" }}
         {{- include "kubecost.lastPVCAnnotations.persistent-configs" . | nindent 8 }}
       {{- else -}}
         {{- with .Values.global.annotations }}
@@ -68,7 +68,7 @@ spec:
         {{- with .Values.aggregator.persistentConfigsStorage.annotations }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
-      {{- end -}}
+      {{- end }}
     spec:
       accessModes: [ "ReadWriteOnce" ]
       {{- if .Values.aggregator.persistentConfigsStorage.storageClass }}
