@@ -643,3 +643,52 @@ imagePullSecrets:
 {{ printf "\nWARNING .Values.imagePullSecrets has been deprecated. Please use .Values.global.imagePullSecrets instead.\nThe finops-agent will only use the global.imagePullSecrets\n" }}
 {{- end -}}
 {{- end -}}
+
+
+{{/*
+Return the annotations from the existing Aggregator StatefulSet PVC
+named "aggregator-db-storage", if present.
+*/}}
+{{- define "kubecost.lastPVCAnnotations.aggregator-db-storage" -}}
+  {{- $annotations := dict -}}
+  {{- $stsList := (lookup "apps/v1" "StatefulSet" .Release.Namespace "") -}}
+  {{- if and $stsList (not (empty $stsList.items)) -}}
+    {{- range $i, $s := $stsList.items -}}
+      {{- if contains "aggregator" $s.metadata.name -}}
+        {{- $volumeClaimTemplates := $s.spec.volumeClaimTemplates -}}
+        {{- range $j, $volumeClaimTemplate := $volumeClaimTemplates -}}
+          {{- if and $volumeClaimTemplate.metadata.annotations (eq $volumeClaimTemplate.metadata.name "aggregator-db-storage") -}}
+            {{- $annotations = $volumeClaimTemplate.metadata.annotations -}}
+          {{- end -}}
+        {{- end -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+  {{- if $annotations }}
+{{ $annotations | toYaml | nindent 8 }}
+  {{- end -}}
+{{- end -}}
+
+{{/*
+Return the annotations from the existing Aggregator StatefulSet PVC
+named "persistent-configs", if present.
+*/}}
+{{- define "kubecost.lastPVCAnnotations.persistent-configs" -}}
+  {{- $annotations := dict -}}
+  {{- $stsList := (lookup "apps/v1" "StatefulSet" .Release.Namespace "") -}}
+  {{- if and $stsList (not (empty $stsList.items)) -}}
+    {{- range $i, $s := $stsList.items -}}
+      {{- if contains "aggregator" $s.metadata.name -}}
+        {{- $volumeClaimTemplates := $s.spec.volumeClaimTemplates -}}
+        {{- range $j, $volumeClaimTemplate := $volumeClaimTemplates -}}
+          {{- if and $volumeClaimTemplate.metadata.annotations (eq $volumeClaimTemplate.metadata.name "persistent-configs") -}}
+            {{- $annotations = $volumeClaimTemplate.metadata.annotations -}}
+          {{- end -}}
+        {{- end -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+  {{- if $annotations }}
+{{ $annotations | toYaml | nindent 8 }}
+  {{- end -}}
+{{- end -}}
