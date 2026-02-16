@@ -644,17 +644,18 @@ imagePullSecrets:
 {{- end -}}
 {{- end -}}
 
-
 {{/*
-Return the annotations from the existing Aggregator StatefulSet PVC
-named "aggregator-db-storage", if present.
+Compute the effective annotations block for the Aggregator StatefulSet
+PVC named "aggregator-db-storage".
 */}}
-{{- define "kubecost.lastPVCAnnotations.aggregator-db-storage" -}}
+{{- define "kubecost.aggregatorStatefulset.pvcAnnotations.aggregator-db-storage" -}}
   {{- $annotations := dict -}}
+  {{- $foundSts := false -}}
   {{- $stsList := (lookup "apps/v1" "StatefulSet" .Release.Namespace "") -}}
   {{- if and $stsList (not (empty $stsList.items)) -}}
     {{- range $i, $s := $stsList.items -}}
       {{- if contains "aggregator" $s.metadata.name -}}
+        {{- $foundSts = true -}}
         {{- $volumeClaimTemplates := $s.spec.volumeClaimTemplates -}}
         {{- range $j, $volumeClaimTemplate := $volumeClaimTemplates -}}
           {{- if and $volumeClaimTemplate.metadata.annotations (eq $volumeClaimTemplate.metadata.name "aggregator-db-storage") -}}
@@ -664,21 +665,34 @@ named "aggregator-db-storage", if present.
       {{- end -}}
     {{- end -}}
   {{- end -}}
-  {{- if $annotations }}
-{{ $annotations | toYaml | nindent 8 }}
-  {{- end -}}
+
+{{- if $foundSts }}
+annotations:
+  {{- if not (empty $annotations) }}
+    {{ $annotations | toYaml | nindent 2 }}
+  {{- else -}}
+    {{- with .Values.global.annotations }}
+      {{ toYaml . | nindent 2 }}
+    {{- end }}
+    {{- with .Values.aggregator.aggregatorDbStorage.annotations }}
+      {{ toYaml . | nindent 2 }}
+    {{- end }}
+  {{- end }}
+{{- end -}}
 {{- end -}}
 
 {{/*
-Return the annotations from the existing Aggregator StatefulSet PVC
-named "persistent-configs", if present.
+Compute the effective annotations block for the Aggregator StatefulSet
+PVC named "persistent-configs".
 */}}
-{{- define "kubecost.lastPVCAnnotations.persistent-configs" -}}
+{{- define "kubecost.aggregatorStatefulset.pvcAnnotations.persistent-configs" -}}
   {{- $annotations := dict -}}
+  {{- $foundSts := false -}}
   {{- $stsList := (lookup "apps/v1" "StatefulSet" .Release.Namespace "") -}}
   {{- if and $stsList (not (empty $stsList.items)) -}}
     {{- range $i, $s := $stsList.items -}}
       {{- if contains "aggregator" $s.metadata.name -}}
+        {{- $foundSts = true -}}
         {{- $volumeClaimTemplates := $s.spec.volumeClaimTemplates -}}
         {{- range $j, $volumeClaimTemplate := $volumeClaimTemplates -}}
           {{- if and $volumeClaimTemplate.metadata.annotations (eq $volumeClaimTemplate.metadata.name "persistent-configs") -}}
@@ -688,7 +702,18 @@ named "persistent-configs", if present.
       {{- end -}}
     {{- end -}}
   {{- end -}}
-  {{- if $annotations }}
-{{ $annotations | toYaml | nindent 8 }}
-  {{- end -}}
+
+{{- if $foundSts }}
+annotations:
+  {{- if not (empty $annotations) }}
+    {{ $annotations | toYaml | nindent 2 }}
+  {{- else -}}
+    {{- with .Values.global.annotations }}
+      {{ toYaml . | nindent 2 }}
+    {{- end }}
+    {{- with .Values.aggregator.persistentConfigsStorage.annotations }}
+      {{ toYaml . | nindent 2 }}
+    {{- end }}
+  {{- end }}
+{{- end -}}
 {{- end -}}

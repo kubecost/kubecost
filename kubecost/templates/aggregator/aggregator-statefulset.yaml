@@ -28,17 +28,7 @@ spec:
     kind: PersistentVolumeClaim
     metadata:
       name: aggregator-db-storage
-      annotations:
-      {{- if "kubecost.lastPVCAnnotations.aggregator-db-storage" }}
-        {{- include "kubecost.lastPVCAnnotations.aggregator-db-storage" . | nindent 8 }}
-      {{- else -}}
-        {{- with .Values.global.annotations }}
-          {{- toYaml . | nindent 8 }}
-        {{- end }}
-        {{- with .Values.aggregator.aggregatorDbStorage.annotations }}      
-          {{- toYaml . | nindent 8 }}
-        {{- end }}
-      {{- end }}
+      {{- include "kubecost.aggregatorStatefulset.pvcAnnotations.aggregator-db-storage" . | nindent 6 }}
     spec:
       accessModes: [ "ReadWriteOnce" ]
       {{- if .Values.aggregator.aggregatorDbStorage.storageClass }}
@@ -58,17 +48,7 @@ spec:
       # a need to "mount" ConfigMap files (using the watcher) to a file system;
       # that's what this per-replica Volume is used for.
       name: persistent-configs
-      annotations:
-      {{- if "kubecost.lastPVCAnnotations.persistent-configs" }}
-        {{- include "kubecost.lastPVCAnnotations.persistent-configs" . | nindent 8 }}
-      {{- else -}}
-        {{- with .Values.global.annotations }}
-          {{- toYaml . | nindent 8 }}
-        {{- end }}
-        {{- with .Values.aggregator.persistentConfigsStorage.annotations }}
-          {{- toYaml . | nindent 8 }}
-        {{- end }}
-      {{- end }}
+      {{- include "kubecost.aggregatorStatefulset.pvcAnnotations.persistent-configs" . | nindent 6 }}
     spec:
       accessModes: [ "ReadWriteOnce" ]
       {{- if .Values.aggregator.persistentConfigsStorage.storageClass }}
