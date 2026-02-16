@@ -666,19 +666,18 @@ PVC named "aggregator-db-storage".
     {{- end -}}
   {{- end -}}
 
-{{- if $foundSts }}
 annotations:
-  {{- if not (empty $annotations) }}
-    {{ $annotations | toYaml | nindent 2 }}
+  # If there was a statefulset previously, use the annotations from the statefulset
+  {{- if $foundSts }}
+    {{- $annotations | toYaml | nindent 2 }}
   {{- else -}}
     {{- with .Values.global.annotations }}
-      {{ toYaml . | nindent 2 }}
+      {{- toYaml . | nindent 2 }}
     {{- end }}
     {{- with .Values.aggregator.aggregatorDbStorage.annotations }}
-      {{ toYaml . | nindent 2 }}
+      {{- toYaml . | nindent 2 }}
     {{- end }}
   {{- end }}
-{{- end -}}
 {{- end -}}
 
 {{/*
@@ -703,17 +702,16 @@ PVC named "persistent-configs".
     {{- end -}}
   {{- end -}}
 
-{{- if $foundSts }}
 annotations:
-  {{- if not (empty $annotations) }}
-    {{ $annotations | toYaml | nindent 2 }}
+  # If there was a statefulset previously, use the annotations from the statefulset
+  {{- if $foundSts }}
+    {{- $annotations | toYaml | nindent 2 }}
   {{- else -}}
     {{- with .Values.global.annotations }}
-      {{ toYaml . | nindent 2 }}
+      {{- toYaml . | nindent 2 }}
     {{- end }}
     {{- with .Values.aggregator.persistentConfigsStorage.annotations }}
-      {{ toYaml . | nindent 2 }}
+      {{- toYaml . | nindent 2 }}
     {{- end }}
   {{- end }}
-{{- end -}}
 {{- end -}}
