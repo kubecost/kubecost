@@ -23,8 +23,8 @@ spec:
   selector:
     matchLabels:
     {{- include "kubecost.aggregator.selectorLabels" . | nindent 6 }}
-  {{- if not .Values.aggregator.useEmptyDir }}
   volumeClaimTemplates:
+  {{- if not .Values.aggregator.useEmptyDir }}
   - apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
@@ -46,6 +46,7 @@ spec:
       resources:
         requests:
           storage:  {{ .Values.aggregator.aggregatorDbStorage.storageRequest }}
+  {{- end }}
   - apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
@@ -72,7 +73,6 @@ spec:
       resources:
         requests:
           storage: {{ .Values.aggregator.persistentConfigsStorage.storageRequest }}
-  {{- end }}
   template:
     metadata:
       labels:
@@ -105,9 +105,6 @@ spec:
         - name: aggregator-db-storage
           emptyDir:
             sizeLimit: {{ .Values.aggregator.emptyDirDbStorageSizeLimit | default "128Gi" }}
-        - name: persistent-configs
-          emptyDir:
-            sizeLimit: {{ .Values.aggregator.emptyDirPersistentConfigsSizeLimit | default "1Gi" }}
         {{- end }}
         - name: aggregator-staging
           emptyDir:
