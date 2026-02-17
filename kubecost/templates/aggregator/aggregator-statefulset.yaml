@@ -28,6 +28,13 @@ spec:
     kind: PersistentVolumeClaim
     metadata:
       name: aggregator-db-storage
+      annotations:
+        {{- with .Values.global.annotations }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.aggregator.aggregatorDbStorage.annotations }}      
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       accessModes: [ "ReadWriteOnce" ]
       {{- if .Values.aggregator.aggregatorDbStorage.storageClass }}
@@ -47,6 +54,13 @@ spec:
       # a need to "mount" ConfigMap files (using the watcher) to a file system;
       # that's what this per-replica Volume is used for.
       name: persistent-configs
+      annotations:
+        {{- with .Values.global.annotations }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.aggregator.persistentConfigsStorage.annotations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     spec:
       accessModes: [ "ReadWriteOnce" ]
       {{- if .Values.aggregator.persistentConfigsStorage.storageClass }}
