@@ -645,11 +645,11 @@ imagePullSecrets:
 {{- end -}}
 
 {{/*
-Compute the effective annotations block for the Aggregator StatefulSet
-PVC named "aggregator-db-storage".
+Persistent db storage annotations block for the Aggregator StatefulSet
+Check if there was an aggregator statefulset previously, if yes apply the annotations from the statefulset, otherwise use the annotations as given in the values
 */}}
 {{- define "kubecost.aggregatorStatefulset.pvcAnnotations.aggregator-db-storage" -}}
-  {{- $annotations := dict -}}
+  {{- $pastAnnotations := dict -}}
   {{- $foundSts := false -}}
   {{- $stsList := (lookup "apps/v1" "StatefulSet" .Release.Namespace "") -}}
   {{- if and $stsList (not (empty $stsList.items)) -}}
@@ -659,7 +659,7 @@ PVC named "aggregator-db-storage".
         {{- $volumeClaimTemplates := $s.spec.volumeClaimTemplates -}}
         {{- range $j, $volumeClaimTemplate := $volumeClaimTemplates -}}
           {{- if and $volumeClaimTemplate.metadata.annotations (eq $volumeClaimTemplate.metadata.name "aggregator-db-storage") -}}
-            {{- $annotations = $volumeClaimTemplate.metadata.annotations -}}
+            {{- $pastAnnotations = $volumeClaimTemplate.metadata.annotations -}}
           {{- end -}}
         {{- end -}}
       {{- end -}}
@@ -667,9 +667,8 @@ PVC named "aggregator-db-storage".
   {{- end -}}
 
 annotations:
-  # If there was a statefulset previously, use the annotations from the statefulset
   {{- if $foundSts }}
-    {{- $annotations | toYaml | nindent 2 }}
+    {{- $pastAnnotations | toYaml | nindent 2 }}
   {{- else -}}
     {{- with .Values.global.annotations }}
       {{- toYaml . | nindent 2 }}
@@ -681,11 +680,11 @@ annotations:
 {{- end -}}
 
 {{/*
-Compute the effective annotations block for the Aggregator StatefulSet
-PVC named "persistent-configs".
+Persistent db storage annotations block for the Aggregator StatefulSet
+Check if there was an aggregator statefulset previously, if yes apply the annotations from the statefulset, otherwise use the annotations as given in the values
 */}}
 {{- define "kubecost.aggregatorStatefulset.pvcAnnotations.persistent-configs" -}}
-  {{- $annotations := dict -}}
+  {{- $pastAnnotations := dict -}}
   {{- $foundSts := false -}}
   {{- $stsList := (lookup "apps/v1" "StatefulSet" .Release.Namespace "") -}}
   {{- if and $stsList (not (empty $stsList.items)) -}}
@@ -695,7 +694,7 @@ PVC named "persistent-configs".
         {{- $volumeClaimTemplates := $s.spec.volumeClaimTemplates -}}
         {{- range $j, $volumeClaimTemplate := $volumeClaimTemplates -}}
           {{- if and $volumeClaimTemplate.metadata.annotations (eq $volumeClaimTemplate.metadata.name "persistent-configs") -}}
-            {{- $annotations = $volumeClaimTemplate.metadata.annotations -}}
+            {{- $pastAnnotations = $volumeClaimTemplate.metadata.annotations -}}
           {{- end -}}
         {{- end -}}
       {{- end -}}
@@ -703,9 +702,8 @@ PVC named "persistent-configs".
   {{- end -}}
 
 annotations:
-  # If there was a statefulset previously, use the annotations from the statefulset
   {{- if $foundSts }}
-    {{- $annotations | toYaml | nindent 2 }}
+    {{- $pastAnnotations | toYaml | nindent 2 }}
   {{- else -}}
     {{- with .Values.global.annotations }}
       {{- toYaml . | nindent 2 }}
