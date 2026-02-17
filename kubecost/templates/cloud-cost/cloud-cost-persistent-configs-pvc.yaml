@@ -1,0 +1,32 @@
+{{- if .Values.cloudCost.enabled }}
+{{- if and ((.Values.cloudCost).persistentConfigsStorage).enabled (not ((.Values.cloudCost).persistentConfigsStorage).existingClaim) -}}
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{ include "kubecost.cloudCost.fullname" . }}-persistent-configs
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "kubecost.cloudCost.commonLabels" . | nindent 4 }}
+    {{- with .Values.global.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  annotations:
+  {{- with .Values.global.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.cloudCost.persistentConfigsStorage.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  {{- if .Values.cloudCost.persistentConfigsStorage.storageClass }}
+  storageClassName: {{ .Values.cloudCost.persistentConfigsStorage.storageClass }}
+  {{- else if .Values.global.defaultStorageClass }}
+  storageClassName: {{ .Values.global.defaultStorageClass }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.cloudCost.persistentConfigsStorage.size }}
+{{- end -}}
+{{- end -}}

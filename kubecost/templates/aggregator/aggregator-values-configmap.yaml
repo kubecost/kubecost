@@ -1,3 +1,4 @@
+{{- if (.Values.aggregator).enabled }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -8,3 +9,4 @@ metadata:
 data:
   user-values.json: |
     {{- .Values | toJson | nindent 4 }}
+{{- end }}

@@ -24,8 +24,17 @@ spec:
     matchLabels:
     {{- include "kubecost.aggregator.selectorLabels" . | nindent 6 }}
   volumeClaimTemplates:
-  - metadata:
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
       name: aggregator-db-storage
+      annotations:
+        {{- with .Values.global.annotations }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.aggregator.aggregatorDbStorage.annotations }}      
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       accessModes: [ "ReadWriteOnce" ]
       {{- if .Values.aggregator.aggregatorDbStorage.storageClass }}
@@ -36,13 +45,22 @@ spec:
       resources:
         requests:
           storage:  {{ .Values.aggregator.aggregatorDbStorage.storageRequest }}
-  - metadata:
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
       # In the StatefulSet config, Aggregator should not share any filesystem
       # state with the cost-model to maintain independence and improve
       # stability (in the event of bad file-locking state). Still, there is
       # a need to "mount" ConfigMap files (using the watcher) to a file system;
       # that's what this per-replica Volume is used for.
       name: persistent-configs
+      annotations:
+        {{- with .Values.global.annotations }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.aggregator.persistentConfigsStorage.annotations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     spec:
       accessModes: [ "ReadWriteOnce" ]
       {{- if .Values.aggregator.persistentConfigsStorage.storageClass }}
@@ -507,18 +525,14 @@ spec:
             {{- end }}
             - name: CUSTOM_COST_ENABLED
               value: {{ .Values.plugins.enabled | quote }}
-            {{- if .Values.diagnostics.enabled }}
             - name: DIAGNOSTICS_ENABLED
-              value: "true"
+              value: {{ .Values.diagnostics.enabled | quote }}
             - name: DIAGNOSTICS_RETENTION
               value: {{ .Values.diagnostics.retention | quote }}
-            {{- end }}
-            {{- if .Values.heartbeat.enabled }}
             - name: HEARTBEAT_ENABLED
-              value: "true"
+              value: {{ .Values.heartbeat.enabled | quote }}
             - name: HEARTBEAT_RETENTION
               value: {{ .Values.heartbeat.retention | quote }}
-            {{- end }}
             {{- if .Values.kubecostProductConfigs.apiConfigMapName }}
             - name: API_CONFIGMAP_NAME
               value: {{ .Values.kubecostProductConfigs.apiConfigMapName }}
@@ -647,8 +661,8 @@ spec:
             - name: DISPLAY_CURRENCY
               value: {{ (.Values.kubecostProductConfigs).currencyCode }}
             {{- end }}
-            {{- if .Values.deploymentGuide.enabled }}
-            - name: ENABLE_DEPLOYMENT_GUIDE
+            {{- if .Values.saasDeployment }}
+            - name: SAAS_DEPLOYMENT
               value: "true"
             {{- end }}
             {{- if .Values.aggregator.extraEnv -}}

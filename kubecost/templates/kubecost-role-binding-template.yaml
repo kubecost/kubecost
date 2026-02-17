@@ -1,7 +1,9 @@
+{{- if or .Values.aggregator.enabled .Values.cloudCost.enabled }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: {{ template "kubecost.serviceAccountName" . }}
+  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "kubecost.commonLabels" . | nindent 4 }}
 roleRef:
@@ -12,3 +14,4 @@ subjects:
   - kind: ServiceAccount
     name: {{ template "kubecost.serviceAccountName" . }}
     namespace: {{ .Release.Namespace }}
+{{- end }}

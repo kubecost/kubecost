@@ -505,9 +505,9 @@ data:
             return 200 '{"aggregatorEnabled": "true"}';
         }
 
-        location /model/enableDeploymentGuide {
+        location /model/isSaaSDeployment {
             default_type 'application/json';
-            return 200 '{"enableDeploymentGuide": {{ .Values.deploymentGuide.enabled | quote }} }';
+            return 200 '{"saasDeployment": {{ .Values.saasDeployment | quote }} }';
         }
 
         {{- if .Values.forecasting.enabled }}
@@ -554,9 +554,12 @@ data:
                 "hideCloudIntegrationsUI": "{{ default false ((.Values.kubecostProductConfigs).hideCloudIntegrationsUI) }}",
                 "hideBellIcon": "{{ default true ((.Values.kubecostProductConfigs).hideBellIcon) }}",
                 "hideTeams": "{{ default false ((.Values.kubecostProductConfigs).hideTeams) }}",
+                "hideCloudCosts": "{{ default false ((.Values.kubecostProductConfigs).hideCloudCosts)}}",
                 "legacyModeEnabled": "{{ .Values.aggregator.legacyMode }}",
                 "clusterId": "{{ include "kubecost.clusterId" . }}",
-                "defaultSavingsProfile": "{{ .Values.kubecostProductConfigs.clusterProfile }}"
+                "defaultSavingsProfile": "{{ .Values.kubecostProductConfigs.clusterProfile }}",
+                "defaultIdle": "{{ .Values.kubecostProductConfigs.defaultIdle }}",
+                "currencyCode": "{{ .Values.kubecostProductConfigs.currencyCode }}"
                 }
             ';
         }
@@ -568,25 +571,6 @@ data:
                     "version": "{{ .Chart.Version }}"
                 }
             ';
-        }
-
-        # TODO: Remove this endpoint. All these configs will become available in the backend's `/model/getApiConfigs` and `/model/setApiConfigs`. They will also be configured in a ConfigMap. https://github.com/kubecost/kubecost/pull/4472.
-        location = /model/getConfigs {
-            default_type 'application/json';
-            return 200 '{
-                "code": 200,
-                "status": "success",
-                "data": {
-                    "defaultIdle": "{{ .Values.kubecostProductConfigs.defaultIdle }}",
-                    "currencyCode": "{{ .Values.kubecostProductConfigs.currencyCode }}",
-                    "negotiatedDiscount": "{{ .Values.kubecostProductConfigs.negotiatedDiscount }}",
-                    "sharedOverhead": "{{ .Values.kubecostProductConfigs.sharedOverhead }}",
-                    "sharedNamespaces": "{{ .Values.kubecostProductConfigs.sharedNamespaces }}",
-                    "sharedLabelNames": "{{ .Values.kubecostProductConfigs.sharedLabelNames }}",
-                    "sharedLabelValues": "{{ .Values.kubecostProductConfigs.sharedLabelValues }}",
-                    "shareTenancyCosts": "{{ .Values.kubecostProductConfigs.shareTenancyCosts }}"
-                }
-            }';
         }
 
         # Branding Routes
