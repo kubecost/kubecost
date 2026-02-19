@@ -1037,14 +1037,28 @@ aggregator:
       ## The "helm.sh/resource-policy: keep" annotation is used to prevent the persistent volume from being deleted when uninstalling or moving to a different deployment method.
       helm.sh/resource-policy: keep
 
+  # WARNING: Setting to true will cause will mount the Aggregator database to
+  # the hostPath. If the pod gets rescheduled to another node, the database will
+  # need to be entirely rebuilt.
+  #
+  # Determines whether the Aggregator uses hostPath instead of a
+  # PersistentVolumeClaim for the Aggregator's DB storage. This is useful when
+  # your StorageClass is not compatible with ClickHouse (e.g. NFS, S3-backed
+  # storage)
+  useHostPath: false
+
+  # Path on the host to use for hostPath volume. Only applies when useHostPath
+  # is set to true. The path must exist on the node.
+  hostPathDbStoragePath: /mnt/kubecost-aggregator-db
+
   # WARNING: Setting to true will cause the database to be completely rebuilt
   # upon pod restart. This setting is not recommended unless special
   # circumstances require it.
   #
   # Determines whether the Aggregator uses emptyDir instead of a
-  # PersistentVolumeClaim for the Aggregator's DB storage. Aggregator's configs
-  # will still use a PVC. This is useful when your StorageClass is not
-  # compatible with ClickHouse (e.g. NFS, S3-backed storage)
+  # PersistentVolumeClaim for the Aggregator's DB storage. This is useful when
+  # your StorageClass is not compatible with ClickHouse (e.g. NFS, S3-backed
+  # storage)
   useEmptyDir: false
 
   # Size limit for the database storage emptyDir volume. Only applies when

@@ -143,6 +143,15 @@ RBAC exclusivity check: make sure either simple RBAC or RBAC Teams is configured
 {{- end -}}
 
 {{/*
+Aggregator storage exclusivity check: make sure useEmptyDir and useHostPath are not both enabled
+*/}}
+{{- define "kubecost.aggregator.storageCheck" -}}
+  {{- if and (.Values.aggregator).useEmptyDir (.Values.aggregator).useHostPath -}}
+    {{- fail "aggregator.useEmptyDir and aggregator.useHostPath cannot both be set to true. Please choose only one storage option." -}}
+  {{- end -}}
+{{- end -}}
+
+{{/*
 Print a warning if PV is enabled AND EKS is detected AND the EBS-CSI driver is not installed.
 Skip the check if CI/CD is enabled and skipSanityChecks is set. Argo CD, for
 example, does not support templating a chart which uses the lookup function.

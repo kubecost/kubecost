@@ -9,6 +9,7 @@
 {{- include "kubecost.actionsStorageSourceCheck" . -}}
 {{- include "kubecost.finopsagentCheck" . -}}
 {{- include "kubecost.cloudCost.persistentStorage.check" . -}}
+{{- include "kubecost.aggregator.storageCheck" . -}}
 ================================================================================
 KUBECOST INSTALLATION SUCCESSFUL
 ================================================================================
