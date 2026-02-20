@@ -236,7 +236,6 @@ example, does not support templating a chart which uses the lookup function.
 {{- end -}}
 {{- end -}}
 
-
 {{/*
 Actions Storage source contents check. Either the Secret must be specified or the YAML, not both.
 */}}
