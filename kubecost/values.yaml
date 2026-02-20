@@ -1037,32 +1037,31 @@ aggregator:
       ## The "helm.sh/resource-policy: keep" annotation is used to prevent the persistent volume from being deleted when uninstalling or moving to a different deployment method.
       helm.sh/resource-policy: keep
 
-  # WARNING: Setting to true will cause will mount the Aggregator database to
-  # the hostPath. If the pod gets rescheduled to another node, the database will
-  # need to be entirely rebuilt.
+  # WARNING: Setting to true will mount the Aggregator database to the hostPath.
+  # If the pod gets rescheduled to another node, the database will need to be
+  # entirely rebuilt, causing significant service disruption. In large
+  # environments, database rebuilds can take over a day to complete. NOT
+  # RECOMMENDED for production use.
   #
-  # Determines whether the Aggregator uses hostPath instead of a
-  # PersistentVolumeClaim for the Aggregator's DB storage. This is useful when
-  # your StorageClass is not compatible with ClickHouse (e.g. NFS, S3-backed
-  # storage)
+  # This option should only be used when block storage is not available and your
+  # StorageClass is not compatible with ClickHouse (e.g. NFS, S3-backed
+  # storage).
   useHostPath: false
 
-  # Path on the host to use for hostPath volume. Only applies when useHostPath
-  # is set to true. The path must exist on the node.
+  # Only applies when useHostPath=true. Path on the host to use for the volume.
   hostPathDbStoragePath: /mnt/kubecost-aggregator-db
 
   # WARNING: Setting to true will cause the database to be completely rebuilt
-  # upon pod restart. This setting is not recommended unless special
-  # circumstances require it.
+  # upon any pod restart, causing significant service disruption. In large
+  # environments, database rebuilds can take over a day to complete. NOT
+  # RECOMMENDED for production use.
   #
-  # Determines whether the Aggregator uses emptyDir instead of a
-  # PersistentVolumeClaim for the Aggregator's DB storage. This is useful when
-  # your StorageClass is not compatible with ClickHouse (e.g. NFS, S3-backed
-  # storage)
+  # This option should only be used when block storage is not available and your
+  # StorageClass is not compatible with ClickHouse (e.g. NFS, S3-backed
+  # storage).
   useEmptyDir: false
 
-  # Size limit for the database storage emptyDir volume. Only applies when
-  # useEmptyDir is set to true.
+  # Only applies when useEmptyDir=true. Size limit for the emptyDir volume. 
   emptyDirDbStorageSizeLimit: 128Gi
 
   resources:
