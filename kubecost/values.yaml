@@ -1046,6 +1046,10 @@ aggregator:
   # This option should only be used when block storage is not available and your
   # StorageClass is not compatible with ClickHouse (e.g. NFS, S3-backed
   # storage).
+  #
+  # IMPORTANT: When using hostPath, you MUST configure:
+  # 1. nodeSelector to pin the pod to a specific node
+  # 2. securityContext with runAsUser: 0 and fsGroup: 0 (for directory permissions)
   useHostPath: false
 
   # Only applies when useHostPath=true. Path on the host to use for the volume.
