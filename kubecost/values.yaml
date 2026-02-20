@@ -1065,7 +1065,7 @@ aggregator:
   # storage).
   useEmptyDir: false
 
-  # Only applies when useEmptyDir=true. Size limit for the emptyDir volume. 
+  # Only applies when useEmptyDir=true. Size limit for the emptyDir volume.
   emptyDirDbStorageSizeLimit: 128Gi
 
   resources:
