@@ -680,10 +680,14 @@ imagePullSecrets:
 {{- end -}}
 
 {{/*
-Persistent db storage annotations block for the Aggregator StatefulSet
-Check if there was an aggregator statefulset previously, if yes apply the annotations from the statefulset, otherwise use the annotations as given in the values
+Persistent db storage annotations block for the Aggregator StatefulSet.
+- CICD: no annotations (lookup unavailable; avoid immutable field conflicts in StatefulSet).
+- Non-CICD: use existing STS annotations if found, else values.
 */}}
 {{- define "kubecost.aggregatorStatefulset.pvcAnnotations.aggregator-db-storage" -}}
+  {{- if .Values.global.platforms.cicd.enabled -}}
+  {{/* CICD: do not set PVC annotations */}}
+  {{- else -}}
   {{- $pastAnnotations := dict -}}
   {{- $foundSts := false -}}
   {{- $stsList := (lookup "apps/v1" "StatefulSet" .Release.Namespace "") -}}
@@ -712,13 +716,18 @@ annotations:
       {{- toYaml . | nindent 2 }}
     {{- end }}
   {{- end }}
+  {{- end -}}
 {{- end -}}
 
 {{/*
-Persistent db storage annotations block for the Aggregator StatefulSet
-Check if there was an aggregator statefulset previously, if yes apply the annotations from the statefulset, otherwise use the annotations as given in the values
+Persistent-configs annotations block for the Aggregator StatefulSet.
+- CICD: no annotations (lookup unavailable; avoid immutable field conflicts in StatefulSet).
+- Non-CICD: use existing STS annotations if found, else values.
 */}}
 {{- define "kubecost.aggregatorStatefulset.pvcAnnotations.persistent-configs" -}}
+  {{- if .Values.global.platforms.cicd.enabled -}}
+  {{/* CICD: do not set PVC annotations */}}
+  {{- else -}}
   {{- $pastAnnotations := dict -}}
   {{- $foundSts := false -}}
   {{- $stsList := (lookup "apps/v1" "StatefulSet" .Release.Namespace "") -}}
@@ -747,4 +756,5 @@ annotations:
       {{- toYaml . | nindent 2 }}
     {{- end }}
   {{- end }}
+  {{- end -}}
 {{- end -}}
