@@ -143,6 +143,42 @@ RBAC exclusivity check: make sure either simple RBAC or RBAC Teams is configured
 {{- end -}}
 
 {{/*
+Aggregator storage exclusivity check: make sure useEmptyDir and useHostPath are not both enabled
+*/}}
+{{- define "kubecost.aggregator.storageCheck" -}}
+  {{- if and (.Values.aggregator).useEmptyDir (.Values.aggregator).useHostPath -}}
+    {{- fail "aggregator.useEmptyDir and aggregator.useHostPath cannot both be set to true. Please choose only one storage option." -}}
+  {{- end -}}
+{{- end -}}
+
+{{/*
+Aggregator storage warning: warn if useEmptyDir or useHostPath is configured
+*/}}
+{{- define "kubecost.aggregator.storageWarning" -}}
+  {{- if or (.Values.aggregator).useEmptyDir (.Values.aggregator).useHostPath -}}
+
+################################################################################
+# WARNING: NON-RECOMMENDED AGGREGATOR STORAGE CONFIGURATION
+################################################################################
+{{- if (.Values.aggregator).useEmptyDir }}
+You have configured aggregator.useEmptyDir=true. This is NOT the recommended
+way to use Kubecost in production environments.
+{{- end }}
+{{- if (.Values.aggregator).useHostPath }}
+You have configured aggregator.useHostPath=true. This is NOT the recommended
+way to use Kubecost in production environments.
+{{- end }}
+
+IMPORTANT: Without a proper PersistentVolumeClaim (PVC), pod restarts will
+require the Aggregator database to reingest all agent data. This will cause
+significant service disruptions. For production use, please configure a PVC for
+persistent storage.
+################################################################################
+
+  {{- end -}}
+{{- end -}}
+
+{{/*
 Print a warning if PV is enabled AND EKS is detected AND the EBS-CSI driver is not installed.
 Skip the check if CI/CD is enabled and skipSanityChecks is set. Argo CD, for
 example, does not support templating a chart which uses the lookup function.
@@ -199,7 +235,6 @@ example, does not support templating a chart which uses the lookup function.
 {{- end -}}
 {{- end -}}
 {{- end -}}
-
 
 {{/*
 Actions Storage source contents check. Either the Secret must be specified or the YAML, not both.
@@ -645,10 +680,14 @@ imagePullSecrets:
 {{- end -}}
 
 {{/*
-Persistent db storage annotations block for the Aggregator StatefulSet
-Check if there was an aggregator statefulset previously, if yes apply the annotations from the statefulset, otherwise use the annotations as given in the values
+Persistent db storage annotations block for the Aggregator StatefulSet.
+- CICD: no annotations (lookup unavailable; avoid immutable field conflicts in StatefulSet).
+- Non-CICD: use existing STS annotations if found, else values.
 */}}
 {{- define "kubecost.aggregatorStatefulset.pvcAnnotations.aggregator-db-storage" -}}
+  {{- if .Values.global.platforms.cicd.enabled -}}
+  {{/* CICD: do not set PVC annotations */}}
+  {{- else -}}
   {{- $pastAnnotations := dict -}}
   {{- $foundSts := false -}}
   {{- $stsList := (lookup "apps/v1" "StatefulSet" .Release.Namespace "") -}}
@@ -677,13 +716,18 @@ annotations:
       {{- toYaml . | nindent 2 }}
     {{- end }}
   {{- end }}
+  {{- end -}}
 {{- end -}}
 
 {{/*
-Persistent db storage annotations block for the Aggregator StatefulSet
-Check if there was an aggregator statefulset previously, if yes apply the annotations from the statefulset, otherwise use the annotations as given in the values
+Persistent-configs annotations block for the Aggregator StatefulSet.
+- CICD: no annotations (lookup unavailable; avoid immutable field conflicts in StatefulSet).
+- Non-CICD: use existing STS annotations if found, else values.
 */}}
 {{- define "kubecost.aggregatorStatefulset.pvcAnnotations.persistent-configs" -}}
+  {{- if .Values.global.platforms.cicd.enabled -}}
+  {{/* CICD: do not set PVC annotations */}}
+  {{- else -}}
   {{- $pastAnnotations := dict -}}
   {{- $foundSts := false -}}
   {{- $stsList := (lookup "apps/v1" "StatefulSet" .Release.Namespace "") -}}
@@ -712,4 +756,5 @@ annotations:
       {{- toYaml . | nindent 2 }}
     {{- end }}
   {{- end }}
+  {{- end -}}
 {{- end -}}
