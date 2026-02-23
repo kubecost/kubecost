@@ -176,6 +176,28 @@ jobs:
           fi
           done
 
+      - name: Checkout Target Branch
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+          path: ./target-branch
+  
+      - name: Install, Upgrade, Test, and Uninstall chart for default values
+        run: |
+          cd ./target-branch/kubecost
+          helm repo add finops-agent-chart https://kubecost.github.io/finops-agent-chart
+          helm repo update
+          helm dependency build
+          helm install --wait --wait-for-jobs kubecost . -n kubecost
+          kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/instance=kubecost --timeout=120s
+          cd ../..
+          helm upgrade kubecost kubecost/ -n kubecost --wait --wait-for-jobs
+          kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/instance=kubecost --timeout=120s
+          helm test -n kubecost kubecost
+          helm uninstall kubecost -n kubecost --no-hooks --wait
+          kubectl -n kubecost delete deployments,daemonsets,statefulsets,pods --all --force
+
+
   deploy-ocp:
     runs-on: ubuntu-latest
     needs: test-chart

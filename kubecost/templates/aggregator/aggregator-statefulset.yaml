@@ -24,17 +24,12 @@ spec:
     matchLabels:
     {{- include "kubecost.aggregator.selectorLabels" . | nindent 6 }}
   volumeClaimTemplates:
+  {{- if and (not .Values.aggregator.useEmptyDir) (not .Values.aggregator.useHostPath) }}
   - apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
       name: aggregator-db-storage
-      annotations:
-        {{- with .Values.global.annotations }}
-          {{- toYaml . | nindent 8 }}
-        {{- end }}
-        {{- with .Values.aggregator.aggregatorDbStorage.annotations }}      
-          {{- toYaml . | nindent 8 }}
-        {{- end }}
+      {{- include "kubecost.aggregatorStatefulset.pvcAnnotations.aggregator-db-storage" . | nindent 6 }}
     spec:
       accessModes: [ "ReadWriteOnce" ]
       {{- if .Values.aggregator.aggregatorDbStorage.storageClass }}
@@ -54,13 +49,7 @@ spec:
       # a need to "mount" ConfigMap files (using the watcher) to a file system;
       # that's what this per-replica Volume is used for.
       name: persistent-configs
-      annotations:
-        {{- with .Values.global.annotations }}
-          {{- toYaml . | nindent 8 }}
-        {{- end }}
-        {{- with .Values.aggregator.persistentConfigsStorage.annotations }}
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+      {{- include "kubecost.aggregatorStatefulset.pvcAnnotations.persistent-configs" . | nindent 6 }}
     spec:
       accessModes: [ "ReadWriteOnce" ]
       {{- if .Values.aggregator.persistentConfigsStorage.storageClass }}
@@ -71,6 +60,7 @@ spec:
       resources:
         requests:
           storage: {{ .Values.aggregator.persistentConfigsStorage.storageRequest }}
+  {{- end }}
   template:
     metadata:
       labels:
@@ -99,6 +89,23 @@ spec:
     {{- end }}
       serviceAccountName: {{ template "kubecost.aggregator.serviceAccountName" . }}
       volumes:
+        {{- if .Values.aggregator.useHostPath }}
+        - name: aggregator-db-storage
+          hostPath:
+            path: {{ .Values.aggregator.hostPathDbStoragePath }}
+            type: DirectoryOrCreate
+        - name: persistent-configs
+          hostPath:
+            path: {{ .Values.aggregator.hostPathDbStoragePath }}-configs
+            type: DirectoryOrCreate
+        {{- else if .Values.aggregator.useEmptyDir }}
+        - name: aggregator-db-storage
+          emptyDir:
+            sizeLimit: {{ .Values.aggregator.emptyDirDbStorageSizeLimit }}
+        - name: persistent-configs
+          emptyDir:
+            sizeLimit: 1Gi
+        {{- end }}
         - name: aggregator-staging
           emptyDir:
             sizeLimit: {{ .Values.aggregator.stagingEmptyDirSizeLimit }}
