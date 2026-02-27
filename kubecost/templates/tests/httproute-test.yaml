@@ -1,0 +1,82 @@
+{{- if .Values.httpRoute.enabled }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "kubecost.fullname" . }}-httproute-test
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
+  annotations:
+    {{- include "kubecost.test.annotations" . | nindent 4 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "kubecost.fullname" . }}-httproute-test
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
+rules:
+  - apiGroups: ["gateway.networking.k8s.io"]
+    resources: ["httproutes"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "kubecost.fullname" . }}-httproute-test
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "kubecost.fullname" . }}-httproute-test
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "kubecost.fullname" . }}-httproute-test
+    namespace: {{ .Release.Namespace }}
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: httproute-test
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    {{- include "kubecost.test.annotations" . | nindent 4 }}
+  labels:
+    app: httproute-test
+    app.kubernetes.io/name: httproute-test
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  automountServiceAccountToken: true
+  restartPolicy: Never
+  serviceAccountName: {{ include "kubecost.fullname" . }}-httproute-test
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 3000
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+    - name: httproute-test
+      image: {{ .Values.httprouteTest.image }}
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+        readOnlyRootFilesystem: true
+      command:
+        - /bin/sh
+        - -ec
+        - |
+          set -e
+          echo "Checking HTTPRoute {{ include "kubecost.fullname" . }} in {{ .Release.Namespace }}..."
+          backend=$(kubectl get httproute {{ include "kubecost.fullname" . }} -n {{ .Release.Namespace }} -o jsonpath='{.spec.rules[0].backendRefs[0].name}')
+          if [ -z "$backend" ]; then
+            echo "HTTPRoute missing or has no backendRefs."
+            exit 1
+          fi
+          echo "HTTPRoute exists with backendRef $backend. Test passed."
+{{- end }}
