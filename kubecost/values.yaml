@@ -727,7 +727,7 @@ ingress:
 httpRoute:
   enabled: false
   # parentRefs: required when enabled. Reference the Gateway(s) this route attaches to.
-  parentRefs: 
+  parentRefs:
     - name: gateway
   #     namespace: my-gateway-namespace  # optional
   #     sectionName: http                 # optional, listener name
