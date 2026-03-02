@@ -1,0 +1,43 @@
+{{- if .Values.httpRoute.enabled }}
+{{- if not .Values.httpRoute.parentRefs }}
+{{- fail "httpRoute.enabled is true but httpRoute.parentRefs is empty. Set at least one parentRef with a name (e.g. parentRefs: [{ name: my-gateway }])." }}
+{{- end }}
+{{- if not (index .Values.httpRoute.parentRefs 0).name }}
+{{- fail "httpRoute.enabled is true but the first parentRef has no name. Set parentRefs[0].name to your Gateway name." }}
+{{- end }}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ include "kubecost.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
+    {{- with .Values.httpRoute.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.httpRoute.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  parentRefs:
+  {{- range .Values.httpRoute.parentRefs }}
+  - {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- if .Values.httpRoute.hostnames }}
+  hostnames:
+  {{- range .Values.httpRoute.hostnames }}
+  - {{ . | quote }}
+  {{- end }}
+  {{- end }}
+  rules:
+  - matches:
+    {{- range .Values.httpRoute.paths }}
+    - path:
+        type: {{ $.Values.httpRoute.pathType }}
+        value: {{ . | quote }}
+    {{- end }}
+    backendRefs:
+    - name: {{ include "kubecost.frontend.serviceName" . }}
+      port: {{ .Values.frontend.service.port | int }}
+{{- end }}
