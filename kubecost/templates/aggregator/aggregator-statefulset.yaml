@@ -536,10 +536,14 @@ spec:
               value: {{ .Values.diagnostics.enabled | quote }}
             - name: DIAGNOSTICS_RETENTION
               value: {{ .Values.diagnostics.retention | quote }}
+            - name: DIAGNOSTICS_STORAGE_LOOKBACK
+              value: {{ .Values.diagnostics.storageLookback | quote }}
             - name: HEARTBEAT_ENABLED
               value: {{ .Values.heartbeat.enabled | quote }}
             - name: HEARTBEAT_RETENTION
               value: {{ .Values.heartbeat.retention | quote }}
+            - name: HEARTBEAT_STORAGE_LOOKBACK
+              value: {{ .Values.heartbeat.storageLookback | quote }}
             {{- if .Values.kubecostProductConfigs.apiConfigMapName }}
             - name: API_CONFIGMAP_NAME
               value: {{ .Values.kubecostProductConfigs.apiConfigMapName }}
