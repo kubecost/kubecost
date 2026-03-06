@@ -1164,10 +1164,12 @@ aggregator:
 ##
 diagnostics:
   enabled: true
-  retention: 30d
+  storageLookback: 1d # Number of days of history to read from storage for fresh installs of aggregator
+  retention: 30d # Time that diagnostics data is stored in aggregator
 heartbeat:
   enabled: true
-  retention: 30d
+  storageLookback: 1d # Number of days of history to read from storage for fresh installs of aggregator
+  retention: 30d # Time that heartbeat data is stored in aggregator
 
 ## Kubecost Cloud Cost Pod
 ## Processes cloud billing data and pushes CloudCost ETL data to the Federated Storage Bucket.
