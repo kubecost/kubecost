@@ -720,6 +720,25 @@ ingress:
   #    hosts:
   #      - kubecost.local
 
+## Optional Gateway API HTTPRoute (one per ingress). Disabled by default.
+## When enabled, only httpRoute.* values are used (no fallback to ingress).
+## Install will fail if httpRoute.enabled is true and parentRefs is empty or the first parentRef has no name.
+##
+httpRoute:
+  enabled: false
+  # parentRefs: required when enabled. Reference the Gateway(s) this route attaches to.
+  parentRefs:
+    - name: gateway
+  #     namespace: my-gateway-namespace  # optional
+  #     sectionName: http                 # optional, listener name
+  #     port: 80                          # optional, listener port
+  labels: {}
+  annotations: {}
+  hostnames:
+    - kubecost.local
+  paths: ["/"]
+  pathType: PathPrefix  # Gateway API: PathPrefix, Exact, or RegularExpression
+
 ## Optional daemonset to more accurately attribute network costs to the correct workload
 ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=configuration-network-cost
 ##
@@ -1653,3 +1672,7 @@ basicHealth:
   registry: docker.io
   repository: alpine/curl
   tag: 8.14.1
+
+# -- Optional override for the image used for the HTTPRoute helm test (only when httpRoute.enabled)
+httprouteTest:
+  image: bitnami/kubectl:1.31
