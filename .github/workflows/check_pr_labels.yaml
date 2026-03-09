@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - id: check-labels
-        uses: mheap/github-action-required-labels@v5
+        uses: kubecost/github-actions/github-action-required-labels
         with:
           mode: minimum
           count: 1
