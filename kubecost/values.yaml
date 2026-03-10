@@ -1323,6 +1323,9 @@ clusterController:
   extraEnv: []
   # - name: EXTRA_ENV_VAR
   #   value: "extra_env_var_value"
+  rateLimiter:
+    eventsPerSecond: 0.1
+    eventBurst: 10
   priorityClassName: ""
   tolerations: []
   annotations: {}
