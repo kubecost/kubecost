@@ -595,7 +595,7 @@ kubecostFrontend:
   enabled: true
   deployMethod: singlepod  # haMode or singlepod - haMode is currently only supported with Enterprise tier
   haReplicas: 2  # only used with haMode
-  image: "gcr.io/kubecost1/frontend"
+  image: "icr.io/kubecost/frontend"
   imagePullPolicy: IfNotPresent
   # fullImageName overrides the default image construction logic. The exact
   # image provided (registry, image, tag) will be used for the frontend.
@@ -683,7 +683,7 @@ sigV4Proxy:
   resources: {}
 
 kubecostModel:
-  image: "gcr.io/kubecost1/cost-model"
+  image: "icr.io/kubecost/cost-model"
   imagePullPolicy: IfNotPresent
   # fullImageName overrides the default image construction logic. The exact
   # image provided (registry, image, tag) will be used for cost-model.
@@ -1477,8 +1477,8 @@ prometheus:
 networkCosts:
   enabled: false
   image:
-    repository: gcr.io/kubecost1/kubecost-network-costs
-    tag: v0.18.0
+    repository: icr.io/kubecost/network-costs
+    tag: v0.18.2
   imagePullPolicy: IfNotPresent
   updateStrategy:
     type: RollingUpdate
@@ -1601,7 +1601,7 @@ forecasting:
   enabled: true
   fullImageName: ""
   image:
-    repository: gcr.io/kubecost1/kubecost-modeling
+    repository: icr.io/kubecost/modeling
     tag: v0.1.34
   imagePullPolicy: IfNotPresent
 
@@ -1924,8 +1924,8 @@ diagnosticsFullnameOverride: ""
 clusterController:
   enabled: false
   image:
-    repository: gcr.io/kubecost1/cluster-controller
-    tag: v0.16.20
+    repository: icr.io/kubecost/cluster-controller
+    tag: v0.16.32
   imagePullPolicy: IfNotPresent
   extraEnv: []
   # - name: EXTRA_ENV_VAR
