@@ -117,10 +117,10 @@ spec:
         {{- else if eq "development" .Chart.AppVersion }}
         - image: gcr.io/kubecost1/frontend-nightly:latest
         {{- else }}
-        - image: {{ .Values.kubecostFrontend.image }}:prod-{{ $.Chart.AppVersion }}
+        - image: {{ .Values.kubecostFrontend.image }}:{{ $.Chart.AppVersion }}
         {{- end }}
         {{- else }}
-        - image: gcr.io/kubecost1/frontend:prod-{{ $.Chart.AppVersion }}
+        - image: icr.io/kubecost/frontend:{{ $.Chart.AppVersion }}
         {{- end }}
           name: cost-analyzer-frontend
           ports:
