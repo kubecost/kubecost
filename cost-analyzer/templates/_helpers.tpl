@@ -913,10 +913,10 @@ Begin Kubecost 2.0 templates
   {{- else if eq "development" .Chart.AppVersion }}
   image: gcr.io/kubecost1/cost-model-nightly:latest
   {{- else }}
-  image: {{ .Values.kubecostModel.image }}:prod-{{ $.Chart.AppVersion }}
+  image: {{ .Values.kubecostModel.image }}:{{ $.Chart.AppVersion }}
   {{- end }}
   {{- else }}
-  image: gcr.io/kubecost1/cost-model:prod-{{ $.Chart.AppVersion }}
+  image: icr.io/kubecost/cost-model:{{ $.Chart.AppVersion }}
   {{- end }}
   {{- if .Values.kubecostAggregator.readinessProbe.enabled }}
   readinessProbe:
@@ -1314,10 +1314,10 @@ Begin Kubecost 2.0 templates
   {{- else if eq "development" .Chart.AppVersion }}
   image: gcr.io/kubecost1/cost-model-nightly:latest
   {{- else }}
-  image: {{ .Values.kubecostModel.image }}:prod-{{ $.Chart.AppVersion }}
+  image: {{ .Values.kubecostModel.image }}:{{ $.Chart.AppVersion }}
   {{ end }}
   {{- else }}
-  image: gcr.io/kubecost1/cost-model:prod-{{ $.Chart.AppVersion }}
+  image: icr.io/kubecost/cost-model:{{ $.Chart.AppVersion }}
   {{ end }}
   {{- if .Values.kubecostAggregator.cloudCost.readinessProbe.enabled }}
   readinessProbe:
@@ -1674,10 +1674,10 @@ for more information
   {{- else if eq "development" .Chart.AppVersion }}
     gcr.io/kubecost1/cost-model-nightly:latest
   {{- else }}
-    {{ .Values.kubecostModel.image }}:prod-{{ $.Chart.AppVersion }}
+    {{ .Values.kubecostModel.image }}:{{ $.Chart.AppVersion }}
   {{- end }}
 {{- else }}
-  gcr.io/kubecost1/cost-model:prod-{{ $.Chart.AppVersion }}
+  icr.io/kubecost/cost-model:{{ $.Chart.AppVersion }}
 {{- end }}
 {{- end }}
 
