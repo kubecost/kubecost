@@ -64,10 +64,10 @@ spec:
           {{- else if eq "development" .Chart.AppVersion }}
           image: gcr.io/kubecost1/cost-model-nightly:latest
           {{- else }}
-          image: {{ .Values.kubecostModel.image }}:prod-{{ $.Chart.AppVersion }}
+          image: {{ .Values.kubecostModel.image }}:{{ $.Chart.AppVersion }}
           {{ end }}
           {{- else }}
-          image: gcr.io/kubecost1/cost-model:prod-{{ $.Chart.AppVersion }}
+          image: icr.io/kubecost/cost-model:{{ $.Chart.AppVersion }}
           {{ end }}
           readinessProbe:
             httpGet:
