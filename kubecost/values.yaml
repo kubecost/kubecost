@@ -1323,9 +1323,6 @@ clusterController:
   extraEnv: []
   # - name: EXTRA_ENV_VAR
   #   value: "extra_env_var_value"
-  rateLimiter:
-    eventsPerSecond: 0.1
-    eventBurst: 10
   priorityClassName: ""
   tolerations: []
   annotations: {}
@@ -1381,6 +1378,11 @@ clusterController:
     clusterRightSizing: false
     clusterTurndown: false
     namespaceTurndown: false
+
+  # Controls the rate at which the cluster controller executes operations against the k8s API.
+  # rateLimiter:
+  #   eventsPerSecond: 0.1
+  #   eventBurst: 10
 
 ## Kubecost Bug Reports
 ## Enables k8s role bindings to access pods/logs limited to .Release.Namespace
