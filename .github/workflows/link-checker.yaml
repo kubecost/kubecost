@@ -31,4 +31,4 @@ jobs:
         with:
           fail: true
           debug: false
-          args: --verbose --include-fragments --no-progress -E './**/*.md' './**/*.yaml' './**/*.yml'
+          args: --verbose --include-fragments --no-progress --exclude-path '.github-actions' -E './**/*.md' './**/*.yaml' './**/*.yml'
