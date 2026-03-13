@@ -1379,6 +1379,11 @@ clusterController:
     clusterTurndown: false
     namespaceTurndown: false
 
+  # Controls the rate at which the cluster controller executes operations against the k8s API.
+  # rateLimiter:
+  #   eventsPerSecond: 0.1
+  #   eventBurst: 10
+
 ## Kubecost Bug Reports
 ## Enables k8s role bindings to access pods/logs limited to .Release.Namespace
 ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=install-capture-bug-report
