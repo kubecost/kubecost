@@ -189,8 +189,8 @@ spec:
             periodSeconds: {{ .Values.cloudCost.readinessProbe.periodSeconds }}
             failureThreshold: {{ .Values.cloudCost.readinessProbe.failureThreshold }}
           {{- end }}
-          {{- if .Values.aggregator.imagePullPolicy }}
-          imagePullPolicy: {{ .Values.aggregator.imagePullPolicy }}
+          {{- if .Values.cloudCost.imagePullPolicy }}
+          imagePullPolicy: {{ .Values.cloudCost.imagePullPolicy }}
           {{- else }}
           imagePullPolicy: Always
           {{- end }}
