@@ -145,6 +145,16 @@ spec:
         - name: CC_KUBESCALER_DEFAULT_RESIZE_ALL
           value: {{ .Values.clusterController.kubescaler.defaultResizeAll | default "false" | quote }}
         {{- end }}
+        {{- if .Values.clusterController.rateLimiter }}
+        {{- if .Values.clusterController.rateLimiter.eventsPerSecond }}
+        - name: RATE_LIMITER_EVENTS_PER_SECOND
+          value: {{ .Values.clusterController.rateLimiter.eventsPerSecond | quote }}
+        {{- end }}
+        {{- if .Values.clusterController.rateLimiter.eventBurst }}
+        - name: RATE_LIMITER_EVENT_BURST
+          value: {{ .Values.clusterController.rateLimiter.eventBurst | quote }}
+        {{- end }}
+        {{- end }}
         {{- if .Values.clusterController.extraEnv -}}
         {{ toYaml .Values.clusterController.extraEnv | nindent 8 }}
         {{- end }}
