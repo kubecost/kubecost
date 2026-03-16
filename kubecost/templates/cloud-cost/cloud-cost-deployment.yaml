@@ -256,7 +256,7 @@ spec:
             - name: CUSTOM_COST_ENABLED
               value: {{ .Values.plugins.enabled | quote }}
             - name: LOG_LEVEL
-              value: {{ .Values.cloudCost.logLevel | default "info" }}
+              value: {{ .Values.cloudCost.logLevel }}
             {{- if .Values.cloudCost.extraEnv }}
             {{- toYaml .Values.cloudCost.extraEnv | nindent 12 }}
             {{- end }}
