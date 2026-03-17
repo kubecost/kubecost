@@ -189,8 +189,8 @@ spec:
             periodSeconds: {{ .Values.cloudCost.readinessProbe.periodSeconds }}
             failureThreshold: {{ .Values.cloudCost.readinessProbe.failureThreshold }}
           {{- end }}
-          {{- if .Values.aggregator.imagePullPolicy }}
-          imagePullPolicy: {{ .Values.aggregator.imagePullPolicy }}
+          {{- if .Values.cloudCost.imagePullPolicy }}
+          imagePullPolicy: {{ .Values.cloudCost.imagePullPolicy }}
           {{- else }}
           imagePullPolicy: Always
           {{- end }}
@@ -255,6 +255,8 @@ spec:
               value: {{ .Values.cloudCost.runWindowDays | default 3 | quote }}
             - name: CUSTOM_COST_ENABLED
               value: {{ .Values.plugins.enabled | quote }}
+            - name: LOG_LEVEL
+              value: {{ .Values.cloudCost.logLevel }}
             {{- if .Values.cloudCost.extraEnv }}
             {{- toYaml .Values.cloudCost.extraEnv | nindent 12 }}
             {{- end }}
