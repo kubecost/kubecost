@@ -731,7 +731,7 @@ networkCosts:
   image:
     registry: ""  # Default is "icr.io"
     repository: kubecost/network-costs
-    tag: v0.18.2
+    tag: v0.18.3
   imagePullPolicy: IfNotPresent
 
   updateStrategy:
