@@ -1278,6 +1278,7 @@ cloudCost:
   nodeSelector: {}
   tolerations: []
   affinity: {}
+  logLevel: info
   extraEnv: []
   # - name: EXTRA_ENV_VAR
   #   value: "extra_env_var_value"
