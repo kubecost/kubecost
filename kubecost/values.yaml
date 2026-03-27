@@ -1373,12 +1373,12 @@ clusterController:
   #       }
 
   rbac:
-    # In 3.x, only containerRequestRightSizing and resourceQuotaRightSizing are supported, all other features are in progress.
+    # In 3.x, only containerRequestRightSizing, resourceQuotaRightSizing, and namespaceTurndown are supported, all other features are in progress.
     containerRequestRightSizing: true
     resourceQuotaRightSizing: true
+    namespaceTurndown: true
     clusterRightSizing: false
     clusterTurndown: false
-    namespaceTurndown: false
 
   # Controls the rate at which the cluster controller executes operations against the k8s API.
   # rateLimiter:
@@ -1484,16 +1484,22 @@ kubecostProductConfigs:
     #       enabled: true
     #     resourceQuotaRightSizing:
     #       enabled: true
+    #     namespaceTurndown:
+    #       enabled: true
     #   clusters: # Define cluster-specific action configuration, where top-level keys are cluster names
     #     cluster-1:
     #       containerRequestRightSizing:
     #         enabled: false
     #       resourceQuotaRightSizing:
     #         enabled: false
+    #       namespaceTurndown:
+    #         enabled: false
     #     cluster-2:
     #       containerRequestRightSizing:
     #         enabled: false
     #       resourceQuotaRightSizing:
+    #         enabled: false
+    #       namespaceTurndown:
     #         enabled: false
     #   actions:
     #     containerRequestRightSizing:
@@ -1504,6 +1510,13 @@ kubecostProductConfigs:
     #           memory: true
     #           profile: "Development"
     #           rightSizingWindow: "24h"
+    #     namespaceTurndown:
+    #       turndown-my-namespace:
+    #         dryRun: false
+    #         enabled: true
+    #         exclusionWindow: ""
+    #         filter: "cluster:\"my-cluster\"+namespace:\"my-namespace\""
+    #         maintenanceWindow: "* 5-9 * * 0||* 5-9 * * 1||* 5-9 * * 2||* 5-9 * * 3||* 5-9 * * 4||* 5-9 * * 5||* 5-9 * * 6"
 
   ## Kubecost Budgets and Budgets Actions
   ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=ui-budgets
