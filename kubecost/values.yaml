@@ -888,12 +888,12 @@ forecasting:
   ## If not set, the image will be pulled from the registry and repository specified in the image block.
   ## If set, the fullImageName will be used to pull the image.
   ## Example:
-  ## fullImageName: gcr.io/kubecost1/kubecost-modeling:v0.1.29
+  ## fullImageName: gcr.io/kubecost1/kubecost-modeling:v0.1.35
   fullImageName: ""
   image:
     registry: ""  # Default is "icr.io"
     repository: kubecost/modeling
-    tag: v0.1.34
+    tag: v0.1.35
   imagePullPolicy: IfNotPresent
 
   # Resource specification block for the forecasting container.
