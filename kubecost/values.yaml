@@ -1313,12 +1313,12 @@ clusterController:
   ## If not set, the image will be pulled from the registry and repository specified in the image block.
   ## If set, the fullImageName will be used to pull the image.
   ## Example:
-  ## fullImageName: gcr.io/kubecost1/cluster-controller:v0.16.32
+  ## fullImageName: gcr.io/kubecost1/cluster-controller:v0.16.33
   fullImageName: ""
   image:
     registry: ""  # Default is "icr.io"
     repository: kubecost/cluster-controller
-    tag: v0.16.32
+    tag: v0.16.33
   imagePullPolicy: IfNotPresent
   logLevel: info
   extraEnv: []
