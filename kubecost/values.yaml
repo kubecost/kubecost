@@ -1690,7 +1690,7 @@ extraObjects: []
 basicHealth:
   registry: docker.io
   repository: alpine/curl
-  tag: 8.14.1
+  tag: 8.17.0
 
 # -- Optional override for the image used for the HTTPRoute helm test (only when httpRoute.enabled)
 httprouteTest:
