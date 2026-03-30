@@ -60,8 +60,8 @@ rules:
     verbs: ['create', 'patch']
   {{- end }}
   {{- if .Values.clusterController.rbac.namespaceTurndown }}
-  - apiGroups: ['*']
-    resources: ['*']
+  - apiGroups: ['']
+    resources: ['namespaces']
     verbs: ['list', 'get', 'delete']
   {{- end }}
   {{- if .Values.clusterController.rbac.resourceQuotaRightSizing }}
