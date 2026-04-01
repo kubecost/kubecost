@@ -44,6 +44,8 @@
 
 {{- define "kubecost.aggregator.commonLabels" -}}
 {{ include "kubecost.chartLabels" . }}
+app.kubernetes.io/name: {{ include "kubecost.aggregator.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
 app: aggregator
 {{- end -}}
 
