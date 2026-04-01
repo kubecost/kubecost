@@ -28,6 +28,7 @@ spec:
   selector:
     matchLabels:
     {{- include "kubecost.aggregator.commonLabels" . | nindent 6 }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
     {{- if .Values.aggregator.service.labels }}
     {{- toYaml .Values.aggregator.service.labels | nindent 6 }}
     {{- end }}
@@ -61,6 +62,7 @@ spec:
   selector:
     matchLabels:
     {{- include "kubecost.aggregator.commonLabels" . | nindent 6 }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
     {{- if .Values.aggregator.service.labels }}
     {{- toYaml .Values.aggregator.service.labels | nindent 6 }}
     {{- end }}
