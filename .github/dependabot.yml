@@ -1,11 +1,35 @@
 version: 2
 updates:
+  # GitHub Actions - Monthly updates to reduce update frequency
+  # Provides time for community feedback before adopting new action versions
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: weekly
+      interval: monthly
+      day: "monday"
     rebase-strategy: disabled
+    labels:
+      - "dependencies"
+      - "github-actions"
+
+  # Docker images - Daily updates for Kubecost-owned container images
   - package-ecosystem: docker
-    directory: /cost-analyzer
+    directory: /kubecost
     schedule:
-      interval: weekly
+      interval: daily
+    rebase-strategy: disabled
+    labels:
+      - "dependencies"
+      - "docker"
+
+  # Helm chart dependencies - Daily updates for finops-agent subchart
+  # Monitors the finops-agent dependency in Chart.yaml
+  - package-ecosystem: helm
+    directory: /kubecost
+    schedule:
+      interval: daily
+    rebase-strategy: disabled
+    labels:
+      - "dependencies"
+      - "helm"
+      - "finops-agent"
