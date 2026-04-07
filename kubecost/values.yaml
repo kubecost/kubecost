@@ -605,7 +605,7 @@ finopsagent:
   #   create: true
   #   name: finops-agent
   persistence:
-    ## The PV for the Finops Agent is only used when the object-store is unavailable. 
+    ## The PV for the Finops Agent is only used when the object-store is unavailable.
     ## It is generally not needed unless the object store connectivity is poor.
     ## https://github.com/kubecost/finops-agent-chart/tree/main/charts/finops-agent#persistence for more detail
     ##
