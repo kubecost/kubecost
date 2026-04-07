@@ -605,8 +605,8 @@ finopsagent:
   #   create: true
   #   name: finops-agent
   persistence:
-    ## @param persistence.enabled Enable FinOps Agent data persistence for WAL and other local data
-    ## This is only used when the object-store is unavailable. It is generally not needed unless the object store connectivity is poor.
+    ## The PV for the Finops Agent is only used when the object-store is unavailable. 
+    ## It is generally not needed unless the object store connectivity is poor.
     ## https://github.com/kubecost/finops-agent-chart/tree/main/charts/finops-agent#persistence for more detail
     ##
     enabled: false
