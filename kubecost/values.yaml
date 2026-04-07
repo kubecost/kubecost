@@ -606,9 +606,10 @@ finopsagent:
   #   name: finops-agent
   persistence:
     ## @param persistence.enabled Enable FinOps Agent data persistence for WAL and other local data
-    ## short-term (<2 days) metrics are stored by the finops agent.
+    ## This is only used when the object-store is unavailable. It is generally not needed unless the object store connectivity is poor.
+    ## https://github.com/kubecost/finops-agent-chart/tree/main/charts/finops-agent#persistence for more detail
     ##
-    enabled: true
+    enabled: false
     ## @param persistence.existingClaim A manually managed Persistent Volume and Claim
     ## If defined, PVC must be created manually before volume will be bound
     ## The value is evaluated as a template
