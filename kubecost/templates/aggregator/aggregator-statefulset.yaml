@@ -509,8 +509,6 @@ spec:
             {{- end }}
             - name: CONFIG_PATH
               value: /var/configs/
-            - name: CLOUD_PROVIDER_API_KEY
-              value: "AIzaSyDXQPG_MHUEy9neR7stolq6l0ujXmjJlvk" # The GCP Pricing API key.This GCP api key is expected to be here and is limited to accessing google's billing API.'
             {{- if .Values.global.integrations.postgres.enabled }}
             - name: AGGREGATOR_ADDRESS
             {{- if or .Values.saml.enabled .Values.oidc.enabled }}

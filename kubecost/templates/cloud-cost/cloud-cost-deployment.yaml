@@ -245,6 +245,8 @@ spec:
               value: "cloud-agent"
             - name: CONFIG_PATH
               value: /var/configs/
+            - name: CLOUD_PROVIDER_API_KEY
+              value: "AIzaSyDXQPG_MHUEy9neR7stolq6l0ujXmjJlvk" # The GCP Pricing API key.This GCP api key is expected to be here and is limited to accessing google's billing API.'
             - name: RESOLUTION_1D_RETENTION
               value: {{ (quote .Values.cloudCost.retention1d) }}
             - name: CLOUD_COST_REFRESH_RATE_HOURS
