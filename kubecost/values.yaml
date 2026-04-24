@@ -365,6 +365,17 @@ oidc:
     #     claimValues:
     #       - "editor"
 
+## Kubecost RBAC signing key (enterprise key required)
+##
+kubecostRbacSecret:
+  # When oidc.rbac or saml.rbac is enabled, this chart writes a Secret named
+  # "kubecost-rbac-secret" containing the HMAC signing key for RBAC tokens.
+  # Set existingSecret to true to skip chart-side generation and consume a
+  # Secret you pre-provisioned. Required when rendering via `helm template`
+  # without cluster access (e.g. ArgoCD, Flux), where `lookup` returns empty
+  # and the random fallback would re-roll on every render.
+  existingSecret: false
+
 ## Kubecost Teams (enterprise key required)
 ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=ui-teams
 ##
