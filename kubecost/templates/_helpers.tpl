@@ -503,7 +503,7 @@ In CI/CD mode, require explicit values because lookup is intentionally skipped.
 {{- else -}}
   {{- $requireValue := and $root.Values.global.platforms.cicd.enabled (not $root.Values.global.platforms.cicd.skipSanityChecks) -}}
   {{- if $requireValue -}}
-    {{- fail (printf "\nError: %s must be set when global.platforms.cicd.enabled=true and global.platforms.cicd.skipSanityChecks=false." .field) -}}
+    {{- fail (printf "\nError: %s must be set when global.platforms.cicd.enabled=true" .field) -}}
   {{- else -}}
     {{- $secret := dict -}}
     {{- if $root.Capabilities.APIVersions.Has "v1/Secret" -}}

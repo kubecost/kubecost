@@ -306,7 +306,7 @@ saml:
   # isGLUUProvider: false  # An additional URL parameter must be appended for GLUU providers
   # encryptionCertSecret: ""  # K8s secret storing the x509 certificate used to encrypt an Okta SAML response
   # decryptionKeySecret: ""  # K8s secret storing the private key associated with the encryptionCertSecret
-  authSecret: ""  # Value of SAML secret used to issue tokens. Set this explicitly when using CI/CD or GitOps templating. Example: `openssl rand -hex 32`
+  authSecret: ""  # Value of SAML secret used to issue tokens. If this is changed after initial deployment, a manual restart of the aggregator pod will be required. Set this explicitly when using CI/CD or GitOps templating. Example: `openssl rand -hex 32`
   authSecretName: "kubecost-saml-secret"  # Name of K8s secret where the authSecret will be stored.
   rbac:
     enabled: false
@@ -335,7 +335,7 @@ oidc:
   enabled: false
   clientID: ""  # Application client_id parameter obtained from provider. Used to make requests to server.
   clientSecret: ""  # Application/client client_secret parameter obtained from provider. Used to make requests to server.
-  authSecret: ""  # Value of the RBAC auth secret used with OIDC. Set this explicitly when using CI/CD or GitOps templating. Example: `openssl rand -hex 32`
+  authSecret: ""  # Value of the RBAC auth secret used with OIDC. If this is changed after initial deployment, a manual restart of the aggregator pod will be required. Set this explicitly when using CI/CD or GitOps templating. Example: `openssl rand -hex 32`
   secretName: "kubecost-oidc-secret"  # K8s secret where clientsecret will be stored
   existingCustomSecret:
     enabled: false
