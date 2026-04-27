@@ -592,6 +592,11 @@ To resolve this, either:
 
 {{- /*
   Compute a checksum based on the rendered content of specific ConfigMaps and Secrets.
+  
+  The kubecost-rbac-secret-template.yaml and kubecost-saml-secret-template.yaml have randAlphaNum that cause
+  automation tools to reconcile changes and restart pods. If the autSecret is changed (and had been set in helm), a manual restart of the
+  aggregator pod will be required.
+
 */ -}}
 {{- define "kubecost.configsChecksum" -}}
 {{- $files := list
@@ -617,9 +622,7 @@ To resolve this, either:
   "kubecost-oidc-configmap-template.yaml"
   "kubecost-oidc-secret-template.yaml"
   "kubecost-productkey-secret.yaml"
-  "kubecost-rbac-secret-template.yaml"
   "kubecost-rbac-teams-configmap-template.yaml"
-  "kubecost-saml-secret-template.yaml"
   "network-costs/network-costs-configmap.yaml"
   "savings-profiles-configmap.yaml"
   "savings-recommendations-allowlists-configmap-template.yaml"
