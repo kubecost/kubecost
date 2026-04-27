@@ -492,6 +492,41 @@ Groups is only used when using simple RBAC.
 {{- end -}}
 
 {{/*
+Resolve SSO auth secret values without rotating them on every render.
+In CI/CD mode, require explicit values because lookup is intentionally skipped.
+*/}}
+{{- define "kubecost.authSecretValue" -}}
+{{- $root := .root -}}
+{{- $providedValue := .value | default "" -}}
+{{- if $providedValue -}}
+{{- $providedValue | quote -}}
+{{- else -}}
+  {{- $requireValue := and $root.Values.global.platforms.cicd.enabled (not $root.Values.global.platforms.cicd.skipSanityChecks) -}}
+  {{- if $requireValue -}}
+    {{- fail (printf "\nError: %s must be set when global.platforms.cicd.enabled=true and global.platforms.cicd.skipSanityChecks=false." .field) -}}
+  {{- else -}}
+    {{- $secret := dict -}}
+    {{- if $root.Capabilities.APIVersions.Has "v1/Secret" -}}
+      {{- $secret = (lookup "v1" "Secret" $root.Release.Namespace .secretName) -}}
+    {{- end -}}
+    {{- if and $secret $secret.data (hasKey $secret.data .secretKey) -}}
+      {{- index $secret.data .secretKey | b64dec | quote -}}
+    {{- else -}}
+      {{- randAlphaNum 32 | quote -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "kubecost.rbacAuthSecretValue" -}}
+{{- if .Values.oidc.enabled -}}
+{{- include "kubecost.authSecretValue" (dict "root" . "value" .Values.oidc.authSecret "field" ".Values.oidc.authSecret" "secretName" "kubecost-rbac-secret" "secretKey" "key") -}}
+{{- else if .Values.saml.enabled -}}
+{{- include "kubecost.authSecretValue" (dict "root" . "value" .Values.saml.authSecret "field" ".Values.saml.authSecret" "secretName" "kubecost-rbac-secret" "secretKey" "key") -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 kubecost.costEventsAudit.enabled flag for nginx configmap
 */}}
 {{- define "kubecost.costEventsAudit.enabled" -}}
@@ -756,5 +791,5 @@ annotations:
       {{- toYaml . | nindent 2 }}
     {{- end }}
   {{- end }}
-  {{- end -}}
+{{- end -}}
 {{- end -}}

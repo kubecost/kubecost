@@ -7,12 +7,13 @@
 saml:
   appRootURL: https://YOUR_KUBECOST_FQDN
   audienceURI: https://YOUR_KUBECOST_FQDN
+  authSecret: CHANGE_ME  # random 32 char string: `openssl rand -hex 32`
   authSecretName: kubecost-saml-secret
   authTimeout: 1440
   enabled: true
   idpMetadataURL: https://example.okta.com/app/EXAMPLE/sso/saml/metadata
   rbac:
-    enabled: true # RBAC must be enabled
+    enabled: true # RBAC must be enabled for teams functionality
 teams:
   teamsConfig:
     - id: ''
