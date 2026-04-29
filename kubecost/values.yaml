@@ -1372,6 +1372,11 @@ clusterController:
   #         "client_x509_cert_url": ""
   #       }
 
+  signing:
+    rsa:
+      enabled: false
+      publicKeySecret: ""
+
   rbac:
     # In 3.x, only containerRequestRightSizing, resourceQuotaRightSizing, and namespaceTurndown are supported, all other features are in progress.
     containerRequestRightSizing: true
@@ -1476,6 +1481,11 @@ kubecostProductConfigs:
     #         "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
     #         "client_x509_cert_url": ""
     #       }
+
+    signing:
+      rsa:
+        enabled: false
+        publicKeySecret: ""
 
     ## Actions can reference configuration at a global or cluster-specific level
     # config:
