@@ -1218,25 +1218,51 @@ cloudCost:
   cloudIntegrationJSON: ""
   # cloudIntegrationJSON: |-
   #   {
-  #     "aws": [
+  #   "aws": {
+  #     "athena": [
   #       {
-  #         "athenaBucketName": "s3://AWS_cloud_integration_athenaBucketName",
-  #         "athenaRegion": "AWS_cloud_integration_athenaRegion",
-  #         "athenaDatabase": "AWS_cloud_integration_athenaDatabase",
-  #         "athenaTable": "AWS_cloud_integration_athenaBucketName",
-  #         "projectID": "AWS_cloud_integration_athena_projectID",
-  #         "serviceKeyName": "AWS_cloud_integration_athena_serviceKeyName",
-  #         "serviceKeySecret": "AWS_cloud_integration_athena_serviceKeySecret"
+  #         "bucket": "<ATHENA_BUCKET_NAME>",
+  #         "region": "<ATHENA_REGION>",
+  #         "database": "<ATHENA_DATABASE>",
+  #         "table": "<ATHENA_TABLE>",
+  #         "workgroup": "<ATHENA_WORKGROUP>",
+  #         "account": "<ACCOUNT_NUMBER>",
+  #         "authorizer": {
+  #           "authorizerType": "AWSAccessKey",
+  #           "id": "<ACCESS_KEY_ID>",
+  #           "secret": "<ACCESS_KEY_SECRET>"
+  #         }
   #       }
-  #     ],
-  #     "azure": [
+  #     ]
+  #   },
+  #   "azure": {
+  #     "storage": [
   #       {
-  #         "azureSubscriptionID": "my-subscription-id",
-  #         "azureStorageAccount": "my-storage-account",
-  #         "azureStorageAccessKey": "my-storage-access-key",
-  #         "azureStorageContainer": "my-storage-container"
+  #         "subscriptionID": "<SUBSCRIPTON_ID>",
+  #         "account": "<STORAGE_ACCOUNT>",
+  #         "container": "<STORAGE_CONTAINER>",
+  #         "path": "<CONTAINER_PATH>",
+  #         "cloud": "<CLOUD>",
+  #         "authorizer": {
+  #           "accessKey": "<STORAGE_ACCESS_KEY>",
+  #           "account": "<STORAGE_ACCOUNT>",
+  #           "authorizerType": "AzureAccessKey"
+  #         }
+  #       },
+  #       {
+  #         "subscriptionID": "<SUBSCRIPTION_ID>",
+  #         "account": "<STORAGE_ACCOUNT>",
+  #         "container": "<EXPORT_CONTAINER>",
+  #         "path": "",
+  #         "cloud": "<CLOUD>",
+  #         "authorizer": {
+  #           "accessKey": "<ACCOUNT_ACCESS_KEY>",
+  #           "account": "<STORAGE_ACCOUNT>",
+  #           "authorizerType": "AzureAccessKey"
+  #         }
   #       }
-  #     ],
+  #     ]
+  #   },
   #     "gcp": {
   #       "bigQuery": [
   #         {
@@ -1261,6 +1287,7 @@ cloudCost:
   #           }
   #         ]
   #       }
+  #     }
 
 
   resources: {}
