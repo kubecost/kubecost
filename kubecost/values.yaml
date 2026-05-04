@@ -605,10 +605,10 @@ finopsagent:
   #   create: true
   #   name: finops-agent
   persistence:
-    ## @param persistence.enabled Enable FinOps Agent data persistence for WAL and other local data
-    ## short-term (<2 days) metrics are stored by the finops agent.
+    ## @param persistence.enabled Currently, persistence is only used for Cloudability agents
+    ## It is not needed unless the cluster is regularly off-line (cannot access object storage)
     ##
-    enabled: true
+    enabled: false
     ## @param persistence.existingClaim A manually managed Persistent Volume and Claim
     ## If defined, PVC must be created manually before volume will be bound
     ## The value is evaluated as a template
