@@ -20,3 +20,14 @@ global:
         runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
+
+## OpenShift environments (including ROSA) restrict network traffic to specific port ranges by
+## default. Port 3001 is blocked by security groups, preventing cross-node metric scraping. Use port
+## 9000-9999 which is allowed for internal cluster monitoring.
+## Ref: https://docs.redhat.com/en/documentation/openshift_container_platform/4.21/html/installation_configuration/configuring-firewall
+networkCosts:
+  port: 9009
+finopsagent:
+  agent:
+    collectorDataSource:
+      networkPort: 9009
