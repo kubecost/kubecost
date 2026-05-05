@@ -7,7 +7,6 @@
 saml:
   appRootURL: https://YOUR_KUBECOST_FQDN
   audienceURI: https://YOUR_KUBECOST_FQDN
-  authSecretName: kubecost-saml-secret
   authTimeout: 1440
   enabled: true
   idpMetadataURL: https://example.okta.com/app/EXAMPLE/sso/saml/metadata

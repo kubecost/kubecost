@@ -153,9 +153,6 @@ spec:
           secret:
             secretName: {{ .Values.saml.metadataSecretName }}
         {{- end }}
-        - name: saml-auth-secret
-          secret:
-            secretName: {{ .Values.saml.authSecretName | default "kubecost-saml-secret" }}
         {{- if .Values.saml.rbac.enabled }}
         - name: saml-roles
           configMap:
@@ -188,11 +185,6 @@ spec:
             secretName: {{ .Values.oidc.apiMasterKeySecret | default "kubecost-master-api-key" }}
         {{- end }}
         {{- end }}
-        {{- end }}
-        {{- if eq (include "kubecost.rbacTeams.enabled" .) "true" }}
-        - name: kubecost-rbac-secret
-          secret:
-            secretName: kubecost-rbac-secret
         {{- end }}
         {{- if eq (include "kubecost.rbacTeams.config.enabled" .) "true" }}
         - name: kubecost-rbac-teams-config
@@ -384,8 +376,6 @@ spec:
             - name: metadata-secret-volume
               mountPath: /var/configs/metadata-secret-volume
             {{- end }}
-            - name: saml-auth-secret
-              mountPath: /var/configs/saml-auth-secret
             {{- if ((.Values.saml).rbac).enabled }}
             - name: saml-roles
               mountPath: /var/configs/saml
@@ -398,10 +388,6 @@ spec:
             - name: oidc-client-secret
               mountPath: /var/configs/oidc-client-secret
             {{- end }}
-            {{- end }}
-            {{- if eq (include "kubecost.rbacTeams.enabled" .) "true" }}
-            - name: kubecost-rbac-secret
-              mountPath: /var/configs/kubecost-rbac-secret
             {{- end }}
             {{- if eq (include "kubecost.authMasterKey.enabled" .) "true" }}
             - name: kubecost-master-api-key
