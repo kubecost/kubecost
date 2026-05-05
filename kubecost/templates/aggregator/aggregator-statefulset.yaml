@@ -560,7 +560,7 @@ spec:
               value: {{ .Values.aggregator.dbReadThreads | quote }}
             - name: DB_WRITE_THREADS
               value: {{ .Values.aggregator.dbWriteThreads | quote }}
-            {{- if ne .Values.aggregator.dbConcurrentIngestionCount nil }}
+            {{- if .Values.aggregator.dbConcurrentIngestionCount }}
             - name: DB_CONCURRENT_INGESTION_COUNT
               value: {{ .Values.aggregator.dbConcurrentIngestionCount | quote }}
             {{- end }}
