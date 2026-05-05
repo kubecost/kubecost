@@ -1007,8 +1007,8 @@ aggregator:
   # How many threads to use when ingesting Asset/Allocation/CloudCost data
   # from the federated storage bucket. In most cases the default is sufficient,
   # but can be increased if trying to backfill historical data.
-  # default: null (2x the current number of cores available to the process)
-  dbConcurrentIngestionCount: null
+  # default: auto (2x the current number of cores available to the process)
+  dbConcurrentIngestionCount: auto
 
   # Memory limit applied to read database and write database connections. The
   # default of "no limit" is appropriate when first establishing a baseline of
