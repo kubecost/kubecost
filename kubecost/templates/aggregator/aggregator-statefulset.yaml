@@ -376,8 +376,6 @@ spec:
             - name: metadata-secret-volume
               mountPath: /var/configs/metadata-secret-volume
             {{- end }}
-            - name: saml-auth-secret
-              mountPath: /var/configs/saml-auth-secret
             {{- if ((.Values.saml).rbac).enabled }}
             - name: saml-roles
               mountPath: /var/configs/saml
