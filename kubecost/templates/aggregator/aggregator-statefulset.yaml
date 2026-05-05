@@ -573,8 +573,10 @@ spec:
               value: {{ .Values.aggregator.dbReadThreads | quote }}
             - name: DB_WRITE_THREADS
               value: {{ .Values.aggregator.dbWriteThreads | quote }}
+            {{- if ne .Values.aggregator.dbConcurrentIngestionCount "auto" }}
             - name: DB_CONCURRENT_INGESTION_COUNT
               value: {{ .Values.aggregator.dbConcurrentIngestionCount | quote }}
+            {{- end }}
             {{- if ne .Values.aggregator.dbMemoryLimit "0GB" }}
             - name: DB_MEMORY_LIMIT
               value: {{ .Values.aggregator.dbMemoryLimit | quote }}
