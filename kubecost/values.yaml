@@ -600,31 +600,11 @@ finopsagent:
   # serviceAccount:
   #   create: true
   #   name: finops-agent
-  persistence:
-    ## @param persistence.enabled Enable FinOps Agent data persistence for WAL and other local data
-    ## short-term (<2 days) metrics are stored by the finops agent.
-    ##
-    enabled: true
-    ## @param persistence.existingClaim A manually managed Persistent Volume and Claim
-    ## If defined, PVC must be created manually before volume will be bound
-    ## The value is evaluated as a template
-    ##
-    existingClaim: ""
-    ## @param persistence.storageClass PVC Storage Class for the FinOps Agent data volume
-    ## If defined, storageClassName: <storageClass>
-    ## If set to "-", storageClassName: "", which disables dynamic provisioning
-    ## If undefined (the default) or set to null, no storageClassName spec is
-    ## set, choosing the default provisioner.
-    ##
-    storageClass: ""
-    size: 8Gi
-    annotations:
-      ## The "helm.sh/resource-policy: keep" annotation is used to prevent the persistent volume from being deleted when uninstalling or moving to a different deployment method.
-      helm.sh/resource-policy: keep
   agent:
     collectorDataSource:
       enabled: true
-      scrapeInterval: 30s
+      ## Changing the scrapeInterval is not recommended unless there are high-cost short-lived workloads that are not captured.
+      scrapeInterval: 60s
       ## Retention values are for the agent's local store only and do not affect Kubecost history.
       ## These can be increased, but will require more memory.
       retention10m: 6
