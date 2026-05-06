@@ -602,27 +602,6 @@ finopsagent:
   # serviceAccount:
   #   create: true
   #   name: finops-agent
-  persistence:
-    ## @param persistence.enabled Currently, persistence is only used for Cloudability agents
-    ## It is not needed unless the cluster is regularly off-line (cannot access object storage)
-    ##
-    enabled: false
-    ## @param persistence.existingClaim A manually managed Persistent Volume and Claim
-    ## If defined, PVC must be created manually before volume will be bound
-    ## The value is evaluated as a template
-    ##
-    existingClaim: ""
-    ## @param persistence.storageClass PVC Storage Class for the FinOps Agent data volume
-    ## If defined, storageClassName: <storageClass>
-    ## If set to "-", storageClassName: "", which disables dynamic provisioning
-    ## If undefined (the default) or set to null, no storageClassName spec is
-    ## set, choosing the default provisioner.
-    ##
-    storageClass: ""
-    size: 8Gi
-    annotations:
-      ## The "helm.sh/resource-policy: keep" annotation is used to prevent the persistent volume from being deleted when uninstalling or moving to a different deployment method.
-      helm.sh/resource-policy: keep
   agent:
     collectorDataSource:
       enabled: true
