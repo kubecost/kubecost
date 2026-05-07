@@ -1382,6 +1382,16 @@ clusterController:
   #         "client_x509_cert_url": ""
   #       }
 
+  # If an enterprise v2 license is configured, actions will sign configuration files pushed to the store with that license
+  # The cluster controller will be able to validate these files automatically
+  # If on free or trial-tier, or if self-management of signing credentials is desired, signing using a user-configured RSA key can be enabled
+
+  # If this is configured, the private key must also be configured on the cluster controller under .kubecostProductConfigs.actions.signing.rsa
+  signing:
+    rsa:
+      enabled: false  # Enables signing via a user-provided RSA key. Requires publicKeySecret to be set.
+      publicKeySecret: ""  # The name of the secret containing the priv.pem public key matching the private key configured on the aggregator
+
   rbac:
     # In 3.x, only containerRequestRightSizing, resourceQuotaRightSizing, and namespaceTurndown are supported, all other features are in progress.
     containerRequestRightSizing: true
@@ -1486,6 +1496,15 @@ kubecostProductConfigs:
     #         "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
     #         "client_x509_cert_url": ""
     #       }
+
+    # If an enterprise v2 license is configured, actions will sign configuration files pushed to the store with that license
+    # If on free or trial-tier, or if self-management of signing credentials is desired, signing using a user-configured RSA key can be enabled
+
+    # If this is configured, the public key must also be configured on the cluster controller under .clusterController.signing.rsa
+    signing:
+      rsa:
+        enabled: false  # Enables signing via a user-provided RSA key. Requires privateKeySecret to be set.
+        privateKeySecret: ""  # The name of the secret containing the priv.pem private key
 
     ## Actions can reference configuration at a global or cluster-specific level
     # config:
