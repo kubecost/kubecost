@@ -55,6 +55,31 @@ Once templating is successful, the combined results of the chart templated acros
 
 If all previous tests pass, the chart with each of the eligible values files will be deployed across a matrix of the last nine (9) versions of Kubernetes clusters to ensure all expected resources are available, and finally that a basic end-to-end test of the Kubecost deployment is successful. In order for some deployment configurations to succeed, there may be some dependent resources which are required. For example, in some configurations Kubecost requires Kubernetes Secrets to already exist so they may be consumed by Pods in the form of a volume mount. Any such prerequisite resources should be stored in `/.github/ci-files` as they will be automatically deployed as part of the test suite. Files in this directory must not clash and all will be deployed at the outset of testing.
 
+## Link Checking
+
+This repository uses [Lychee](https://github.com/lycheeverse/lychee) to validate links in documentation and configuration files. Link checking runs automatically in CI on pull requests.
+
+```sh
+# Install macOS
+brew install lychee
+
+# Install Linux
+cargo install lychee
+
+# Or, install from release: https://github.com/lycheeverse/lychee/releases
+
+# CI-matching command
+lychee --verbose --include-fragments --no-progress --exclude-path '.github-actions' './**/*.md' './**/*.yaml' './**/*.yml'
+
+# Single file
+lychee --verbose --include-fragments --no-progress kubecost/values-openshift.yaml
+```
+
+Notes:
+
+- Excluded links are listed in `.lycheeignore` (example URLs, internal services, etc.)
+- Lychee follows redirects automatically and reports the final destination
+
 ## YAML Style Guidelines
 
 For the `values.yaml` file, these are the design decisions we make:
