@@ -1376,7 +1376,7 @@ clusterController:
   # The cluster controller will be able to validate these files automatically
   # If on free or trial-tier, or if self-management of signing credentials is desired, signing using a user-configured RSA key can be enabled
 
-  # If this is confiugred, the private key must also be configured on the cluster controller under .kubecostProductConfigs.actions.signing.rsa
+  # If this is configured, the private key must also be configured on the cluster controller under .kubecostProductConfigs.actions.signing.rsa
   signing:
     rsa:
       enabled: false  # Enables signing via a user-provided RSA key. Requires publicKeySecret to be set.
@@ -1490,7 +1490,7 @@ kubecostProductConfigs:
     # If an enterprise v2 license is configured, actions will sign configuration files pushed to the store with that license
     # If on free or trial-tier, or if self-management of signing credentials is desired, signing using a user-configured RSA key can be enabled
 
-    # If this is confiugred, the public key must also be configured on the cluster controller under .clusterController.signing.rsa
+    # If this is configured, the public key must also be configured on the cluster controller under .clusterController.signing.rsa
     signing:
       rsa:
         enabled: false  # Enables signing via a user-provided RSA key. Requires privateKeySecret to be set.
