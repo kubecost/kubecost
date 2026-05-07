@@ -93,6 +93,10 @@ spec:
           readOnly: true
         {{- end }}
         {{- end }}
+        {{- if .Values.clusterController.signing.rsa.enabled }}
+        - name: rsa-public-key
+          mountPath: /var/configs/keys
+        {{- end }}
         env:
         - name: POD_NAME
           valueFrom:
@@ -116,6 +120,8 @@ spec:
           value: /var/keys/service-key.json
         - name: CC_LOG_LEVEL
           value: {{ .Values.clusterController.logLevel | default "info" }}
+        - name: ACTIONS_USER_RSA_KEY
+          value: {{ .Values.clusterController.signing.rsa.enabled | default "false" | quote }}
         {{- if not (.Values.clusterController).legacyMode }}
         - name: LOG_LEVEL
           value: {{ .Values.clusterController.logLevel | default "info" }}
@@ -204,5 +210,10 @@ spec:
         secret:
           secretName: {{ include "kubecost.clusterController.actionsBucketConfigSecretName" . }}
       {{- end }}
+      {{- end }}
+      {{- if .Values.clusterController.signing.rsa.enabled }}
+      - name: rsa-public-key
+        secret:
+          secretName: {{ .Values.clusterController.signing.rsa.publicKeySecret }}
       {{- end }}
 {{- end }}
