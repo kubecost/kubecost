@@ -273,10 +273,12 @@ fullnameOverride: ""
 enterpriseCustomPricing:
   # Enabled the feature by setting this flag to "true". If enabled, the feature
   # requires a CSV pricing spec to be provided at the location, below, using a
-  # ConfigMap, for which we provide instructions, also below.
+  # ConfigMap, for which we provide instructions, also below. Alternatively, the
+  # CSV pricing spec can be provided via the UI (see below).
   enabled: false
   # To allow for setting the Enterprise Custom Pricng CSV via the UI, comment out
-  # the configMapName and location fields below.
+  # the configMapName and location fields below. If configMapName is specified, you
+  # must also create the config map with the below command.
   #
   # Use the following command to create a ConfigMap from your pricing spec CSV.
   # You may change the ConfigMap name, or file name, as long as you set the
