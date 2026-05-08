@@ -1,0 +1,698 @@
+# Copyright IBM, Inc. All Rights Reserved.
+# SPDX-License-Identifier: APACHE-2.0
+
+## @section Global parameters
+## Global Docker image parameters
+## Please, note that this will override the image parameters, including dependencies, configured to use the global value
+## Current available global Docker image parameters: imageRegistry, imagePullSecrets and storageClass
+
+## @param global.imageRegistry Global Docker image registry
+## @param global.imagePullSecrets Global Docker registry secret names as an array
+## @param global.defaultStorageClass Global default StorageClass for Persistent Volume(s)
+##
+global:
+  ## @param clusterId The id of the cluster REQUIRED
+  ##
+  clusterId: ""
+  ## @param global.federatedStorage.config The config for the federated storage
+  ## @param global.federatedStorage.existingSecret The name of an existing secret to use for the federated storage config. Note, you cannot set both `config` and `existingSecret`.
+  ##
+  federatedStorage:
+    config: ""
+    # A federated storage config can be provided via an existingSecret or via a string in helm values.
+    # If both are provided, the string in helm values take precedence.
+    # Example:
+    #   config: |-
+    #     type: S3
+    #     config:
+    #       bucket: ibm-kubecost-unified-agent-demo-data
+    #       endpoint: s3.amazonaws.com
+    #       region: us-west-2
+    #       access_key: xxx
+    #       secret_key: xxx
+    existingSecret: ""
+    # If you want to use a different file name for the federated storage config, you can set the fileName value.
+    fileName: federated-store.yaml   # set this value to change what the file name for the yaml config is
+  ## @param cspPricingApiKey.existingSecret The name of an existing secret containing a GCP API key. If set, this existing secret will be used instead of creating a new one.
+  ## @param cspPricingApiKey.apiKey The GCP API key value used to access pricing data. Required for GCP clusters to fetch on-demand pricing.
+  ## If set, a new secret will be created with this API key. Leave empty if using an existing secret via cspPricingApiKey.existingSecret.
+  ## @param cspPricingApiKey.useDefaultApiKey When true, the default GCP API key will be used.
+  ## WARNING: The default API key provided here is rate-limited and shared across all users.
+  ## For production use, it is strongly recommended to create and use your own GCP API key to avoid quota limits.
+  cspPricingApiKey:
+    existingSecret: ""
+    apiKey: ""
+    useDefaultApiKey: true
+  ## @param global.imageRegistry The image registry to use for the finops agent
+  ## @param global.imagePullSecrets The image pull secrets to use for the finops agent
+  ## @param global.defaultStorageClass The default storage class to use for the finops agent
+  ## @param global.security.allowInsecureImages Allows skipping image verification
+  ## @param global.compatibility.openshift.adaptSecurityContext Adapt the securityContext sections of the deployment to make them compatible with Openshift restricted-v2 SCC: remove runAsUser, runAsGroup and fsGroup and let the platform use their allowed default IDs. Possible values: auto (apply if the detected running cluster is Openshift), force (perform the adaptation always), disabled (do not perform adaptation)
+  imageRegistry: ""
+  ## E.g.
+  ## imagePullSecrets:
+  ##   - myRegistryKeySecretName
+  ##
+  imagePullSecrets: []
+  defaultStorageClass: ""
+  ## Security parameters
+  ##
+  security:
+    ## @param global.security.allowInsecureImages Allows skipping image verification
+    allowInsecureImages: false
+  ## Compatibility adaptations for Kubernetes platforms
+  ##
+  compatibility:
+    ## Compatibility adaptations for Openshift
+    ##
+    openshift:
+      ## @param global.compatibility.openshift.adaptSecurityContext Adapt the securityContext sections of the deployment to make them compatible with Openshift restricted-v2 SCC: remove runAsUser, runAsGroup and fsGroup and let the platform use their allowed default IDs. Possible values: auto (apply if the detected running cluster is Openshift), force (perform the adaptation always), disabled (do not perform adaptation)
+      ##
+      adaptSecurityContext: auto
+  chartName: finops-agent
+
+  ## @section global.updateCaTrust Installs custom CA certificates onto finops-agent pod
+  ## @param global.updateCaTrust.enabled Enable the updateCaTrust feature
+  ## @param global.updateCaTrust.securityContext Security context settings for the init container.
+  ## @param global.updateCaTrust.caCertsSecret The name of the Secret containing custom CA certificates to mount to the finops-agent container.
+  ## @param global.updateCaTrust.caCertsConfig The name of the ConfigMap containing the CA trust configuration. Only one of caCertsSecret or caCertsConfig can be set.
+  ## @param global.updateCaTrust.resources Resources for the init container.
+  ## @param global.updateCaTrust.caCertsMountPath The path where the custom CA certificates will be mounted in the init container. Defaults to /etc/pki/ca-trust/source/anchors unless you are sure.
+  ##
+  updateCaTrust:
+    enabled: false
+    securityContext:
+      runAsUser: 0
+      runAsGroup: 0
+      runAsNonRoot: false
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      seccompProfile:
+        type: RuntimeDefault
+    caCertsSecret: ca-certs-secret
+    # caCertsConfig: ca-certs-config
+    resources: {}
+    caCertsMountPath: /etc/pki/ca-trust/source/anchors
+
+## @section Common parameters
+
+## @param kubeVersion Override Kubernetes version
+##
+kubeVersion: ""
+## @param apiVersions Override Kubernetes API versions reported by .Capabilities
+##
+apiVersions: []
+## @param nameOverride String to partially override common.names.name
+##
+nameOverride: ""
+## @param fullnameOverride String to fully override common.names.fullname
+##
+fullnameOverride: ""
+## @param namespaceOverride String to fully override common.names.namespace. This would be used to deploy the finops-agent resources to a different namespace than the release itself
+##
+namespaceOverride: ""
+## @param clusterDomain Default Kubernetes cluster domain
+##
+clusterDomain: cluster.local
+## @param commonAnnotations Annotations to add to all deployed objects
+##
+commonAnnotations: {}
+## @param commonLabels Labels to add to all deployed objects
+##
+commonLabels: {}
+## @param extraDeploy Array of extra objects to deploy with the release
+##
+extraDeploy: []
+## @param useHelmHooks Enable use of Helm hooks if needed, e.g. on pre-install jobs
+##
+useHelmHooks: true
+
+## @section IBM FinOps Agent Core parameters
+
+## IBM FinOps Agent Core image
+## @param image.registry [default: icr.io] IBM FinOps Agent image registry
+## @param image.repository [default: ibm-finops/agent] IBM FinOps Agent image repository
+## @skip image.tag IBM FinOps Agent image tag (immutable tags are recommended)
+## @param image.digest IBM FinOps Agent image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag
+## @param image.pullPolicy IBM FinOps Agent image pull policy
+## @param image.pullSecrets Specify docker-registry secret names as an array
+##
+image:
+  registry: icr.io
+  repository: ibm-finops/agent
+  tag: v1.0.6
+  digest: ""
+  pullPolicy: IfNotPresent
+  ## Optionally specify an array of imagePullSecrets.
+  ## Secrets must be manually created in the namespace.
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+  ## e.g:
+  ## pullSecrets:
+  ##   - myRegistryKeySecretName
+  ##
+  pullSecrets: []
+## @param fullImageName If set, this will override the image name and tag.
+fullImageName: ""
+
+## @param logLevel The log level for the finops agent
+logLevel: "info"
+
+# Agent configuration
+# For the collector data source, note that all retention settings may directly impact the memory usage of the agent. The default values safely capture the required retention to operate
+# the agent at minimal memory usage. Based cluster size, higher retained samples can have significant impact on memory usage.
+## @param agent.collectorDataSource.enabled Enable the collector data source
+## @param agent.collectorDataSource.scrapeInterval The scrape interval for the collector data source
+## @param agent.collectorDataSource.networkPort The network port for the collector data source
+## @param agent.collectorDataSource.retention10m The number of 10m samples to retain for querying. The default of 6 captures 1h of historical data at 10m resolution.
+## @param agent.collectorDataSource.retention1h The number of 1h samples to retain for querying. The default of 3 captures 3h of historical data at 1h resolution.
+## @param agent.collectorDataSource.retention1d The number of 1d samples to retain for querying. The default of 2 captures 2d of historical data at 1d resolution.
+## @param agent.exportIntervals.allocation A duration string of how often allocation data is exported.
+## @param agent.exportIntervals.asset A duration string of how often asset data is exported.
+## @param agent.exportIntervals.networkInsight A duration string of how often network insight data is exported.
+## @param agent.exportIntervals.heartbeat A duration string of how often heartbeat data is exported.
+## @param agent.exportIntervals.diagnostics A duration string of how often diagnostics data is exported.
+## @param agent.exporter.emissionInterval A duration string of how often the core agent exporter will emit new data snapshots to the enabled emitters.
+## @param agent.cloudability.enabled Enable the cloudability data source
+## @param agent.cloudability.pathToCloudabilitySecrets the path to the location on the filesystem the cloudability secrets are stored
+## @param agent.cloudability.keyAccessFile the name of the keyAccessFile
+## @param agent.cloudability.keySecretFile the name of the keySecretFile
+## @param agent.cloudability.envIDFile the name of the envIDFile
+## @param agent.cloudability.localWorkingDir The local working directory for the cloudability data source
+## @param agent.cloudability.uploadRegion The upload region for the cloudability data source
+## @param agent.cloudability.httpsClientTimeout Amount (in seconds) of time the http client has before timing out requests. Might need to be increased to clusters with large payloads.
+## @param agent.cloudability.uploadRetryCount Number of attempts the agent will retry to upload a payload
+## @param agent.cloudability.outboundProxyInsecure When true, does not verify certificates when making TLS connections.
+## @param agent.cloudability.parseMetricData When true, core files will be parsed and non-relevant data will be removed prior to upload.
+## @param agent.cloudability.emissionInterval A duration string of how often samples are emitted to the cloudability uploader
+## @param agent.cloudability.outboundProxy The URL of an outbound HTTP/HTTPS proxy for the agent to use (eg: http://x.x.x.x:8080). The URL must contain the scheme prefix (http:// or https://)
+## @param agent.cloudability.outboundProxyAuth Basic Authentication credentials to be used with the defined outbound proxy. If your outbound proxy requires basic authentication credentials can be defined in the form username:password
+## @param agent.cloudability.useProxyForGettingUploadURLonly When true, the cloudability client will only use the proxy for clusters/upload and frontdoor apikey login
+## @param agent.cloudability.customS3UploadBucket S3 bucket for custom uploading agent
+## @param agent.cloudability.customS3UploadRegion S3 region for custom uploading agent
+## @param agent.cloudability.customAzureBlobContainerName Azure blob name for custom uploading agent
+## @param agent.cloudability.customAzureBlobURL Azure blob url for custom uploading agent
+## @param agent.cloudability.customAzureTenantID Azure tenantID for custom uploading agent
+## @param agent.cloudability.customAzureClientID Azure clientID for custom uploading agent
+## @param agent.cloudability.customAzureBlobClientSecretFile the name of the customAzureBlobClientSecretFile
+## @param agent.cloudability.secret.existingSecret The name of an existing secret to use for the cloudability data source. Note, you cannot set both `create` and `existingSecret`.
+## @param agent.cloudability.secret.create Create a secret for the cloudability data source. cannot be used with existingSecret
+## @param agent.cloudability.secret.cloudabilityAccessKey The cloudability access key for the cloudability data source
+## @param agent.cloudability.secret.cloudabilitySecretKey The cloudability secret key for the cloudability data source
+## @param agent.cloudability.secret.cloudabilityEnvId The cloudability env id for the cloudability data source
+## @param agent.cloudability.secret.customAzureClientSecret The cloudability client secret for azure blob upload
+##
+agent:
+  collectorDataSource:
+    enabled: true
+    scrapeInterval: 30s
+    networkPort: 3001
+    retention10m: 6
+    retention1h: 3
+    retention1d: 2
+  exportIntervals:
+    allocation: 10m
+    asset: 10m
+    networkInsight: 10m
+    heartbeat: 5m
+    diagnostics: 10m
+  exporter:
+    emissionInterval: 1m
+  cloudability:
+    ## Cloudability requires an API key to send data to the cloudability platform
+    enabled: false
+    pathToCloudabilitySecrets: "/opt/cloudability"
+    keyAccessFile: "CLOUDABILITY_KEY_ACCESS"
+    keySecretFile: "CLOUDABILITY_KEY_SECRET"
+    envIDFile: "CLOUDABILITY_ENV_ID"
+    localWorkingDir: /tmp
+    uploadRegion: us
+    httpsClientTimeout: 60
+    uploadRetryCount: 5
+    outboundProxyInsecure: false
+    parseMetricData: false
+    outboundProxy: ""
+    outboundProxyAuth: ""
+    useProxyForGettingUploadURLonly: false
+    customS3UploadBucket: ""
+    customS3UploadRegion: ""
+    customAzureBlobContainerName: ""
+    customAzureBlobURL: ""
+    customAzureTenantID: ""
+    customAzureClientID: ""
+    customAzureBlobClientSecretFile: "CLOUDABILITY_CUSTOM_AZURE_BLOB_CLIENT_SECRET"
+    emissionInterval: 3m
+
+    secret:
+      create: true
+      existingSecret: ""
+      cloudabilityAccessKey: ""
+      cloudabilitySecretKey: ""
+      cloudabilityEnvId: ""
+      customAzureClientSecret: ""
+
+  kubecost:
+    projectID: ""
+    awsSpotDataBucket: ""
+    awsSpotDataPrefix: ""
+    awsSpotDataRegion: ""
+    customPrices:
+      enabled: true
+      CPU: "10"
+      GPU: "20"
+      RAM: "30"
+      spotCPU: "40"
+      spotGPU: "50"
+      spotRAM: "60"
+      storage: "70"
+      internetNetworkEgress: "80"
+      regionNetworkEgress: "90"
+      zoneNetworkEgress: "100"
+    discount: "110"
+    negotiatedDiscount: "120"
+    gpuLabel: "labelg"
+    gpuLabelValue: "labelgv"
+    spotLabel: "labels"
+    spotLabelValue: "labelsv"
+
+## @param command Override default container command (useful when using custom images)
+##
+command: []
+## @param args Override default container args (useful when using custom images)
+##
+args: []
+## @param extraEnvVars Array with extra environment variables to add to the FinOps Agent container
+##
+extraEnvVars: []
+## @param extraEnvVarsCM Name of existing ConfigMap containing extra env vars for the FinOps Agent container
+##
+extraEnvVarsCM: ""
+## @param extraEnvVarsSecret Name of existing Secret containing extra env vars for the FinOps Agent container
+##
+extraEnvVarsSecret: ""
+## @param containerPorts.http The FinOps Agent container HTTP port
+##
+containerPorts:
+  http: 9003
+## @param extraContainerPorts Optionally specify extra list of additional ports for the FinOps Agent container
+## e.g:
+## extraContainerPorts:
+##   - name: myservice
+##     containerPort: 9090
+##
+extraContainerPorts: []
+## The FinOps Agent pod's resource requests and limits
+## ref: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
+## @param resourcesPreset Set container resources according to one common preset (allowed values: none, nano, micro, small, medium, large, xlarge, 2xlarge). This is ignored if resources is set.
+## More information: https://github.com/bitnami/charts/blob/main/bitnami/common/templates/_resources.tpl#L15
+##
+resourcesPreset: "small"
+## @param resources Set container requests and limits for different resources like CPU or memory, if the presents won't work
+## Example:
+## resources:
+##   requests:
+##     cpu: 2
+##     memory: 512Mi
+##   limits:
+##     cpu: 3
+##     memory: 1024Mi
+##
+resources: {}
+## Configure FinOps Agent pod Security Context
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
+## @param podSecurityContext.enabled Enable the FinOps Agent pod's Security Context
+## @param podSecurityContext.fsGroupChangePolicy Set filesystem group change policy
+## @param podSecurityContext.sysctls Set kernel settings using the sysctl interface
+## @param podSecurityContext.supplementalGroups Set filesystem extra groups
+## @param podSecurityContext.fsGroup Set the FinOps Agent pod's Security Context fsGroup
+##
+podSecurityContext:
+  enabled: true
+  fsGroupChangePolicy: Always
+  sysctls: []
+  supplementalGroups: []
+  fsGroup: 1001
+## Configure FinOps Agent container Security Context
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
+## @param containerSecurityContext.enabled Enable container Security Context
+## @param containerSecurityContext.seLinuxOptions [object,nullable] Set SELinux options in container
+## @param containerSecurityContext.runAsUser Set containers' Security Context runAsUser
+## @param containerSecurityContext.runAsGroup Set containers' Security Context runAsGroup
+## @param containerSecurityContext.runAsNonRoot Set container's Security Context runAsNonRoot
+## @param containerSecurityContext.privileged Set container's Security Context privileged
+## @param containerSecurityContext.readOnlyRootFilesystem Set container's Security Context readOnlyRootFilesystem
+## @param containerSecurityContext.allowPrivilegeEscalation Set container's Security Context allowPrivilegeEscalation
+## @param containerSecurityContext.capabilities.drop List of capabilities to be dropped
+## @param containerSecurityContext.seccompProfile.type Set container's Security Context seccomp profile
+##
+containerSecurityContext:
+  enabled: true
+  seLinuxOptions: {}
+  runAsUser: 1001
+  runAsGroup: 1001
+  runAsNonRoot: true
+  privileged: false
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: ["ALL"]
+  seccompProfile:
+    type: "RuntimeDefault"
+## Configure extra options for the FinOps Agent container's liveness, readiness and startup probes
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes)
+## @param startupProbe.enabled Enable startupProbe on the container
+## @param startupProbe.initialDelaySeconds Initial delay seconds for startupProbe
+## @param startupProbe.periodSeconds Period seconds for startupProbe
+## @param startupProbe.timeoutSeconds Timeout seconds for startupProbe
+## @param startupProbe.failureThreshold Failure threshold for startupProbe
+## @param startupProbe.successThreshold Success threshold for startupProbe
+##
+startupProbe:
+  enabled: false
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 1
+  failureThreshold: 3
+  successThreshold: 1
+## @param livenessProbe.enabled Enable livenessProbe on FinOps Agent container
+## @param livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
+## @param livenessProbe.periodSeconds Period seconds for livenessProbe
+## @param livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
+## @param livenessProbe.failureThreshold Failure threshold for livenessProbe
+## @param livenessProbe.successThreshold Success threshold for livenessProbe
+##
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 60
+  periodSeconds: 10
+  timeoutSeconds: 1
+  failureThreshold: 3
+  successThreshold: 1
+## @param readinessProbe.enabled Enable readinessProbe on FinOps Agent container
+## @param readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
+## @param readinessProbe.periodSeconds Period seconds for readinessProbe
+## @param readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
+## @param readinessProbe.failureThreshold Failure threshold for readinessProbe
+## @param readinessProbe.successThreshold Success threshold for readinessProbe
+##
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 1
+  failureThreshold: 3
+  successThreshold: 1
+## @param customStartupProbe Override default startup probe
+##
+customStartupProbe: {}
+## @param customLivenessProbe Override default liveness probe
+##
+customLivenessProbe: {}
+## @param customReadinessProbe Override default readiness probe
+##
+customReadinessProbe: {}
+## @param podAffinityPreset FinOps Agent Pod affinity preset. Ignored if `affinity` is set. Allowed values: `soft` or `hard`
+## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+##
+podAffinityPreset: ""
+## @param podAntiAffinityPreset FinOps Agent Pod anti-affinity preset. Ignored if `affinity` is set. Allowed values: `soft` or `hard`
+## Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+##
+podAntiAffinityPreset: soft
+## Node affinity preset
+## Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity
+##
+nodeAffinityPreset:
+  ## @param nodeAffinityPreset.type FinOps Agent Node affinity preset type. Ignored if `affinity` is set. Allowed values: `soft` or `hard`
+  type: ""
+  ## @param nodeAffinityPreset.key FinOps Agent Node label key to match Ignored if `affinity` is set.
+  ## E.g.
+  ## key: "kubernetes.io/e2e-az-name"
+  ##
+  key: ""
+  ## @param nodeAffinityPreset.values FinOps Agent Node label values to match. Ignored if `affinity` is set.
+  ## E.g.
+  ## values:
+  ##   - e2e-az1
+  ##   - e2e-az2
+  ##
+  values: []
+## @param affinity FinOps Agent Affinity for pod assignment
+## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+## Note: podAffinityPreset, podAntiAffinityPreset, and  nodeAffinityPreset will be ignored when it's set
+##
+affinity: {}
+## @param nodeSelector FinOps Agent Node labels for pod assignment
+## Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/
+##
+nodeSelector: {}
+## @param tolerations FinOps Agent Tolerations for pod assignment
+## Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+##
+tolerations: []
+## @param podAnnotations Annotations for FinOps Agent pod
+## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+##
+podAnnotations: {}
+## @param podLabels Extra labels for FinOps Agent pod
+## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+##
+podLabels: {}
+
+## @param hostAliases FinOps Agent pods host aliases
+## https://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/
+##
+hostAliases: []
+## @param updateStrategy.type FinOps Agent deployment strategy type
+## ref: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy
+##
+updateStrategy:
+  ## StrategyType
+  ## Can be set to RollingUpdate or Recreate
+  ##
+  type: Recreate
+## @param priorityClassName FinOps Agent pods' priorityClassName
+##
+priorityClassName: ""
+## @param revisionHistoryLimit FinOps Agent deployment revision history limit
+##
+revisionHistoryLimit: 10
+## @param schedulerName Name of the k8s scheduler (other than default)
+## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
+##
+schedulerName: ""
+## @param topologySpreadConstraints Topology Spread Constraints for pod assignment
+## https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/
+## The value is evaluated as a template
+##
+topologySpreadConstraints: []
+## @param lifecycleHooks for the FinOps Agent container(s) to automate configuration before or after startup
+##
+lifecycleHooks: {}
+## @param extraVolumeMounts Optionally specify extra list of additional volumeMounts for the FinOps Agent pods
+##
+extraVolumeMounts: []
+## @param extraVolumes Optionally specify extra list of additional volumes for the FinOps Agent pods
+##
+extraVolumes: []
+## @param sidecars Add additional sidecar containers to the FinOps Agent pod(s)
+## e.g:
+## sidecars:
+##   - name: your-image-name
+##     image: your-image
+##     imagePullPolicy: Always
+##     ports:
+##       - name: portname
+##         containerPort: 1234
+##
+sidecars: []
+## @param initContainers Add additional init-containers to the FinOps Agent pod(s)
+## ref: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/
+## e.g:
+## initContainers:
+##  - name: your-image-name
+##    image: your-image
+##    imagePullPolicy: Always
+##    command: ['sh', '-c', 'echo "hello world"']
+##
+initContainers: []
+
+## @section Service parameters
+
+## Service parameters
+##
+service:
+  ## @param service.enabled Enable a clusterIP service for the FinOps Agent
+  enabled: true
+
+  ## @param service.type Kubernetes service type
+  ##
+  type: ClusterIP
+
+  ## @param service.ports.http The FinOps Agent HTTP port
+  ##
+  ports:
+    http: 80
+
+  ## @param service.clusterIP The FinOps Agent service Cluster IP
+  ## e.g.:
+  ## clusterIP: None
+  ##
+  clusterIP: ""
+
+  ## @param service.extraPorts Extra port to expose on the FinOps Agent service
+  ##
+  extraPorts: []
+
+  ## @param service.annotations Additional custom annotations for the FinOps Agent service
+  ##
+  annotations: {}
+
+## @section Metrics parameters
+
+## Prometheus metrics
+##
+metrics:
+  ## @param metrics.enabled Enable the export of Prometheus metrics
+  ##
+  enabled: false
+  ## Prometheus Operator ServiceMonitor configuration
+  ##
+  serviceMonitor:
+    ## @param metrics.serviceMonitor.enabled if `true`, creates a Prometheus Operator ServiceMonitor (also requires `metrics.enabled` to be `true`)
+    ##
+    enabled: false
+    ## @param metrics.serviceMonitor.namespace Namespace in which Prometheus is running
+    ## e.g:
+    ## namespace: monitoring
+    ##
+    namespace: ""
+    ## @param metrics.serviceMonitor.labels Additional labels that can be used so ServiceMonitor will be discovered by Prometheus
+    ##
+    labels: {}
+    ## @param metrics.serviceMonitor.interval Interval at which metrics should be scraped.
+    ## ref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#endpoint
+    ## e.g:
+    ## interval: 10s
+    ##
+    interval: ""
+    ## @param metrics.serviceMonitor.scrapeTimeout Timeout after which the scrape is ended
+    ## ref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#endpoint
+    ## e.g:
+    ## scrapeTimeout: 10s
+    ##
+    scrapeTimeout: ""
+    ## @param metrics.serviceMonitor.relabelings RelabelConfigs to apply to samples before scraping
+    ## ref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#relabelconfig
+    ##
+    relabelings: []
+    ## @param metrics.serviceMonitor.metricRelabelings MetricRelabelConfigs to apply to samples before ingestion
+    ## ref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#relabelconfig
+    ##
+    metricRelabelings: []
+    ## @param metrics.serviceMonitor.selector Prometheus instance selector labels
+    ## ref: https://github.com/bitnami/charts/tree/main/bitnami/prometheus-operator#prometheus-configuration
+    ## e.g:
+    ## selector:
+    ##   prometheus: my-prometheus
+    ##
+    selector: {}
+    ## @param metrics.serviceMonitor.honorLabels honorLabels chooses the metric's labels on collisions with target labels
+    ##
+    honorLabels: false
+  ## @param metrics.configs configurable values to be accessible to ibm-finops-agent at /var/configs/metrics.json
+  ##
+  configs:
+    ## @param metrics.configs.disabledMetrics metrics that should not be emitted by ibm-finops-agent
+    ##
+    disabledMetrics: []
+
+## @section Persistence parameters
+
+## Enable persistence using Persistent Volume Claims
+## ref: https://kubernetes.io/docs/concepts/storage/persistent-volumes/
+##
+persistence:
+  ## @param persistence.enabled Enable FinOps Agent data persistence for WAL and other local data
+  ##
+  enabled: true
+  ## @param persistence.existingClaim A manually managed Persistent Volume and Claim
+  ## If defined, PVC must be created manually before volume will be bound
+  ## The value is evaluated as a template
+  ##
+  existingClaim: ""
+  ## @param persistence.storageClass PVC Storage Class for the FinOps Agent data volume
+  ## If defined, storageClassName: <storageClass>
+  ## If set to "-", storageClassName: "", which disables dynamic provisioning
+  ## If undefined (the default) or set to null, no storageClassName spec is
+  ## set, choosing the default provisioner.
+  ##
+  storageClass: ""
+  ## @param persistence.accessModes Persistent Volume Access Modes
+  ##
+  accessModes:
+  - ReadWriteOnce
+  ## @param persistence.size PVC Storage Request for the FinOps Agent data volume
+  ##
+  size: 8Gi
+  ## @param persistence.dataSource Custom PVC data source
+  ##
+  dataSource: {}
+  ## @param persistence.annotations.helm.sh/resource-policy The \"helm.sh/resource-policy: keep\" annotation is used to prevent the persistent volume from being deleted when uninstalling or moving to a different deployment method.
+  ##
+  annotations:
+    helm.sh/resource-policy: keep
+  ## @param persistence.selector Selector to match an existing Persistent Volume for the FinOps Agent data PVC. If set, the PVC can't have a PV dynamically provisioned for it
+  ## selector:
+  ##   matchLabels:
+  ##     app: my-app
+  ##
+  selector: {}
+  ## @param persistence.mountPath Mount path of the IBM FinOps Agent data volume
+  ##
+  mountPath: /opt/finops-agent
+
+## @section Other Parameters
+
+## Service Account for IBM FinOps Agent
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+## @param serviceAccount.create Enable creation of ServiceAccount for IBM FinOps Agent pods
+## @param serviceAccount.name Name of the service account to use. If not set and `create` is `true`, a name is generated
+## @param serviceAccount.automountServiceAccountToken Allows auto mount of ServiceAccountToken on the serviceAccount created
+## @param serviceAccount.annotations Additional custom annotations for the ServiceAccount
+##
+serviceAccount:
+  create: true
+  name: ""
+  automountServiceAccountToken: true
+  annotations: {}
+## Role Based Access Control
+## ref: https://kubernetes.io/docs/admin/authorization/rbac/
+## @param rbac.create Whether to create & use RBAC resources or not
+## @param rbac.clusterRole.create Whether to create & use ClusterRole resources or not
+##
+rbac:
+  create: true
+  clusterRole:
+    create: true
+extraObjects: []
+# - apiVersion: external-secrets.io/v1
+#   kind: ExternalSecret
+#   metadata:
+#     name: example
+#   spec:
+#     refreshInterval: 1h
+#     secretStoreRef:
+#       name: secretstore-sample
+#       kind: SecretStore
+#     target:
+#       name: secret-to-be-created
+#       creationPolicy: Owner
+#     data:
+#     - secretKey: secret-key-to-be-managed
+#       remoteRef:
+#         key: provider-key
+#         version: provider-key-version
+#         property: provider-key-property
+#     dataFrom:
+#     - extract:
+#         key: remote-key-in-the-provider

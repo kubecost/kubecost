@@ -277,7 +277,7 @@ enterpriseCustomPricing:
   # CSV pricing spec can be provided via the UI (see below).
   enabled: false
   # To allow for setting the Enterprise Custom Pricng CSV via the UI, comment out
-  # the location field below, and set configMapName="". If configMapName is specified, you
+  # the configMapName and location fields below. If configMapName is specified, you
   # must also create the config map with the below command.
   #
   # Use the following command to create a ConfigMap from your pricing spec CSV.

@@ -1,0 +1,84 @@
+{{- /*
+Copyright IBM, Inc. All Rights Reserved.
+SPDX-License-Identifier: APACHE-2.0
+*/}}
+
+{{- if .Values.agent.kubecost }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pricing-configs
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" .) | nindent 4 }}
+    app.kubernetes.io/part-of: finops-agent
+    app.kubernetes.io/component: config
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" (dict "value" .Values.commonAnnotations "context" .) | nindent 4 }}
+  {{- end }}
+data:
+  {{- if .Values.agent.kubecost.customPrices }}
+  {{- if .Values.agent.kubecost.customPrices.enabled }}
+  customPricesEnabled: "{{ .Values.agent.kubecost.customPrices.enabled | toString }}"
+  {{- end -}}
+  {{- if .Values.agent.kubecost.customPrices.CPU }}
+  CPU: "{{ .Values.agent.kubecost.customPrices.CPU | toString }}"
+  {{- end -}}
+  {{- if .Values.agent.kubecost.customPrices.spotCPU }}
+  spotCPU: "{{ .Values.agent.kubecost.customPrices.spotCPU | toString }}"
+  {{- end -}}
+  {{- if .Values.agent.kubecost.customPrices.RAM }}
+  RAM: "{{ .Values.agent.kubecost.customPrices.RAM | toString }}"
+  {{- end -}}
+  {{- if .Values.agent.kubecost.customPrices.spotRAM }}
+  spotRAM: "{{ .Values.agent.kubecost.customPrices.spotRAM | toString }}"
+  {{- end -}}
+  {{- if .Values.agent.kubecost.customPrices.GPU }}
+  GPU: "{{ .Values.agent.kubecost.customPrices.GPU | toString }}"
+  {{- end -}}
+  {{- if .Values.agent.kubecost.customPrices.spotGPU }}
+  spotGPU: "{{ .Values.agent.kubecost.customPrices.spotGPU | toString }}"
+  {{- end -}}
+  {{- if .Values.agent.kubecost.customPrices.storage }}
+  storage: "{{ .Values.agent.kubecost.customPrices.storage | toString }}"
+  {{- end -}}
+  {{- if .Values.agent.kubecost.customPrices.zoneNetworkEgress }}
+  zoneNetworkEgress: "{{ .Values.agent.kubecost.customPrices.zoneNetworkEgress | toString }}"
+  {{- end -}}
+  {{- if .Values.agent.kubecost.customPrices.regionNetworkEgress }}
+  regionNetworkEgress: "{{ .Values.agent.kubecost.customPrices.regionNetworkEgress | toString }}"
+  {{- end -}}
+  {{- if .Values.agent.kubecost.customPrices.internetNetworkEgress }}
+  internetNetworkEgress: "{{ .Values.agent.kubecost.customPrices.internetNetworkEgress | toString }}"
+  {{- end -}}
+  {{- end -}}
+  {{- if .Values.agent.kubecost.discount }}
+  discount: "{{ .Values.agent.kubecost.discount }}"
+  {{- end -}}
+  {{- if .Values.agent.kubecost.negotiatedDiscount }}
+  negotiatedDiscount: "{{ .Values.agent.kubecost.negotiatedDiscount }}"
+  {{- end -}}
+  {{- if .Values.agent.kubecost.spotLabel }}
+  spotLabel: "{{ .Values.agent.kubecost.spotLabel }}"
+  {{- end -}}
+  {{- if .Values.agent.kubecost.spotLabelValue }}
+  spotLabelValue: "{{ .Values.agent.kubecost.spotLabelValue }}"
+  {{- end -}}
+  {{- if .Values.agent.kubecost.awsSpotDataRegion }}
+  spotDataRegion: "{{ .Values.agent.kubecost.awsSpotDataRegion }}"
+  {{- end -}}
+  {{- if .Values.agent.kubecost.awsSpotDataBucket }}
+  spotDataBucket: "{{ .Values.agent.kubecost.awsSpotDataBucket }}"
+  {{- end -}}
+  {{- if .Values.agent.kubecost.awsSpotDataPrefix }}
+  spotDataPrefix: "{{ .Values.agent.kubecost.awsSpotDataPrefix }}"
+  {{- end -}}
+  {{- if .Values.agent.kubecost.projectID }}
+  projectID: "{{ .Values.agent.kubecost.projectID }}"
+  {{- end -}}
+  {{- if .Values.agent.kubecost.gpuLabel }}
+  gpuLabel: "{{ .Values.agent.kubecost.gpuLabel }}"
+  {{- end -}}
+  {{- if .Values.agent.kubecost.gpuLabelValue }}
+  gpuLabelValue: "{{ .Values.agent.kubecost.gpuLabelValue }}"
+  {{- end -}}
+{{- end -}}

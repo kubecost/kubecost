@@ -1,0 +1,12 @@
+{{ include "finops-agent.gcpCheck" . }}
+{{- include "finops-agent.exportBucketLegacyCheck" . }}
+
+CHART NAME: {{ .Chart.Name }}
+CHART VERSION: {{ .Chart.Version }}
+APP VERSION: {{ .Chart.AppVersion }}
+
+Kubecost Agent Enabled: {{ include "finops-agent.kubecostEnabled" . }}
+Cloudability Agent Enabled: {{ .Values.agent.cloudability.enabled }}
+
+{{- include "finops-agent.configCheck" . }}
+{{- include "finops-agent.cspPricingApiKeyWarning" . }}
