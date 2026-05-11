@@ -1082,7 +1082,9 @@ aggregator:
     failureThreshold: 200
 
   ## Set additional environment variables for the aggregator pod
-  extraEnv: []
+  extraEnv:
+    - name: KUBEMODEL_INGESTION_ENABLED
+      value: "false"
   # - name: SOME_VARIABLE
   #   value: "some_value"
 
