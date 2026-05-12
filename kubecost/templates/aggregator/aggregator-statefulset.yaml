@@ -677,6 +677,8 @@ spec:
             - name: SAAS_DEPLOYMENT
               value: "true"
             {{- end }}
+            - name: KUBEMODEL_INGESTION_ENABLED
+              value: {{ .Values.aggregator.kubemodelIngestionEnabled | quote }}
             {{- if .Values.aggregator.extraEnv -}}
             {{- toYaml .Values.aggregator.extraEnv | nindent 12 }}
             {{- end }}
