@@ -1081,6 +1081,9 @@ aggregator:
     periodSeconds: 10
     failureThreshold: 200
 
+  ## Enable or disable kubemodel ingestion
+  kubemodelIngestionEnabled: false
+
   ## Set additional environment variables for the aggregator pod
   extraEnv: []
   # - name: SOME_VARIABLE
