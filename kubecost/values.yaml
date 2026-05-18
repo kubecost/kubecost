@@ -276,7 +276,7 @@ enterpriseCustomPricing:
   # ConfigMap, for which we provide instructions, also below.
   enabled: false
   # To allow for setting the Enterprise Custom Pricing CSV via the UI, leave
-  # the configMapName and location fields commented out (or unset).
+  # the configMapName and location fields unset.
   #
   # Use the following command to create a ConfigMap from your pricing spec CSV.
   # You may change the ConfigMap name, or file name, as long as you set the
