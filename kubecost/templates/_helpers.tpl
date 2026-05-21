@@ -257,6 +257,13 @@ Free Actions validation check. Ensures that a signing key is properly configured
     {{- if or (not $rsaEnabled) (not $rsaPrivateKeySecret) -}}
       {{- fail "\nActions is enabled on free-tier. Either provide an RSA signing key pair under kubecostProductConfigs.actions.signing.rsa and clusterController.signing.rsa or configure an enterprise v2 license." -}}
     {{- end -}}
+    {{- if (.Values.clusterController).enabled -}}
+      {{- $clusterControllerRSAEnabled := (((.Values.clusterController).signing).rsa).enabled -}}
+      {{- $clusterControllerRSAPublicKeySecret := (((.Values.clusterController).signing).rsa).publicKeySecret -}}
+      {{- if or (not $clusterControllerRSAEnabled) (not $clusterControllerRSAPublicKeySecret) -}}
+        {{- fail "\nActions is enabled on free-tier and clusterController is enabled. You must configure the cluster controller RSA public key under clusterController.signing.rsa." -}}
+      {{- end -}}
+    {{- end -}}
   {{- end -}}
 {{- end -}}
 
