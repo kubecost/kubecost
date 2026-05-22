@@ -247,6 +247,26 @@ Actions Storage source contents check. Either the Secret must be specified or th
   {{- end -}}
 {{- end -}}
 
+{{/*
+Free Actions validation check. Ensures that a signing key is properly configured.
+*/}}
+{{- define "kubecost.freeActionsSigningKeyCheck" -}}
+  {{- if and (not (.Values.kubecostProductConfigs.productKey).enabled) ((.Values.kubecostProductConfigs.actions).enabled) -}}
+    {{- $rsaEnabled := (((.Values.kubecostProductConfigs.actions).signing).rsa).enabled -}}
+    {{- $rsaPrivateKeySecret := (((.Values.kubecostProductConfigs.actions).signing).rsa).privateKeySecret -}}
+    {{- if or (not $rsaEnabled) (not $rsaPrivateKeySecret) -}}
+      {{- fail "\nActions is enabled on free-tier. Either provide an RSA signing key pair under kubecostProductConfigs.actions.signing.rsa and clusterController.signing.rsa or configure an enterprise v2 license." -}}
+    {{- end -}}
+    {{- if (.Values.clusterController).enabled -}}
+      {{- $clusterControllerRSAEnabled := (((.Values.clusterController).signing).rsa).enabled -}}
+      {{- $clusterControllerRSAPublicKeySecret := (((.Values.clusterController).signing).rsa).publicKeySecret -}}
+      {{- if or (not $clusterControllerRSAEnabled) (not $clusterControllerRSAPublicKeySecret) -}}
+        {{- fail "\nActions is enabled on free-tier and clusterController is enabled. You must configure the cluster controller RSA public key under clusterController.signing.rsa." -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
 {{- define "kubecost.clusterId" }}
   {{- if ((((.Values.prometheus).server).global).external_labels).cluster_id }}
     {{- .Values.prometheus.server.global.external_labels.cluster_id }}
