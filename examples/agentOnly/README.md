@@ -8,9 +8,9 @@ The multiple examples here are due to the difference in the object-storage confi
 
 ## Agent only configurations
 
-- [AWS](./agentOnly/helmValues-kubecost-aws.yaml)
-- [Azure](./agentOnly/helmValues-kubecost-azure.yaml)
-- [GCP](./agentOnly/helmValues-kubecost-gcp.yaml)
+- [AWS](./helmValues-kubecost-aws.yaml)
+- [Azure](./helmValues-kubecost-azure.yaml)
+- [GCP](./helmValues-kubecost-gcp.yaml)
 
 After customizing the values, use the `-f` flag to pass them to the helm install command:
 
