@@ -15,20 +15,12 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Checkout github-actions
-        uses: actions/checkout@v6
-        with:
-          repository: kubecost/github-actions
-          token: ${{ secrets.GH_PAT }}
-          path: .github-actions
-          sparse-checkout: lychee-action
-
       ## Recursively check all markdown and yaml files for broken links
       ## Ref: https://github.com/lycheeverse/lychee#commandline-parameters
       - name: Link Checker
         id: lychee
-        uses: ./.github-actions/lychee-action
+        uses: kubecost/github-actions/lychee-action@e9abae7eb1051daabf263ff7bad15e4deaff72a8 # main as of 2026-05-29
         with:
           fail: true
           debug: false
-          args: --verbose --include-fragments --no-progress --exclude-path '.github-actions' -E './**/*.md' './**/*.yaml' './**/*.yml'
+          args: --verbose --include-fragments --no-progress -E './**/*.md' './**/*.yaml' './**/*.yml'
