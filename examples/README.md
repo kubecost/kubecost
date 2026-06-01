@@ -30,23 +30,9 @@ Consider installing agents first, as the UI will not have value until there is d
 Kubecost 3.x architecture was designed to allow for a single agent configuration to be pushed to all clusters including the primary.
 This is not required, and users can continue to use the same design as previous versions.
 
-When using a global agent configuration, the agent should be installed to a different namespace than is used for the primary cluster.
+When using a global agent configuration, the agent should be installed to a different namespace or Helm release name than is used for the primary cluster.
 
-Agent only configurations:
-
-- [AWS](./agentOnly/helmValues-kubecost-aws.yaml)
-- [Azure](./agentOnly/helmValues-kubecost-azure.yaml)
-- [GCP](./agentOnly/helmValues-kubecost-gcp.yaml)
-
-When you have your customized values, use the `-f` flag to pass them to the helm install command:
-
-```bash
-helm install kubecost-agent \
-  --repo https://kubecost.github.io/kubecost/ kubecost \
-  --namespace kubecost-agent \
-  --create-namespace \
-  -f helmValues-kubecost-agentOnly.yaml
-```
+[Agent configuration guide](agentOnly/README.md)
 
 ### Primary Cluster
 
