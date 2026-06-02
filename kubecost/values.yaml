@@ -1314,11 +1314,11 @@ cloudCost:
 ##
 clusterController:
   enabled: true
-  
+
   serviceAccount:
     ## @param clusterController.serviceAccount.create Whether to create a service account for cluster controller
     create: true
-    
+
     ## @param clusterController.serviceAccount.annotations Annotations for the cluster controller service account
     ## Configure cloud provider authentication for federated storage access:
     ##   AWS:   eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/ROLE_NAME
@@ -1427,7 +1427,7 @@ reporting:
 serviceAccount:
   create: true  # Set this to false if you're bringing your own service account.
   ## @param serviceAccount.annotations Annotations for the service account
-  ## 
+  ##
   ## Configure cloud provider authentication for accessing federated object storage.
   ## These annotations are applied to all service accounts unless overridden by
   ## component-specific annotations (e.g., clusterController.serviceAccount.annotations).
