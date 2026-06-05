@@ -1330,10 +1330,6 @@ clusterController:
     ## Falls back to global serviceAccount.annotations if not set.
     annotations: {}
 
-  ## Enables legacy mode for cluster controller actions (v1)
-  ## Only used with kubecost versions < 3.0.0
-  legacyMode: false
-
   ## Override the image name and version for the cluster controller.
   ## If not set, the image will be pulled from the registry and repository specified in the image block.
   ## If set, the fullImageName will be used to pull the image.
