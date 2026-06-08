@@ -1317,8 +1317,17 @@ cloudCost:
 ##
 clusterController:
   enabled: true
+
   serviceAccount:
+    ## @param clusterController.serviceAccount.create Whether to create a service account for cluster controller
     create: true
+
+    ## @param clusterController.serviceAccount.annotations Annotations for the cluster controller service account
+    ## Configure cloud provider authentication for federated storage access:
+    ##   AWS:   eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/ROLE_NAME
+    ##   GCP:   iam.gke.io/gcp-service-account: SA_NAME@PROJECT_ID.iam.gserviceaccount.com
+    ##   Azure: azure.workload.identity/client-id: CLIENT_ID
+    ## Falls back to global serviceAccount.annotations if not set.
     annotations: {}
 
   ## Enables legacy mode for cluster controller actions (v1)
@@ -1420,6 +1429,24 @@ reporting:
 
 serviceAccount:
   create: true  # Set this to false if you're bringing your own service account.
+  ## @param serviceAccount.annotations Annotations for the service account
+  ##
+  ## Configure cloud provider authentication for accessing federated object storage.
+  ## These annotations are applied to all service accounts unless overridden by
+  ## component-specific annotations (e.g., clusterController.serviceAccount.annotations).
+  ##
+  ## AWS (IAM Roles for Service Accounts):
+  ##   annotations:
+  ##     eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/ROLE_NAME
+  ##
+  ## GCP (Workload Identity):
+  ##   annotations:
+  ##     iam.gke.io/gcp-service-account: SA_NAME@PROJECT_ID.iam.gserviceaccount.com
+  ##
+  ## Azure (Workload Identity):
+  ##   annotations:
+  ##     azure.workload.identity/client-id: CLIENT_ID
+  ##
   annotations: {}
 
 ## Kubecost Admission Controller (beta feature)
