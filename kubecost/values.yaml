@@ -288,6 +288,9 @@ enterpriseCustomPricing:
   # The file name (e.g. pricing.csv) needs to match the file name used to make the ConfigMap (above)
   location:
     URI: ""  # e.g. /var/configs/enterprise-pricing/pricing.csv
+  # When true (default), custom pricing is applied retroactively to historical
+  # data. Set to false to apply custom pricing only going forward.
+  applyRetroactively: true
 
 ## Kubecost SAML (enterprise key required)
 ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=configuration-user-management-saml

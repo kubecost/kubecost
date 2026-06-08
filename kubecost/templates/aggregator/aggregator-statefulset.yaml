@@ -659,7 +659,7 @@ spec:
               value: {{ (quote .Values.enterpriseCustomPricing.location.URI) }}
             {{- end }}
             - name: ENTERPRISE_CUSTOM_PRICING_APPLY_RETROACTIVELY
-              value: "true"
+              value: {{ .Values.enterpriseCustomPricing.applyRetroactively | quote }}
             {{- end }}
             {{- if ((.Values.kubecostProductConfigs).actions).enabled }}
             - name: ACTIONS_ENABLED
