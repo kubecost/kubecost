@@ -735,7 +735,7 @@ networkCosts:
   image:
     registry: ""  # Default is "icr.io"
     repository: kubecost/network-costs
-    tag: v0.18.3
+    tag: v0.19.0
   imagePullPolicy: IfNotPresent
 
   updateStrategy:
@@ -897,7 +897,7 @@ forecasting:
   image:
     registry: ""  # Default is "icr.io"
     repository: kubecost/modeling
-    tag: v0.1.35
+    tag: v0.1.36
   imagePullPolicy: IfNotPresent
 
   # Resource specification block for the forecasting container.
@@ -1318,10 +1318,6 @@ clusterController:
     create: true
     annotations: {}
 
-  ## Enables legacy mode for cluster controller actions (v1)
-  ## Only used with kubecost versions < 3.0.0
-  legacyMode: false
-
   ## Override the image name and version for the cluster controller.
   ## If not set, the image will be pulled from the registry and repository specified in the image block.
   ## If set, the fullImageName will be used to pull the image.
@@ -1331,7 +1327,7 @@ clusterController:
   image:
     registry: ""  # Default is "icr.io"
     repository: kubecost/cluster-controller
-    tag: v0.16.36
+    tag: v0.16.37
   imagePullPolicy: IfNotPresent
   logLevel: info
   extraEnv: []
