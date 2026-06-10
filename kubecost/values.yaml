@@ -288,6 +288,9 @@ enterpriseCustomPricing:
   # The file name (e.g. pricing.csv) needs to match the file name used to make the ConfigMap (above)
   location:
     URI: ""  # e.g. /var/configs/enterprise-pricing/pricing.csv
+  # When true (default), custom pricing is applied retroactively to historical
+  # data. Set to false to apply custom pricing only going forward.
+  applyRetroactively: true
 
 ## Kubecost SAML (enterprise key required)
 ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=configuration-user-management-saml
@@ -732,7 +735,7 @@ networkCosts:
   image:
     registry: ""  # Default is "icr.io"
     repository: kubecost/network-costs
-    tag: v0.18.3
+    tag: v0.19.0
   imagePullPolicy: IfNotPresent
 
   updateStrategy:
@@ -894,7 +897,7 @@ forecasting:
   image:
     registry: ""  # Default is "icr.io"
     repository: kubecost/modeling
-    tag: v0.1.35
+    tag: v0.1.36
   imagePullPolicy: IfNotPresent
 
   # Resource specification block for the forecasting container.
@@ -1314,13 +1317,18 @@ cloudCost:
 ##
 clusterController:
   enabled: true
-  serviceAccount:
-    create: true
-    annotations: {}
 
-  ## Enables legacy mode for cluster controller actions (v1)
-  ## Only used with kubecost versions < 3.0.0
-  legacyMode: false
+  serviceAccount:
+    ## @param clusterController.serviceAccount.create Whether to create a service account for cluster controller
+    create: true
+
+    ## @param clusterController.serviceAccount.annotations Annotations for the cluster controller service account
+    ## Configure cloud provider authentication for federated storage access:
+    ##   AWS:   eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/ROLE_NAME
+    ##   GCP:   iam.gke.io/gcp-service-account: SA_NAME@PROJECT_ID.iam.gserviceaccount.com
+    ##   Azure: azure.workload.identity/client-id: CLIENT_ID
+    ## Falls back to global serviceAccount.annotations if not set.
+    annotations: {}
 
   ## Override the image name and version for the cluster controller.
   ## If not set, the image will be pulled from the registry and repository specified in the image block.
@@ -1331,7 +1339,7 @@ clusterController:
   image:
     registry: ""  # Default is "icr.io"
     repository: kubecost/cluster-controller
-    tag: v0.16.35
+    tag: v0.16.37
   imagePullPolicy: IfNotPresent
   logLevel: info
   extraEnv: []
@@ -1417,6 +1425,24 @@ reporting:
 
 serviceAccount:
   create: true  # Set this to false if you're bringing your own service account.
+  ## @param serviceAccount.annotations Annotations for the service account
+  ##
+  ## Configure cloud provider authentication for accessing federated object storage.
+  ## These annotations are applied to all service accounts unless overridden by
+  ## component-specific annotations (e.g., clusterController.serviceAccount.annotations).
+  ##
+  ## AWS (IAM Roles for Service Accounts):
+  ##   annotations:
+  ##     eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/ROLE_NAME
+  ##
+  ## GCP (Workload Identity):
+  ##   annotations:
+  ##     iam.gke.io/gcp-service-account: SA_NAME@PROJECT_ID.iam.gserviceaccount.com
+  ##
+  ## Azure (Workload Identity):
+  ##   annotations:
+  ##     azure.workload.identity/client-id: CLIENT_ID
+  ##
   annotations: {}
 
 ## Kubecost Admission Controller (beta feature)

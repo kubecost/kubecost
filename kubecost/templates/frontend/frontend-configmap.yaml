@@ -71,20 +71,6 @@ data:
         {{- end }}
     }
 
-{{- if and .Values.clusterController .Values.clusterController.enabled .Values.clusterController.legacyMode }}
-    upstream clustercontroller {
-{{- if .Values.frontend.useDefaultFqdn }}
-        server {{ include "kubecost.clusterController.name" . }}-service.{{ .Release.Namespace }}.svc.cluster.local:9731;
-{{- else }}
-{{- if (.Values.frontend.clusterController).fqdn }}
-        server {{ .Values.frontend.clusterController.fqdn }};
-{{- else }}
-        server {{ include "kubecost.clusterController.name" . }}-service.{{ .Release.Namespace }}:9731;
-{{- end }}
-{{- end }}
-    }
-{{- end }}
-
   {{- if .Values.forecasting.enabled }}
     upstream forecasting {
         {{- if .Values.frontend.useDefaultFqdn }}
@@ -220,34 +206,7 @@ data:
         }
 
         location ~ ^/(turndown|cluster)/ {
-
-{{- if .Values.clusterController }}
-{{- if and .Values.clusterController.enabled .Values.clusterController.legacyMode }}
-            {{- if or .Values.saml .Values.oidc }}
-            {{- if or .Values.saml.enabled .Values.oidc.enabled }}
-            auth_request /auth;
-            {{- else if .Values.saml.rbac.enabled}}
-            auth_request /authrbac;
-            {{- end }}
-            {{- end }}
-
-            rewrite ^/(?:turndown|cluster)/(.*)$ /$1 break;
-            proxy_pass http://clustercontroller;
-            proxy_connect_timeout       180;
-            proxy_send_timeout          180;
-            proxy_read_timeout          180;
-            proxy_redirect off;
-            proxy_http_version 1.1;
-            proxy_set_header Connection "";
-            proxy_set_header X-Real-IP  $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-
-{{- else }}
-            return 404;
-{{- end }}
-{{- else }}
-            return 404;
-{{- end }}
+          return 404;
         }
 
     {{- if .Values.oidc.enabled }}
