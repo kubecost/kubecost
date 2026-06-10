@@ -958,6 +958,78 @@ aggregator:
   # Log level for the aggregator container. Options are "trace", "debug", "info", "warn", "error", "fatal", "panic"
   logLevel: info
 
+  ## Aggregator Querier (Read-Only Mode)
+  ## Enables deployment of a separate read-only aggregator for query workloads.
+  ## When enabled, write operations (POST/PUT/DELETE/PATCH) are routed to the main
+  ## aggregator (ingestor), while read operations (GET) are routed to the querier.
+  ## This allows independent scaling of read and write workloads.
+  ##
+  querier:
+    ## @param aggregator.querier.enabled Enable read-only querier aggregator
+    ## Set to true to deploy a separate querier StatefulSet alongside the main aggregator
+    enabled: false
+
+    ## @param aggregator.querier.replicas Number of querier replicas
+    ## Typically set higher than ingestor replicas to handle read load
+    replicas: 3
+
+    ## @param aggregator.querier.resources Resource requests and limits for querier
+    ## If not specified, inherits from aggregator.resources
+    resources: {}
+    #   requests:
+    #     cpu: 1000m
+    #     memory: 2Gi
+    #   limits:
+    #     cpu: 2000m
+    #     memory: 4Gi
+
+    ## @param aggregator.querier.dbReadThreads Database read threads for querier
+    ## If not specified, inherits from aggregator.dbReadThreads
+    ## Default: 0 (no limit)
+    dbReadThreads: 0
+
+    ## @param aggregator.querier.dbWriteThreads Database write threads for querier
+    ## Always set to 0 for read-only mode (this value is ignored if set)
+    dbWriteThreads: 0
+
+    ## @param aggregator.querier.logLevel Log level for querier
+    ## If not specified, inherits from aggregator.logLevel
+    logLevel: ""
+
+    ## @param aggregator.querier.nodeSelector Node selector for querier pods
+    ## If not specified, inherits from aggregator.nodeSelector
+    nodeSelector: {}
+
+    ## @param aggregator.querier.tolerations Tolerations for querier pods
+    ## If not specified, inherits from aggregator.tolerations
+    tolerations: []
+
+    ## @param aggregator.querier.affinity Affinity rules for querier pods
+    ## If not specified, inherits from aggregator.affinity
+    affinity: {}
+
+    ## @param aggregator.querier.extraEnv Extra environment variables for querier
+    ## If not specified, inherits from aggregator.extraEnv
+    extraEnv: []
+    # - name: EXTRA_ENV_VAR
+    #   value: "extra_env_var_value"
+
+  ## Example: Enable querier with 3 replicas for read scaling
+  ## This configuration deploys a separate read-only aggregator alongside the main ingestor.
+  ## Write operations (POST/PUT/DELETE/PATCH) are routed to the ingestor, while read operations
+  ## (GET) are routed to the querier for independent scaling of read workloads.
+  ##
+  # querier:
+  #   enabled: true
+  #   replicas: 3
+  #   resources:
+  #     requests:
+  #       cpu: 1000m
+  #       memory: 2Gi
+  #     limits:
+  #       cpu: 2000m
+  #       memory: 4Gi
+
   #   standardDiscount: "" # custom negotiated cloud provider discount, applied to all ingested asset compute costs. Overrides negotiatedDiscount on any cluster being aggregated.
 
   # stagingEmptyDirSizeLimit changes how large the "staging"

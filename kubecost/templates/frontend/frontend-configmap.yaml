@@ -71,6 +71,16 @@ data:
         {{- end }}
     }
 
+    {{- if (.Values.aggregator.querier).enabled }}
+    upstream aggregator_querier {
+        {{- if .Values.frontend.useDefaultFqdn }}
+        server {{ .Release.Name }}-aggregator-querier.{{ .Release.Namespace }}.svc.cluster.local:9004;
+        {{- else }}
+        server {{ .Release.Name }}-aggregator-querier.{{ .Release.Namespace }}:9004;
+        {{- end }}
+    }
+    {{- end }}
+
   {{- if .Values.forecasting.enabled }}
     upstream forecasting {
         {{- if .Values.frontend.useDefaultFqdn }}
@@ -178,6 +188,24 @@ data:
 {{- end }}
         
         location /model/ {
+            {{- if (.Values.aggregator.querier).enabled }}
+            # Route write operations to ingestor, read operations to querier
+            set $backend "aggregator_querier";
+            if ($request_method ~ ^(POST|PUT|DELETE|PATCH)$) {
+                set $backend "aggregator";
+            }
+            {{- if (.Values.frontend.upstreamAggregatorConfiguration) }}
+            # Shorter timeout for faster failover when backup server is configured
+            proxy_connect_timeout       2s;
+            proxy_send_timeout          {{ .Values.frontend.timeoutSeconds | default 300 }};
+            proxy_read_timeout          {{ .Values.frontend.timeoutSeconds | default 300 }};
+            {{- else }}
+            proxy_connect_timeout       {{ .Values.frontend.timeoutSeconds | default 300 }};
+            proxy_send_timeout          {{ .Values.frontend.timeoutSeconds | default 300 }};
+            proxy_read_timeout          {{ .Values.frontend.timeoutSeconds | default 300 }};
+            {{- end }}
+            proxy_pass http://$backend/;
+            {{- else }}
             {{- if (.Values.frontend.upstreamAggregatorConfiguration) }}
             # Shorter timeout for faster failover when backup server is configured
             proxy_connect_timeout       2s;
@@ -189,6 +217,7 @@ data:
             proxy_read_timeout          {{ .Values.frontend.timeoutSeconds | default 300 }};
             {{- end }}
             proxy_pass http://aggregator/;
+            {{- end }}
             proxy_redirect off;
             proxy_http_version 1.1;
             proxy_set_header Connection "";
