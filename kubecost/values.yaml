@@ -964,10 +964,18 @@ aggregator:
   ## aggregator (ingestor), while read operations (GET) are routed to the querier.
   ## This allows independent scaling of read and write workloads.
   ##
+  ## IMPORTANT: The querier does NOT create its own database storage. It connects to
+  ## the ingestor's ClickHouse database using the clickhouseUrl configuration.
+  ##
   querier:
     ## @param aggregator.querier.enabled Enable read-only querier aggregator
     ## Set to true to deploy a separate querier StatefulSet alongside the main aggregator
     enabled: false
+
+    ## @param aggregator.querier.clickhouseUrl ClickHouse database URL for querier
+    ## REQUIRED when querier is enabled. Points to the ingestor's ClickHouse database.
+    ## Format: "host:port" (e.g., "kubecost-cost-analyzer.kubecost.svc.cluster.local:9000")
+    clickhouseUrl: ""
 
     ## @param aggregator.querier.replicas Number of querier replicas
     ## Typically set higher than ingestor replicas to handle read load
@@ -988,10 +996,6 @@ aggregator:
     ## Default: 0 (no limit)
     dbReadThreads: 0
 
-    ## @param aggregator.querier.dbWriteThreads Database write threads for querier
-    ## Always set to 0 for read-only mode (this value is ignored if set)
-    dbWriteThreads: 0
-
     ## @param aggregator.querier.logLevel Log level for querier
     ## If not specified, inherits from aggregator.logLevel
     logLevel: ""
@@ -1009,19 +1013,18 @@ aggregator:
     affinity: {}
 
     ## @param aggregator.querier.extraEnv Extra environment variables for querier
-    ## If not specified, inherits from aggregator.extraEnv
+    ## Optional additional environment variables beyond clickhouseUrl
     extraEnv: []
-    # - name: EXTRA_ENV_VAR
-    #   value: "extra_env_var_value"
 
-  ## Example: Enable querier with 3 replicas for read scaling
-  ## This configuration deploys a separate read-only aggregator alongside the main ingestor.
-  ## Write operations (POST/PUT/DELETE/PATCH) are routed to the ingestor, while read operations
-  ## (GET) are routed to the querier for independent scaling of read workloads.
+  ## Example: Complete querier configuration with external ClickHouse connection
+  ## This deploys a read-only querier that connects to the ingestor's database.
+  ## The querier has NO persistent storage - it queries the ingestor's ClickHouse remotely.
   ##
   # querier:
   #   enabled: true
+  #   clickhouseUrl: "kubecost-cost-analyzer.kubecost.svc.cluster.local:9000"
   #   replicas: 3
+  #   dbReadThreads: 0  # 0 = no limit, uses all available cores
   #   resources:
   #     requests:
   #       cpu: 1000m

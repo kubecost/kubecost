@@ -762,21 +762,6 @@ spec:
   - apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
-      name: aggregator-db-storage
-      {{- include "kubecost.aggregatorStatefulset.pvcAnnotations.aggregator-db-storage" . | nindent 6 }}
-    spec:
-      accessModes: [ "ReadWriteOnce" ]
-      {{- if .Values.aggregator.aggregatorDbStorage.storageClass }}
-      storageClassName: {{ .Values.aggregator.aggregatorDbStorage.storageClass }}
-      {{- else if .Values.global.defaultStorageClass }}
-      storageClassName: {{ .Values.global.defaultStorageClass }}
-      {{- end }}
-      resources:
-        requests:
-          storage:  {{ .Values.aggregator.aggregatorDbStorage.storageRequest }}
-  - apiVersion: v1
-    kind: PersistentVolumeClaim
-    metadata:
       name: persistent-configs
       {{- include "kubecost.aggregatorStatefulset.pvcAnnotations.persistent-configs" . | nindent 6 }}
     spec:
@@ -820,18 +805,11 @@ spec:
       serviceAccountName: {{ template "kubecost.aggregator.serviceAccountName" . }}
       volumes:
         {{- if .Values.aggregator.useHostPath }}
-        - name: aggregator-db-storage
-          hostPath:
-            path: {{ .Values.aggregator.hostPathDbStoragePath }}-querier
-            type: DirectoryOrCreate
         - name: persistent-configs
           hostPath:
             path: {{ .Values.aggregator.hostPathDbStoragePath }}-querier-configs
             type: DirectoryOrCreate
         {{- else if .Values.aggregator.useEmptyDir }}
-        - name: aggregator-db-storage
-          emptyDir:
-            sizeLimit: {{ .Values.aggregator.emptyDirDbStorageSizeLimit }}
         - name: persistent-configs
           emptyDir:
             sizeLimit: 1Gi
@@ -1082,14 +1060,8 @@ spec:
               mountPath: /var/configs/federated-store.yaml
               subPath: {{ include "kubecost.federatedStorage.fileName" . }}
               readOnly: true
-            - name: aggregator-db-storage
-              mountPath: /var/configs/waterfowl/duckdb
             - name: aggregator-staging
               mountPath: /var/configs/waterfowl
-              {{- if (not .Values.aggregator.legacyMode ) }}
-            - name: aggregator-db-storage
-              mountPath: /var/lib/clickhouse
-              {{- end }}
             {{- if ((.Values.kubecostProductConfigs).productKey).enabled }}
             - name: productkey-secret
               mountPath: /var/configs/productkey
@@ -1202,6 +1174,16 @@ spec:
               mountPath: /var/configs/turbonomic
             {{- end }}
           env:
+            # START QUERIER ENV VARS
+            - name: CLICKHOUSE_URL
+              value: {{ required "aggregator.querier.clickhouseUrl is required when querier is enabled" .Values.aggregator.querier.clickhouseUrl | quote }}
+            - name: READ_ONLY
+              value: "true"
+            - name: READ_ONLY_DB_NAME
+              value: "kubecost"
+            - name: DB_READ_ONLY
+              value: "true"
+            # END QUERIER ENV VARS
             - name: CLUSTER_ID
               value: {{ include "kubecost.clusterId" . }}
             - name: INSTALL_NAMESPACE
@@ -1256,12 +1238,6 @@ spec:
             - name: INT_PG_RUN_INTERVAL
               value: {{ quote .Values.global.integrations.postgres.runInterval }}
             {{- end }}
-            - name: READ_ONLY
-              value: "true"
-            - name: READ_ONLY_DB_NAME
-              value: "kubecost"
-            - name: DB_READ_ONLY
-              value: "true"
             {{- include "common.systemProxy" . | nindent 12 }}
             {{- if ((.Values.kubecostProductConfigs).carbonEstimates) }}
             - name: CARBON_ESTIMATES_ENABLED
