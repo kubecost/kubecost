@@ -234,6 +234,10 @@ data:
             {{- end }}
         }
 
+        location ~ ^/(turndown|cluster)/ {
+          return 404;
+        }
+
     {{- if .Values.oidc.enabled }}
         location /oidc/ {
             proxy_connect_timeout       180;
