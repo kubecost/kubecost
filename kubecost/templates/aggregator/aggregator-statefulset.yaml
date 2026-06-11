@@ -755,8 +755,10 @@ spec:
   serviceName: {{ template "kubecost.aggregator.serviceName" . }}-querier
   selector:
     matchLabels:
-    {{- include "kubecost.aggregator.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/name: aggregator
+      app.kubernetes.io/instance: {{ .Release.Name }}
       app.kubernetes.io/component: aggregator-querier
+      app: aggregator-querier
   volumeClaimTemplates:
   {{- if and (not .Values.aggregator.useEmptyDir) (not .Values.aggregator.useHostPath) }}
   - apiVersion: v1
