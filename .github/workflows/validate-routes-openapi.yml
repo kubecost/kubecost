@@ -31,11 +31,20 @@ jobs:
           path: kubecost-proxy
           token: ${{ secrets.CLOUDABILITY_GITHUB }}
 
-      - name: Install yq
+      - name: Checkout Cerberus
+        uses: actions/checkout@v4
+        with:
+          repository: cloudability/cerberus
+          path: cerberus
+          token: ${{ secrets.CLOUDABILITY_GITHUB }}
+
+      - name: Install yq and jq
         run: |
           sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.44.1/yq_linux_amd64
           sudo chmod +x /usr/local/bin/yq
           yq --version
+          sudo apt-get update
+          sudo apt-get install -y jq
 
       - name: Validate routes against OpenAPI specs
         id: validate
@@ -43,6 +52,7 @@ jobs:
           set +e
           bash .github/scripts/validate_routes_openapi.sh \
             kubecost-proxy/deploy/openapi \
+            cerberus/policy/actions.json \
             --json > validation_results.json 2>&1
           set -e
 
@@ -55,13 +65,16 @@ jobs:
             exit 1
           fi
 
-          if grep -q '"validation_passed": false' validation_results.json; then
-            openapi_missing=$(grep -o '"missing_count": [0-9]*' validation_results.json | head -1 | awk '{print $2}')
-            echo "openapi_missing=${openapi_missing:-unknown}" >> "$GITHUB_OUTPUT"
-            exit 1
+          if command -v jq >/dev/null 2>&1; then
+            openapi_missing=$(jq -r '.openapi_validation.missing_count // 0' validation_results.json)
+            cerberus_missing=$(jq -r '.cerberus_validation.missing_count // 0' validation_results.json)
+            echo "openapi_missing=${openapi_missing}" >> "$GITHUB_OUTPUT"
+            echo "cerberus_missing=${cerberus_missing}" >> "$GITHUB_OUTPUT"
           fi
 
-          echo "openapi_missing=0" >> "$GITHUB_OUTPUT"
+          if grep -q '"validation_passed": false' validation_results.json; then
+            exit 1
+          fi
 
       - name: Upload validation results
         if: always()
@@ -115,13 +128,15 @@ jobs:
 
             const passed = data.validation_passed === true;
             const ov = data.openapi_validation || {};
-            const missing = ov.missing_routes || [];
+            const cv = data.cerberus_validation || {};
+            const openapiMissing = ov.missing_routes || [];
+            const cerberusMissing = cv.missing_routes || [];
 
             if (passed) {
               await upsertComment([
                 '## ✅ Nginx Route Validation Passed',
                 '',
-                'All nginx-native routes (direct JSON responses, not proxied to aggregator/cloudCost/forecasting) are present in `kubecost-complete-api.yaml` (dev/staging/prod).',
+                'All nginx-native routes (direct JSON responses, not proxied to aggregator/cloudCost/forecasting) are present in OpenAPI and Cerberus.',
                 '',
                 `OpenAPI prefix: \`${data.openapi_path_prefix || '/model'}\``,
                 '',
@@ -129,37 +144,68 @@ jobs:
                 `|:-------|------:|----------:|--------:|`,
                 `| frontend nginx | ${ov.total_routes || 0} | ${ov.validated_routes || 0} | 0 |`,
                 '',
-                `Cerberus validation skipped (on-prem; proxied routes validated in other repos).`,
-                '',
                 `[View artifact](${artifactUrl})`,
               ].join('\n'));
               return;
             }
 
-            const rows = missing.map(r =>
+            const openapiRows = openapiMissing.map(r =>
               `| \`${r.method}\` | \`${r.path}\` | ${r.missing_from || 'dev,staging,prod'} |`
             ).join('\n');
+            const cerberusRows = cerberusMissing.map(r =>
+              `| \`${r.method}\` | \`${r.path}\` | \`${r.cerberus_path || ''}\` |`
+            ).join('\n');
 
-            await upsertComment([
+            const sections = [
               '## ❌ Nginx Route Validation Failed',
               '',
-              'Nginx-native routes from `frontend-configmap.yaml` are missing from OpenAPI specs.',
-              '',
-              '| Method | Path | Missing envs |',
-              '|:------:|:-----|:-------------|',
-              rows || '_none_',
-              '',
-              'Update `kubecost-proxy/deploy/openapi/*/kubecost-complete-api.yaml`.',
-              '',
-              `[View artifact](${artifactUrl})`,
-            ].join('\n'));
+              'Nginx-native routes from `frontend-configmap.yaml` are missing from OpenAPI and/or Cerberus.',
+            ];
+
+            if (openapiMissing.length > 0) {
+              sections.push(
+                '',
+                '### Missing from OpenAPI',
+                '',
+                '| Method | Path | Missing envs |',
+                '|:------:|:-----|:-------------|',
+                openapiRows,
+                '',
+                'Update `kubecost-proxy/deploy/openapi/*/kubecost-complete-api.yaml`.'
+              );
+            }
+
+            if (cerberusMissing.length > 0) {
+              sections.push(
+                '',
+                '### Missing from Cerberus',
+                '',
+                '| Method | Path | Cerberus path |',
+                '|:------:|:-----|:--------------|',
+                cerberusRows,
+                '',
+                'Update `cerberus/policy/actions.json`.'
+              );
+            }
+
+            if (cv.available === false) {
+              sections.push(
+                '',
+                '### Cerberus unavailable',
+                '',
+                cv.error || cv.reason || 'Cerberus policy could not be loaded.'
+              );
+            }
+
+            sections.push('', `[View artifact](${artifactUrl})`);
+            await upsertComment(sections.join('\n'));
 
       - name: Set job summary
         if: always()
         run: |
           if [ "${{ steps.validate.outcome }}" == "success" ]; then
             echo "## ✅ Nginx Route Validation Passed" >> "$GITHUB_STEP_SUMMARY"
-            echo "Nginx-native routes match OpenAPI specs." >> "$GITHUB_STEP_SUMMARY"
+            echo "Nginx-native routes match OpenAPI and Cerberus." >> "$GITHUB_STEP_SUMMARY"
           else
             echo "## ❌ Nginx Route Validation Failed" >> "$GITHUB_STEP_SUMMARY"
             echo "Check validation_results.json artifact for missing routes." >> "$GITHUB_STEP_SUMMARY"

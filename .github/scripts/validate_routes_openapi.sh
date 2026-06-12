@@ -10,10 +10,9 @@ set -euo pipefail
 # Examples: /model/productConfigs, /model/installInfo, /model/isSaaSDeployment
 #
 # Proxied routes (/model/ -> aggregator, /forecasting/, cloudCost, auth) are ignored.
-# Cerberus is skipped (on-prem).
 #
 # Usage:
-#   ./validate_routes_openapi.sh [openapi_base] [--json]
+#   ./validate_routes_openapi.sh [openapi_base] [cerberus_policy_path] [--json]
 
 JSON_OUTPUT=false
 POSITIONAL_ARGS=()
@@ -39,6 +38,7 @@ fi
 
 NGINX_CONFIGMAP="${NGINX_CONFIGMAP:-kubecost/templates/frontend/frontend-configmap.yaml}"
 OPENAPI_BASE="${POSITIONAL_ARGS[0]:-kubecost-proxy/deploy/openapi}"
+CERBERUS_POLICY_PATH="${POSITIONAL_ARGS[1]:-cerberus/policy/actions.json}"
 OPENAPI_SPEC_FILENAME="${OPENAPI_SPEC_FILENAME:-kubecost-complete-api.yaml}"
 OPENAPI_PATH_PREFIX="${OPENAPI_PATH_PREFIX_OVERRIDE:-/model}"
 
@@ -53,11 +53,12 @@ ENV_ROUTES_STAGING=$(mktemp)
 ENV_ROUTES_PROD=$(mktemp)
 ALLOWLIST_LOADED=$(mktemp)
 ROUTES_TO_VALIDATE=$(mktemp)
+CERBERUS_MISSING_FILE=$(mktemp)
 
 cleanup_temp_files() {
     rm -f "$ROUTES_FILE" "$OPENAPI_ROUTES_FILE" "$MISSING_ROUTES_FILE" \
         "$ENV_ROUTES_DEV" "$ENV_ROUTES_STAGING" "$ENV_ROUTES_PROD" \
-        "$ALLOWLIST_LOADED" "$ROUTES_TO_VALIDATE"
+        "$ALLOWLIST_LOADED" "$ROUTES_TO_VALIDATE" "$CERBERUS_MISSING_FILE"
 }
 trap cleanup_temp_files EXIT
 
@@ -88,6 +89,18 @@ load_allowlist() {
 is_route_allowlisted() {
     local route=$1
     [ -s "$ALLOWLIST_LOADED" ] && grep -qF "$route" "$ALLOWLIST_LOADED"
+}
+
+nginx_path_to_cerberus_path() {
+    local path=$1
+    case "$path" in
+        /healthz)
+            echo "/v3/kubecost/model/healthz"
+            ;;
+        *)
+            echo "/v3/kubecost${path}"
+            ;;
+    esac
 }
 
 extract_nginx_direct_routes() {
@@ -206,6 +219,23 @@ if ! command -v yq >/dev/null 2>&1; then
     exit 2
 fi
 
+cerberus_available=false
+cerberus_unavailable_reason=""
+cerberus_missing_count=0
+
+if [ ! -f "$CERBERUS_POLICY_PATH" ]; then
+    cerberus_unavailable_reason="Cerberus policy file not found: ${CERBERUS_POLICY_PATH}"
+elif ! command -v jq >/dev/null 2>&1; then
+    cerberus_unavailable_reason="jq not found; required to parse Cerberus policy"
+elif ! jq -e '.api_actions' "$CERBERUS_POLICY_PATH" >/dev/null 2>&1; then
+    cerberus_unavailable_reason="Failed to parse Cerberus policy file: ${CERBERUS_POLICY_PATH}"
+else
+    cerberus_available=true
+    if [ "$JSON_OUTPUT" = false ]; then
+        echo -e "${BLUE}Cerberus policy: ${CERBERUS_POLICY_PATH}${NC}"
+    fi
+fi
+
 : > "$OPENAPI_ROUTES_FILE"
 for env in dev staging prod; do
     spec_file="${OPENAPI_BASE}/${env}/${OPENAPI_SPEC_FILENAME}"
@@ -219,8 +249,16 @@ done
 sort -u "$OPENAPI_ROUTES_FILE" -o "$OPENAPI_ROUTES_FILE"
 
 validation_failed=0
+if [ "$cerberus_available" = false ]; then
+    validation_failed=1
+    if [ "$JSON_OUTPUT" = false ]; then
+        echo -e "${RED}Cerberus validation unavailable: ${cerberus_unavailable_reason}${NC}"
+    fi
+fi
+
 missing_count=0
 declare -a missing_routes_json
+declare -a cerberus_missing_routes_json
 
 : > "$MISSING_ROUTES_FILE"
 while read -r route; do
@@ -251,6 +289,32 @@ elif [ "$JSON_OUTPUT" = false ]; then
     echo -e "${GREEN}All nginx-native routes present in OpenAPI specs${NC}"
 fi
 
+if [ "$cerberus_available" = true ]; then
+    : > "$CERBERUS_MISSING_FILE"
+    while read -r route; do
+        method=$(echo "$route" | awk '{print $1}')
+        path=$(echo "$route" | awk '{$1=""; print $0}' | sed 's/^ //')
+        cerberus_path=$(nginx_path_to_cerberus_path "$path")
+
+        if ! jq -e --arg cerberus_path "$cerberus_path" --arg method "$method" \
+            '.api_actions[$cerberus_path][$method]' "$CERBERUS_POLICY_PATH" >/dev/null 2>&1; then
+            echo "$route" >> "$CERBERUS_MISSING_FILE"
+            cerberus_missing_count=$((cerberus_missing_count + 1))
+            cerberus_missing_routes_json+=("{\"method\":\"${method}\",\"path\":\"${path}\",\"cerberus_path\":\"${cerberus_path}\"}")
+        fi
+    done < "$ROUTES_TO_VALIDATE"
+
+    if [ "$cerberus_missing_count" -gt 0 ]; then
+        validation_failed=1
+        if [ "$JSON_OUTPUT" = false ]; then
+            echo -e "${RED}Missing from Cerberus (${cerberus_missing_count}):${NC}"
+            cat "$CERBERUS_MISSING_FILE" | sed 's/^/  /'
+        fi
+    elif [ "$JSON_OUTPUT" = false ]; then
+        echo -e "${GREEN}All nginx-native routes present in Cerberus policy${NC}"
+    fi
+fi
+
 if [ "$JSON_OUTPUT" = true ]; then
     echo "{"
     echo "  \"validation_passed\": $([ "$validation_failed" -eq 0 ] && echo "true" || echo "false"),"
@@ -270,10 +334,29 @@ if [ "$JSON_OUTPUT" = true ]; then
     done
     echo "    ]"
     echo "  },"
-    echo "  \"cerberus_validation\": {"
-    echo "    \"skipped\": true,"
-    echo "    \"reason\": \"on-prem helm chart; proxied routes validated in other repos\""
-    echo "  },"
+    if [ "$cerberus_available" = true ]; then
+        echo "  \"cerberus_validation\": {"
+        echo "    \"available\": true,"
+        echo "    \"policy_path\": \"$(json_escape "$CERBERUS_POLICY_PATH")\","
+        echo "    \"missing_count\": ${cerberus_missing_count},"
+        echo "    \"missing_routes\": ["
+        for i in "${!cerberus_missing_routes_json[@]}"; do
+            if [ "$i" -lt $((${#cerberus_missing_routes_json[@]} - 1)) ]; then
+                echo "      ${cerberus_missing_routes_json[$i]},"
+            else
+                echo "      ${cerberus_missing_routes_json[$i]}"
+            fi
+        done
+        echo "    ]"
+        echo "  },"
+    else
+        echo "  \"cerberus_validation\": {"
+        echo "    \"available\": false,"
+        echo -n "    \"error\": \""
+        json_escape "${cerberus_unavailable_reason:-Cerberus policy not available}"
+        echo "\""
+        echo "  },"
+    fi
     echo "  \"excluded_routes\": {"
     echo "    \"count\": ${excluded_route_count},"
     echo -n "    \"allowlist_path\": \""
