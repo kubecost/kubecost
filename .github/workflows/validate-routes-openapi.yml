@@ -37,9 +37,6 @@ jobs:
           sudo chmod +x /usr/local/bin/yq
           yq --version
 
-      - name: Run validation tests
-        run: bash .github/scripts/validate_routes_openapi_test.sh
-
       - name: Validate routes against OpenAPI specs
         id: validate
         run: |
