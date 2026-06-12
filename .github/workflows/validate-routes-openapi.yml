@@ -1,0 +1,169 @@
+name: Validate Nginx-Native Routes Against OpenAPI
+
+on:
+  pull_request:
+    paths:
+      - 'kubecost/templates/frontend/frontend-configmap.yaml'
+      - '.github/workflows/validate-routes-openapi.yml'
+      - '.github/scripts/validate_routes_openapi.sh'
+      - '.github/scripts/validate_routes_openapi_test.sh'
+      - '.github/config/route_validation_allowlist.txt'
+      - '.github/scripts/testfixtures/**'
+  merge_group:
+    types: [checks_requested]
+  schedule:
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+jobs:
+  validate-routes:
+    name: Validate Nginx-Native Routes
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout cost-analyzer-helm-chart
+        uses: actions/checkout@v4
+
+      - name: Checkout kubecost-proxy
+        uses: actions/checkout@v4
+        with:
+          repository: cloudability/kubecost-saas
+          path: kubecost-proxy
+          token: ${{ secrets.CLOUDABILITY_GITHUB }}
+
+      - name: Install yq
+        run: |
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.44.1/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+          yq --version
+
+      - name: Run validation tests
+        run: bash .github/scripts/validate_routes_openapi_test.sh
+
+      - name: Validate routes against OpenAPI specs
+        id: validate
+        run: |
+          set +e
+          bash .github/scripts/validate_routes_openapi.sh \
+            kubecost-proxy/deploy/openapi \
+            --json > validation_results.json 2>&1
+          set -e
+
+          echo "::group::Route Validation Results"
+          cat validation_results.json
+          echo "::endgroup::"
+
+          if [ ! -s validation_results.json ]; then
+            echo "::error::Validation script produced no output"
+            exit 1
+          fi
+
+          if grep -q '"validation_passed": false' validation_results.json; then
+            openapi_missing=$(grep -o '"missing_count": [0-9]*' validation_results.json | head -1 | awk '{print $2}')
+            echo "openapi_missing=${openapi_missing:-unknown}" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+
+          echo "openapi_missing=0" >> "$GITHUB_OUTPUT"
+
+      - name: Upload validation results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-results
+          path: validation_results.json
+          retention-days: 7
+
+      - name: Comment on PR with validation results
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const marker = '<!-- helm-nginx-route-validation -->';
+            const artifactUrl = `${context.payload.repository.html_url}/actions/runs/${context.runId}`;
+
+            let data;
+            try {
+              data = JSON.parse(fs.readFileSync('validation_results.json', 'utf8'));
+            } catch (error) {
+              await upsertComment(`## ❌ Nginx Route Validation Failed\n\nCould not parse validation output.\n\n[View run](${artifactUrl})`);
+              return;
+            }
+
+            async function upsertComment(body) {
+              const commentBody = `${marker}\n${body}`;
+              const comments = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+              });
+              const existing = comments.data.find(c => c.body && c.body.includes(marker));
+              if (existing) {
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existing.id,
+                  body: commentBody,
+                });
+              } else {
+                await github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: commentBody,
+                });
+              }
+            }
+
+            const passed = data.validation_passed === true;
+            const ov = data.openapi_validation || {};
+            const missing = ov.missing_routes || [];
+
+            if (passed) {
+              await upsertComment([
+                '## ✅ Nginx Route Validation Passed',
+                '',
+                'All nginx-native routes (direct JSON responses, not proxied to aggregator/cloudCost/forecasting) are present in `kubecost-complete-api.yaml` (dev/staging/prod).',
+                '',
+                `OpenAPI prefix: \`${data.openapi_path_prefix || '/model'}\``,
+                '',
+                `| Source | Total | Validated | Missing |`,
+                `|:-------|------:|----------:|--------:|`,
+                `| frontend nginx | ${ov.total_routes || 0} | ${ov.validated_routes || 0} | 0 |`,
+                '',
+                `Cerberus validation skipped (on-prem; proxied routes validated in other repos).`,
+                '',
+                `[View artifact](${artifactUrl})`,
+              ].join('\n'));
+              return;
+            }
+
+            const rows = missing.map(r =>
+              `| \`${r.method}\` | \`${r.path}\` | ${r.missing_from || 'dev,staging,prod'} |`
+            ).join('\n');
+
+            await upsertComment([
+              '## ❌ Nginx Route Validation Failed',
+              '',
+              'Nginx-native routes from `frontend-configmap.yaml` are missing from OpenAPI specs.',
+              '',
+              '| Method | Path | Missing envs |',
+              '|:------:|:-----|:-------------|',
+              rows || '_none_',
+              '',
+              'Update `kubecost-proxy/deploy/openapi/*/kubecost-complete-api.yaml`.',
+              '',
+              `[View artifact](${artifactUrl})`,
+            ].join('\n'));
+
+      - name: Set job summary
+        if: always()
+        run: |
+          if [ "${{ steps.validate.outcome }}" == "success" ]; then
+            echo "## ✅ Nginx Route Validation Passed" >> "$GITHUB_STEP_SUMMARY"
+            echo "Nginx-native routes match OpenAPI specs." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "## ❌ Nginx Route Validation Failed" >> "$GITHUB_STEP_SUMMARY"
+            echo "Check validation_results.json artifact for missing routes." >> "$GITHUB_STEP_SUMMARY"
+          fi

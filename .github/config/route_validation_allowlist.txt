@@ -1,0 +1,5 @@
+# Routes intentionally excluded from OpenAPI validation.
+# One route per line: METHOD /full/path
+#
+# On-prem nginx-native routes not yet in kubecost-complete-api.yaml, or served
+# at a different public path than the SaaS OpenAPI prefix (/kubecost/model).
