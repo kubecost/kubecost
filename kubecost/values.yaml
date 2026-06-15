@@ -511,12 +511,19 @@ frontend:
     enabled: true  # disable if the cluster does not support ipv6
   timeoutSeconds: 300  # should be rarely used, but can be increased if needed
 
-  # Customizable nginx-conf server block
+  # Default nginx buffer directives for the server block. Concatenated before extraServerConfig.
+  bufferConfig:
+    enabled: true
+    server: |-
+      proxy_busy_buffers_size   512k;
+      proxy_buffers   4 512k;
+      proxy_buffer_size   256k;
+      large_client_header_buffers 8 2m;
+      client_header_buffer_size 2m;
+
+  # Additional customizable nginx-conf server block directives (appended after bufferConfig).
   # extraServerConfig: |-
-  #   proxy_busy_buffers_size   512k;
-  #   proxy_buffers   4 512k;
-  #   proxy_buffer_size   256k;
-  #   large_client_header_buffers 4 64k;
+  #   ...
 
   # Configurable headers for nginx responses. Applied to all route locations
   nginxHeaders:
