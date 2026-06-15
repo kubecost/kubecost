@@ -110,11 +110,8 @@ data:
         add_header {{ . }}
         {{- end }}
 
-        {{- if and .Values.frontend.bufferConfig.enabled .Values.frontend.bufferConfig.server }}
-        {{- .Values.frontend.bufferConfig.server | toString | nindent 8 -}}
-        {{- end }}
-        {{- if .Values.frontend.extraServerConfig }}
-        {{- .Values.frontend.extraServerConfig | toString | nindent 8 -}}
+        {{- with include "kubecost.frontend.serverBlockConfig" . }}
+        {{- . | nindent 8 -}}
         {{- end }}
 
         error_page 504 /custom_504.html;

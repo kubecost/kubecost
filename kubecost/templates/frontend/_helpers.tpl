@@ -60,3 +60,31 @@ Create the branding config map name with fallback logic.
   {{ printf "frontend-logo-%s" .Release.Name | trunc 63 | trimSuffix "-" }}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Merge bufferConfig.directives with extraServerConfig lines, render nginx directives.
+*/}}
+{{- define "kubecost.frontend.serverBlockConfig" -}}
+  {{- $fromExtra := dict -}}
+  {{- range $line := splitList "\n" (.Values.frontend.extraServerConfig | default "" | toString) -}}
+    {{- $trimmed := $line | trim | trimSuffix ";" | trim -}}
+    {{- if $trimmed -}}
+      {{- $parts := regexSplit "\\s+" $trimmed 2 -}}
+      {{- if ge (len $parts) 2 -}}
+        {{- $fromExtra = mergeOverwrite $fromExtra (dict (index $parts 0) (index $parts 1)) -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+
+  {{- $base := dict -}}
+  {{- if .Values.frontend.bufferConfig.enabled -}}
+    {{- $base = .Values.frontend.bufferConfig.directives | default dict -}}
+  {{- end -}}
+  {{- $merged := mergeOverwrite $base $fromExtra -}}
+
+  {{- $out := "" -}}
+  {{- range $key := sortAlpha (keys $merged) -}}
+    {{- $out = printf "%s%s %s;\n" $out $key (index $merged $key) -}}
+  {{- end -}}
+  {{- trimSuffix "\n" $out -}}
+{{- end -}}
