@@ -29,7 +29,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Set up chart-testing
-        uses: helm/chart-testing-action@v2.8.0
+        uses: helm/chart-testing-action@6ec842c01de15ebb84c8627d2744a0c2f2755c9f #v2.8.0
 
       # Lint all chart values including those in the ci directory.
       - name: Run chart-testing (lint)
@@ -82,7 +82,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Set up chart-testing
-        uses: helm/chart-testing-action@v2.8.0
+        uses: helm/chart-testing-action@6ec842c01de15ebb84c8627d2744a0c2f2755c9f #v2.8.0
 
       - name: Create KinD cluster
         uses: helm/kind-action@v1.14.0
