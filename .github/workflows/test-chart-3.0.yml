@@ -59,6 +59,11 @@ jobs:
           entrypoint: /kubeconform
           args: "-summary -ignore-missing-schemas -output text full.yaml"
 
+      - name: Frontend serverBlockConfig template tests
+        run: |
+          helm dependency build kubecost/
+          .github/scripts/extra_server_config_test.sh
+
   # Test cluster versions.
   deploy-chart:
     runs-on: ubuntu-latest
