@@ -110,10 +110,11 @@ data:
         add_header {{ . }}
         {{- end }}
 
+        {{- if and .Values.frontend.bufferConfig.enabled .Values.frontend.bufferConfig.server }}
+        {{- .Values.frontend.bufferConfig.server | toString | nindent 8 -}}
+        {{- end }}
         {{- if .Values.frontend.extraServerConfig }}
         {{- .Values.frontend.extraServerConfig | toString | nindent 8 -}}
-        {{- else }}
-        large_client_header_buffers 4 32k;
         {{- end }}
 
         error_page 504 /custom_504.html;
