@@ -143,6 +143,42 @@ RBAC exclusivity check: make sure either simple RBAC or RBAC Teams is configured
 {{- end -}}
 
 {{/*
+Aggregator storage exclusivity check: make sure useEmptyDir and useHostPath are not both enabled
+*/}}
+{{- define "kubecost.aggregator.storageCheck" -}}
+  {{- if and (.Values.aggregator).useEmptyDir (.Values.aggregator).useHostPath -}}
+    {{- fail "aggregator.useEmptyDir and aggregator.useHostPath cannot both be set to true. Please choose only one storage option." -}}
+  {{- end -}}
+{{- end -}}
+
+{{/*
+Aggregator storage warning: warn if useEmptyDir or useHostPath is configured
+*/}}
+{{- define "kubecost.aggregator.storageWarning" -}}
+  {{- if or (.Values.aggregator).useEmptyDir (.Values.aggregator).useHostPath -}}
+
+################################################################################
+# WARNING: NON-RECOMMENDED AGGREGATOR STORAGE CONFIGURATION
+################################################################################
+{{- if (.Values.aggregator).useEmptyDir }}
+You have configured aggregator.useEmptyDir=true. This is NOT the recommended
+way to use Kubecost in production environments.
+{{- end }}
+{{- if (.Values.aggregator).useHostPath }}
+You have configured aggregator.useHostPath=true. This is NOT the recommended
+way to use Kubecost in production environments.
+{{- end }}
+
+IMPORTANT: Without a proper PersistentVolumeClaim (PVC), pod restarts will
+require the Aggregator database to reingest all agent data. This will cause
+significant service disruptions. For production use, please configure a PVC for
+persistent storage.
+################################################################################
+
+  {{- end -}}
+{{- end -}}
+
+{{/*
 Print a warning if PV is enabled AND EKS is detected AND the EBS-CSI driver is not installed.
 Skip the check if CI/CD is enabled and skipSanityChecks is set. Argo CD, for
 example, does not support templating a chart which uses the lookup function.
@@ -200,7 +236,6 @@ example, does not support templating a chart which uses the lookup function.
 {{- end -}}
 {{- end -}}
 
-
 {{/*
 Actions Storage source contents check. Either the Secret must be specified or the YAML, not both.
 */}}
@@ -209,6 +244,26 @@ Actions Storage source contents check. Either the Secret must be specified or th
   {{- if and ((.Values.kubecostProductConfigs).actions).storageConfigSecret ((.Values.kubecostProductConfigs).actions).storageConfig -}}
     {{- fail "\nkubecostProductConfigs.actions.storageConfigSecret and kubecostProductConfigs.actions.storageConfig are mutually exclusive. Please specify only one." -}}
   {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+{{/*
+Free Actions validation check. Ensures that a signing key is properly configured.
+*/}}
+{{- define "kubecost.freeActionsSigningKeyCheck" -}}
+  {{- if and (not (.Values.kubecostProductConfigs.productKey).enabled) ((.Values.kubecostProductConfigs.actions).enabled) -}}
+    {{- $rsaEnabled := (((.Values.kubecostProductConfigs.actions).signing).rsa).enabled -}}
+    {{- $rsaPrivateKeySecret := (((.Values.kubecostProductConfigs.actions).signing).rsa).privateKeySecret -}}
+    {{- if or (not $rsaEnabled) (not $rsaPrivateKeySecret) -}}
+      {{- fail "\nActions is enabled on free-tier. Either provide an RSA signing key pair under kubecostProductConfigs.actions.signing.rsa and clusterController.signing.rsa or configure an enterprise v2 license." -}}
+    {{- end -}}
+    {{- if (.Values.clusterController).enabled -}}
+      {{- $clusterControllerRSAEnabled := (((.Values.clusterController).signing).rsa).enabled -}}
+      {{- $clusterControllerRSAPublicKeySecret := (((.Values.clusterController).signing).rsa).publicKeySecret -}}
+      {{- if or (not $clusterControllerRSAEnabled) (not $clusterControllerRSAPublicKeySecret) -}}
+        {{- fail "\nActions is enabled on free-tier and clusterController is enabled. You must configure the cluster controller RSA public key under clusterController.signing.rsa." -}}
+      {{- end -}}
+    {{- end -}}
   {{- end -}}
 {{- end -}}
 
@@ -547,9 +602,7 @@ To resolve this, either:
   "kubecost-oidc-configmap-template.yaml"
   "kubecost-oidc-secret-template.yaml"
   "kubecost-productkey-secret.yaml"
-  "kubecost-rbac-secret-template.yaml"
   "kubecost-rbac-teams-configmap-template.yaml"
-  "kubecost-saml-secret-template.yaml"
   "network-costs/network-costs-configmap.yaml"
   "savings-profiles-configmap.yaml"
   "savings-recommendations-allowlists-configmap-template.yaml"
@@ -642,4 +695,84 @@ imagePullSecrets:
 {{- if .Values.imagePullSecrets }}
 {{ printf "\nWARNING .Values.imagePullSecrets has been deprecated. Please use .Values.global.imagePullSecrets instead.\nThe finops-agent will only use the global.imagePullSecrets\n" }}
 {{- end -}}
+{{- end -}}
+
+{{/*
+Persistent db storage annotations block for the Aggregator StatefulSet.
+- CICD: no annotations (lookup unavailable; avoid immutable field conflicts in StatefulSet).
+- Non-CICD: use existing STS annotations if found, else values.
+*/}}
+{{- define "kubecost.aggregatorStatefulset.pvcAnnotations.aggregator-db-storage" -}}
+  {{- if .Values.global.platforms.cicd.enabled -}}
+  {{/* CICD: do not set PVC annotations */}}
+  {{- else -}}
+  {{- $pastAnnotations := dict -}}
+  {{- $foundSts := false -}}
+  {{- $stsList := (lookup "apps/v1" "StatefulSet" .Release.Namespace "") -}}
+  {{- if and $stsList (not (empty $stsList.items)) -}}
+    {{- range $i, $s := $stsList.items -}}
+      {{- if contains "aggregator" $s.metadata.name -}}
+        {{- $foundSts = true -}}
+        {{- $volumeClaimTemplates := $s.spec.volumeClaimTemplates -}}
+        {{- range $j, $volumeClaimTemplate := $volumeClaimTemplates -}}
+          {{- if and $volumeClaimTemplate.metadata.annotations (eq $volumeClaimTemplate.metadata.name "aggregator-db-storage") -}}
+            {{- $pastAnnotations = $volumeClaimTemplate.metadata.annotations -}}
+          {{- end -}}
+        {{- end -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+
+annotations:
+  {{- if $foundSts }}
+    {{- $pastAnnotations | toYaml | nindent 2 }}
+  {{- else -}}
+    {{- with .Values.global.annotations }}
+      {{- toYaml . | nindent 2 }}
+    {{- end }}
+    {{- with .Values.aggregator.aggregatorDbStorage.annotations }}
+      {{- toYaml . | nindent 2 }}
+    {{- end }}
+  {{- end }}
+  {{- end -}}
+{{- end -}}
+
+{{/*
+Persistent-configs annotations block for the Aggregator StatefulSet.
+- CICD: no annotations (lookup unavailable; avoid immutable field conflicts in StatefulSet).
+- Non-CICD: use existing STS annotations if found, else values.
+*/}}
+{{- define "kubecost.aggregatorStatefulset.pvcAnnotations.persistent-configs" -}}
+  {{- if .Values.global.platforms.cicd.enabled -}}
+  {{/* CICD: do not set PVC annotations */}}
+  {{- else -}}
+  {{- $pastAnnotations := dict -}}
+  {{- $foundSts := false -}}
+  {{- $stsList := (lookup "apps/v1" "StatefulSet" .Release.Namespace "") -}}
+  {{- if and $stsList (not (empty $stsList.items)) -}}
+    {{- range $i, $s := $stsList.items -}}
+      {{- if contains "aggregator" $s.metadata.name -}}
+        {{- $foundSts = true -}}
+        {{- $volumeClaimTemplates := $s.spec.volumeClaimTemplates -}}
+        {{- range $j, $volumeClaimTemplate := $volumeClaimTemplates -}}
+          {{- if and $volumeClaimTemplate.metadata.annotations (eq $volumeClaimTemplate.metadata.name "persistent-configs") -}}
+            {{- $pastAnnotations = $volumeClaimTemplate.metadata.annotations -}}
+          {{- end -}}
+        {{- end -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+
+annotations:
+  {{- if $foundSts }}
+    {{- $pastAnnotations | toYaml | nindent 2 }}
+  {{- else -}}
+    {{- with .Values.global.annotations }}
+      {{- toYaml . | nindent 2 }}
+    {{- end }}
+    {{- with .Values.aggregator.persistentConfigsStorage.annotations }}
+      {{- toYaml . | nindent 2 }}
+    {{- end }}
+  {{- end }}
+  {{- end -}}
 {{- end -}}

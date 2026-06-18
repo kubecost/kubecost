@@ -24,10 +24,12 @@ spec:
     matchLabels:
     {{- include "kubecost.aggregator.selectorLabels" . | nindent 6 }}
   volumeClaimTemplates:
+  {{- if and (not .Values.aggregator.useEmptyDir) (not .Values.aggregator.useHostPath) }}
   - apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
       name: aggregator-db-storage
+      {{- include "kubecost.aggregatorStatefulset.pvcAnnotations.aggregator-db-storage" . | nindent 6 }}
     spec:
       accessModes: [ "ReadWriteOnce" ]
       {{- if .Values.aggregator.aggregatorDbStorage.storageClass }}
@@ -47,6 +49,7 @@ spec:
       # a need to "mount" ConfigMap files (using the watcher) to a file system;
       # that's what this per-replica Volume is used for.
       name: persistent-configs
+      {{- include "kubecost.aggregatorStatefulset.pvcAnnotations.persistent-configs" . | nindent 6 }}
     spec:
       accessModes: [ "ReadWriteOnce" ]
       {{- if .Values.aggregator.persistentConfigsStorage.storageClass }}
@@ -57,6 +60,7 @@ spec:
       resources:
         requests:
           storage: {{ .Values.aggregator.persistentConfigsStorage.storageRequest }}
+  {{- end }}
   template:
     metadata:
       labels:
@@ -85,6 +89,23 @@ spec:
     {{- end }}
       serviceAccountName: {{ template "kubecost.aggregator.serviceAccountName" . }}
       volumes:
+        {{- if .Values.aggregator.useHostPath }}
+        - name: aggregator-db-storage
+          hostPath:
+            path: {{ .Values.aggregator.hostPathDbStoragePath }}
+            type: DirectoryOrCreate
+        - name: persistent-configs
+          hostPath:
+            path: {{ .Values.aggregator.hostPathDbStoragePath }}-configs
+            type: DirectoryOrCreate
+        {{- else if .Values.aggregator.useEmptyDir }}
+        - name: aggregator-db-storage
+          emptyDir:
+            sizeLimit: {{ .Values.aggregator.emptyDirDbStorageSizeLimit }}
+        - name: persistent-configs
+          emptyDir:
+            sizeLimit: 1Gi
+        {{- end }}
         - name: aggregator-staging
           emptyDir:
             sizeLimit: {{ .Values.aggregator.stagingEmptyDirSizeLimit }}
@@ -111,6 +132,11 @@ spec:
             - key: smtp.json
               path: smtp.json
         {{- end }}
+        {{- if ((((.Values.kubecostProductConfigs).actions).signing).rsa).enabled }}
+        - name: rsa-private-key
+          secret:
+            secretName: {{ .Values.kubecostProductConfigs.actions.signing.rsa.privateKeySecret }}
+        {{- end }}
         {{- if (.Values.saml).enabled }}
         {{- if .Values.saml.secretName }}
         - name: secret-volume
@@ -132,9 +158,6 @@ spec:
           secret:
             secretName: {{ .Values.saml.metadataSecretName }}
         {{- end }}
-        - name: saml-auth-secret
-          secret:
-            secretName: {{ .Values.saml.authSecretName | default "kubecost-saml-secret" }}
         {{- if .Values.saml.rbac.enabled }}
         - name: saml-roles
           configMap:
@@ -167,11 +190,6 @@ spec:
             secretName: {{ .Values.oidc.apiMasterKeySecret | default "kubecost-master-api-key" }}
         {{- end }}
         {{- end }}
-        {{- end }}
-        {{- if eq (include "kubecost.rbacTeams.enabled" .) "true" }}
-        - name: kubecost-rbac-secret
-          secret:
-            secretName: kubecost-rbac-secret
         {{- end }}
         {{- if eq (include "kubecost.rbacTeams.config.enabled" .) "true" }}
         - name: kubecost-rbac-teams-config
@@ -213,9 +231,11 @@ spec:
           emptyDir: {}
         {{- end }}
         {{- if (.Values.enterpriseCustomPricing).enabled }}
+        {{- if (.Values.enterpriseCustomPricing).configMapName }}
         - name: kubecost-enterprise-pricing
           configMap:
             name: {{ .Values.enterpriseCustomPricing.configMapName }}
+        {{- end }}
         {{- end }}
         {{- if ((.Values.kubecostProductConfigs).actions).config }}
         - name: actions-config
@@ -344,6 +364,10 @@ spec:
             - name: smtp-secret
               mountPath: /var/configs/smtp
             {{- end }}
+            {{- if ((((.Values.kubecostProductConfigs).actions).signing).rsa).enabled }}
+            - name: rsa-private-key
+              mountPath: /var/configs/keys
+            {{- end }}
             {{- if (.Values.saml).enabled }}
             {{- if (.Values.saml).secretName }}
             - name: secret-volume
@@ -361,8 +385,6 @@ spec:
             - name: metadata-secret-volume
               mountPath: /var/configs/metadata-secret-volume
             {{- end }}
-            - name: saml-auth-secret
-              mountPath: /var/configs/saml-auth-secret
             {{- if ((.Values.saml).rbac).enabled }}
             - name: saml-roles
               mountPath: /var/configs/saml
@@ -375,10 +397,6 @@ spec:
             - name: oidc-client-secret
               mountPath: /var/configs/oidc-client-secret
             {{- end }}
-            {{- end }}
-            {{- if eq (include "kubecost.rbacTeams.enabled" .) "true" }}
-            - name: kubecost-rbac-secret
-              mountPath: /var/configs/kubecost-rbac-secret
             {{- end }}
             {{- if eq (include "kubecost.authMasterKey.enabled" .) "true" }}
             - name: kubecost-master-api-key
@@ -402,8 +420,10 @@ spec:
               readOnly: false
             {{- end }}
             {{- if (.Values.enterpriseCustomPricing).enabled }}
+            {{- if (.Values.enterpriseCustomPricing).configMapName }}
             - name: kubecost-enterprise-pricing
               mountPath: /var/configs/enterprise-pricing
+            {{- end }}
             {{- end }}
             {{- if ((.Values.kubecostProductConfigs).actions).config }}
             - name: actions-config
@@ -466,6 +486,10 @@ spec:
             - name: SMTP_CONFIGMAP_NAME
               value: {{ .Values.smtpConfigmapName }}
             {{- end }}
+            {{- if ((((.Values.kubecostProductConfigs).actions).signing).rsa).enabled }}
+            - name: ACTIONS_USER_RSA_KEY
+              value: "true"
+            {{- end }}
             {{- if .Values.kubecostProductConfigs.budgets.configmapName }}
             - name: BUDGETS_CONFIGMAP_NAME
               value: {{ .Values.kubecostProductConfigs.budgets.configmapName }}
@@ -511,10 +535,14 @@ spec:
               value: {{ .Values.diagnostics.enabled | quote }}
             - name: DIAGNOSTICS_RETENTION
               value: {{ .Values.diagnostics.retention | quote }}
+            - name: DIAGNOSTICS_STORAGE_LOOKBACK
+              value: {{ .Values.diagnostics.storageLookback | quote }}
             - name: HEARTBEAT_ENABLED
               value: {{ .Values.heartbeat.enabled | quote }}
             - name: HEARTBEAT_RETENTION
               value: {{ .Values.heartbeat.retention | quote }}
+            - name: HEARTBEAT_STORAGE_LOOKBACK
+              value: {{ .Values.heartbeat.storageLookback | quote }}
             {{- if .Values.kubecostProductConfigs.apiConfigMapName }}
             - name: API_CONFIGMAP_NAME
               value: {{ .Values.kubecostProductConfigs.apiConfigMapName }}
@@ -531,8 +559,10 @@ spec:
               value: {{ .Values.aggregator.dbReadThreads | quote }}
             - name: DB_WRITE_THREADS
               value: {{ .Values.aggregator.dbWriteThreads | quote }}
+            {{- if ne (toString .Values.aggregator.dbConcurrentIngestionCount) "auto" }}
             - name: DB_CONCURRENT_INGESTION_COUNT
               value: {{ .Values.aggregator.dbConcurrentIngestionCount | quote }}
+            {{- end }}
             {{- if ne .Values.aggregator.dbMemoryLimit "0GB" }}
             - name: DB_MEMORY_LIMIT
               value: {{ .Values.aggregator.dbMemoryLimit | quote }}
@@ -626,10 +656,12 @@ spec:
             {{- if (.Values.enterpriseCustomPricing).enabled }}
             - name: ENTERPRISE_CUSTOM_PRICING_ENABLED
               value: "true"
+            {{- if ((.Values.enterpriseCustomPricing).location).URI }}
             - name: ENTERPRISE_CUSTOM_PRICING_CSV_LOCATION_URI
               value: {{ (quote .Values.enterpriseCustomPricing.location.URI) }}
+            {{- end }}
             - name: ENTERPRISE_CUSTOM_PRICING_APPLY_RETROACTIVELY
-              value: "true"
+              value: {{ .Values.enterpriseCustomPricing.applyRetroactively | quote }}
             {{- end }}
             {{- if ((.Values.kubecostProductConfigs).actions).enabled }}
             - name: ACTIONS_ENABLED
@@ -645,6 +677,8 @@ spec:
             - name: SAAS_DEPLOYMENT
               value: "true"
             {{- end }}
+            - name: KUBEMODEL_INGESTION_ENABLED
+              value: {{ .Values.aggregator.kubemodelIngestionEnabled | quote }}
             {{- if .Values.aggregator.extraEnv -}}
             {{- toYaml .Values.aggregator.extraEnv | nindent 12 }}
             {{- end }}

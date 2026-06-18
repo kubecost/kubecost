@@ -59,6 +59,11 @@ jobs:
           entrypoint: /kubeconform
           args: "-summary -ignore-missing-schemas -output text full.yaml"
 
+      - name: Frontend serverBlockConfig template tests
+        run: |
+          helm dependency build kubecost/
+          .github/scripts/extra_server_config_test.sh
+
   # Test cluster versions.
   deploy-chart:
     runs-on: ubuntu-latest
@@ -80,7 +85,7 @@ jobs:
         uses: helm/chart-testing-action@v2.8.0
 
       - name: Create KinD cluster
-        uses: helm/kind-action@v1.13.0
+        uses: helm/kind-action@v1.14.0
         with:
           version: v0.20.0
           node_image: kindest/node:${{ matrix.k8s-version.version }}
@@ -175,6 +180,28 @@ jobs:
             kubectl -n kubecost delete deployments,daemonsets,statefulsets,pods --all --force
           fi
           done
+
+      - name: Checkout Target Branch
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+          path: ./target-branch
+  
+      - name: Install, Upgrade, Test, and Uninstall chart for default values
+        run: |
+          cd ./target-branch/kubecost
+          helm repo add finops-agent-chart https://kubecost.github.io/finops-agent-chart
+          helm repo update
+          helm dependency build
+          helm install --wait --wait-for-jobs kubecost . -n kubecost
+          kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/instance=kubecost --timeout=120s
+          cd ../..
+          helm upgrade kubecost kubecost/ -n kubecost --wait --wait-for-jobs
+          kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/instance=kubecost --timeout=120s
+          helm test -n kubecost kubecost
+          helm uninstall kubecost -n kubecost --no-hooks --wait
+          kubectl -n kubecost delete deployments,daemonsets,statefulsets,pods --all --force
+
 
   deploy-ocp:
     runs-on: ubuntu-latest

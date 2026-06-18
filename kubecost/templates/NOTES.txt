@@ -7,8 +7,11 @@
 {{- include "kubecost.clusterId.check" . -}}
 {{- include "kubecost.caCertsSecretConfig.check" . -}}
 {{- include "kubecost.actionsStorageSourceCheck" . -}}
+{{- include "kubecost.freeActionsSigningKeyCheck" . -}}
 {{- include "kubecost.finopsagentCheck" . -}}
 {{- include "kubecost.cloudCost.persistentStorage.check" . -}}
+{{- include "kubecost.aggregator.storageCheck" . -}}
+{{- include "kubecost.aggregator.storageWarning" . }}
 ================================================================================
 KUBECOST INSTALLATION SUCCESSFUL
 ================================================================================

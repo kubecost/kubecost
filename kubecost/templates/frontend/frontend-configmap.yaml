@@ -71,20 +71,6 @@ data:
         {{- end }}
     }
 
-{{- if and .Values.clusterController .Values.clusterController.enabled .Values.clusterController.legacyMode }}
-    upstream clustercontroller {
-{{- if .Values.frontend.useDefaultFqdn }}
-        server {{ include "kubecost.clusterController.name" . }}-service.{{ .Release.Namespace }}.svc.cluster.local:9731;
-{{- else }}
-{{- if (.Values.frontend.clusterController).fqdn }}
-        server {{ .Values.frontend.clusterController.fqdn }};
-{{- else }}
-        server {{ include "kubecost.clusterController.name" . }}-service.{{ .Release.Namespace }}:9731;
-{{- end }}
-{{- end }}
-    }
-{{- end }}
-
   {{- if .Values.forecasting.enabled }}
     upstream forecasting {
         {{- if .Values.frontend.useDefaultFqdn }}
@@ -124,10 +110,8 @@ data:
         add_header {{ . }}
         {{- end }}
 
-        {{- if .Values.frontend.extraServerConfig }}
-        {{- .Values.frontend.extraServerConfig | toString | nindent 8 -}}
-        {{- else }}
-        large_client_header_buffers 4 32k;
+        {{- with include "kubecost.frontend.serverBlockConfig" . }}
+        {{- . | nindent 8 -}}
         {{- end }}
 
         error_page 504 /custom_504.html;
@@ -220,34 +204,7 @@ data:
         }
 
         location ~ ^/(turndown|cluster)/ {
-
-{{- if .Values.clusterController }}
-{{- if and .Values.clusterController.enabled .Values.clusterController.legacyMode }}
-            {{- if or .Values.saml .Values.oidc }}
-            {{- if or .Values.saml.enabled .Values.oidc.enabled }}
-            auth_request /auth;
-            {{- else if .Values.saml.rbac.enabled}}
-            auth_request /authrbac;
-            {{- end }}
-            {{- end }}
-
-            rewrite ^/(?:turndown|cluster)/(.*)$ /$1 break;
-            proxy_pass http://clustercontroller;
-            proxy_connect_timeout       180;
-            proxy_send_timeout          180;
-            proxy_read_timeout          180;
-            proxy_redirect off;
-            proxy_http_version 1.1;
-            proxy_set_header Connection "";
-            proxy_set_header X-Real-IP  $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-
-{{- else }}
-            return 404;
-{{- end }}
-{{- else }}
-            return 404;
-{{- end }}
+          return 404;
         }
 
     {{- if .Values.oidc.enabled }}
@@ -557,7 +514,9 @@ data:
                 "hideCloudCosts": "{{ default false ((.Values.kubecostProductConfigs).hideCloudCosts)}}",
                 "legacyModeEnabled": "{{ .Values.aggregator.legacyMode }}",
                 "clusterId": "{{ include "kubecost.clusterId" . }}",
-                "defaultSavingsProfile": "{{ .Values.kubecostProductConfigs.clusterProfile }}"
+                "defaultSavingsProfile": "{{ .Values.kubecostProductConfigs.clusterProfile }}",
+                "defaultIdle": "{{ .Values.kubecostProductConfigs.defaultIdle }}",
+                "currencyCode": "{{ .Values.kubecostProductConfigs.currencyCode }}"
                 }
             ';
         }
@@ -569,25 +528,6 @@ data:
                     "version": "{{ .Chart.Version }}"
                 }
             ';
-        }
-
-        # TODO: Remove this endpoint. All these configs will become available in the backend's `/model/getApiConfigs` and `/model/setApiConfigs`. They will also be configured in a ConfigMap. https://github.com/kubecost/kubecost/pull/4472.
-        location = /model/getConfigs {
-            default_type 'application/json';
-            return 200 '{
-                "code": 200,
-                "status": "success",
-                "data": {
-                    "defaultIdle": "{{ .Values.kubecostProductConfigs.defaultIdle }}",
-                    "currencyCode": "{{ .Values.kubecostProductConfigs.currencyCode }}",
-                    "negotiatedDiscount": "{{ .Values.kubecostProductConfigs.negotiatedDiscount }}",
-                    "sharedOverhead": "{{ .Values.kubecostProductConfigs.sharedOverhead }}",
-                    "sharedNamespaces": "{{ .Values.kubecostProductConfigs.sharedNamespaces }}",
-                    "sharedLabelNames": "{{ .Values.kubecostProductConfigs.sharedLabelNames }}",
-                    "sharedLabelValues": "{{ .Values.kubecostProductConfigs.sharedLabelValues }}",
-                    "shareTenancyCosts": "{{ .Values.kubecostProductConfigs.shareTenancyCosts }}"
-                }
-            }';
         }
 
         # Branding Routes

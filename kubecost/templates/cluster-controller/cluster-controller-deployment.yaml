@@ -65,11 +65,7 @@ spec:
         image: {{ include "kubecost.clusterController.image" . }}
         imagePullPolicy: {{ .Values.clusterController.imagePullPolicy }}
         args:
-        {{- if (.Values.clusterController).legacyMode }}
-        - v1
-        {{- else }}
         - v2
-        {{- end }}
         securityContext:
         {{- if .Values.clusterController.securityContext }}
           {{- toYaml .Values.clusterController.securityContext | nindent 10 -}}
@@ -79,7 +75,6 @@ spec:
         volumeMounts:
         - name: cluster-controller-keys
           mountPath: /var/keys
-        {{- if not (.Values.clusterController).legacyMode }}
         {{- if and (not (.Values.clusterController).storageConfigSecret) (not (.Values.clusterController).storageConfig) }}
         - name: actions-storage
           mountPath: /var/configs/actions/storage
@@ -92,6 +87,9 @@ spec:
           mountPath: /var/configs/actions/storage
           readOnly: true
         {{- end }}
+        {{- if .Values.clusterController.signing.rsa.enabled }}
+        - name: rsa-public-key
+          mountPath: /var/configs/keys
         {{- end }}
         env:
         - name: POD_NAME
@@ -116,12 +114,12 @@ spec:
           value: /var/keys/service-key.json
         - name: CC_LOG_LEVEL
           value: {{ .Values.clusterController.logLevel | default "info" }}
-        {{- if not (.Values.clusterController).legacyMode }}
+        - name: ACTIONS_USER_RSA_KEY
+          value: {{ .Values.clusterController.signing.rsa.enabled | default "false" | quote }}
         - name: LOG_LEVEL
           value: {{ .Values.clusterController.logLevel | default "info" }}
         - name: ACTIONS_BUCKET_CONFIG
           value: /var/configs/actions/storage/actions-store.yaml
-        {{- end }}
         - name: CC_KUBESCALER_COST_MODEL_PATH
           {{- if .Values.clusterController.primaryKubecostURL }}
           value: {{ .Values.clusterController.primaryKubecostURL }}/model
@@ -145,16 +143,22 @@ spec:
         - name: CC_KUBESCALER_DEFAULT_RESIZE_ALL
           value: {{ .Values.clusterController.kubescaler.defaultResizeAll | default "false" | quote }}
         {{- end }}
+        {{- if .Values.clusterController.rateLimiter }}
+        {{- if .Values.clusterController.rateLimiter.eventsPerSecond }}
+        - name: RATE_LIMITER_EVENTS_PER_SECOND
+          value: {{ .Values.clusterController.rateLimiter.eventsPerSecond | quote }}
+        {{- end }}
+        {{- if .Values.clusterController.rateLimiter.eventBurst }}
+        - name: RATE_LIMITER_EVENT_BURST
+          value: {{ .Values.clusterController.rateLimiter.eventBurst | quote }}
+        {{- end }}
+        {{- end }}
         {{- if .Values.clusterController.extraEnv -}}
         {{ toYaml .Values.clusterController.extraEnv | nindent 8 }}
         {{- end }}
         ports:
         - name: http-server
-        {{- if not (.Values.clusterController).legacyMode }}
           containerPort: 9732
-        {{- else }}
-          containerPort: 9731
-        {{- end }}
         resources:
           {{- toYaml .Values.clusterController.resources | nindent 12 }}
       {{- include "kubecost.imagePullSecrets" . | nindent 6 }}
@@ -181,7 +185,6 @@ spec:
           # partially or fully initialize based on the presence of these keys
           # and their validity.
           optional: true
-      {{- if not (.Values.clusterController).legacyMode }}
       {{- if and (not (.Values.clusterController).storageConfigSecret) (not (.Values.clusterController).storageConfig) }}
       - name: actions-storage
         emptyDir: { }
@@ -194,5 +197,9 @@ spec:
         secret:
           secretName: {{ include "kubecost.clusterController.actionsBucketConfigSecretName" . }}
       {{- end }}
+      {{- if .Values.clusterController.signing.rsa.enabled }}
+      - name: rsa-public-key
+        secret:
+          secretName: {{ .Values.clusterController.signing.rsa.publicKeySecret }}
       {{- end }}
 {{- end }}

@@ -5,6 +5,7 @@ global:
   federatedStorage:
     ## Use the existingSecret when a access key and secret is used to access the federated storage.
     ## the 'config' can be used when using assumed roles.
+    ## when using the 'existingSecret' the 'config' should be commented out    
     existingSecret: ""
     config: |-
       type: AZURE

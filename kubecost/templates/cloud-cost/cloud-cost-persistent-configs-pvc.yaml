@@ -10,8 +10,11 @@ metadata:
     {{- with .Values.global.additionalLabels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-  {{- with .Values.global.annotations }}
   annotations:
+  {{- with .Values.global.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.cloudCost.persistentConfigsStorage.annotations }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
