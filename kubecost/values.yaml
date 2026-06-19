@@ -1624,24 +1624,34 @@ kubecostProductConfigs:
 
   ## Kubecost settings surfaced to the frontend.
   ##
-  ## These render into the "api-configs" ConfigMap. As of KCM-5836, any value
-  ## set here is treated as Helm-defined: it is locked in the UI and cannot be
-  ## overridden via the settings page (/setApiConfig). Leave a value empty to
-  ## keep it editable in the UI; the cost-model supplies the default (the
-  ## previous chart defaults are now the cost-model defaults, so emptying these
-  ## is a no-op on upgrade). Only set a value here to intentionally pin/lock it.
+  ## These render into the "api-configs" ConfigMap and act as the seed/default
+  ## values shown in the settings UI. By default they remain editable in the UI.
+  ## To pin (lock) any of these to a Helm-managed value the UI cannot change,
+  ## list it under lockedApiConfigs below. (KCM-5836)
   ##
   labelMappingConfigs:        # Names of k8s labels or annotations used to designate different allocation concepts
-    owner_label: ""           # cost-model default: "owner"
-    team_label: ""            # cost-model default: "team"
-    department_label: ""      # cost-model default: "dept"
-    product_label: ""         # cost-model default: "product"
-    environment_label: ""     # cost-model default: "env"
+    owner_label: "owner"
+    team_label: "team"
+    department_label: "dept"
+    product_label: "product"
+    environment_label: "env"
   sharedNamespaces: ""        # Namespaces with shared workloads, example value: "kube-system\,ingress-nginx\,kubecost\,monitoring"
   sharedLabelNames: ""
   sharedLabelValues: ""       # Default shared label values, e.g., "app:prometheus"
-  sharedOverhead: ""          # Value representing a fixed external cost per month to be distributed among aggregations. cost-model default: 0
-  shareTenancyCosts: ""       # Enable or disable sharing costs such as cluster management fees. cost-model default: true
+  sharedOverhead: 0           # Value representing a fixed external cost per month to be distributed among aggregations.
+  shareTenancyCosts: true     # Enable or disable sharing costs such as cluster management fees
+
+  ## Configs to lock to Helm-managed values. Anything listed here renders into a
+  ## separate "api-configs-locked" ConfigMap: it is shown in the settings page
+  ## as Helm-defined, cannot be changed via the UI (/setApiConfig returns an
+  ## error), and takes precedence over any UI value. Keys must match the api
+  ## config json keys (e.g. owner_label, sharedOverhead). Leave as {} to keep
+  ## every config UI-editable. Additive and opt-in, so it never alters a pre-set
+  ## config on upgrade. (KCM-5836)
+  ##
+  lockedApiConfigs: {}
+  #   owner_label: "owner"
+  #   sharedOverhead: "25"
   currencyCode: "USD"         # Official support for USD, AUD, BRL, CAD, CHF, CNY, DKK, EUR, GBP, IDR, INR, JPY, NOK, PLN, SEK
   negotiatedDiscount: ""      # Custom negotiated cloud provider discount
   defaultIdle: false
