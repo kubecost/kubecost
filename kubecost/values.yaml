@@ -1622,12 +1622,7 @@ kubecostProductConfigs:
   # cloudAccountMapping:
   #   EXAMPLE_ACCOUNT_ID: EXAMPLE_ACCOUNT_NAME
 
-  ## Kubecost settings surfaced to the frontend.
-  ##
-  ## These render into the "api-configs" ConfigMap and act as the seed/default
-  ## values shown in the settings UI. By default they remain editable in the UI.
-  ## To pin (lock) any of these to a Helm-managed value the UI cannot change,
-  ## list it under lockedApiConfigs below. (KCM-5836)
+  ## Kubecost settings surfaced to the frontend
   ##
   labelMappingConfigs:        # Names of k8s labels or annotations used to designate different allocation concepts
     owner_label: "owner"
@@ -1640,18 +1635,6 @@ kubecostProductConfigs:
   sharedLabelValues: ""       # Default shared label values, e.g., "app:prometheus"
   sharedOverhead: 0           # Value representing a fixed external cost per month to be distributed among aggregations.
   shareTenancyCosts: true     # Enable or disable sharing costs such as cluster management fees
-
-  ## Configs to lock to Helm-managed values. Anything listed here renders into a
-  ## separate "api-configs-locked" ConfigMap: it is shown in the settings page
-  ## as Helm-defined, cannot be changed via the UI (/setApiConfig returns an
-  ## error), and takes precedence over any UI value. Keys must match the api
-  ## config json keys (e.g. owner_label, sharedOverhead). Leave as {} to keep
-  ## every config UI-editable. Additive and opt-in, so it never alters a pre-set
-  ## config on upgrade. (KCM-5836)
-  ##
-  lockedApiConfigs: {}
-  #   owner_label: "owner"
-  #   sharedOverhead: "25"
   currencyCode: "USD"         # Official support for USD, AUD, BRL, CAD, CHF, CNY, DKK, EUR, GBP, IDR, INR, JPY, NOK, PLN, SEK
   negotiatedDiscount: ""      # Custom negotiated cloud provider discount
   defaultIdle: false
