@@ -288,6 +288,9 @@ enterpriseCustomPricing:
   # The file name (e.g. pricing.csv) needs to match the file name used to make the ConfigMap (above)
   location:
     URI: ""  # e.g. /var/configs/enterprise-pricing/pricing.csv
+  # When true (default), custom pricing is applied retroactively to historical
+  # data. Set to false to apply custom pricing only going forward.
+  applyRetroactively: true
 
 ## Kubecost SAML (enterprise key required)
 ## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=configuration-user-management-saml
@@ -508,12 +511,19 @@ frontend:
     enabled: true  # disable if the cluster does not support ipv6
   timeoutSeconds: 300  # should be rarely used, but can be increased if needed
 
-  # Customizable nginx-conf server block
+  # Default server block directives; extraServerConfig overrides matching keys.
+  bufferConfig:
+    enabled: true
+    directives:
+      proxy_busy_buffers_size: "512k"
+      proxy_buffers: "4 512k"
+      proxy_buffer_size: "256k"
+      large_client_header_buffers: "8 2m"
+      client_header_buffer_size: "2m"
+
+  # Additional server block directives (merged on top of bufferConfig.directives).
   # extraServerConfig: |-
-  #   proxy_busy_buffers_size   512k;
-  #   proxy_buffers   4 512k;
-  #   proxy_buffer_size   256k;
-  #   large_client_header_buffers 4 64k;
+  #   ...
 
   # Configurable headers for nginx responses. Applied to all route locations
   nginxHeaders:
@@ -732,7 +742,7 @@ networkCosts:
   image:
     registry: ""  # Default is "icr.io"
     repository: kubecost/network-costs
-    tag: v0.18.3
+    tag: v0.19.0
   imagePullPolicy: IfNotPresent
 
   updateStrategy:
@@ -767,6 +777,15 @@ networkCosts:
   # Port will set both the containerPort and hostPort to this value.
   # These must be identical due to network-costs being run on hostNetwork
   port: 3001
+
+  # Refresh interval for route table updates (e.g., "10m", "600s")
+  # Default: 600s (10 minutes)
+  routeRefreshInterval: "600s"
+
+  # Refresh interval for conntrack entry collection (e.g., "5s", "10s")
+  # Default: 5s
+  conntrackRefreshInterval: "5s"
+
   # this daemonset can use significant resources on large clusters: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=dashboard-network-traffic-cost-allocation
   resources:
     limits:  # remove the limits by setting cpu: null
@@ -840,6 +859,33 @@ networkCosts:
       #      - "15.128.15.2"
       #      - "20.0.0.0/8"
 
+  ## Storage configuration for NAT gateway traffic logs
+  ## Used when NAT gateway traffic detection is enabled to access VPC flow logs
+  ## Example for S3:
+  ##   storageConfig:
+  ##     type: S3
+  ##     config:
+  ##       bucket: my-flow-logs-bucket
+  ##       endpoint: s3.amazonaws.com
+  ##       region: us-west-2
+  ##       access_key: my-access-key
+  ##       secret_key: my-secret-key
+  ##       aws_sdk_auth: false
+  storageConfig: {}
+
+  ## NAT Gateway configuration
+  ## Enables detection and labeling of traffic passing through NAT gateways
+  ## Example for AWS:
+  ##   natGatewayConfig:
+  ##     enabled: true
+  ##     aws:
+  ##       cluster-name: my-cluster
+  ##       access_key: my-access-key
+  ##       secret_key: my-secret-key
+  ##       aws_sdk_auth: false
+  ##     refresh-interval: "10m"
+  natGatewayConfig: {}
+
   ## Network costs is a daemonset and may need to be scheduled on nodes with specific taints.
   ## If monitoring the network costs for workloads on nodes with specific taints, add the tolerations here.
   ## to tolerate all taints, use the following:
@@ -894,7 +940,7 @@ forecasting:
   image:
     registry: ""  # Default is "icr.io"
     repository: kubecost/modeling
-    tag: v0.1.35
+    tag: v0.1.36
   imagePullPolicy: IfNotPresent
 
   # Resource specification block for the forecasting container.
@@ -1314,13 +1360,18 @@ cloudCost:
 ##
 clusterController:
   enabled: true
-  serviceAccount:
-    create: true
-    annotations: {}
 
-  ## Enables legacy mode for cluster controller actions (v1)
-  ## Only used with kubecost versions < 3.0.0
-  legacyMode: false
+  serviceAccount:
+    ## @param clusterController.serviceAccount.create Whether to create a service account for cluster controller
+    create: true
+
+    ## @param clusterController.serviceAccount.annotations Annotations for the cluster controller service account
+    ## Configure cloud provider authentication for federated storage access:
+    ##   AWS:   eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/ROLE_NAME
+    ##   GCP:   iam.gke.io/gcp-service-account: SA_NAME@PROJECT_ID.iam.gserviceaccount.com
+    ##   Azure: azure.workload.identity/client-id: CLIENT_ID
+    ## Falls back to global serviceAccount.annotations if not set.
+    annotations: {}
 
   ## Override the image name and version for the cluster controller.
   ## If not set, the image will be pulled from the registry and repository specified in the image block.
@@ -1331,7 +1382,7 @@ clusterController:
   image:
     registry: ""  # Default is "icr.io"
     repository: kubecost/cluster-controller
-    tag: v0.16.35
+    tag: v0.16.37
   imagePullPolicy: IfNotPresent
   logLevel: info
   extraEnv: []
@@ -1417,6 +1468,24 @@ reporting:
 
 serviceAccount:
   create: true  # Set this to false if you're bringing your own service account.
+  ## @param serviceAccount.annotations Annotations for the service account
+  ##
+  ## Configure cloud provider authentication for accessing federated object storage.
+  ## These annotations are applied to all service accounts unless overridden by
+  ## component-specific annotations (e.g., clusterController.serviceAccount.annotations).
+  ##
+  ## AWS (IAM Roles for Service Accounts):
+  ##   annotations:
+  ##     eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/ROLE_NAME
+  ##
+  ## GCP (Workload Identity):
+  ##   annotations:
+  ##     iam.gke.io/gcp-service-account: SA_NAME@PROJECT_ID.iam.gserviceaccount.com
+  ##
+  ## Azure (Workload Identity):
+  ##   annotations:
+  ##     azure.workload.identity/client-id: CLIENT_ID
+  ##
   annotations: {}
 
 ## Kubecost Admission Controller (beta feature)
