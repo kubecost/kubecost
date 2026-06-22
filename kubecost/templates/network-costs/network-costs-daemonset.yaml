@@ -83,6 +83,18 @@ spec:
           value: {{ (quote .Values.networkCosts.leaderKubernetesWatcher) }}
         - name: USE_HOST_NODE_NETWORK_MAP
           value: {{ (quote .Values.networkCosts.hostNodeNetworkMap) }}
+        - name: ROUTE_REFRESH_INTERVAL
+          value: {{ (quote .Values.networkCosts.routeRefreshInterval) }}
+        - name: CONNTRACK_REFRESH_INTERVAL
+          value: {{ (quote .Values.networkCosts.conntrackRefreshInterval) }}
+        {{- if .Values.networkCosts.storageConfig }}
+        - name: STORAGE_CONFIG_PATH
+          value: /network-costs/config/storage.yaml
+        {{- end }}
+        {{- if .Values.networkCosts.natGatewayConfig }}
+        - name: NAT_GATEWAY_CONFIG_PATH
+          value: /network-costs/config/nat-gateway.yaml
+        {{- end }}
         {{- if .Values.networkCosts.healthCheckProbes }}
         {{- toYaml .Values.networkCosts.healthCheckProbes | nindent 8 }}
         {{- end }}
