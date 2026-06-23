@@ -1,6 +1,6 @@
 {{- if .Values.networkCosts -}}
 {{- if .Values.networkCosts.enabled -}}
-{{- if or .Values.networkCosts.config .Values.networkCosts.storageConfig .Values.networkCosts.natGatewayConfig -}}
+{{- if .Values.networkCosts.config -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -9,18 +9,8 @@ metadata:
   labels:
     {{- include "kubecost.commonLabels" . | nindent 4 }}
 data:
-{{- if .Values.networkCosts.config }}
   config.yaml: |
 {{ toYaml .Values.networkCosts.config | nindent 4 }}
-{{- end }}
-{{- if .Values.networkCosts.storageConfig }}
-  storage.yaml: |
-{{ toYaml .Values.networkCosts.storageConfig | nindent 4 }}
-{{- end }}
-{{- if .Values.networkCosts.natGatewayConfig }}
-  nat-gateway.yaml: |
-{{ toYaml .Values.networkCosts.natGatewayConfig | nindent 4 }}
-{{- end }}
 {{- end -}}
 {{- end -}}
 {{- end -}}
