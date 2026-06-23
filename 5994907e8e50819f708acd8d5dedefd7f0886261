@@ -1,0 +1,3 @@
+{"id":"5be9bb7b-1022-477e-9dd3-94ed1b1b806a","ts":"2026-06-23T00:12:24.883Z","path":"/Users/thomasnguyen/code/helm/kubecost/kubecost/templates/network-costs/network-costs-secret.yaml","version":"1.0.0","taskID":"5ebe2795-e9dc-4365-822c-041603f85862"}
+{"id":"c97f59b5-4590-4f37-9003-7913963d48ba","ts":"2026-06-23T00:12:29.307Z","path":"/Users/thomasnguyen/code/helm/kubecost/kubecost/templates/network-costs/network-costs-configmap.yaml","version":"1.0.0","taskID":"5ebe2795-e9dc-4365-822c-041603f85862"}
+{"id":"08b12b35-3216-45f5-8f16-df1ec61e8d57","ts":"2026-06-23T00:12:53.074Z","path":"/Users/thomasnguyen/code/helm/kubecost/kubecost/templates/network-costs/network-costs-daemonset.yaml","version":"1.0.0","taskID":"5ebe2795-e9dc-4365-822c-041603f85862"}
