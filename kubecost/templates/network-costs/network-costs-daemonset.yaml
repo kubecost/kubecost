@@ -90,6 +90,9 @@ spec:
         {{- if .Values.networkCosts.storageConfig }}
         - name: STORAGE_CONFIG_PATH
           value: /network-costs/config/storage.yaml
+        {{- else if or (.Values.global.federatedStorage).config (.Values.global.federatedStorage).existingSecret }}
+        - name: STORAGE_CONFIG_PATH
+          value: /network-costs/federated-store/{{ include "kubecost.federatedStorage.fileName" . }}
         {{- end }}
         {{- if .Values.networkCosts.natGatewayConfig }}
         - name: NAT_GATEWAY_CONFIG_PATH
@@ -111,6 +114,11 @@ spec:
         {{- if .Values.networkCosts.config }}
         - mountPath: /network-costs/config
           name: network-costs-config
+        {{- end }}
+        {{- if and (not .Values.networkCosts.storageConfig) (or (.Values.global.federatedStorage).config (.Values.global.federatedStorage).existingSecret) }}
+        - mountPath: /network-costs/federated-store
+          name: network-costs-federated-store
+          readOnly: true
         {{- end }}
         securityContext:
           privileged: true  # Required
@@ -140,6 +148,11 @@ spec:
       - name: network-costs-config
         configMap:
           name: network-costs-config
+      {{- end }}
+      {{- if and (not .Values.networkCosts.storageConfig) (or (.Values.global.federatedStorage).config (.Values.global.federatedStorage).existingSecret) }}
+      - name: network-costs-federated-store
+        secret:
+          secretName: {{ include "kubecost.federatedStorage.secretName" . | trim }}
       {{- end }}
       {{- if .Values.networkCosts.hostProc }}
       - name: host-proc
