@@ -1001,6 +1001,81 @@ aggregator:
   # Log level for the aggregator container. Options are "trace", "debug", "info", "warn", "error", "fatal", "panic"
   logLevel: info
 
+  ## Aggregator Querier (Read-Only Mode)
+  ## Enables deployment of a separate read-only aggregator for query workloads.
+  ## When enabled, write operations (POST/PUT/DELETE/PATCH) are routed to the main
+  ## aggregator (ingestor), while read operations (GET) are routed to the querier.
+  ## This allows independent scaling of read and write workloads.
+  ##
+  ## IMPORTANT: The querier does NOT create its own database storage. It connects to
+  ## the ingestor's ClickHouse database using the clickhouseUrl configuration.
+  ##
+  querier:
+    ## @param aggregator.querier.enabled Enable read-only querier aggregator
+    ## Set to true to deploy a separate querier StatefulSet alongside the main aggregator
+    enabled: false
+
+    ## @param aggregator.querier.clickhouseUrl ClickHouse database URL for querier
+    ## REQUIRED when querier is enabled. Points to the ingestor's ClickHouse database.
+    ## Format: "host:port" (e.g., "kubecost-cost-analyzer.kubecost.svc.cluster.local:9000")
+    clickhouseUrl: ""
+
+    ## @param aggregator.querier.replicas Number of querier replicas
+    ## Typically set higher than ingestor replicas to handle read load
+    replicas: 3
+
+    ## @param aggregator.querier.resources Resource requests and limits for querier
+    ## If not specified, inherits from aggregator.resources
+    resources: {}
+    #   requests:
+    #     cpu: 1000m
+    #     memory: 2Gi
+    #   limits:
+    #     cpu: 2000m
+    #     memory: 4Gi
+
+    ## @param aggregator.querier.dbReadThreads Database read threads for querier
+    ## If not specified, inherits from aggregator.dbReadThreads
+    ## Default: 0 (no limit)
+    dbReadThreads: 0
+
+    ## @param aggregator.querier.logLevel Log level for querier
+    ## If not specified, inherits from aggregator.logLevel
+    logLevel: ""
+
+    ## @param aggregator.querier.nodeSelector Node selector for querier pods
+    ## If not specified, inherits from aggregator.nodeSelector
+    nodeSelector: {}
+
+    ## @param aggregator.querier.tolerations Tolerations for querier pods
+    ## If not specified, inherits from aggregator.tolerations
+    tolerations: []
+
+    ## @param aggregator.querier.affinity Affinity rules for querier pods
+    ## If not specified, inherits from aggregator.affinity
+    affinity: {}
+
+    ## @param aggregator.querier.extraEnv Extra environment variables for querier
+    ## Optional additional environment variables beyond clickhouseUrl
+    extraEnv: []
+
+  ## Example: Complete querier configuration with external ClickHouse connection
+  ## This deploys a read-only querier that connects to the ingestor's database.
+  ## The querier has NO persistent storage - it queries the ingestor's ClickHouse remotely.
+  ##
+  # querier:
+  #   enabled: true
+  #   clickhouseUrl: "kubecost-cost-analyzer.kubecost.svc.cluster.local:9000"
+  #   replicas: 3
+  #   dbReadThreads: 0  # 0 = no limit, uses all available cores
+  #   resources:
+  #     requests:
+  #       cpu: 1000m
+  #       memory: 2Gi
+  #     limits:
+  #       cpu: 2000m
+  #       memory: 4Gi
+
   #   standardDiscount: "" # custom negotiated cloud provider discount, applied to all ingested asset compute costs. Overrides negotiatedDiscount on any cluster being aggregated.
 
   # stagingEmptyDirSizeLimit changes how large the "staging"
