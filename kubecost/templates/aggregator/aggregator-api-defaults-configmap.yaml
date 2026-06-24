@@ -1,0 +1,21 @@
+{{- if (.Values.aggregator).enabled }}
+{{- /*
+api-configs-defaults holds the chart's built-in default api-config values,
+rendered from the single-source kubecost.apiConfigDefaults helper. The
+cost-model reads this to detect which configs an admin set via Helm (those whose
+api-configs value differs from the default here), so the defaults are not
+duplicated as Go constants. (KCM-5836)
+*/ -}}
+{{- $defaults := include "kubecost.apiConfigDefaults" . | fromYaml -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-configs-defaults
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
+data:
+  {{- range $k, $v := $defaults }}
+  {{ $k }}: {{ $v | quote }}
+  {{- end }}
+{{- end -}}

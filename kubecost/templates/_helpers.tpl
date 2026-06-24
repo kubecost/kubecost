@@ -776,3 +776,23 @@ annotations:
   {{- end }}
   {{- end -}}
 {{- end -}}
+
+{{/*
+kubecost.apiConfigDefaults is the single source of truth for the built-in
+api-config default values. It is consumed by both the api-configs ConfigMap (as
+the fallback when an admin has not overridden a value) and the
+api-configs-defaults ConfigMap (which the cost-model reads to detect which
+configs an admin set via Helm). Keep all values as strings. (KCM-5836)
+*/}}
+{{- define "kubecost.apiConfigDefaults" -}}
+owner_label: "owner"
+team_label: "team"
+department_label: "dept"
+product_label: "product"
+environment_label: "env"
+sharedNamespaces: ""
+sharedLabelNames: ""
+sharedLabelValues: ""
+sharedOverhead: "0"
+shareTenancyCosts: "true"
+{{- end -}}
