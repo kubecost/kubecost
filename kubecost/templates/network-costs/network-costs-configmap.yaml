@@ -10,7 +10,7 @@ metadata:
     {{- include "kubecost.commonLabels" . | nindent 4 }}
 data:
   config.yaml: |
-{{- toYaml .Values.networkCosts.config | nindent 4 }}
+{{ toYaml .Values.networkCosts.config | nindent 4 }}
 {{- end -}}
 {{- end -}}
 {{- end -}}
