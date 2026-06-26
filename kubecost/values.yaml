@@ -1660,11 +1660,9 @@ kubecostProductConfigs:
 
   ## Kubecost settings surfaced to the frontend.
   ##
-  ## Leave these empty to keep them editable in the settings UI; the cost-model
-  ## supplies the defaults (owner_label=owner, team_label=team, department_label=dept,
-  ## product_label=product, environment_label=env, sharedOverhead=0, shareTenancyCosts=true).
+  ## Leave these empty to keep them editable in the settings UI.
   ## Set a value here ONLY to manage it via Helm: it is then shown in the settings
-  ## page as Helm-defined and cannot be changed in the UI. (KCM-5836)
+  ## page as Helm-defined and cannot be changed in the UI.
   ##
   labelMappingConfigs:        # Names of k8s labels or annotations used to designate different allocation concepts
     owner_label: ""
