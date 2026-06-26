@@ -85,7 +85,7 @@ jobs:
         uses: helm/chart-testing-action@v2.8.0
 
       - name: Create KinD cluster
-        uses: helm/kind-action@v1.14.0
+        uses: helm/kind-action@ef37e7f390d99f746eb8b610417061a60e82a6cc #v1.14.0
         with:
           version: v0.20.0
           node_image: kindest/node:${{ matrix.k8s-version.version }}
@@ -218,7 +218,7 @@ jobs:
       # Outputs: `cluster-kubeconfig`, `cluster-id`
       - name: Create Cluster
         id: create-cluster
-        uses: replicatedhq/compatibility-actions/create-cluster@v1
+        uses: replicatedhq/replicated-actions/create-cluster@6803131db735f7cc067de88fa14237c7462b247a # v1.27.0
         with:
           kubernetes-distribution: ${{ matrix.cluster.distribution }}
           kubernetes-version: ${{ matrix.cluster.version }}
@@ -259,8 +259,7 @@ jobs:
         run: helm test -n kubecost kubecost
       - name: Remove Cluster
         id: remove-cluster
-        uses: replicatedhq/compatibility-actions/remove-cluster@v1
-        continue-on-error: true
+        uses: replicatedhq/replicated-actions/remove-cluster@6803131db735f7cc067de88fa14237c7462b247a # v1.27.0
         with:
           api-token: ${{ secrets.REPLICATED_API_TOKEN }}
           cluster-id: ${{ steps.create-cluster.outputs.cluster-id }}
@@ -279,7 +278,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Create Cluster
         id: create-cluster
-        uses: replicatedhq/compatibility-actions/create-cluster@v1
+        uses: replicatedhq/replicated-actions/create-cluster@6803131db735f7cc067de88fa14237c7462b247a # v1.27.0
         with:
           kubernetes-distribution: ${{ matrix.cluster.distribution }}
           kubernetes-version: ${{ matrix.cluster.version }}
@@ -313,7 +312,7 @@ jobs:
         run: helm test -n kubecost kubecost
       - name: Remove Cluster
         id: remove-cluster
-        uses: replicatedhq/compatibility-actions/remove-cluster@v1
+        uses: replicatedhq/replicated-actions/remove-cluster@6803131db735f7cc067de88fa14237c7462b247a # v1.27.0
         continue-on-error: true
         with:
           api-token: ${{ secrets.REPLICATED_API_TOKEN }}
