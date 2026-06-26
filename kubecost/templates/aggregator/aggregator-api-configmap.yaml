@@ -1,7 +1,4 @@
 {{- if (.Values.aggregator).enabled }}
-{{- $defaults := include "kubecost.apiConfigDefaults" . | fromYaml -}}
-{{- $lmc := .Values.kubecostProductConfigs.labelMappingConfigs | default dict -}}
-{{- $kpc := .Values.kubecostProductConfigs -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -10,10 +7,14 @@ metadata:
   labels:
     {{- include "kubecost.commonLabels" . | nindent 4 }}
 data:
-  {{- /* For each api config key: use the admin's override if they set one
-         (checked by key presence, so false/0/"" are honored), else the chart
-         default from the single-source helper. */ -}}
-  {{- range $k, $default := $defaults }}
-  {{ $k }}: {{ if hasKey $lmc $k }}{{ get $lmc $k | quote }}{{ else if hasKey $kpc $k }}{{ get $kpc $k | quote }}{{ else }}{{ $default | quote }}{{ end }}
-  {{- end }}
+  owner_label: {{ .Values.kubecostProductConfigs.labelMappingConfigs.owner_label | quote }}
+  team_label: {{ .Values.kubecostProductConfigs.labelMappingConfigs.team_label | quote }}
+  department_label: {{ .Values.kubecostProductConfigs.labelMappingConfigs.department_label | quote }}
+  product_label: {{ .Values.kubecostProductConfigs.labelMappingConfigs.product_label | quote }}
+  environment_label: {{ .Values.kubecostProductConfigs.labelMappingConfigs.environment_label | quote }}
+  sharedOverhead: {{ .Values.kubecostProductConfigs.sharedOverhead | quote }}
+  sharedNamespaces: {{ .Values.kubecostProductConfigs.sharedNamespaces | quote }}
+  sharedLabelNames: {{ .Values.kubecostProductConfigs.sharedLabelNames | quote }}
+  sharedLabelValues: {{ .Values.kubecostProductConfigs.sharedLabelValues | quote }}
+  shareTenancyCosts: {{ .Values.kubecostProductConfigs.shareTenancyCosts | quote }}
 {{- end -}}
