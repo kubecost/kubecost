@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
@@ -77,7 +77,7 @@ jobs:
     name: ${{ matrix.k8s-version.name }} test
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
@@ -182,7 +182,7 @@ jobs:
           done
 
       - name: Checkout Target Branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.base.ref }}
           path: ./target-branch
@@ -212,7 +212,7 @@ jobs:
         - distribution: openshift
           version: 4.19.0-okd
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       # Outputs: `cluster-kubeconfig`, `cluster-id`
@@ -273,7 +273,7 @@ jobs:
         - distribution: eks
           version: v1.33
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Create Cluster
