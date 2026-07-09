@@ -452,7 +452,7 @@ frontend:
   ## If not set, the image will be pulled from the registry and repository specified in the image block.
   ## If set, the fullImageName will be used to pull the image.
   ## Example:
-  ## fullImageName: gcr.io/kubecost1/frontend:v3.0.0
+  ## fullImageName: icr.io/kubecost/frontend:3.2.1
   fullImageName: ""
   image:
     registry: ""  # Default is "icr.io"
@@ -608,7 +608,7 @@ finopsagent:
     repository: ibm-finops/agent
   #   registry: ""  # Default is "icr.io"
   #   tag: ""  # Default is set in Chart.yaml
-  # fullImageName: ""  # fullImageName If set, will override the image registry, repo/name and tag.
+  # fullImageName: ""  # fullImageName If set, will override the image registry, repo/name and tag. Ex: icr.io/ibm-finops/agent:v1.0.20
   # serviceAccount:
   #   create: true
   #   name: finops-agent
@@ -737,7 +737,7 @@ networkCosts:
   ## If not set, the image will be pulled from the registry and repository specified in the image block.
   ## If set, the fullImageName will be used to pull the image.
   ## Example:
-  ## fullImageName: gcr.io/kubecost1/kubecost-network-costs:v0.18.1
+  ## fullImageName: icr.io/kubecost/network-costs:v0.19.0
   fullImageName: ""
   image:
     registry: ""  # Default is "icr.io"
@@ -935,7 +935,7 @@ forecasting:
   ## If not set, the image will be pulled from the registry and repository specified in the image block.
   ## If set, the fullImageName will be used to pull the image.
   ## Example:
-  ## fullImageName: gcr.io/kubecost1/kubecost-modeling:v0.1.35
+  ## fullImageName: icr.io/kubecost/modeling:v0.1.36
   fullImageName: ""
   image:
     registry: ""  # Default is "icr.io"
@@ -986,7 +986,7 @@ aggregator:
     registry: ""  # Default is "icr.io"
     repository: kubecost/cost-model
     tag: ""  # Default is to match the Chart.AppVersion
-  fullImageName: ""  # Overrides the default image construction logic.
+  fullImageName: ""  # Overrides the default image construction logic. Ex: icr.io/kubecost/cost-model:3.2.1
   imagePullPolicy: IfNotPresent
 
   ## Retention values determine for what duration into the past data will be
@@ -1377,7 +1377,7 @@ clusterController:
   ## If not set, the image will be pulled from the registry and repository specified in the image block.
   ## If set, the fullImageName will be used to pull the image.
   ## Example:
-  ## fullImageName: gcr.io/kubecost1/cluster-controller:v0.16.34
+  ## fullImageName: icr.io/kubecost/cluster-controller:v0.16.37
   fullImageName: ""
   image:
     registry: ""  # Default is "icr.io"
