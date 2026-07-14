@@ -994,7 +994,7 @@ aggregator:
   retention1d: 91
   retention1h: 49
   # 10m files are currently only use for specific right sizing operations. Enabling 10m data will increase resource usage of the aggregator.
-  retention10m: 0 
+  retention10m: 0
 
   # Replicas sets the number of Aggregator replicas.
   replicas: 1
