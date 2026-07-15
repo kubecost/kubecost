@@ -77,7 +77,7 @@ spec:
         checksum/configs: {{ include "kubecost.configsChecksum" . }}
     spec:
       restartPolicy: Always
-      terminationGracePeriodSeconds: 90
+      terminationGracePeriodSeconds: {{ .Values.aggregator.terminationGracePeriodSeconds }}
     {{- if .Values.aggregator.securityContext }}
       securityContext:
     {{- toYaml .Values.aggregator.securityContext | nindent 8 }}
