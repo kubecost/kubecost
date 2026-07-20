@@ -993,10 +993,13 @@ aggregator:
   imagePullPolicy: IfNotPresent
 
   ## Retention values determine for what duration into the past data will be
-  ## ingested into Aggregator's database
+  ## ingested into Aggregator's database. 10m resolution data is only used for the
+  ## Node Group Right-Sizing and Resource Quota Right-Sizing features for further
+  ## granularity. Enabling 10m data will increase resource usage of the Aggregator.
+  ## A good starting value would be `retention10m: 36`
   retention1d: 91
   retention1h: 49
-  retention10m: 36
+  retention10m: 0
 
   # Replicas sets the number of Aggregator replicas.
   replicas: 1
