@@ -3,6 +3,8 @@ apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
 metadata:
   name: {{ include "kubecost.clusterController.name" . }}
+  labels:
+    {{- include "kubecost.commonLabels" . | nindent 4 }}
 priority: 10
 allowPrivilegedContainer: true
 allowHostDirVolumePlugin: true
