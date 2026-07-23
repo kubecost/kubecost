@@ -1004,6 +1004,9 @@ aggregator:
   # Replicas sets the number of Aggregator replicas.
   replicas: 1
 
+  # terminationGracePeriodSeconds sets the pod termination grace period for the aggregator StatefulSet.
+  terminationGracePeriodSeconds: 90
+
   # Log level for the aggregator container. Options are "trace", "debug", "info", "warn", "error", "fatal", "panic"
   logLevel: info
 
