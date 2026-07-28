@@ -17,13 +17,22 @@ jobs:
     name: Check labels
     runs-on: ubuntu-latest
     steps:
+      - name: Generate an app token with permissions to clone cross-repo
+        id: generate-app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.KC_ACTIONS_BOT_APP_CLIENT_ID }}
+          private-key: ${{ secrets.KC_ACTIONS_BOT_APP_PRIVATE_KEY }}
+          owner: kubecost
+          repositories: github-actions
+
       - name: Check out actions code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: kubecost/github-actions
           path: ./github-actions
           ref: main
-          token: ${{ secrets.GH_PAT }}
+          token: ${{ steps.generate-app-token.outputs.token }}
 
       - id: check-labels
         uses: ./github-actions/github-action-required-labels
