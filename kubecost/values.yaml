@@ -1239,6 +1239,19 @@ cloudCost:
   ## queried and processed into ETL.
   retention1d: 91
 
+  ## Azure integrations only. Controls whether the Azure billing export is written to disk before
+  ## being parsed, or streamed directly from blob storage.
+  ##
+  ## When false (default), the export is streamed and parsed in a bounded buffer, and nothing is
+  ## written to the persistentConfigs volume. When true, each export is downloaded to
+  ## <CONFIG_PATH>/db/cloudcost first. Azure names every export run with a distinct timestamp and
+  ## GUID, so successive runs accumulate as separate files rather than overwriting, and a
+  ## month-to-date export for a large subscription can exhaust the persistentConfigs volume.
+  ##
+  ## Only set this to true if you have a specific reason to keep the exports on disk, and size
+  ## cloudCost.persistentConfigsStorage accordingly.
+  downloadBillingDataToDisk: false
+
   ## Specify an existing Kubernetes Secret holding the cloud integration information. This Secret must contain
   ## a key with name `cloud-integration.json` and the contents must be in a specific format. It is expected
   ## to exist in the release Namespace. This is mutually exclusive with cloudIntegrationJSON where only one must be defined.
