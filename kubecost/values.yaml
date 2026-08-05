@@ -861,6 +861,9 @@ networkCosts:
 
   ## Storage configuration for NAT gateway traffic logs
   ## Used when NAT gateway traffic detection is enabled to access VPC flow logs
+  ## Note: when set, storageConfig takes priority over global.federatedStorage for
+  ## the STORAGE_CONFIG_PATH env var in the network-costs DaemonSet. If both are
+  ## configured, global.federatedStorage will be ignored for network-costs.
   ## Example for S3:
   ##   storageConfig:
   ##     type: S3
