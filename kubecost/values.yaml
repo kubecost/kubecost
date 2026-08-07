@@ -1525,6 +1525,10 @@ costEventsAudit:
 ##
 telemetry:
   enabled: true
+  ## When true, telemetry consent is granted automatically at startup instead of
+  ## requiring a user action in the Settings UI. Defaults to false, so consent
+  ## stays user-driven unless explicitly enabled.
+  autoConsent: false
 
 ## These configs can also be set from the Settings page in the Kubecost product
 ## UI. Values in this block override config changes in the Settings UI on pod
