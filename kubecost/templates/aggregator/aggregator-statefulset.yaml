@@ -583,6 +583,10 @@ spec:
               value: {{ .Release.Namespace }}
             - name: TELEMETRY_ENABLED
               value: {{ (quote .Values.telemetry.enabled) }}
+            {{- if .Values.telemetry.autoConsent }}
+            - name: TELEMETRY_AUTO_CONSENT
+              value: "true"
+            {{- end }}
             {{- if .Values.oidc.enabled }}
             - name: OIDC_ENABLED
               value: "true"
