@@ -1,0 +1,103 @@
+name: Validate mcp-kubecost subchart
+
+on:
+  pull_request:
+    paths:
+      - 'kubecost/Chart.yaml'
+      - 'kubecost/Chart.lock'
+      - 'kubecost/values.yaml'
+      - '.github/scripts/validate_mcp_subchart.sh'
+      - '.github/workflows/validate-mcp-subchart.yml'
+  workflow_dispatch: {}
+
+# Prevents multiple runs of the same workflow on the same branch from executing
+# simultaneously. Saves resources.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CHART_DIR: kubecost
+  KUBERNETES_VERSION: 1.34.0
+
+jobs:
+  validate-mcp-subchart:
+    name: Lint, render, and check global inheritance
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v5
+
+      # ubuntu-latest ships yq, but pin it so assertion syntax cannot drift
+      # when the runner image is updated.
+      - name: Set up yq
+        run: |
+          set -euo pipefail
+          YQ_VERSION=v4.53.4
+          curl -fsSL -o /tmp/yq \
+            "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64"
+          sudo install -m 0755 /tmp/yq /usr/local/bin/yq
+          yq --version
+
+      - name: Add chart repositories
+        run: |
+          set -euo pipefail
+          helm repo add finops-agent-chart https://kubecost.github.io/finops-agent-chart
+          helm repo add mcp-kubecost https://kubecost.github.io/mcp-kubecost
+          helm repo update
+
+      # Resolves both dependencies from Chart.lock. This fails loudly if
+      # Chart.lock is out of sync with Chart.yaml, or if the pinned
+      # mcp-kubecost version is not published yet.
+      - name: Build chart dependencies
+        run: helm dependency build "$CHART_DIR"
+
+      # helm lint with the subchart enabled, helm template for the default and
+      # enabled cases, resource assertions, and the global: conformance checks.
+      - name: Validate mcp-kubecost subchart integration
+        run: .github/scripts/validate_mcp_subchart.sh "$CHART_DIR"
+
+      - name: Render charts for schema validation
+        run: |
+          set -euo pipefail
+          mkdir -p .helm-render
+          helm template kubecost "$CHART_DIR" \
+            --skip-schema-validation \
+            --set mcp.enabled=true \
+            > .helm-render/mcp-enabled.yaml
+          helm template kubecost "$CHART_DIR" \
+            --skip-schema-validation \
+            --set mcp.enabled=true \
+            --set mcp.httpRoute.enabled=true \
+            --set mcp.config.kubecostApiKey.existingSecret=kubecost-api-key \
+            --set global.platforms.cicd.enabled=true \
+            --set global.platforms.cicd.skipSanityChecks=true \
+            > .helm-render/mcp-httproute.yaml
+
+      # Ensure every rendered resource is valid Kubernetes YAML. HTTPRoute is a
+      # Gateway API CRD, so that render tolerates missing schemas.
+      - name: Kubeconform (core resources)
+        uses: docker://ghcr.io/yannh/kubeconform:latest
+        with:
+          entrypoint: /kubeconform
+          args: -summary -strict -kubernetes-version 1.34.0 -ignore-missing-schemas -output text .helm-render/mcp-enabled.yaml
+
+      - name: Kubeconform (HTTPRoute render)
+        uses: docker://ghcr.io/yannh/kubeconform:latest
+        with:
+          entrypoint: /kubeconform
+          args: -summary -kubernetes-version 1.34.0 -ignore-missing-schemas -output text .helm-render/mcp-httproute.yaml
+
+      - name: Upload rendered manifests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcp-subchart-renders
+          path: .helm-render/
+          if-no-files-found: warn

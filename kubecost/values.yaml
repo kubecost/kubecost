@@ -654,6 +654,36 @@ finopsagent:
       spotLabel: ""
       spotLabelValue: ""
 
+## The FinOps MCP server for Kubecost analytics. Below are a subset of values from
+## the mcp-kubecost subchart that are most commonly changed.
+## Ref: https://github.com/kubecost/mcp-kubecost/blob/main/charts/mcp-kubecost/values.yaml
+##
+mcp:
+  enabled: true
+  ## The MCP server reads cost data through the Kubecost frontend Service
+  ## (`<release>-frontend:9090`). This value is tpl-evaluated by the subchart.
+  config:
+    kubecostBaseUrl: "http://{{ .Release.Name }}-frontend:9090"
+    kubecostApiBasePath: /model
+    ## Authentication for the MCP HTTP endpoint. One of: none, oidc, api_key, both.
+    ## The default of "none" leaves the endpoint unauthenticated inside the cluster;
+    ## set an authMode before exposing it through ingress.hosts or httpRoute.
+    # oidc:
+    #   authMode: none
+  ## The MCP server is reachable in-cluster at <release>-mcp:3030. Enable
+  ## httpRoute (Gateway API) or ingress to expose it outside the cluster.
+  # httpRoute:
+  #   enabled: false
+  # ingress:
+  #   enabled: false
+  # resources:
+  #   requests:
+  #     cpu: 250m
+  #     memory: 1Gi
+  #   limits:
+  #     cpu: 1000m
+  #     memory: 1Gi
+
 ## Installs Kubecost/OpenCost plugins
 ## Ref: https://opencost.io/docs/integrations/plugins/
 ##
