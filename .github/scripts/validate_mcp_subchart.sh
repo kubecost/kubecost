@@ -109,7 +109,7 @@ assert_eq "${chart_lock} pins the same version as ${chart_yaml}" \
   "${dep_version#v}" "${lock_version#v}"
 
 default_enabled="$(yq -r ".[\"${values_key}\"].enabled" "${CHART_DIR}/values.yaml")"
-assert_eq "values.yaml defaults ${values_key}.enabled to false" "false" "$default_enabled"
+assert_eq "values.yaml defaults ${values_key}.enabled to true" "true" "$default_enabled"
 
 # ---------------------------------------------------------------------------
 group "Dependency resolution (validates Chart.lock is in sync)"
@@ -145,9 +145,9 @@ helm lint "$CHART_DIR" "${skip_schema[@]}" --set "${values_key}.enabled=true"
 pass "helm lint (--set ${values_key}.enabled=true)"
 
 # ---------------------------------------------------------------------------
-group "Subchart is opt-in"
+group "Subchart is enabled by default"
 
-helm template "$RELEASE_NAME" "$CHART_DIR" > "${RENDER_DIR}/default.yaml"
+helm template "$RELEASE_NAME" "$CHART_DIR" "${skip_schema[@]}" > "${RENDER_DIR}/default.yaml"
 pass "helm template (defaults) rendered without errors"
 
 # Only look at rendered resource sources, since the diagnostics ConfigMap
@@ -155,9 +155,9 @@ pass "helm template (defaults) rendered without errors"
 default_sources="$(grep '^# Source:' "${RENDER_DIR}/default.yaml" || true)"
 # Helm uses the alias (when set) as the on-disk chart directory in # Source: lines.
 if printf '%s\n' "$default_sources" | grep -q "charts/${values_key}/"; then
-  fail "subchart rendered resources while ${values_key}.enabled=false"
+  pass "subchart resources rendered with ${values_key}.enabled=true (default)"
 else
-  pass "no subchart resources rendered while ${values_key}.enabled=false"
+  fail "subchart rendered no resources despite ${values_key}.enabled=true (default)"
 fi
 
 # ---------------------------------------------------------------------------

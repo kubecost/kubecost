@@ -21,7 +21,6 @@ permissions:
 
 env:
   CHART_DIR: kubecost
-  KUBERNETES_VERSION: 1.34.0
 
 jobs:
   validate-mcp-subchart:

@@ -1,5 +1,9 @@
 # Agents.md
 
+## GitHub Actions
+
+- Never downgrade (or change) a GitHub Actions version without first verifying the version exists. Use `execute_command` to look it up: `curl -s https://api.github.com/repos/<owner>/<repo>/git/refs/tags | grep '"ref"' | grep '@v<N>'` or check the GitHub Marketplace page. Do not assume a version does not exist based on training knowledge alone.
+
 ## PR Reviews
 
 - When asked to review a PR, compare this current branch against the `develop` branch. `git diff develop`.
