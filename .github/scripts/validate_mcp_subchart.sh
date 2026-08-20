@@ -240,6 +240,51 @@ assert_eq "subchart BaseUrl follows a non-default release name" \
   "http://${alt_frontend}:${alt_port}" "$alt_base_url"
 
 # ---------------------------------------------------------------------------
+group "Frontend nginx MCP proxy"
+
+# The frontend ConfigMap must proxy MCP HTTP + OAuth paths to the subchart
+# Service when enabled, and report MCP settings from /model/productConfigs.
+nginx_enabled="$(yq -r \
+  'select(.kind == "ConfigMap" and (.metadata.name | test("^nginx-conf-"))) | .data["nginx.conf"]' \
+  "${RENDER_DIR}/enabled.yaml")"
+printf '%s\n' "$nginx_enabled" > "${RENDER_DIR}/nginx-enabled.conf"
+
+assert_contains "frontend nginx defines the mcpKubecost upstream when enabled" \
+  "${RENDER_DIR}/nginx-enabled.conf" "upstream mcpKubecost"
+assert_contains "frontend nginx targets the subchart Service" \
+  "${RENDER_DIR}/nginx-enabled.conf" "server ${expected_fullname}."
+assert_contains "frontend nginx proxies /mcp" \
+  "${RENDER_DIR}/nginx-enabled.conf" "location /mcp"
+assert_contains "frontend nginx proxies the MCP OIDC callback" \
+  "${RENDER_DIR}/nginx-enabled.conf" "location /auth-mcp"
+assert_contains "frontend nginx proxies FastMCP OAuth routes" \
+  "${RENDER_DIR}/nginx-enabled.conf" "location ~ ^/(register|authorize|token|consent)(/|$)"
+assert_contains "productConfigs reports mcpEnabled=true" \
+  "${RENDER_DIR}/nginx-enabled.conf" '"mcpEnabled": "true"'
+assert_contains "productConfigs reports default mcpAuthMode" \
+  "${RENDER_DIR}/nginx-enabled.conf" '"mcpAuthMode": "none"'
+assert_contains "productConfigs reports mcpRedirectPath" \
+  "${RENDER_DIR}/nginx-enabled.conf" '"mcpRedirectPath": "/auth-mcp"'
+
+helm template "$RELEASE_NAME" "$CHART_DIR" \
+  "${skip_schema[@]}" \
+  --set "${values_key}.enabled=false" \
+  > "${RENDER_DIR}/disabled.yaml"
+pass "helm template (${values_key}.enabled=false) rendered without errors"
+
+nginx_disabled="$(yq -r \
+  'select(.kind == "ConfigMap" and (.metadata.name | test("^nginx-conf-"))) | .data["nginx.conf"]' \
+  "${RENDER_DIR}/disabled.yaml")"
+printf '%s\n' "$nginx_disabled" > "${RENDER_DIR}/nginx-disabled.conf"
+
+assert_absent "frontend nginx omits the mcpKubecost upstream when disabled" \
+  "${RENDER_DIR}/nginx-disabled.conf" "upstream mcpKubecost"
+assert_absent "frontend nginx omits /mcp proxy when disabled" \
+  "${RENDER_DIR}/nginx-disabled.conf" "location /mcp"
+assert_contains "productConfigs reports mcpEnabled=false" \
+  "${RENDER_DIR}/nginx-disabled.conf" '"mcpEnabled": "false"'
+
+# ---------------------------------------------------------------------------
 group "global: values conformance"
 
 helm template "$RELEASE_NAME" "$CHART_DIR" \

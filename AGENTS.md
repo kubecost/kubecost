@@ -3,6 +3,7 @@
 ## GitHub Actions
 
 - Never downgrade (or change) a GitHub Actions version without first verifying the version exists. Use `execute_command` to look it up: `curl -s https://api.github.com/repos/<owner>/<repo>/git/refs/tags | grep '"ref"' | grep '@v<N>'` or check the GitHub Marketplace page. Do not assume a version does not exist based on training knowledge alone.
+- when a GitHub Action is modified, verify that all actions in the workflow are current and use online lookups, do not depend on stale training data. If a new version is available, always suggest updating it.
 
 ## PR Reviews
 

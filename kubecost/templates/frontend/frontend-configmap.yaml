@@ -99,6 +99,20 @@ data:
     }
   {{- end }}
 
+  {{- if (.Values.mcp).enabled }}
+    upstream mcpKubecost {
+        {{- if .Values.frontend.useDefaultFqdn }}
+        server {{ include "kubecost.mcp.serviceName" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ include "kubecost.mcp.servicePort" . }};
+        {{- else }}
+        {{- if (.Values.frontend.mcp).fqdn }}
+        server {{ .Values.frontend.mcp.fqdn }};
+        {{- else }}
+        server {{ include "kubecost.mcp.serviceName" . }}.{{ .Release.Namespace }}:{{ include "kubecost.mcp.servicePort" . }};
+        {{- end }}
+        {{- end }}
+    }
+  {{- end }}
+
     server {
         server_name _;
         root /var/www;
@@ -484,6 +498,33 @@ data:
         }
         {{- end }}
 
+        {{- if (.Values.mcp).enabled }}
+        # MCP streamable HTTP — FastMCP serves at /mcp on port {{ include "kubecost.mcp.servicePort" . }}
+        location /mcp {
+            {{- include "kubecost.frontend.mcpProxyDirectives" . | nindent 12 }}
+        }
+
+        # MCP OIDC callback. Must be a longer prefix than location /auth, or
+        # /auth-mcp is treated as Kubecost auth_request (aggregator /isAuthenticated).
+        location {{ include "kubecost.mcp.redirectPath" . }} {
+            {{- include "kubecost.frontend.mcpProxyDirectives" . | nindent 12 }}
+        }
+
+        # MCP OAuth (OIDCProxy). location / runs auth_request /auth; these must
+        # reach FastMCP as JSON, not the Kubecost SSO HTML login page.
+        location ~ ^/(register|authorize|token|consent)(/|$) {
+            {{- include "kubecost.frontend.mcpProxyDirectives" . | nindent 12 }}
+        }
+
+        location ^~ /.well-known/oauth-protected-resource {
+            {{- include "kubecost.frontend.mcpProxyDirectives" . | nindent 12 }}
+        }
+
+        location ^~ /.well-known/oauth-authorization-server {
+            {{- include "kubecost.frontend.mcpProxyDirectives" . | nindent 12 }}
+        }
+        {{- end }}
+
         location /model/productConfigs {
             default_type 'application/json';
             return 200 '\n
@@ -498,6 +539,10 @@ data:
                 "clusterControllerEnabled": "{{ include "kubecost.clusterController.enabled" . }}",
                 "forecastingEnabled": "{{ include "kubecost.forecasting.enabled" . }}",
                 "turbonomicEnabled": "{{ include "kubecost.turbonomic.enabled" . }}",
+                "mcpEnabled": "{{ include "kubecost.mcp.enabled" . }}",
+                "mcpAuthMode": "{{ include "kubecost.mcp.authMode" . }}",
+                "mcpRequireClientApiKey": "{{ include "kubecost.mcp.requireClientApiKey" . }}",
+                "mcpRedirectPath": "{{ include "kubecost.mcp.redirectPath" . }}",
                 "chartVersion": "DEVELOP_BRANCH",
                 "tenMinuteDataRetention": "{{ (.Values.aggregator.retention10m) }}",
                 "hourlyDataRetention": "{{ (.Values.aggregator.retention1h) }}",

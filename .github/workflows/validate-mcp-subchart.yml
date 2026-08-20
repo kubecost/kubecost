@@ -6,6 +6,9 @@ on:
       - 'kubecost/Chart.yaml'
       - 'kubecost/Chart.lock'
       - 'kubecost/values.yaml'
+      - 'kubecost/templates/_helpers.tpl'
+      - 'kubecost/templates/frontend/_helpers.tpl'
+      - 'kubecost/templates/frontend/frontend-configmap.yaml'
       - '.github/scripts/validate_mcp_subchart.sh'
       - '.github/workflows/validate-mcp-subchart.yml'
   workflow_dispatch: {}
@@ -60,6 +63,8 @@ jobs:
       # helm lint with the subchart enabled, helm template for the default and
       # enabled cases, resource assertions, and the global: conformance checks.
       - name: Validate mcp-kubecost subchart integration
+        env:
+          MCP_SUBCHART_SKIP_DEP_BUILD: "1"
         run: .github/scripts/validate_mcp_subchart.sh "$CHART_DIR"
 
       - name: Render charts for schema validation

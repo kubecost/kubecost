@@ -35,6 +35,7 @@ jobs:
       - name: Run chart-testing (lint)
         run: |
           helm repo add finops-agent-chart https://kubecost.github.io/finops-agent-chart
+          helm repo add mcp-kubecost https://kubecost.github.io/mcp-kubecost
           helm repo update
           helm dependency build kubecost/
           ct lint --chart-dirs=kubecost/ --charts kubecost/ --validate-maintainers=false
@@ -61,6 +62,8 @@ jobs:
 
       - name: Frontend serverBlockConfig template tests
         run: |
+          helm repo add mcp-kubecost https://kubecost.github.io/mcp-kubecost
+          helm repo update
           helm dependency build kubecost/
           .github/scripts/extra_server_config_test.sh
 
@@ -108,6 +111,7 @@ jobs:
         working-directory: ./kubecost
         run: |
           helm repo add finops-agent-chart https://kubecost.github.io/finops-agent-chart
+          helm repo add mcp-kubecost https://kubecost.github.io/mcp-kubecost
           helm repo update
           helm dependency build
           helm install --wait --wait-for-jobs kubecost . -n kubecost
@@ -191,6 +195,7 @@ jobs:
         run: |
           cd ./target-branch/kubecost
           helm repo add finops-agent-chart https://kubecost.github.io/finops-agent-chart
+          helm repo add mcp-kubecost https://kubecost.github.io/mcp-kubecost
           helm repo update
           helm dependency build
           helm install --wait --wait-for-jobs kubecost . -n kubecost
@@ -243,6 +248,7 @@ jobs:
         working-directory: ./kubecost
         run: |
           helm repo add finops-agent-chart https://kubecost.github.io/finops-agent-chart
+          helm repo add mcp-kubecost https://kubecost.github.io/mcp-kubecost
           helm repo update
           helm dependency build
           helm install --wait --wait-for-jobs kubecost . -n kubecost -f values-openshift.yaml \
@@ -302,6 +308,7 @@ jobs:
         working-directory: ./kubecost
         run: |
           helm repo add finops-agent-chart https://kubecost.github.io/finops-agent-chart
+          helm repo add mcp-kubecost https://kubecost.github.io/mcp-kubecost
           helm repo update
           helm dependency build
           helm install --wait --wait-for-jobs kubecost . -n kubecost -f values-eks-cost-monitoring.yaml

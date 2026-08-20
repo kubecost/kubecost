@@ -14,11 +14,11 @@ dependencies:
     version: "v1.0.25"
     repository: https://kubecost.github.io/finops-agent-chart
     condition: finopsagent.enabled
-  # The FinOps MCP server for Kubecost analytics. Disabled by default; the pinned
+  # The FinOps MCP server for Kubecost analytics. Enabled by default; the pinned
   # version is bumped automatically by the mcp-kubecost release pipeline.
   # Ref: https://github.com/kubecost/mcp-kubecost
   - name: mcp-kubecost
     alias: mcp
-    version: "0.6.2"
+    version: "0.6.3"
     repository: https://kubecost.github.io/mcp-kubecost
     condition: mcp.enabled

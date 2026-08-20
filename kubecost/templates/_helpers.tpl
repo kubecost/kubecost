@@ -575,6 +575,71 @@ To resolve this, either:
 {{- end -}}
 {{- end -}}
 
+{{- define "kubecost.mcp.enabled" }}
+{{- if (.Values.mcp).enabled }}
+{{- printf "true" -}}
+{{- else -}}
+{{- printf "false" -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "kubecost.mcp.authMode" -}}
+{{- default "none" (((.Values.mcp).config).oidc).authMode -}}
+{{- end -}}
+
+{{- define "kubecost.mcp.requireClientApiKey" }}
+{{- if ((.Values.mcp).config).requireClientApiKey }}
+{{- printf "true" -}}
+{{- else -}}
+{{- printf "false" -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "kubecost.mcp.redirectPath" -}}
+{{- default "/auth-mcp" (((.Values.mcp).config).oidc).redirectPath -}}
+{{- end -}}
+
+{{/*
+Service name of the mcp-kubecost subchart. Mirrors mcp-kubecost.fullname so the
+frontend nginx upstream targets the same Service the subchart renders.
+*/}}
+{{- define "kubecost.mcp.serviceName" -}}
+{{- if ((.Values.mcp).fullnameOverride) -}}
+{{- .Values.mcp.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- $name := default "mcp" (.Values.mcp).nameOverride -}}
+{{- if contains $name .Release.Name -}}
+{{- .Release.Name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "kubecost.mcp.servicePort" -}}
+{{- default 3030 ((.Values.mcp).service).port -}}
+{{- end -}}
+
+{{/*
+Fail when MCP holds a Kubecost API key but the MCP HTTP endpoint is not
+protected with OIDC. When CI/CD skipSanityChecks is set, emit a warning instead.
+*/}}
+{{- define "kubecost.mcp.apiKeyAuthCheck" -}}
+{{- $hasKeyValue := (((.Values.mcp).config).kubecostApiKey).value -}}
+{{- $hasKeySecret := (((.Values.mcp).config).kubecostApiKey).existingSecret -}}
+{{- if and (.Values.mcp).enabled (or $hasKeyValue $hasKeySecret) }}
+{{- $authMode := include "kubecost.mcp.authMode" . -}}
+{{- if and (ne $authMode "oidc") (ne $authMode "both") (ne $authMode "api_key") }}
+{{- if and .Values.global.platforms.cicd.enabled .Values.global.platforms.cicd.skipSanityChecks }}
+
+WARNING: MCP.CONFIG.KUBECOSTAPIKEY IS SET BUT MCP.CONFIG.OIDC.AUTHMODE IS NOT "OIDC", "BOTH", OR "API_KEY". THIS IS NOT SECURE: THE MCP SERVER HOLDS A KUBECOST API KEY WHILE THE MCP HTTP ENDPOINT IS NOT PROTECTED. SET MCP.CONFIG.OIDC.AUTHMODE TO OIDC, BOTH, OR API_KEY, OR CLEAR THE API KEY. SKIPSANITYCHECKS IS TRUE SO THIS CHECK DID NOT FAIL.
+{{- else }}
+{{- fail "\n\nFAILURE: mcp.config.kubecostApiKey is set but mcp.config.oidc.authMode is not \"oidc\", \"both\", or \"api_key\". This is not secure: the MCP server holds a Kubecost API key while the MCP HTTP endpoint is not protected. Set mcp.config.oidc.authMode to oidc, both, or api_key, or clear the API key\n" }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end -}}
+
 {{- /*
   Compute a checksum based on the rendered content of specific ConfigMaps and Secrets.
 */ -}}

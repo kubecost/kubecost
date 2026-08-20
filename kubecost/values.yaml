@@ -544,6 +544,8 @@ frontend:
     fqdn: ""  # Example: kubecost-cloud-cost.kubecost.svc.cluster.local:9005
   clusterController:
     fqdn: ""  # Example: cluster-controller.kubecost.svc.cluster.local:9731
+  mcp:
+    fqdn: ""  # Example: kubecost-mcp.kubecost.svc.cluster.local:3030
 
 ## Kubecost Local Store
 ## When no federated storage bucket is configured, localStore provides local storage via a
