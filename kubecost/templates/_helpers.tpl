@@ -584,7 +584,7 @@ To resolve this, either:
 {{- end -}}
 
 {{- define "kubecost.mcp.authMode" -}}
-{{- default "none" (((.Values.mcp).config).oidc).authMode -}}
+{{- default "none" ((.Values.mcp).config).authMode -}}
 {{- end -}}
 
 {{- define "kubecost.mcp.requireClientApiKey" }}
@@ -632,9 +632,12 @@ protected with OIDC. When CI/CD skipSanityChecks is set, emit a warning instead.
 {{- if and (ne $authMode "oidc") (ne $authMode "both") (ne $authMode "api_key") }}
 {{- if and .Values.global.platforms.cicd.enabled .Values.global.platforms.cicd.skipSanityChecks }}
 
-WARNING: MCP.CONFIG.KUBECOSTAPIKEY IS SET BUT MCP.CONFIG.OIDC.AUTHMODE IS NOT "OIDC", "BOTH", OR "API_KEY". THIS IS NOT SECURE: THE MCP SERVER HOLDS A KUBECOST API KEY WHILE THE MCP HTTP ENDPOINT IS NOT PROTECTED. SET MCP.CONFIG.OIDC.AUTHMODE TO OIDC, BOTH, OR API_KEY, OR CLEAR THE API KEY. SKIPSANITYCHECKS IS TRUE SO THIS CHECK DID NOT FAIL.
+WARNING: MCP.CONFIG.KUBECOSTAPIKEY IS SET BUT MCP.CONFIG.AUTHMODE IS NOT "OIDC", "BOTH", OR "API_KEY". THIS IS
+NOT SECURE: THE MCP SERVER HOLDS A KUBECOST API KEY WHILE THE MCP HTTP ENDPOINT IS NOT PROTECTED.
+SET MCP.CONFIG.AUTHMODE TO OIDC, BOTH, OR API_KEY, OR CLEAR THE API KEY.
+SKIPSANITYCHECKS IS TRUE SO THIS CHECK DID NOT FAIL.
 {{- else }}
-{{- fail "\n\nFAILURE: mcp.config.kubecostApiKey is set but mcp.config.oidc.authMode is not \"oidc\", \"both\", or \"api_key\". This is not secure: the MCP server holds a Kubecost API key while the MCP HTTP endpoint is not protected. Set mcp.config.oidc.authMode to oidc, both, or api_key, or clear the API key\n" }}
+{{- fail "\n\nFAILURE: mcp.config.kubecostApiKey is set but mcp.config.authMode is not \"oidc\", \"both\", or \"api_key\". This is not secure: the MCP server holds a Kubecost API key while the MCP HTTP endpoint is not protected. Set mcp.config.authMode to oidc, both, or api_key, or clear the API key\n" }}
 {{- end }}
 {{- end }}
 {{- end }}

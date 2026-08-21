@@ -92,8 +92,14 @@ Merge bufferConfig.directives with extraServerConfig lines, render nginx directi
 {{/*
 Shared proxy directives for MCP upstream locations. Long read/send timeouts
 and buffering off are required for FastMCP streamable HTTP.
+When mcp.config.authMode is "none" the endpoint is unconfigured; return a
+503 informational response instead of proxying to the MCP backend.
 */}}
 {{- define "kubecost.frontend.mcpProxyDirectives" -}}
+{{- if eq (include "kubecost.mcp.authMode" .) "none" -}}
+add_header Content-Type text/plain;
+return 503 "MCP endpoint is not configured. Set mcp.config.authMode to enable access.";
+{{- else -}}
 proxy_connect_timeout       300;
 proxy_send_timeout          3600;
 proxy_read_timeout          3600;
@@ -108,4 +114,5 @@ proxy_set_header X-Forwarded-Proto $scheme;
 proxy_buffering off;
 proxy_cache off;
 chunked_transfer_encoding on;
+{{- end -}}
 {{- end -}}

@@ -669,22 +669,21 @@ mcp:
     kubecostApiBasePath: /model
     ## Authentication for the MCP HTTP endpoint. One of: none, oidc, api_key, both.
     ## The default of "none" leaves the endpoint unauthenticated inside the cluster;
-    ## set an authMode before exposing it through ingress.hosts or httpRoute.
-    # oidc:
-    #   authMode: none
+    ## set mcp.config.authMode before exposing it through ingress.hosts or httpRoute.
+    authMode: none
   ## The MCP server is reachable in-cluster at <release>-mcp:3030. Enable
   ## httpRoute (Gateway API) or ingress to expose it outside the cluster.
-  # httpRoute:
-  #   enabled: false
-  # ingress:
-  #   enabled: false
-  # resources:
-  #   requests:
-  #     cpu: 250m
-  #     memory: 1Gi
-  #   limits:
-  #     cpu: 1000m
-  #     memory: 1Gi
+  httpRoute:
+    enabled: false
+  ingress:
+    enabled: false
+  resources:
+    requests:
+      cpu: 250m
+      memory: 1Gi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
 
 ## Installs Kubecost/OpenCost plugins
 ## Ref: https://opencost.io/docs/integrations/plugins/
