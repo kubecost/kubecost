@@ -10,7 +10,7 @@ Kubecost strives to support as many versions of Kubernetes as possible. Below is
 |---------------|----------------|----------------|---------------------------------------|
 | 2.8           | 1.22           | 1.34           | Final feature release of Kubecost 2.x |
 | 2.9           | 1.22           | 1.34           | Intermediate step to upgrade to 3.x   |
-| 3.0           | 1.29           | 1.34           | First release of Kubecost 3.x         |
+| 3.3           | 1.29           | 1.36+          | Current GA release                    |
 
 ### Migration path from 2.x to 3.x
 
@@ -30,13 +30,13 @@ Due to the new database, a complete re-ingestion of data will begin as soon as 3
 ### Agent compatibility
 
 A Kubecost 3.0 primary cluster is compatible with 2.x agents and newer.
-3.0 has significant changes to the agent (previously called secondaries). The old agent container was called cost-model. The new agent is now called the finops-agent.
+3.0 has significant changes to the agent (previously called secondaries). The old agent container was called `cost-model`. The new agent is the `finops-agent`, delivered as a sub-chart (`finopsagent`).
 
 The new agent has major benefits over the old agent:
 
 - 10 minute metric granularity (cluster/node group/container right-sizing)
-- up to 50% less memory usage
-- more diagnostics data
+- Up to 50% less memory usage
+- More diagnostics data
 
 ### Diagnostics compatibility
 
@@ -46,6 +46,15 @@ The new agent has major benefits over the old agent:
 | 2.x                     | 3.x           | No                | 10m metric granularity is not supported       |
 | 3.x                     | 2.x           | No                |       |
 | 3.x                     | 3.x           | Yes               |       |
+
+## Sub-charts
+
+| Sub-chart | Alias | Default | Description |
+|---|---|---|---|
+| `finops-agent` | `finopsagent` | disabled | Lightweight agent for secondary (agent-only) clusters |
+| `mcp-kubecost` | `mcp` | **enabled** | FinOps MCP server — exposes Kubecost analytics via the Model Context Protocol at `<release>-mcp:3030` |
+
+The MCP server is enabled by default and proxied through the Kubecost frontend at `/mcp`. Set `mcp.config.authMode` before exposing it outside the cluster. See [mcp-kubecost](https://github.com/kubecost/mcp-kubecost) for full configuration options.
 
 ## Installation
 
@@ -91,6 +100,15 @@ helm install nightly \
   --namespace kubecost-nightly --create-namespace
 ```
 
+## Example Configurations
+
+The [`examples/`](examples/) directory contains reference values files for common deployment patterns:
+
+- [`examples/agentOnly/`](examples/agentOnly/) — agent-only (secondary cluster) values for AWS, Azure, and GCP
+- [`examples/federatedStorage/`](examples/federatedStorage/) — multi-cluster federated storage configurations
+
+See [`examples/README.md`](examples/README.md) for usage guidance.
+
 ## Uninstall
 
 Uninstall the chart:
@@ -99,7 +117,7 @@ Uninstall the chart:
 helm uninstall kubecost -n kubecost
 ```
 
-Note that when uninstalling, the persistent volume for the Kubecost metrics are not deleted. You can delete them manually by deleting the namespace:
+Persistent volumes are not deleted on uninstall. To remove them, delete the namespace:
 
 ```sh
 kubectl delete namespace kubecost

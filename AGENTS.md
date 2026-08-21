@@ -16,9 +16,10 @@ Testing the changes via `helm template`:
 # Remove any existing subcharts
 rm -rf ./kubecost/charts
 
-# Get the updated subchart
-helm repo add finops-agent https://kubecost.github.io/finops-agent-chart/
-helm repo update finops-agent
+# Ensure both subchart repos are present
+helm repo add finops-agent-chart https://kubecost.github.io/finops-agent-chart
+helm repo add mcp-kubecost https://kubecost.github.io/mcp-kubecost
+helm repo update
 helm dependency build ./kubecost
 
 # Templating
