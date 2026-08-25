@@ -629,15 +629,40 @@ protected with OIDC. When CI/CD skipSanityChecks is set, emit a warning instead.
 {{- $hasKeySecret := (((.Values.mcp).config).kubecostApiKey).existingSecret -}}
 {{- if and (.Values.mcp).enabled (or $hasKeyValue $hasKeySecret) }}
 {{- $authMode := include "kubecost.mcp.authMode" . -}}
-{{- if and (ne $authMode "oidc") (ne $authMode "both") (ne $authMode "api_key") }}
+{{- if and (ne $authMode "oidc") (ne $authMode "api_key") }}
 {{- if and .Values.global.platforms.cicd.enabled .Values.global.platforms.cicd.skipSanityChecks }}
 
-WARNING: MCP.CONFIG.KUBECOSTAPIKEY IS SET BUT MCP.CONFIG.AUTHMODE IS NOT "OIDC", "BOTH", OR "API_KEY". THIS IS
+WARNING: MCP.CONFIG.KUBECOSTAPIKEY IS SET BUT MCP.CONFIG.AUTHMODE IS NOT "OIDC" OR "API_KEY". THIS IS
 NOT SECURE: THE MCP SERVER HOLDS A KUBECOST API KEY WHILE THE MCP HTTP ENDPOINT IS NOT PROTECTED.
-SET MCP.CONFIG.AUTHMODE TO OIDC, BOTH, OR API_KEY, OR CLEAR THE API KEY.
+SET MCP.CONFIG.AUTHMODE TO OIDC OR API_KEY, OR CLEAR THE API KEY.
 SKIPSANITYCHECKS IS TRUE SO THIS CHECK DID NOT FAIL.
 {{- else }}
-{{- fail "\n\nFAILURE: mcp.config.kubecostApiKey is set but mcp.config.authMode is not \"oidc\", \"both\", or \"api_key\". This is not secure: the MCP server holds a Kubecost API key while the MCP HTTP endpoint is not protected. Set mcp.config.authMode to oidc, both, or api_key, or clear the API key\n" }}
+{{- fail "\n\nFAILURE: mcp.config.kubecostApiKey is set but mcp.config.authMode is not \"oidc\" or \"api_key\". This is not secure: the MCP server holds a Kubecost API key while the MCP HTTP endpoint is not protected. Set mcp.config.authMode to oidc or api_key, or clear the API key\n" }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end -}}
+
+{{/*
+Fail when authMode is "none" and either an MCP route (httpRoute or ingress) is
+enabled, or kubecostApiPort is 9008 (aggregator SSO bypass). In both cases the
+MCP endpoint would be unauthenticated while able to reach Kubecost without
+SSO. When CI/CD skipSanityChecks is set, emit a warning instead.
+*/}}
+{{- define "kubecost.mcp.openRouteCheck" -}}
+{{- if (.Values.mcp).enabled }}
+{{- $routeEnabled := or ((.Values.mcp).httpRoute).enabled ((.Values.mcp).ingress).enabled -}}
+{{- $apiPort := toString (default 9004 ((.Values.mcp).config).kubecostApiPort) -}}
+{{- $authMode := include "kubecost.mcp.authMode" . -}}
+{{- if and (or $routeEnabled (eq $apiPort "9008")) (eq $authMode "none") }}
+{{- if and .Values.global.platforms.cicd.enabled .Values.global.platforms.cicd.skipSanityChecks }}
+
+WARNING: MCP.CONFIG.AUTHMODE IS "NONE" WHILE MCP.HTTPROUTE/INGRESS IS ENABLED OR MCP.CONFIG.KUBECOSTAPIPORT IS 9008.
+THE MCP ENDPOINT WOULD BE UNPROTECTED WHILE ABLE TO BYPASS KUBECOST SSO. SET MCP.CONFIG.AUTHMODE TO AT LEAST "OPEN"
+TO ACKNOWLEDGE THIS, OR USE "OIDC" OR "API_KEY" TO ENFORCE AUTHENTICATION.
+SKIPSANITYCHECKS IS TRUE SO THIS CHECK DID NOT FAIL.
+{{- else }}
+{{- fail "\n\nFAILURE: mcp.config.authMode is \"none\" while mcp.httpRoute or mcp.ingress is enabled, or mcp.config.kubecostApiPort is 9008. The MCP endpoint would be unauthenticated while it can bypass Kubecost SSO on port 9008. Set mcp.config.authMode to at least \"open\" to acknowledge intentional unauthenticated exposure, or use \"oidc\" or \"api_key\" to enforce authentication.\n" }}
 {{- end }}
 {{- end }}
 {{- end }}

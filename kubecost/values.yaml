@@ -662,14 +662,17 @@ finopsagent:
 ##
 mcp:
   enabled: true
-  ## The MCP server reads cost data through the Kubecost frontend Service
-  ## (`<release>-frontend:9090`). This value is tpl-evaluated by the subchart.
+  ## The MCP server reads cost data through the Kubecost aggregator Service.
+  ## If Kubecost is deployed with SAML or OIDC authentication,
+  ## set mcp.config.kubecostApiPort to 9008 instead of 9004 to bypass authentication.
   config:
-    kubecostBaseUrl: "http://{{ .Release.Name }}-frontend:9090"
-    kubecostApiBasePath: /model
-    ## Authentication for the MCP HTTP endpoint. One of: none, oidc, api_key, both.
+    kubecostApiBaseUrl: "http://{{ .Release.Name }}-aggregator"
+    kubecostApiPort: 9004
+    kubecostApiBasePath: /
+    ## Authentication for the MCP HTTP endpoint. One of: none, open, oidc, api_key.
+    ## To require both OIDC and X-API-KEY, set authMode: oidc and mcp.config.requireClientApiKey: true.
     ## The default of "none" leaves the endpoint unauthenticated inside the cluster;
-    ## set mcp.config.authMode before exposing it through ingress.hosts or httpRoute.
+    ## See https://github.com/kubecost/mcp-kubecost/tree/main/docs/auth for more details.
     authMode: none
   ## The MCP server is reachable in-cluster at <release>-mcp:3030. Enable
   ## httpRoute (Gateway API) or ingress to expose it outside the cluster.

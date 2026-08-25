@@ -92,8 +92,10 @@ Merge bufferConfig.directives with extraServerConfig lines, render nginx directi
 {{/*
 Shared proxy directives for MCP upstream locations. Long read/send timeouts
 and buffering off are required for FastMCP streamable HTTP.
-When mcp.config.authMode is "none" the endpoint is unconfigured; return a
-503 informational response instead of proxying to the MCP backend.
+When mcp.config.authMode is "none" the endpoint is unconfigured/unacknowledged;
+return a 503 informational response instead of proxying to the MCP backend.
+When mcp.config.authMode is "open" the operator has explicitly acknowledged
+unauthenticated exposure — requests are proxied normally without auth enforcement.
 */}}
 {{- define "kubecost.frontend.mcpProxyDirectives" -}}
 {{- if eq (include "kubecost.mcp.authMode" .) "none" -}}

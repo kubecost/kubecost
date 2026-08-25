@@ -7,6 +7,7 @@ on:
       - 'kubecost/Chart.lock'
       - 'kubecost/values.yaml'
       - 'kubecost/templates/_helpers.tpl'
+      - 'kubecost/templates/NOTES.txt'
       - 'kubecost/templates/frontend/_helpers.tpl'
       - 'kubecost/templates/frontend/frontend-configmap.yaml'
       - '.github/scripts/validate_mcp_subchart.sh'
@@ -83,6 +84,12 @@ jobs:
             --set global.platforms.cicd.enabled=true \
             --set global.platforms.cicd.skipSanityChecks=true \
             > .helm-render/mcp-httproute.yaml
+          helm template kubecost "$CHART_DIR" \
+            --skip-schema-validation \
+            --set mcp.enabled=true \
+            --set mcp.httpRoute.enabled=true \
+            --set mcp.config.authMode=open \
+            > .helm-render/mcp-httproute-open.yaml
 
       # Ensure every rendered resource is valid Kubernetes YAML. HTTPRoute is a
       # Gateway API CRD, so that render tolerates missing schemas.

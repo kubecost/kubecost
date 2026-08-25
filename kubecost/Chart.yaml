@@ -19,6 +19,6 @@ dependencies:
   # Ref: https://github.com/kubecost/mcp-kubecost
   - name: mcp-kubecost
     alias: mcp
-    version: "0.6.3"
+    version: "0.7.0"
     repository: https://kubecost.github.io/mcp-kubecost
     condition: mcp.enabled

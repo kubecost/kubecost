@@ -197,28 +197,17 @@ assert_eq "subchart Service exposes the MCP port" "3030" "$svc_port"
 # ---------------------------------------------------------------------------
 group "Cross-chart wiring"
 
-# The MCP server reads cost data through the frontend Service, so the default
-# kubecostBaseUrl in values.yaml must match what the parent chart actually
-# renders. This catches drift if the frontend Service name or port changes.
-frontend_service="$(yq -r \
-  'select(.kind == "Service" and .spec.selector."app.kubernetes.io/name" == "frontend") | .metadata.name' \
-  "${RENDER_DIR}/enabled.yaml" | head -1)"
-frontend_port="$(yq -r \
-  'select(.kind == "Service" and .spec.selector."app.kubernetes.io/name" == "frontend") | .spec.ports[0].port' \
-  "${RENDER_DIR}/enabled.yaml" | head -1)"
+# KUBECOST_BASE_URL is assembled from kubecostApiBaseUrl (tpl-evaluated) and
+# kubecostApiPort. Assert that the rendered ConfigMap reflects the expected
+# aggregator service name (derived from the release name) and the default port.
+base_url="$(yq -r \
+  "select(.kind == \"ConfigMap\" and .metadata.name == \"${expected_fullname}-config\") | .data.KUBECOST_BASE_URL" \
+  "${RENDER_DIR}/enabled.yaml")"
+assert_eq "subchart KUBECOST_BASE_URL targets the in-cluster Kubecost aggregator" \
+  "http://${RELEASE_NAME}-aggregator:9004" "$base_url"
 
-if [ -z "$frontend_service" ] || [ -z "$frontend_port" ]; then
-  fail "could not locate the rendered Kubecost frontend Service"
-else
-  base_url="$(yq -r \
-    "select(.kind == \"ConfigMap\" and .metadata.name == \"${expected_fullname}-config\") | .data.KUBECOST_BASE_URL" \
-    "${RENDER_DIR}/enabled.yaml")"
-  assert_eq "subchart targets the in-cluster Kubecost frontend Service" \
-    "http://${frontend_service}:${frontend_port}" "$base_url"
-fi
-
-# kubecostBaseUrl is a tpl string in values.yaml, so a different release name
-# must rewrite both the frontend Service and the MCP ConfigMap together.
+# kubecostApiBaseUrl is a tpl string, so a different release name must produce
+# a matching aggregator URL in KUBECOST_BASE_URL.
 alt_release="cost-analyzer"
 helm template "$alt_release" "$CHART_DIR" \
   "${skip_schema[@]}" \
@@ -226,18 +215,12 @@ helm template "$alt_release" "$CHART_DIR" \
   > "${RENDER_DIR}/alt-release.yaml"
 pass "helm template (release ${alt_release}) rendered without errors"
 
-alt_frontend="$(yq -r \
-  'select(.kind == "Service" and .spec.selector."app.kubernetes.io/name" == "frontend") | .metadata.name' \
-  "${RENDER_DIR}/alt-release.yaml" | head -1)"
-alt_port="$(yq -r \
-  'select(.kind == "Service" and .spec.selector."app.kubernetes.io/name" == "frontend") | .spec.ports[0].port' \
-  "${RENDER_DIR}/alt-release.yaml" | head -1)"
 alt_fullname="${alt_release}-${values_key}"
 alt_base_url="$(yq -r \
   "select(.kind == \"ConfigMap\" and .metadata.name == \"${alt_fullname}-config\") | .data.KUBECOST_BASE_URL" \
   "${RENDER_DIR}/alt-release.yaml")"
-assert_eq "subchart BaseUrl follows a non-default release name" \
-  "http://${alt_frontend}:${alt_port}" "$alt_base_url"
+assert_eq "subchart KUBECOST_BASE_URL follows a non-default release name" \
+  "http://${alt_release}-aggregator:9004" "$alt_base_url"
 
 # ---------------------------------------------------------------------------
 group "Frontend nginx MCP proxy"
@@ -283,6 +266,76 @@ assert_absent "frontend nginx omits /mcp proxy when disabled" \
   "${RENDER_DIR}/nginx-disabled.conf" "location /mcp"
 assert_contains "productConfigs reports mcpEnabled=false" \
   "${RENDER_DIR}/nginx-disabled.conf" '"mcpEnabled": "false"'
+
+# ---------------------------------------------------------------------------
+group "authMode routing guard"
+
+# 1) httpRoute.enabled=true + authMode=none must FAIL (hard fail expected).
+set +e
+helm template "$RELEASE_NAME" "$CHART_DIR" \
+  "${skip_schema[@]}" \
+  --set "${values_key}.enabled=true" \
+  --set mcp.httpRoute.enabled=true \
+  --set mcp.config.authMode=none \
+  > /dev/null 2>&1
+_exit_code=$?
+set -e
+if [[ "$_exit_code" -eq 0 ]]; then
+  fail "helm template should have failed when httpRoute.enabled=true and authMode=none"
+else
+  pass "helm template fails when httpRoute.enabled=true and authMode=none (exit code ${_exit_code})"
+fi
+
+# 2) httpRoute.enabled=true + authMode=open must SUCCEED and produce a ConfigMap.
+helm template "$RELEASE_NAME" "$CHART_DIR" \
+  "${skip_schema[@]}" \
+  --set "${values_key}.enabled=true" \
+  --set mcp.httpRoute.enabled=true \
+  --set mcp.config.authMode=open \
+  > "${RENDER_DIR}/httproute-open.yaml"
+pass "helm template succeeds when httpRoute.enabled=true and authMode=open"
+
+assert_contains "authMode=open render includes a ConfigMap" \
+  "${RENDER_DIR}/httproute-open.yaml" "kind: ConfigMap"
+
+# 3) skipSanityChecks=true must SUCCEED (warning path) even with authMode=none.
+helm template "$RELEASE_NAME" "$CHART_DIR" \
+  "${skip_schema[@]}" \
+  --set "${values_key}.enabled=true" \
+  --set mcp.httpRoute.enabled=true \
+  --set mcp.config.authMode=none \
+  --set global.platforms.cicd.enabled=true \
+  --set global.platforms.cicd.skipSanityChecks=true \
+  > "${RENDER_DIR}/httproute-none-skip.yaml"
+pass "helm template succeeds with skipSanityChecks=true when httpRoute.enabled=true and authMode=none"
+
+assert_contains "skipSanityChecks render includes a ConfigMap" \
+  "${RENDER_DIR}/httproute-none-skip.yaml" "kind: ConfigMap"
+
+# 4) kubecostApiPort=9008 + authMode=none must FAIL (aggregator SSO bypass).
+set +e
+helm template "$RELEASE_NAME" "$CHART_DIR" \
+  "${skip_schema[@]}" \
+  --set "${values_key}.enabled=true" \
+  --set mcp.config.kubecostApiPort=9008 \
+  --set mcp.config.authMode=none \
+  > /dev/null 2>&1
+_exit_code=$?
+set -e
+if [[ "$_exit_code" -eq 0 ]]; then
+  fail "helm template should have failed when kubecostApiPort=9008 and authMode=none"
+else
+  pass "helm template fails when kubecostApiPort=9008 and authMode=none (exit code ${_exit_code})"
+fi
+
+# 5) kubecostApiPort=9008 + authMode=oidc must SUCCEED.
+helm template "$RELEASE_NAME" "$CHART_DIR" \
+  "${skip_schema[@]}" \
+  --set "${values_key}.enabled=true" \
+  --set mcp.config.kubecostApiPort=9008 \
+  --set mcp.config.authMode=oidc \
+  > "${RENDER_DIR}/apiport-9008-oidc.yaml"
+pass "helm template succeeds when kubecostApiPort=9008 and authMode=oidc"
 
 # ---------------------------------------------------------------------------
 group "global: values conformance"
