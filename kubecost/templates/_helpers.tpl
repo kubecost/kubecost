@@ -600,6 +600,46 @@ To resolve this, either:
 {{- end -}}
 
 {{/*
+Path prefix the MCP server is served under on the Kubecost frontend host,
+derived from the path component of mcp.config.oidc.baseUrl. Empty when the MCP
+server has its own hostname (baseUrl at a host root) or when OIDC is off.
+
+When non-empty, FastMCP advertises {baseUrl}/authorize, {baseUrl}/token and
+{baseUrl}/register in its OAuth metadata, so every OAuth path the MCP clients
+touch lives under this prefix instead of the shared host root. The frontend
+nginx strips the prefix before proxying, and the subchart serves the MCP
+endpoint at "/" to match (mcp-kubecost.httpPath).
+
+Rejects characters that are not safe to interpolate into the nginx rewrite
+regexes that consume this value.
+*/}}
+{{- define "kubecost.mcp.pathPrefix" -}}
+{{- $raw := ((((.Values.mcp).config).oidc).baseUrl) | default "" | trim -}}
+{{- if $raw -}}
+{{- $path := (urlParse $raw).path | default "" -}}
+{{- $path = printf "/%s" (trimAll "/" $path) -}}
+{{- if ne $path "/" -}}
+{{- if not (regexMatch "^(/[A-Za-z0-9._~-]+)+$" $path) -}}
+{{- fail (printf "\n\nFAILURE [kubecost / mcp]: the path in mcp.config.oidc.baseUrl (%q) is not a usable nginx location prefix. Use only unreserved URL characters, e.g. https://kubecost.example.com/mcp\n" $path) -}}
+{{- end -}}
+{{- $path -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "kubecost.mcp.kubecostApiBaseUrl" -}}
+{{- tpl (default (printf "http://%s-aggregator" .Release.Name) ((.Values.mcp).config).kubecostApiBaseUrl) . -}}
+{{- end -}}
+
+{{- define "kubecost.mcp.kubecostApiPort" -}}
+{{- default 9004 ((.Values.mcp).config).kubecostApiPort -}}
+{{- end -}}
+
+{{- define "kubecost.mcp.kubecostApiBasePath" -}}
+{{- default "/" ((.Values.mcp).config).kubecostApiBasePath -}}
+{{- end -}}
+
+{{/*
 Service name of the mcp-kubecost subchart. Mirrors mcp-kubecost.fullname so the
 frontend nginx upstream targets the same Service the subchart renders.
 */}}
@@ -621,43 +661,21 @@ frontend nginx upstream targets the same Service the subchart renders.
 {{- end -}}
 
 {{/*
-Fail when MCP holds a Kubecost API key but the MCP HTTP endpoint is not
-protected with OIDC. When CI/CD skipSanityChecks is set, emit a warning instead.
-*/}}
-{{- define "kubecost.mcp.apiKeyAuthCheck" -}}
-{{- $hasKeyValue := (((.Values.mcp).config).kubecostApiKey).value -}}
-{{- $hasKeySecret := (((.Values.mcp).config).kubecostApiKey).existingSecret -}}
-{{- if and (.Values.mcp).enabled (or $hasKeyValue $hasKeySecret) }}
-{{- $authMode := include "kubecost.mcp.authMode" . -}}
-{{- if and (ne $authMode "oidc") (ne $authMode "api_key") }}
-{{- if and .Values.global.platforms.cicd.enabled .Values.global.platforms.cicd.skipSanityChecks }}
-
-WARNING: MCP.CONFIG.KUBECOSTAPIKEY IS SET BUT MCP.CONFIG.AUTHMODE IS NOT "OIDC" OR "API_KEY". THIS IS
-NOT SECURE: THE MCP SERVER HOLDS A KUBECOST API KEY WHILE THE MCP HTTP ENDPOINT IS NOT PROTECTED.
-SET MCP.CONFIG.AUTHMODE TO OIDC OR API_KEY, OR CLEAR THE API KEY.
-SKIPSANITYCHECKS IS TRUE SO THIS CHECK DID NOT FAIL.
-{{- else }}
-{{- fail "\n\nFAILURE: mcp.config.kubecostApiKey is set but mcp.config.authMode is not \"oidc\" or \"api_key\". This is not secure: the MCP server holds a Kubecost API key while the MCP HTTP endpoint is not protected. Set mcp.config.authMode to oidc or api_key, or clear the API key\n" }}
-{{- end }}
-{{- end }}
-{{- end }}
-{{- end -}}
-
-{{/*
 Fail when authMode is "none" and either an MCP route (httpRoute or ingress) is
 enabled, or kubecostApiPort is 9008 (aggregator SSO bypass). In both cases the
 MCP endpoint would be unauthenticated while able to reach Kubecost without
 SSO. When CI/CD skipSanityChecks is set, emit a warning instead.
+This does not prevent an mcp.httpRoute or mcp.ingress from being enabled. Those checks exist in the sub-chart itself.
 */}}
 {{- define "kubecost.mcp.openRouteCheck" -}}
 {{- if (.Values.mcp).enabled }}
-{{- $routeEnabled := or ((.Values.mcp).httpRoute).enabled ((.Values.mcp).ingress).enabled -}}
-{{- $apiPort := toString (default 9004 ((.Values.mcp).config).kubecostApiPort) -}}
+{{- $routeEnabled := or ((.Values.mcp).httpRoute).enabled ((.Values.mcp).ingress).enabled (.Values.ingress).enabled (.Values.httpRoute).enabled -}}
+{{- $apiPort := toString (include "kubecost.mcp.kubecostApiPort" .) -}}
 {{- $authMode := include "kubecost.mcp.authMode" . -}}
 {{- if and (or $routeEnabled (eq $apiPort "9008")) (eq $authMode "none") }}
 {{- if and .Values.global.platforms.cicd.enabled .Values.global.platforms.cicd.skipSanityChecks }}
 
-WARNING: MCP.CONFIG.AUTHMODE IS "NONE" WHILE MCP.HTTPROUTE/INGRESS IS ENABLED OR MCP.CONFIG.KUBECOSTAPIPORT IS 9008.
+WARNING: MCP.CONFIG.AUTHMODE IS "NONE" WHILE an HTTPROUTE/INGRESS IS ENABLED OR MCP.CONFIG.KUBECOSTAPIPORT IS 9008.
 THE MCP ENDPOINT WOULD BE UNPROTECTED WHILE ABLE TO BYPASS KUBECOST SSO. SET MCP.CONFIG.AUTHMODE TO AT LEAST "OPEN"
 TO ACKNOWLEDGE THIS, OR USE "OIDC" OR "API_KEY" TO ENFORCE AUTHENTICATION.
 SKIPSANITYCHECKS IS TRUE SO THIS CHECK DID NOT FAIL.
@@ -666,6 +684,68 @@ SKIPSANITYCHECKS IS TRUE SO THIS CHECK DID NOT FAIL.
 {{- end }}
 {{- end }}
 {{- end }}
+{{- end -}}
+
+{{/*
+Fail when MCP is enabled, authMode is "oidc", but no OIDC credentials are supplied.
+Valid credential state = either (clientId AND clientSecret both non-empty)
+OR existingSecret non-empty. When CI/CD skipSanityChecks is set, emit a warning instead.
+
+CONCERNS:
+- No mutual-exclusivity guard: supplying both existingSecret and inline clientId/clientSecret
+  will not fail here. The subchart favours existingSecret at runtime but still renders the
+  inline values into a Kubernetes Secret (secret sprawl). This is intentional.
+- Presence != validity: whitespace-only strings pass this check. Runtime OIDC token exchange
+  is the real validation gate.
+- mcp.config.oidc.existingSecret was not in this chart's values.yaml historically. It was
+  added alongside this check so it is now discoverable. The subchart passes it through to the
+  pod via its own Secret-wiring logic.
+- The parent chart only passes through a subset of the subchart's oidc config keys. Operators
+  who need the full OIDC surface (audience, requiredScopes, authIngress.*) must add values
+  under mcp.config.oidc.* directly.
+- Ordering: this check runs during the parent chart's NOTES.txt render. The subchart's own
+  mcp-kubecost.validateOIDC also runs (via its NOTES.txt). Both fire independently when both
+  are misconfigured — this is intentional redundancy, not a bug.
+*/}}
+{{- define "kubecost.mcp.validateOIDC" -}}
+{{- if (.Values.mcp).enabled -}}
+{{- $mode := default "none" ((.Values.mcp).config).authMode -}}
+{{- if eq $mode "oidc" -}}
+{{- $oidc := (((.Values.mcp).config).oidc) | default dict -}}
+{{- $hasInline := and $oidc.clientId $oidc.clientSecret -}}
+{{- $hasExisting := $oidc.existingSecret -}}
+{{- if not (or $hasInline $hasExisting) -}}
+{{- if and .Values.global.platforms.cicd.enabled .Values.global.platforms.cicd.skipSanityChecks }}
+
+WARNING: MCP.CONFIG.AUTHMODE IS "OIDC" BUT NO OIDC CREDENTIALS ARE CONFIGURED.
+SET MCP.CONFIG.OIDC.CLIENTID AND MCP.CONFIG.OIDC.CLIENTSECRET, OR SET MCP.CONFIG.OIDC.EXISTINGSECRET.
+SKIPSANITYCHECKS IS TRUE SO THIS CHECK DID NOT FAIL.
+{{- else }}
+{{- fail "\n\nFAILURE [kubecost / mcp]: mcp.config.authMode is \"oidc\" but no OIDC credentials are configured.\n\nTo fix, choose one of:\n  Option A — inline credentials:\n    mcp.config.oidc.clientId: \"<your-client-id>\"\n    mcp.config.oidc.clientSecret: \"<your-client-secret>\"\n\n  Option B — reference a pre-existing Secret (required keys: OIDC_CLIENT_ID, OIDC_CLIENT_SECRET):\n    mcp.config.oidc.existingSecret: \"<secret-name>\"\n\n  Option C — skip this sanity check (CI/CD only; the MCP OIDC deployment will still be broken until credentials are set):\n    global.platforms.cicd.enabled: true\n    global.platforms.cicd.skipSanityChecks: true\n" }}
+{{- end }}
+{{- end -}}
+{{- if not (hasPrefix "https://" ($oidc.issuerUrl | default "")) -}}
+{{- if and .Values.global.platforms.cicd.enabled .Values.global.platforms.cicd.skipSanityChecks }}
+
+WARNING: MCP.CONFIG.OIDC.ISSUERURL MUST BE SET TO AN HTTPS:// URL.
+EXAMPLE: mcp.config.oidc.issuerUrl: "https://kubecost.example.com/.well-known/openid-configuration"
+SKIPSANITYCHECKS IS TRUE SO THIS CHECK DID NOT FAIL.
+{{- else }}
+{{- fail "\n\nFAILURE [kubecost / mcp]: mcp.config.oidc.issuerUrl must be set to an https:// URL.\n\n  Example:\n    mcp.config.oidc.issuerUrl: \"https://kubecost.example.com/.well-known/openid-configuration\"\n\n  To skip this check (CI/CD only):\n    global.platforms.cicd.enabled: true\n    global.platforms.cicd.skipSanityChecks: true\n" }}
+{{- end }}
+{{- end -}}
+{{- if not (hasPrefix "https://" ($oidc.baseUrl | default "")) -}}
+{{- if and .Values.global.platforms.cicd.enabled .Values.global.platforms.cicd.skipSanityChecks }}
+
+WARNING: MCP.CONFIG.OIDC.BASEURL MUST BE SET TO AN HTTPS:// URL.
+EXAMPLE: mcp.config.oidc.baseUrl: "https://kubecost.example.com"
+SKIPSANITYCHECKS IS TRUE SO THIS CHECK DID NOT FAIL.
+{{- else }}
+{{- fail "\n\nFAILURE [kubecost / mcp]: mcp.config.oidc.baseUrl must be set to an https:// URL.\n\n  Example:\n    mcp.config.oidc.baseUrl: \"https://kubecost.example.com\"\n\n  To skip this check (CI/CD only):\n    global.platforms.cicd.enabled: true\n    global.platforms.cicd.skipSanityChecks: true\n" }}
+{{- end }}
+{{- end -}}
+{{- end -}}
+{{- end -}}
 {{- end -}}
 
 {{- /*

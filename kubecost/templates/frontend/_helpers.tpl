@@ -90,31 +90,35 @@ Merge bufferConfig.directives with extraServerConfig lines, render nginx directi
 {{- end -}}
 
 {{/*
-Shared proxy directives for MCP upstream locations. Long read/send timeouts
-and buffering off are required for FastMCP streamable HTTP.
-When mcp.config.authMode is "none" the endpoint is unconfigured/unacknowledged;
-return a 503 informational response instead of proxying to the MCP backend.
+When mcp.config.authMode is "none" AND a Kubecost ingress/httpRoute is defined, block the endpoint
+until it is configured/acknowledged; otherwise, proxy to the MCP backend.
 When mcp.config.authMode is "open" the operator has explicitly acknowledged
 unauthenticated exposure — requests are proxied normally without auth enforcement.
+When mcp.config.authMode is "oidc/api_key" the endpoint is proxied with auth enforcement being handled by the MCP backend.
+This does not prevent an mcp.httpRoute or mcp.ingress from being enabled. Those checks exist in the sub-chart itself.
 */}}
 {{- define "kubecost.frontend.mcpProxyDirectives" -}}
-{{- if eq (include "kubecost.mcp.authMode" .) "none" -}}
-add_header Content-Type text/plain;
-return 503 "MCP endpoint is not configured. Set mcp.config.authMode to enable access.";
+{{- if and (eq (include "kubecost.mcp.authMode" .) "none") (or .Values.httpRoute.enabled .Values.ingress.enabled) -}}
+  add_header Content-Type text/plain;
+  return 424 "MCP endpoint is not configured. Set mcp.config.authMode to enable access.";
 {{- else -}}
-proxy_connect_timeout       300;
-proxy_send_timeout          3600;
-proxy_read_timeout          3600;
-proxy_pass http://mcpKubecost;
-proxy_redirect off;
-proxy_http_version 1.1;
-proxy_set_header Connection "";
-proxy_set_header Host $host;
-proxy_set_header X-Real-IP $remote_addr;
-proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-proxy_set_header X-Forwarded-Proto $scheme;
-proxy_buffering off;
-proxy_cache off;
-chunked_transfer_encoding on;
+{{/*
+Shared proxy directives for MCP upstream locations. Long read/send timeouts
+and buffering off are required for FastMCP streamable HTTP.
+*/}}
+  proxy_connect_timeout       300;
+  proxy_send_timeout          3600;
+  proxy_read_timeout          3600;
+  proxy_pass http://mcpKubecost;
+  proxy_redirect off;
+  proxy_http_version 1.1;
+  proxy_set_header Connection "";
+  proxy_set_header Host $host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  proxy_buffering off;
+  proxy_cache off;
+  chunked_transfer_encoding on;
 {{- end -}}
 {{- end -}}

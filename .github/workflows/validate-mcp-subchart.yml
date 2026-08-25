@@ -80,6 +80,7 @@ jobs:
             --skip-schema-validation \
             --set mcp.enabled=true \
             --set mcp.httpRoute.enabled=true \
+            --set mcp.config.authMode=open \
             --set mcp.config.kubecostApiKey.existingSecret=kubecost-api-key \
             --set global.platforms.cicd.enabled=true \
             --set global.platforms.cicd.skipSanityChecks=true \

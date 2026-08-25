@@ -670,10 +670,38 @@ mcp:
     kubecostApiPort: 9004
     kubecostApiBasePath: /
     ## Authentication for the MCP HTTP endpoint. One of: none, open, oidc, api_key.
-    ## To require both OIDC and X-API-KEY, set authMode: oidc and mcp.config.requireClientApiKey: true.
     ## The default of "none" leaves the endpoint unauthenticated inside the cluster;
     ## See https://github.com/kubecost/mcp-kubecost/tree/main/docs/auth for more details.
     authMode: none
+    oidc:
+      # mcp.config.oidc.issuerUrl is the provider's .well-known/openid-configuration URL.
+      # Example: https://{domain}/.well-known/openid-configuration
+      issuerUrl: ""
+      # mcp.config.oidc.baseUrl is the public URL of this MCP server (used for OAuth redirect callback).
+      #
+      # When the MCP server shares the Kubecost frontend hostname, give this a
+      # path prefix -- https://kubecost.example.com/mcp -- so FastMCP advertises
+      # every OAuth endpoint under that prefix (/mcp/authorize, /mcp/token,
+      # /mcp/register, /mcp/auth-mcp) instead of claiming those names at the
+      # root of a host it shares with Kubecost SSO. The frontend nginx strips
+      # the prefix, and the subchart then serves the MCP endpoint at "/".
+      # Register the redirect URI at the IdP with the prefix included.
+      #
+      # Leave the path off (https://mcp.example.com) only when the MCP server
+      # has its own hostname, where there is nothing to collide with.
+      baseUrl: ""
+      # mcp.config.oidc.redirectPath is the FastMCP OAuth callback path
+      # The default is /auth-mcp which is to avoid conflict with the Kubecost OIDC callback for the main UI
+      # With a path-prefixed baseUrl this is served under the prefix, so it no
+      # longer has to out-length the Kubecost /auth location.
+      redirectPath: "/auth-mcp"
+      # mcp.config.oidc.clientId is the OIDC client ID. Prefer existingSecret for production.
+      clientId: ""
+      # mcp.config.oidc.clientSecret is the OIDC client secret. Prefer existingSecret for production.
+      clientSecret: ""
+      # mcp.config.oidc.existingSecret references a pre-created Secret containing OIDC credentials.
+      # Required keys: OIDC_CLIENT_ID, OIDC_CLIENT_SECRET. Preferred over clientId/clientSecret.
+      existingSecret: ""
   ## The MCP server is reachable in-cluster at <release>-mcp:3030. Enable
   ## httpRoute (Gateway API) or ingress to expose it outside the cluster.
   httpRoute:
