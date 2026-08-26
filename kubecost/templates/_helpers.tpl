@@ -614,6 +614,7 @@ Rejects characters that are not safe to interpolate into the nginx rewrite
 regexes that consume this value.
 */}}
 {{- define "kubecost.mcp.pathPrefix" -}}
+{{- if eq (include "kubecost.mcp.authMode" .) "oidc" -}}
 {{- $raw := ((((.Values.mcp).config).oidc).baseUrl) | default "" | trim -}}
 {{- if $raw -}}
 {{- $path := (urlParse $raw).path | default "" -}}
@@ -623,6 +624,7 @@ regexes that consume this value.
 {{- fail (printf "\n\nFAILURE [kubecost / mcp]: the path in mcp.config.oidc.baseUrl (%q) is not a usable nginx location prefix. Use only unreserved URL characters, e.g. https://kubecost.example.com/mcp\n" $path) -}}
 {{- end -}}
 {{- $path -}}
+{{- end -}}
 {{- end -}}
 {{- end -}}
 {{- end -}}
@@ -661,10 +663,11 @@ frontend nginx upstream targets the same Service the subchart renders.
 {{- end -}}
 
 {{/*
-Fail when authMode is "none" and either an MCP route (httpRoute or ingress) is
-enabled, or kubecostApiPort is 9008 (aggregator SSO bypass). In both cases the
-MCP endpoint would be unauthenticated while able to reach Kubecost without
-SSO. When CI/CD skipSanityChecks is set, emit a warning instead.
+Fail when authMode is "none" AND a route (httpRoute or ingress) is exposed AND
+kubecostApiPort is 9008 (aggregator SSO bypass). All three conditions must be
+true simultaneously: a route alone at the default port (9004) is permitted, and
+port 9008 alone without an exposed route is also permitted. When CI/CD
+skipSanityChecks is set, emit a warning instead of failing.
 This does not prevent an mcp.httpRoute or mcp.ingress from being enabled. Those checks exist in the sub-chart itself.
 */}}
 {{- define "kubecost.mcp.openRouteCheck" -}}
@@ -672,15 +675,15 @@ This does not prevent an mcp.httpRoute or mcp.ingress from being enabled. Those 
 {{- $routeEnabled := or ((.Values.mcp).httpRoute).enabled ((.Values.mcp).ingress).enabled (.Values.ingress).enabled (.Values.httpRoute).enabled -}}
 {{- $apiPort := toString (include "kubecost.mcp.kubecostApiPort" .) -}}
 {{- $authMode := include "kubecost.mcp.authMode" . -}}
-{{- if and (or $routeEnabled (eq $apiPort "9008")) (eq $authMode "none") }}
+{{- if and  ($routeEnabled) (eq $apiPort "9008") (eq $authMode "none") }}
 {{- if and .Values.global.platforms.cicd.enabled .Values.global.platforms.cicd.skipSanityChecks }}
 
-WARNING: MCP.CONFIG.AUTHMODE IS "NONE" WHILE an HTTPROUTE/INGRESS IS ENABLED OR MCP.CONFIG.KUBECOSTAPIPORT IS 9008.
+WARNING: MCP.CONFIG.AUTHMODE IS "NONE" WHILE an HTTPROUTE/INGRESS IS ENABLED AND MCP.CONFIG.KUBECOSTAPIPORT IS 9008.
 THE MCP ENDPOINT WOULD BE UNPROTECTED WHILE ABLE TO BYPASS KUBECOST SSO. SET MCP.CONFIG.AUTHMODE TO AT LEAST "OPEN"
 TO ACKNOWLEDGE THIS, OR USE "OIDC" OR "API_KEY" TO ENFORCE AUTHENTICATION.
 SKIPSANITYCHECKS IS TRUE SO THIS CHECK DID NOT FAIL.
 {{- else }}
-{{- fail "\n\nFAILURE: mcp.config.authMode is \"none\" while mcp.httpRoute or mcp.ingress is enabled, or mcp.config.kubecostApiPort is 9008. The MCP endpoint would be unauthenticated while it can bypass Kubecost SSO on port 9008. Set mcp.config.authMode to at least \"open\" to acknowledge intentional unauthenticated exposure, or use \"oidc\" or \"api_key\" to enforce authentication.\n" }}
+{{- fail "\n\nFAILURE: mcp.config.authMode is \"none\" while mcp.httpRoute or mcp.ingress is enabled, AND mcp.config.kubecostApiPort is 9008. The MCP endpoint would be unauthenticated while it can bypass Kubecost SSO on port 9008. Set mcp.config.authMode to at least \"open\" to acknowledge intentional unauthenticated exposure, or use \"oidc\" or \"api_key\" to enforce authentication.\n" }}
 {{- end }}
 {{- end }}
 {{- end }}

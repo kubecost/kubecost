@@ -89,19 +89,7 @@ Merge bufferConfig.directives with extraServerConfig lines, render nginx directi
   {{- trimSuffix "\n" $out -}}
 {{- end -}}
 
-{{/*
-When mcp.config.authMode is "none" AND a Kubecost ingress/httpRoute is defined, block the endpoint
-until it is configured/acknowledged; otherwise, proxy to the MCP backend.
-When mcp.config.authMode is "open" the operator has explicitly acknowledged
-unauthenticated exposure — requests are proxied normally without auth enforcement.
-When mcp.config.authMode is "oidc/api_key" the endpoint is proxied with auth enforcement being handled by the MCP backend.
-This does not prevent an mcp.httpRoute or mcp.ingress from being enabled. Those checks exist in the sub-chart itself.
-*/}}
 {{- define "kubecost.frontend.mcpProxyDirectives" -}}
-{{- if and (eq (include "kubecost.mcp.authMode" .) "none") (or .Values.httpRoute.enabled .Values.ingress.enabled) -}}
-  add_header Content-Type text/plain;
-  return 424 "MCP endpoint is not configured. Set mcp.config.authMode to enable access.";
-{{- else -}}
 {{/*
 Shared proxy directives for MCP upstream locations. Long read/send timeouts
 and buffering off are required for FastMCP streamable HTTP.
@@ -120,5 +108,4 @@ and buffering off are required for FastMCP streamable HTTP.
   proxy_buffering off;
   proxy_cache off;
   chunked_transfer_encoding on;
-{{- end -}}
 {{- end -}}

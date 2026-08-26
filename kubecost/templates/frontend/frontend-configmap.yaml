@@ -498,17 +498,29 @@ data:
         }
         {{- end }}
 
-        {{- if (.Values.mcp).enabled }}
+        {{- /* mcpProxy: Only proxy MCP if it is enabled and not using its own httproute or ingress */}}
+        {{- if and (.Values.mcp.enabled) (not (.Values.mcp.httpRoute.enabled)) (not (.Values.mcp.ingress.enabled)) }}
+        {{- $mcpAuthMode := include "kubecost.mcp.authMode" . }}
+        {{- /*
+        kubecost.mcp.pathPrefix is the path component of mcp.config.oidc.baseUrl,
+        and is empty unless authMode is "oidc". It decides which of the two
+        mutually exclusive modes below applies, because the subchart derives
+        config.http.path from the same value: the container serves the MCP
+        endpoint at "/" when there is a prefix to strip, at /mcp when there is not.
+
+        The modes must stay mutually exclusive. Rendering both repeats the
+        /.well-known locations, and nginx refuses to load a duplicated location.
+        */}}
         {{- $mcpPrefix := include "kubecost.mcp.pathPrefix" . }}
         {{- if $mcpPrefix }}
-        # MCP served under the {{ $mcpPrefix }} path prefix.
+        # mcpPrefixMode: MCP served under the {{ $mcpPrefix }} path prefix of the Kubecost host.
         #
         # mcp.config.oidc.baseUrl carries this prefix, so FastMCP advertises
         # {{ $mcpPrefix }}/authorize, {{ $mcpPrefix }}/token, {{ $mcpPrefix }}/register and
         # {{ $mcpPrefix }}{{ include "kubecost.mcp.redirectPath" . }} in its OAuth metadata. Nothing MCP-related
-        # claims a bare root path, so nothing can collide with Kubecost SSO
-        # (/auth, /login, /logout, /oidc/, /saml/) now or with a future
-        # Kubecost OAuth surface at the root well-known paths.
+        # claims a bare root path in this mode, so nothing can collide with
+        # Kubecost SSO (/auth, /login, /logout, /oidc/, /saml/) now or with a
+        # future Kubecost OAuth surface at the root well-known paths.
         #
         # nginx strips the prefix; the subchart serves the MCP endpoint at "/"
         # (config.http.path) so both the endpoint and the stripped OAuth paths
@@ -547,18 +559,21 @@ data:
             {{- include "kubecost.frontend.mcpProxyDirectives" . | nindent 12 }}
         }
         {{- else }}
+        # mcpHostRootMode: no path prefix, so the subchart serves the MCP
+        # endpoint at /mcp (config.http.path) and every OAuth route at the
+        # container root. Paths pass through unrewritten.
         # MCP streamable HTTP — FastMCP serves at /mcp on port {{ include "kubecost.mcp.servicePort" . }}
         location /mcp {
             {{- include "kubecost.frontend.mcpProxyDirectives" . | nindent 12 }}
         }
-
-        {{- if eq (include "kubecost.mcp.authMode" .) "oidc" }}
+        {{- /* mcpOidc: when mcp is using oidc auth: create oidc paths that do not conflict with kubecost oidc */}}
+        {{- if eq $mcpAuthMode "oidc" }}
         # Root-level OAuth paths. Give mcp.config.oidc.baseUrl a path prefix
         # (e.g. https://kubecost.example.com/mcp) to move all of these under
         # that prefix instead of claiming them at the root of a shared host.
 
         # MCP OIDC callback. Must be a longer prefix than location /auth, or
-        # /auth-mcp is treated as Kubecost auth_request (aggregator /isAuthenticated).
+        # {{ include "kubecost.mcp.redirectPath" . }} is treated as Kubecost auth_request (aggregator /isAuthenticated).
         location {{ include "kubecost.mcp.redirectPath" . }} {
             {{- include "kubecost.frontend.mcpProxyDirectives" . | nindent 12 }}
         }

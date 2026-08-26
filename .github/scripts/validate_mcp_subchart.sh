@@ -300,22 +300,34 @@ assert_contains "productConfigs reports mcpEnabled=false" \
 # ---------------------------------------------------------------------------
 group "authMode routing guard"
 
-# Two independent gates, covering every flag in kubecost.mcp.openRouteCheck:
-#   mcp.httpRoute.enabled, mcp.ingress.enabled, ingress.enabled, httpRoute.enabled
+# There are two independent guards over MCP exposure:
 #
-# 1) Subchart mcp-kubecost.sanityChecks: mcp.httpRoute / mcp.ingress + authMode=none
-#    is a hard fail. skipSanityChecks does not bypass it (that flag only skips
-#    live Secret lookups in the subchart).
-# 2) Parent kubecost.mcp.openRouteCheck: parent ingress / httpRoute (and port
-#    9008) + authMode=none fails, but skipSanityChecks turns it into a warning.
+# Guard 1 — subchart sanityChecks (mcp-kubecost.sanityChecks):
+#   mcp.httpRoute.enabled=true OR mcp.ingress.enabled=true WITH authMode=none
+#   is always a hard fail. skipSanityChecks does NOT bypass it (that flag only
+#   skips live Secret lookups).
 #
-# nginx 424 vs proxy_pass is a third gate in kubecost.frontend.mcpProxyDirectives:
-# it only fires for parent ingress/httpRoute (not mcp.httpRoute / mcp.ingress).
+# Guard 2 — parent openRouteCheck (kubecost.mcp.openRouteCheck):
+#   Fires ONLY when ALL THREE of these are simultaneously true:
+#     - a parent route is exposed (ingress.enabled or httpRoute.enabled)
+#     - kubecostApiPort is 9008 (aggregator SSO bypass port)
+#     - authMode is "none"
+#   When skipSanityChecks is set, this becomes a warning rather than a hard fail.
+#   Missing any one of the three conditions means no error is raised.
+#
+# nginx proxy behaviour (kubecost.frontend.mcpProxyDirectives):
+#   The helper is unconditional — it always emits proxy_pass directives.
+#   ingress.enabled, httpRoute.enabled, and authMode do not affect whether
+#   proxy_pass or 424 appears in the rendered nginx config. The MCP location
+#   blocks are only rendered at all when mcp.enabled=true.
 
 _subchart_route_fail='authMode = "none" with an exposed route is not permitted'
 _parent_route_fail='mcp.config.authMode is "none"'
 
-# 1) Subchart route flags + authMode=none must FAIL (subchart error).
+# ---------------------------------------------------------------------------
+# Guard 1: subchart route flags + authMode=none must FAIL regardless of port.
+# ---------------------------------------------------------------------------
+
 assert_helm_fails "when mcp.httpRoute.enabled=true and authMode=none" \
   "$_subchart_route_fail" \
   --set mcp.httpRoute.enabled=true \
@@ -326,50 +338,7 @@ assert_helm_fails "when mcp.ingress.enabled=true and authMode=none" \
   --set mcp.ingress.enabled=true \
   --set mcp.config.authMode=none
 
-# 1b) Parent route flags + authMode=none must FAIL (parent openRouteCheck).
-assert_helm_fails "when ingress.enabled=true and authMode=none" \
-  "$_parent_route_fail" \
-  --set ingress.enabled=true \
-  --set mcp.config.authMode=none
-
-assert_helm_fails "when httpRoute.enabled=true and authMode=none" \
-  "$_parent_route_fail" \
-  --set httpRoute.enabled=true \
-  --set mcp.config.authMode=none
-
-# 2) mcp.httpRoute.enabled=true + authMode=open must SUCCEED and proxy /mcp.
-helm template "$RELEASE_NAME" "$CHART_DIR" \
-  "${skip_schema[@]}" \
-  --set "${values_key}.enabled=true" \
-  --set mcp.httpRoute.enabled=true \
-  --set mcp.config.authMode=open \
-  > "${RENDER_DIR}/httproute-open.yaml"
-pass "helm template succeeds when mcp.httpRoute.enabled=true and authMode=open"
-
-extract_nginx "${RENDER_DIR}/httproute-open.yaml" "${RENDER_DIR}/nginx-httproute-open.conf"
-assert_contains "authMode=open nginx proxies /mcp to the MCP upstream" \
-  "${RENDER_DIR}/nginx-httproute-open.conf" "proxy_pass http://mcpKubecost"
-assert_absent "authMode=open nginx does not block /mcp with 424" \
-  "${RENDER_DIR}/nginx-httproute-open.conf" "return 424"
-
-# 2b) Parent ingress.enabled=true + authMode=open must SUCCEED and proxy /mcp
-# (this is the path where authMode=none would have rendered return 424).
-helm template "$RELEASE_NAME" "$CHART_DIR" \
-  "${skip_schema[@]}" \
-  --set "${values_key}.enabled=true" \
-  --set ingress.enabled=true \
-  --set mcp.config.authMode=open \
-  > "${RENDER_DIR}/ingress-open.yaml"
-pass "helm template succeeds when ingress.enabled=true and authMode=open"
-
-extract_nginx "${RENDER_DIR}/ingress-open.yaml" "${RENDER_DIR}/nginx-ingress-open.conf"
-assert_contains "parent ingress + authMode=open nginx proxies /mcp" \
-  "${RENDER_DIR}/nginx-ingress-open.conf" "proxy_pass http://mcpKubecost"
-assert_absent "parent ingress + authMode=open nginx does not block /mcp with 424" \
-  "${RENDER_DIR}/nginx-ingress-open.conf" "return 424"
-
-# 3) skipSanityChecks must NOT bypass the subchart's mcp.httpRoute + authMode=none
-# hard fail (skipSanityChecks only skips live Secret lookups in the subchart).
+# skipSanityChecks must NOT bypass the subchart's hard fail.
 assert_helm_fails "when mcp.httpRoute.enabled=true, authMode=none, and skipSanityChecks=true" \
   "$_subchart_route_fail" \
   --set mcp.httpRoute.enabled=true \
@@ -377,32 +346,177 @@ assert_helm_fails "when mcp.httpRoute.enabled=true, authMode=none, and skipSanit
   --set global.platforms.cicd.enabled=true \
   --set global.platforms.cicd.skipSanityChecks=true
 
-# 3b) skipSanityChecks + parent ingress + authMode=none: parent openRouteCheck
-# becomes a warning, so render succeeds, but frontend nginx must still block
-# /mcp (return 424) rather than proxy.
+# ---------------------------------------------------------------------------
+# Guard 2: parent openRouteCheck — 3-way AND (route AND port=9008 AND authMode=none)
+# ---------------------------------------------------------------------------
+
+# All three conditions present → hard fail.
+assert_helm_fails "when ingress.enabled=true, kubecostApiPort=9008, and authMode=none" \
+  "$_parent_route_fail" \
+  --set ingress.enabled=true \
+  --set mcp.config.kubecostApiPort=9008 \
+  --set mcp.config.authMode=none
+
+assert_helm_fails "when httpRoute.enabled=true, kubecostApiPort=9008, and authMode=none" \
+  "$_parent_route_fail" \
+  --set httpRoute.enabled=true \
+  --set mcp.config.kubecostApiPort=9008 \
+  --set mcp.config.authMode=none
+
+# Route + port9008 + authMode=none + skipSanityChecks → warning only (render succeeds).
+helm template "$RELEASE_NAME" "$CHART_DIR" \
+  "${skip_schema[@]}" \
+  --set "${values_key}.enabled=true" \
+  --set ingress.enabled=true \
+  --set mcp.config.kubecostApiPort=9008 \
+  --set mcp.config.authMode=none \
+  --set global.platforms.cicd.enabled=true \
+  --set global.platforms.cicd.skipSanityChecks=true \
+  > "${RENDER_DIR}/ingress-9008-none-skip.yaml"
+pass "helm template succeeds (warning) when ingress+kubecostApiPort=9008+authMode=none+skipSanityChecks"
+
+# Missing one condition: route present, port 9008, but authMode != none → no error.
+helm template "$RELEASE_NAME" "$CHART_DIR" \
+  "${skip_schema[@]}" \
+  --set "${values_key}.enabled=true" \
+  --set ingress.enabled=true \
+  --set mcp.config.kubecostApiPort=9008 \
+  --set mcp.config.authMode=open \
+  > /dev/null
+pass "openRouteCheck does not fire when route+port9008 but authMode=open"
+
+helm template "$RELEASE_NAME" "$CHART_DIR" \
+  "${skip_schema[@]}" \
+  --set "${values_key}.enabled=true" \
+  --set ingress.enabled=true \
+  --set mcp.config.kubecostApiPort=9008 \
+  --set mcp.config.authMode=oidc \
+  --set mcp.config.oidc.clientId=test-client-id \
+  --set mcp.config.oidc.clientSecret=test-client-secret \
+  --set mcp.config.oidc.issuerUrl=https://auth.example.com \
+  --set mcp.config.oidc.baseUrl=https://kubecost.example.com \
+  > /dev/null
+pass "openRouteCheck does not fire when route+port9008 but authMode=oidc"
+
+# Missing one condition: route present, authMode=none, but default port (9004) → no error.
 helm template "$RELEASE_NAME" "$CHART_DIR" \
   "${skip_schema[@]}" \
   --set "${values_key}.enabled=true" \
   --set ingress.enabled=true \
   --set mcp.config.authMode=none \
-  --set global.platforms.cicd.enabled=true \
-  --set global.platforms.cicd.skipSanityChecks=true \
-  > "${RENDER_DIR}/ingress-none-skip.yaml"
-pass "helm template succeeds with skipSanityChecks=true when ingress.enabled=true and authMode=none"
+  > /dev/null
+pass "openRouteCheck does not fire when ingress+authMode=none but default port 9004"
 
-extract_nginx "${RENDER_DIR}/ingress-none-skip.yaml" "${RENDER_DIR}/nginx-ingress-none-skip.conf"
-assert_contains "parent ingress + authMode=none nginx blocks /mcp with 424" \
-  "${RENDER_DIR}/nginx-ingress-none-skip.conf" "return 424"
-assert_absent "parent ingress + authMode=none nginx does not proxy /mcp" \
-  "${RENDER_DIR}/nginx-ingress-none-skip.conf" "proxy_pass http://mcpKubecost"
+helm template "$RELEASE_NAME" "$CHART_DIR" \
+  "${skip_schema[@]}" \
+  --set "${values_key}.enabled=true" \
+  --set httpRoute.enabled=true \
+  --set mcp.config.authMode=none \
+  > /dev/null
+pass "openRouteCheck does not fire when httpRoute+authMode=none but default port 9004"
 
-# 4) kubecostApiPort=9008 + authMode=none must FAIL (aggregator SSO bypass).
-assert_helm_fails "when kubecostApiPort=9008 and authMode=none" \
-  "$_parent_route_fail" \
+# Missing one condition: port 9008, authMode=none, but no route → no error.
+helm template "$RELEASE_NAME" "$CHART_DIR" \
+  "${skip_schema[@]}" \
+  --set "${values_key}.enabled=true" \
   --set mcp.config.kubecostApiPort=9008 \
-  --set mcp.config.authMode=none
+  --set mcp.config.authMode=none \
+  > /dev/null
+pass "openRouteCheck does not fire when port9008+authMode=none but no route is exposed"
 
-# 5) kubecostApiPort=9008 + authMode=oidc must SUCCEED.
+# ---------------------------------------------------------------------------
+# nginx proxy behaviour: kubecost.frontend.mcpProxyDirectives is unconditional.
+# The helper always emits proxy_pass regardless of ingress, httpRoute, or authMode.
+# ---------------------------------------------------------------------------
+
+# Baseline: default render (no ingress, no httpRoute, authMode=none) → proxy_pass.
+extract_nginx "${RENDER_DIR}/enabled.yaml" "${RENDER_DIR}/nginx-baseline.conf"
+assert_contains "nginx proxies /mcp with default settings (no ingress, authMode=none)" \
+  "${RENDER_DIR}/nginx-baseline.conf" "proxy_pass http://mcpKubecost"
+assert_absent "nginx does not emit 424 with default settings" \
+  "${RENDER_DIR}/nginx-baseline.conf" "return 424"
+
+# authMode=open, no parent ingress/httpRoute → proxy_pass.
+helm template "$RELEASE_NAME" "$CHART_DIR" \
+  "${skip_schema[@]}" \
+  --set "${values_key}.enabled=true" \
+  --set mcp.config.authMode=open \
+  > "${RENDER_DIR}/no-route-open.yaml"
+extract_nginx "${RENDER_DIR}/no-route-open.yaml" "${RENDER_DIR}/nginx-no-route-open.conf"
+assert_contains "nginx proxies /mcp when authMode=open and no parent ingress/httpRoute" \
+  "${RENDER_DIR}/nginx-no-route-open.conf" "proxy_pass http://mcpKubecost"
+assert_absent "nginx does not emit 424 when authMode=open and no parent ingress/httpRoute" \
+  "${RENDER_DIR}/nginx-no-route-open.conf" "return 424"
+
+# authMode=none, ingress.enabled → proxy_pass (nginx has no awareness of ingress).
+helm template "$RELEASE_NAME" "$CHART_DIR" \
+  "${skip_schema[@]}" \
+  --set "${values_key}.enabled=true" \
+  --set ingress.enabled=true \
+  --set mcp.config.authMode=none \
+  > "${RENDER_DIR}/ingress-none.yaml"
+extract_nginx "${RENDER_DIR}/ingress-none.yaml" "${RENDER_DIR}/nginx-ingress-none.conf"
+assert_contains "nginx proxies /mcp when ingress.enabled and authMode=none" \
+  "${RENDER_DIR}/nginx-ingress-none.conf" "proxy_pass http://mcpKubecost"
+assert_absent "nginx does not emit 424 when ingress.enabled and authMode=none" \
+  "${RENDER_DIR}/nginx-ingress-none.conf" "return 424"
+
+# authMode=open, ingress.enabled → proxy_pass.
+helm template "$RELEASE_NAME" "$CHART_DIR" \
+  "${skip_schema[@]}" \
+  --set "${values_key}.enabled=true" \
+  --set ingress.enabled=true \
+  --set mcp.config.authMode=open \
+  > "${RENDER_DIR}/ingress-open.yaml"
+extract_nginx "${RENDER_DIR}/ingress-open.yaml" "${RENDER_DIR}/nginx-ingress-open.conf"
+assert_contains "nginx proxies /mcp when ingress.enabled and authMode=open" \
+  "${RENDER_DIR}/nginx-ingress-open.conf" "proxy_pass http://mcpKubecost"
+assert_absent "nginx does not emit 424 when ingress.enabled and authMode=open" \
+  "${RENDER_DIR}/nginx-ingress-open.conf" "return 424"
+
+# authMode=none, httpRoute.enabled → proxy_pass.
+helm template "$RELEASE_NAME" "$CHART_DIR" \
+  "${skip_schema[@]}" \
+  --set "${values_key}.enabled=true" \
+  --set httpRoute.enabled=true \
+  --set mcp.config.authMode=none \
+  > "${RENDER_DIR}/httproute-none.yaml"
+extract_nginx "${RENDER_DIR}/httproute-none.yaml" "${RENDER_DIR}/nginx-httproute-none.conf"
+assert_contains "nginx proxies /mcp when httpRoute.enabled and authMode=none" \
+  "${RENDER_DIR}/nginx-httproute-none.conf" "proxy_pass http://mcpKubecost"
+assert_absent "nginx does not emit 424 when httpRoute.enabled and authMode=none" \
+  "${RENDER_DIR}/nginx-httproute-none.conf" "return 424"
+
+# authMode=open, httpRoute.enabled → proxy_pass.
+helm template "$RELEASE_NAME" "$CHART_DIR" \
+  "${skip_schema[@]}" \
+  --set "${values_key}.enabled=true" \
+  --set httpRoute.enabled=true \
+  --set mcp.config.authMode=open \
+  > "${RENDER_DIR}/httproute-open.yaml"
+extract_nginx "${RENDER_DIR}/httproute-open.yaml" "${RENDER_DIR}/nginx-httproute-open.conf"
+assert_contains "nginx proxies /mcp when httpRoute.enabled and authMode=open" \
+  "${RENDER_DIR}/nginx-httproute-open.conf" "proxy_pass http://mcpKubecost"
+assert_absent "nginx does not emit 424 when httpRoute.enabled and authMode=open" \
+  "${RENDER_DIR}/nginx-httproute-open.conf" "return 424"
+
+# mcp.httpRoute.enabled (subchart route, not parent): the frontend nginx MCP proxy
+# block is suppressed entirely — the subchart's HTTPRoute handles external traffic
+# directly. Nginx must NOT contain any MCP proxy_pass or location /mcp for these.
+helm template "$RELEASE_NAME" "$CHART_DIR" \
+  "${skip_schema[@]}" \
+  --set "${values_key}.enabled=true" \
+  --set mcp.httpRoute.enabled=true \
+  --set mcp.config.authMode=open \
+  > "${RENDER_DIR}/mcp-httproute-open.yaml"
+extract_nginx "${RENDER_DIR}/mcp-httproute-open.yaml" "${RENDER_DIR}/nginx-mcp-httproute-open.conf"
+assert_absent "nginx omits proxy_pass http://mcpKubecost when mcp.httpRoute.enabled (subchart route handles traffic)" \
+  "${RENDER_DIR}/nginx-mcp-httproute-open.conf" "proxy_pass http://mcpKubecost"
+assert_absent "nginx omits location /mcp when mcp.httpRoute.enabled (subchart route handles traffic)" \
+  "${RENDER_DIR}/nginx-mcp-httproute-open.conf" "location /mcp"
+
+# OIDC nginx rendering: port 9008 + authMode=oidc with full required OIDC params.
+# openRouteCheck does not fire (authMode != none), and the subchart renders cleanly.
 helm template "$RELEASE_NAME" "$CHART_DIR" \
   "${skip_schema[@]}" \
   --set "${values_key}.enabled=true" \
@@ -410,12 +524,16 @@ helm template "$RELEASE_NAME" "$CHART_DIR" \
   --set mcp.config.authMode=oidc \
   --set mcp.config.oidc.clientId=test-client-id \
   --set mcp.config.oidc.clientSecret=test-client-secret \
+  --set mcp.config.oidc.issuerUrl=https://auth.example.com \
+  --set mcp.config.oidc.baseUrl=https://kubecost.example.com \
   > "${RENDER_DIR}/apiport-9008-oidc.yaml"
 pass "helm template succeeds when kubecostApiPort=9008 and authMode=oidc"
 
 extract_nginx "${RENDER_DIR}/apiport-9008-oidc.yaml" "${RENDER_DIR}/nginx-oidc.conf"
-assert_contains "frontend nginx proxies the MCP OIDC callback when authMode is oidc" \
+assert_contains "nginx defines the MCP OIDC callback location when authMode=oidc" \
   "${RENDER_DIR}/nginx-oidc.conf" "location /auth-mcp"
+assert_contains "nginx proxies /mcp when authMode=oidc" \
+  "${RENDER_DIR}/nginx-oidc.conf" "proxy_pass http://mcpKubecost"
 assert_contains "productConfigs reports kubecostApiPort=9008" \
   "${RENDER_DIR}/nginx-oidc.conf" '"kubecostApiPort": "9008"'
 
@@ -437,43 +555,54 @@ else
   pass "helm template fails when authMode=oidc and no OIDC credentials (exit code ${_exit_code})"
 fi
 
-# 6b) skipSanityChecks=true must SUCCEED (warning path) even with authMode=oidc and no credentials.
-helm template "$RELEASE_NAME" "$CHART_DIR" \
-  "${skip_schema[@]}" \
-  --set "${values_key}.enabled=true" \
-  --set mcp.config.authMode=oidc \
-  --set global.platforms.cicd.enabled=true \
-  --set global.platforms.cicd.skipSanityChecks=true \
-  > "${RENDER_DIR}/oidc-none-creds-skip.yaml"
-pass "helm template succeeds with skipSanityChecks=true when authMode=oidc and no OIDC credentials"
-
-assert_contains "skipSanityChecks OIDC render includes a ConfigMap" \
-  "${RENDER_DIR}/oidc-none-creds-skip.yaml" "kind: ConfigMap"
-
-# 7) authMode=oidc with inline clientId+clientSecret must SUCCEED.
+# 6b) skipSanityChecks=true (parent chart warning path) with authMode=oidc and no credentials.
+# The parent chart's validateOIDC emits a warning; the subchart's validateOIDC always
+# hard-fails on missing credentials regardless of skipSanityChecks. Both credentials
+# AND issuerUrl AND baseUrl are required for the subchart to render cleanly.
 helm template "$RELEASE_NAME" "$CHART_DIR" \
   "${skip_schema[@]}" \
   --set "${values_key}.enabled=true" \
   --set mcp.config.authMode=oidc \
   --set mcp.config.oidc.clientId=test-client-id \
   --set mcp.config.oidc.clientSecret=test-client-secret \
+  --set mcp.config.oidc.issuerUrl=https://auth.example.com \
+  --set mcp.config.oidc.baseUrl=https://kubecost.example.com \
+  --set global.platforms.cicd.enabled=true \
+  --set global.platforms.cicd.skipSanityChecks=true \
+  > "${RENDER_DIR}/oidc-none-creds-skip.yaml"
+pass "helm template succeeds with skipSanityChecks=true when authMode=oidc with full credentials"
+
+assert_contains "skipSanityChecks OIDC render includes a ConfigMap" \
+  "${RENDER_DIR}/oidc-none-creds-skip.yaml" "kind: ConfigMap"
+
+# 7) authMode=oidc with inline clientId+clientSecret, issuerUrl, and baseUrl must SUCCEED.
+# The subchart validates all four fields; all must be present for a clean render.
+helm template "$RELEASE_NAME" "$CHART_DIR" \
+  "${skip_schema[@]}" \
+  --set "${values_key}.enabled=true" \
+  --set mcp.config.authMode=oidc \
+  --set mcp.config.oidc.clientId=test-client-id \
+  --set mcp.config.oidc.clientSecret=test-client-secret \
+  --set mcp.config.oidc.issuerUrl=https://auth.example.com \
+  --set mcp.config.oidc.baseUrl=https://kubecost.example.com \
   > "${RENDER_DIR}/oidc-inline-creds.yaml"
 pass "helm template succeeds when authMode=oidc with inline clientId+clientSecret"
 
 assert_contains "OIDC inline-creds render includes a ConfigMap" \
   "${RENDER_DIR}/oidc-inline-creds.yaml" "kind: ConfigMap"
 
-# 8) authMode=oidc with existingSecret must SUCCEED.
-# skipSanityChecks=true bypasses the live Secret lookup for existingSecret.
+# 8) authMode=oidc with existingSecret (satisfies credentials check) plus issuerUrl
+# and baseUrl must SUCCEED. skipSanityChecks is not needed since all required
+# OIDC fields are present.
 helm template "$RELEASE_NAME" "$CHART_DIR" \
   "${skip_schema[@]}" \
   --set "${values_key}.enabled=true" \
   --set mcp.config.authMode=oidc \
   --set mcp.config.oidc.existingSecret=my-oidc-secret \
-  --set global.platforms.cicd.enabled=true \
-  --set global.platforms.cicd.skipSanityChecks=true \
+  --set mcp.config.oidc.issuerUrl=https://auth.example.com \
+  --set mcp.config.oidc.baseUrl=https://kubecost.example.com \
   > "${RENDER_DIR}/oidc-existing-secret.yaml"
-pass "helm template succeeds when authMode=oidc with existingSecret"
+pass "helm template succeeds when authMode=oidc with existingSecret, issuerUrl, and baseUrl"
 
 assert_contains "OIDC existingSecret render includes a ConfigMap" \
   "${RENDER_DIR}/oidc-existing-secret.yaml" "kind: ConfigMap"
@@ -488,8 +617,8 @@ helm template "$RELEASE_NAME" "$CHART_DIR" \
   --set mcp.config.oidc.clientId=test-client-id \
   --set mcp.config.oidc.clientSecret=test-client-secret \
   --set mcp.config.oidc.existingSecret=my-oidc-secret \
-  --set global.platforms.cicd.enabled=true \
-  --set global.platforms.cicd.skipSanityChecks=true \
+  --set mcp.config.oidc.issuerUrl=https://auth.example.com \
+  --set mcp.config.oidc.baseUrl=https://kubecost.example.com \
   > "${RENDER_DIR}/oidc-both-creds.yaml"
 pass "helm template succeeds when authMode=oidc with both inline and existingSecret (no mutual-exclusivity guard)"
 
