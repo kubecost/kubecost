@@ -99,6 +99,20 @@ data:
     }
   {{- end }}
 
+  {{- if (.Values.mcp).enabled }}
+    upstream mcpKubecost {
+        {{- if .Values.frontend.useDefaultFqdn }}
+        server {{ include "kubecost.mcp.serviceName" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ include "kubecost.mcp.servicePort" . }};
+        {{- else }}
+        {{- if (.Values.frontend.mcp).fqdn }}
+        server {{ .Values.frontend.mcp.fqdn }};
+        {{- else }}
+        server {{ include "kubecost.mcp.serviceName" . }}.{{ .Release.Namespace }}:{{ include "kubecost.mcp.servicePort" . }};
+        {{- end }}
+        {{- end }}
+    }
+  {{- end }}
+
     server {
         server_name _;
         root /var/www;
@@ -484,6 +498,102 @@ data:
         }
         {{- end }}
 
+        {{- /* mcpProxy: Only proxy MCP if it is enabled and not using its own httproute or ingress */}}
+        {{- if and (.Values.mcp.enabled) (not (.Values.mcp.httpRoute.enabled)) (not (.Values.mcp.ingress.enabled)) }}
+        {{- $mcpAuthMode := include "kubecost.mcp.authMode" . }}
+        {{- /*
+        kubecost.mcp.pathPrefix is the path component of mcp.config.oidc.baseUrl,
+        and is empty unless authMode is "oidc". It decides which of the two
+        mutually exclusive modes below applies, because the subchart derives
+        config.http.path from the same value: the container serves the MCP
+        endpoint at "/" when there is a prefix to strip, at /mcp when there is not.
+
+        The modes must stay mutually exclusive. Rendering both repeats the
+        /.well-known locations, and nginx refuses to load a duplicated location.
+        */}}
+        {{- $mcpPrefix := include "kubecost.mcp.pathPrefix" . }}
+        {{- if $mcpPrefix }}
+        # mcpPrefixMode: MCP served under the {{ $mcpPrefix }} path prefix of the Kubecost host.
+        #
+        # mcp.config.oidc.baseUrl carries this prefix, so FastMCP advertises
+        # {{ $mcpPrefix }}/authorize, {{ $mcpPrefix }}/token, {{ $mcpPrefix }}/register and
+        # {{ $mcpPrefix }}{{ include "kubecost.mcp.redirectPath" . }} in its OAuth metadata. Nothing MCP-related
+        # claims a bare root path in this mode, so nothing can collide with
+        # Kubecost SSO (/auth, /login, /logout, /oidc/, /saml/) now or with a
+        # future Kubecost OAuth surface at the root well-known paths.
+        #
+        # nginx strips the prefix; the subchart serves the MCP endpoint at "/"
+        # (config.http.path) so both the endpoint and the stripped OAuth paths
+        # resolve. `=` and `^~` both outrank `location /` and its auth_request
+        # without relying on the regex-location precedence tier.
+        #
+        # Split into an exact match and a `{{ $mcpPrefix }}/` prefix so that sibling paths
+        # such as {{ $mcpPrefix }}-admin keep falling through to the frontend rather than
+        # being swallowed by a bare `{{ $mcpPrefix }}` prefix match.
+        location = {{ $mcpPrefix }} {
+            rewrite ^ / break;
+            {{- include "kubecost.frontend.mcpProxyDirectives" . | nindent 12 }}
+        }
+
+        location ^~ {{ $mcpPrefix }}/ {
+            rewrite ^{{ $mcpPrefix }}(/.*)$ $1 break;
+            {{- include "kubecost.frontend.mcpProxyDirectives" . | nindent 12 }}
+        }
+
+        # RFC 9728 protected-resource metadata. Clients derive this URL from the
+        # resource identifier, so it is requested at the host root and cannot be
+        # moved under the prefix — but it stays scoped to {{ $mcpPrefix }} by suffix.
+        # Served at the same path inside the container, so no rewrite.
+        location ^~ /.well-known/oauth-protected-resource{{ $mcpPrefix }} {
+            {{- include "kubecost.frontend.mcpProxyDirectives" . | nindent 12 }}
+        }
+
+        # RFC 8414 authorization-server metadata for issuer {{ $mcpPrefix }}. FastMCP
+        # registers this route at the container root rather than the path-aware
+        # variant (fastmcp http.py builds routes via get_routes(), which skips
+        # the rewriting in get_well_known_routes()), so map it back.
+        # Clients that instead append /.well-known to the issuer are handled by
+        # the prefix-strip location above.
+        location ^~ /.well-known/oauth-authorization-server{{ $mcpPrefix }} {
+            rewrite ^ /.well-known/oauth-authorization-server break;
+            {{- include "kubecost.frontend.mcpProxyDirectives" . | nindent 12 }}
+        }
+        {{- else }}
+        # mcpHostRootMode: no path prefix, so the subchart serves the MCP
+        # endpoint at /mcp (config.http.path) and every OAuth route at the
+        # container root. Paths pass through unrewritten.
+        # MCP streamable HTTP — FastMCP serves at /mcp on port {{ include "kubecost.mcp.servicePort" . }}
+        location /mcp {
+            {{- include "kubecost.frontend.mcpProxyDirectives" . | nindent 12 }}
+        }
+        {{- /* mcpOidc: when mcp is using oidc auth: create oidc paths that do not conflict with kubecost oidc */}}
+        {{- if eq $mcpAuthMode "oidc" }}
+        # Root-level OAuth paths. Give mcp.config.oidc.baseUrl a path prefix
+        # (e.g. https://kubecost.example.com/mcp) to move all of these under
+        # that prefix instead of claiming them at the root of a shared host.
+
+        # MCP OIDC callback. Must be a longer prefix than location /auth, or
+        # {{ include "kubecost.mcp.redirectPath" . }} is treated as Kubecost auth_request (aggregator /isAuthenticated).
+        location {{ include "kubecost.mcp.redirectPath" . }} {
+            {{- include "kubecost.frontend.mcpProxyDirectives" . | nindent 12 }}
+        }
+        location ~ ^/(register|authorize|token|consent)(/|$) {
+            {{- include "kubecost.frontend.mcpProxyDirectives" . | nindent 12 }}
+        }
+
+        # OAuth discovery. Without these, both fall through to `location /`,
+        # whose auth_request returns the Kubecost SSO login page as HTML where
+        # the MCP client expects OAuth JSON.
+        location ^~ /.well-known/oauth-protected-resource/mcp {
+            {{- include "kubecost.frontend.mcpProxyDirectives" . | nindent 12 }}
+        }
+        location ^~ /.well-known/oauth-authorization-server {
+            {{- include "kubecost.frontend.mcpProxyDirectives" . | nindent 12 }}
+        }
+        {{- end }}
+        {{- end }}
+        {{- end }}
+
         location /model/productConfigs {
             default_type 'application/json';
             return 200 '\n
@@ -498,6 +608,14 @@ data:
                 "clusterControllerEnabled": "{{ include "kubecost.clusterController.enabled" . }}",
                 "forecastingEnabled": "{{ include "kubecost.forecasting.enabled" . }}",
                 "turbonomicEnabled": "{{ include "kubecost.turbonomic.enabled" . }}",
+                "mcpEnabled": "{{ include "kubecost.mcp.enabled" . }}",
+                "mcpAuthMode": "{{ include "kubecost.mcp.authMode" . }}",
+                "mcpRequireClientApiKey": "{{ include "kubecost.mcp.requireClientApiKey" . }}",
+                "mcpRedirectPath": "{{ include "kubecost.mcp.redirectPath" . }}",
+                "mcpPathPrefix": "{{ include "kubecost.mcp.pathPrefix" . }}",
+                "kubecostApiBaseUrl": "{{ include "kubecost.mcp.kubecostApiBaseUrl" . }}",
+                "kubecostApiPort": "{{ include "kubecost.mcp.kubecostApiPort" . }}",
+                "kubecostApiBasePath": "{{ include "kubecost.mcp.kubecostApiBasePath" . }}",
                 "chartVersion": "DEVELOP_BRANCH",
                 "tenMinuteDataRetention": "{{ (.Values.aggregator.retention10m) }}",
                 "hourlyDataRetention": "{{ (.Values.aggregator.retention1h) }}",

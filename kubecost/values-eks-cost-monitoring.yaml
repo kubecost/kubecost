@@ -24,3 +24,7 @@ clusterController:
 finopsagent:
   image:
     repository: kubecost/agent
+
+mcp:
+  image:
+    repository: kubecost/mcp
