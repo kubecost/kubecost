@@ -9,3 +9,4 @@ kubecost/charts/*.tgz
 gke_gcloud_auth_plugin_cache
 temp/
 cost-analyzer/
+kubecost/charts/.helm_ls_cache
