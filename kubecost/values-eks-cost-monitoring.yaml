@@ -27,4 +27,4 @@ finopsagent:
 
 mcp:
   image:
-    repository: kubecost/mcp
+    repository: kubecost/mcp-kubecost
