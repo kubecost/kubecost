@@ -49,4 +49,6 @@ https://www.ibm.com/docs/
 https://www.oreilly.com/library/
 
 # Shell variable placeholders in workflow files (not real URLs)
-https://github.com/mikefarah/yq/releases/download/$
+https://github.com/mikefarah
+
+docker://
