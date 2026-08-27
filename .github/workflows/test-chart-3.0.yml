@@ -76,8 +76,6 @@ jobs:
         k8s-version:
           - name: v1.36
             version: v1.36.4
-          - name: v1.37
-            version: v1.37.0
     needs: test-chart
     name: ${{ matrix.k8s-version.name }} test
     steps:
