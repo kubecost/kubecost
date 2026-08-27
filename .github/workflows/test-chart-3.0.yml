@@ -284,7 +284,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Create Cluster
         id: create-cluster
-        uses: replicatedhq/replicated-actions/create-cluster@00fbf5395cf3e8c744f447bbc92b7de9135eead8e # v1.27.1
+        uses: replicatedhq/replicated-actions/create-cluster@0fbf5395cf3e8c744f447bbc92b7de9135eead8e # v1.27.1
         with:
           kubernetes-distribution: ${{ matrix.cluster.distribution }}
           kubernetes-version: ${{ matrix.cluster.version }}
