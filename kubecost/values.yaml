@@ -1429,7 +1429,7 @@ cloudCost:
       helm.sh/resource-policy: keep
 
 ## Kubecost Cluster Controller for Automated Right Sizing and Turndown
-## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=configuration-cluster-controller
+## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=savings-actions
 ##
 clusterController:
   enabled: true
