@@ -1067,11 +1067,7 @@ aggregator:
   replicas: 1
 
   ## Controls what happens to the Aggregator's PVCs when its StatefulSet is
-  ## deleted or scaled down. Defaults to Retain/Retain (the Kubernetes default —
-  ## volumes survive, safe for all users). Hosted deployments may set
-  ## whenDeleted: Delete so per-tenant volumes are reclaimed on deprovision,
-  ## preventing orphaned EBS volumes (CLDYCON-7823). whenScaled should stay
-  ## Retain — scaling down must never destroy data.
+  ## deleted or scaled down.
   persistentVolumeClaimRetentionPolicy:
     whenDeleted: Retain
     whenScaled: Retain
