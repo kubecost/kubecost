@@ -20,6 +20,11 @@ metadata:
 spec:
   replicas: {{ .Values.aggregator.replicas }}
   serviceName: {{ template "kubecost.aggregator.serviceName" . }}
+  {{- with .Values.aggregator.persistentVolumeClaimRetentionPolicy }}
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: {{ .whenDeleted | default "Retain" }}
+    whenScaled: {{ .whenScaled | default "Retain" }}
+  {{- end }}
   selector:
     matchLabels:
     {{- include "kubecost.aggregator.selectorLabels" . | nindent 6 }}
