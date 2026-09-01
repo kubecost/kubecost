@@ -13,7 +13,7 @@ jobs:
   linkChecker:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Generate app token
         id: app-token
@@ -25,7 +25,7 @@ jobs:
           repositories: github-actions
 
       - name: Checkout github-actions
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: kubecost/github-actions
           token: ${{ steps.app-token.outputs.token }}
