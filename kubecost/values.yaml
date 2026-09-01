@@ -1066,6 +1066,12 @@ aggregator:
   # Replicas sets the number of Aggregator replicas.
   replicas: 1
 
+  ## Controls what happens to the Aggregator's PVCs when its StatefulSet is
+  ## deleted or scaled down.
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
+
   ## Sets the pod termination grace period for the Aggregator StatefulSet. Must
   ## exceed shutdown_wait_unfinished (120s in kc-embedded-ch-config.xml) plus
   ## app drain time.
