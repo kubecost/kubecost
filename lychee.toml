@@ -1,0 +1,5 @@
+# IBM Docs rejects Lychee's default user agent with HTTP 403 even though the
+# pages are publicly reachable. Override it only for IBM so other link checks
+# continue to use Lychee's default request identity.
+[hosts."www.ibm.com"]
+headers = { "User-Agent" = "curl/8.7.1" }

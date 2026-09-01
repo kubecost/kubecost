@@ -12,6 +12,7 @@
 {{- include "kubecost.cloudCost.persistentStorage.check" . -}}
 {{- include "kubecost.aggregator.storageCheck" . -}}
 {{- include "kubecost.aggregator.storageWarning" . }}
+
 ================================================================================
 KUBECOST INSTALLATION SUCCESSFUL
 ================================================================================
@@ -46,3 +47,5 @@ Copyright IBM Corp. 2019-2026
 
 {{- include "kubecost.localStoreClusterIdCheck" . -}}
 {{- include "kubecost.v3-postconditions" . -}}
+{{- include "kubecost.mcp.openRouteCheck" . -}}
+{{- include "kubecost.mcp.validateOIDC" . -}}

@@ -24,3 +24,7 @@ helm dependency build ./kubecost
 # Templating
 helm template kubecost ./kubecost
 ```
+
+## Additional rules
+
+Always check for rules that agents must follow in the [.bob/rules](.bob/rules) folder.
