@@ -705,13 +705,13 @@ mcp:
       # mcp.config.oidc.issuerUrl is the provider's .well-known/openid-configuration URL.
       # Example: https://{domain}/.well-known/openid-configuration
       issuerUrl: ""
-      # mcp.config.oidc.clientId is the OIDC client ID. Prefer existingSecret for production.
-      clientId: ""
+      # mcp.config.oidc.clientID is the OIDC client ID. Prefer existingSecret for production.
+      clientID: ""
       # mcp.config.oidc.clientSecret is the OIDC client secret. Prefer existingSecret for production.
       clientSecret: ""
       # mcp.config.oidc.existingSecret references a pre-created Secret containing OIDC credentials.
-      # Required keys: OIDC_CLIENT_ID, OIDC_CLIENT_SECRET. Preferred over clientId/clientSecret.
-      # Supply either this or clientId/clientSecret, not both.
+      # Required keys: OIDC_CLIENT_ID, OIDC_CLIENT_SECRET. Preferred over clientID/clientSecret.
+      # Supply either this or clientID/clientSecret, not both.
       existingSecret: ""
       # Register https://<mcp.config.externalUrl host>/oauth/mcp/callback as the redirect
       # URI at the IdP. The callback path is fixed and cannot be changed.

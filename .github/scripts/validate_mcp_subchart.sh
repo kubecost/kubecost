@@ -396,7 +396,7 @@ helm template "$RELEASE_NAME" "$CHART_DIR" \
   --set ingress.hosts[0]=kubecost.example.com \
   --set mcp.config.kubecostApiPort=9008 \
   --set mcp.config.authMode=oidc \
-  --set mcp.config.oidc.clientId=test-client-id \
+  --set mcp.config.oidc.clientID=test-client-id \
   --set mcp.config.oidc.clientSecret=test-client-secret \
   --set mcp.config.oidc.issuerUrl=https://auth.example.com \
   --set mcp.config.externalUrl=https://kubecost.example.com \
@@ -527,7 +527,7 @@ helm template "$RELEASE_NAME" "$CHART_DIR" \
   --set "${values_key}.enabled=true" \
   --set mcp.config.kubecostApiPort=9008 \
   --set mcp.config.authMode=oidc \
-  --set mcp.config.oidc.clientId=test-client-id \
+  --set mcp.config.oidc.clientID=test-client-id \
   --set mcp.config.oidc.clientSecret=test-client-secret \
   --set mcp.config.oidc.issuerUrl=https://auth.example.com \
   --set mcp.config.externalUrl=https://kubecost.example.com \
@@ -578,7 +578,7 @@ helm template "$RELEASE_NAME" "$CHART_DIR" \
   "${skip_schema[@]}" \
   --set "${values_key}.enabled=true" \
   --set mcp.config.authMode=oidc \
-  --set mcp.config.oidc.clientId=test-client-id \
+  --set mcp.config.oidc.clientID=test-client-id \
   --set mcp.config.oidc.clientSecret=test-client-secret \
   --set mcp.config.oidc.issuerUrl=https://auth.example.com \
   --set mcp.config.externalUrl=https://kubecost.example.com \
@@ -590,18 +590,18 @@ pass "helm template succeeds with skipSanityChecks=true when authMode=oidc with 
 assert_contains "skipSanityChecks OIDC render includes a ConfigMap" \
   "${RENDER_DIR}/oidc-none-creds-skip.yaml" "kind: ConfigMap"
 
-# 7) authMode=oidc with inline clientId+clientSecret, issuerUrl, and externalUrl must SUCCEED.
+# 7) authMode=oidc with inline clientID+clientSecret, issuerUrl, and externalUrl must SUCCEED.
 # The subchart validates all four fields; all must be present for a clean render.
 helm template "$RELEASE_NAME" "$CHART_DIR" \
   "${skip_schema[@]}" \
   --set "${values_key}.enabled=true" \
   --set mcp.config.authMode=oidc \
-  --set mcp.config.oidc.clientId=test-client-id \
+  --set mcp.config.oidc.clientID=test-client-id \
   --set mcp.config.oidc.clientSecret=test-client-secret \
   --set mcp.config.oidc.issuerUrl=https://auth.example.com \
   --set mcp.config.externalUrl=https://kubecost.example.com \
   > "${RENDER_DIR}/oidc-inline-creds.yaml"
-pass "helm template succeeds when authMode=oidc with inline clientId+clientSecret"
+pass "helm template succeeds when authMode=oidc with inline clientID+clientSecret"
 
 assert_contains "OIDC inline-creds render includes a ConfigMap" \
   "${RENDER_DIR}/oidc-inline-creds.yaml" "kind: ConfigMap"
@@ -626,9 +626,9 @@ assert_contains "OIDC existingSecret render includes a ConfigMap" \
 # renders the inline values into a Secret alongside the referenced one (secret
 # sprawl), so the parent's validateOIDC rejects it and names the two ways to fix it.
 assert_helm_fails "when authMode=oidc has both inline credentials and existingSecret" \
-  "mcp.config.oidc has both existingSecret and inline clientId/clientSecret set" \
+  "mcp.config.oidc has both existingSecret and inline clientID/clientSecret set" \
   --set mcp.config.authMode=oidc \
-  --set mcp.config.oidc.clientId=test-client-id \
+  --set mcp.config.oidc.clientID=test-client-id \
   --set mcp.config.oidc.clientSecret=test-client-secret \
   --set mcp.config.oidc.existingSecret=my-oidc-secret \
   --set mcp.config.oidc.issuerUrl=https://auth.example.com \
@@ -639,7 +639,7 @@ assert_helm_fails "when authMode=oidc has both inline credentials and existingSe
 assert_helm_fails "when externalUrl does not match the Kubecost ingress host" \
   "is not one of the Kubecost route's hostnames" \
   --set mcp.config.authMode=oidc \
-  --set mcp.config.oidc.clientId=test-client-id \
+  --set mcp.config.oidc.clientID=test-client-id \
   --set mcp.config.oidc.clientSecret=test-client-secret \
   --set mcp.config.oidc.issuerUrl=https://auth.example.com \
   --set ingress.enabled=true \
