@@ -286,6 +286,26 @@ assert_contains "productConfigs reports default kubecostApiPort" \
 assert_contains "productConfigs reports default kubecostApiBasePath" \
   "${RENDER_DIR}/nginx-enabled.conf" '"kubecostApiBasePath": "/"'
 
+# authMode=api_key always requires a client API key. An explicit false value is
+# retained for backwards-compatible values files but must not weaken the mode.
+helm template "$RELEASE_NAME" "$CHART_DIR" \
+  "${skip_schema[@]}" \
+  --set "${values_key}.enabled=true" \
+  --set "${values_key}.config.authMode=api_key" \
+  --set "${values_key}.config.requireClientApiKey=false" \
+  > "${RENDER_DIR}/api-key.yaml"
+pass "helm template (authMode=api_key, requireClientApiKey=false) rendered without errors"
+
+api_key_required="$(yq -r \
+  "select(.kind == \"ConfigMap\" and .metadata.name == \"${expected_fullname}-config\") | .data.REQUIRE_CLIENT_API_KEY" \
+  "${RENDER_DIR}/api-key.yaml")"
+assert_eq "subchart forces REQUIRE_CLIENT_API_KEY=true when authMode=api_key" \
+  "true" "$api_key_required"
+
+extract_nginx "${RENDER_DIR}/api-key.yaml" "${RENDER_DIR}/nginx-api-key.conf"
+assert_contains "productConfigs forces mcpRequireClientApiKey=true when authMode=api_key" \
+  "${RENDER_DIR}/nginx-api-key.conf" '"mcpRequireClientApiKey": "true"'
+
 helm template "$RELEASE_NAME" "$CHART_DIR" \
   "${skip_schema[@]}" \
   --set "${values_key}.enabled=false" \

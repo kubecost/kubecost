@@ -588,7 +588,7 @@ To resolve this, either:
 {{- end -}}
 
 {{- define "kubecost.mcp.requireClientApiKey" }}
-{{- if ((.Values.mcp).config).requireClientApiKey }}
+{{- if or (((.Values.mcp).config).requireClientApiKey) (eq (include "kubecost.mcp.authMode" .) "api_key") }}
 {{- printf "true" -}}
 {{- else -}}
 {{- printf "false" -}}
