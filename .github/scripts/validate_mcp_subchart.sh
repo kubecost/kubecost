@@ -590,10 +590,8 @@ else
   pass "helm template fails when authMode=oidc and no OIDC credentials (exit code ${_exit_code})"
 fi
 
-# 6b) skipSanityChecks=true (parent chart warning path) with authMode=oidc and no credentials.
-# The parent chart's validateOIDC emits a warning; the subchart's validateOIDC always
-# hard-fails on missing credentials regardless of skipSanityChecks. Both credentials
-# AND issuerUrl AND externalUrl are required for the subchart to render cleanly.
+# 6b) skipSanityChecks does not bypass static OIDC validation. A complete OIDC
+# configuration still renders because the flag only skips live cluster lookups.
 helm template "$RELEASE_NAME" "$CHART_DIR" \
   "${skip_schema[@]}" \
   --set "${values_key}.enabled=true" \
@@ -605,7 +603,7 @@ helm template "$RELEASE_NAME" "$CHART_DIR" \
   --set global.platforms.cicd.enabled=true \
   --set global.platforms.cicd.skipSanityChecks=true \
   > "${RENDER_DIR}/oidc-none-creds-skip.yaml"
-pass "helm template succeeds with skipSanityChecks=true when authMode=oidc with full credentials"
+pass "helm template succeeds with complete OIDC values when skipSanityChecks=true"
 
 assert_contains "skipSanityChecks OIDC render includes a ConfigMap" \
   "${RENDER_DIR}/oidc-none-creds-skip.yaml" "kind: ConfigMap"
@@ -642,13 +640,23 @@ pass "helm template succeeds when authMode=oidc with existingSecret, issuerUrl, 
 assert_contains "OIDC existingSecret render includes a ConfigMap" \
   "${RENDER_DIR}/oidc-existing-secret.yaml" "kind: ConfigMap"
 
-# 9) authMode=oidc with both inline and existingSecret must FAIL. Supplying both
-# renders the inline values into a Secret alongside the referenced one (secret
-# sprawl), so the parent's validateOIDC rejects it and names the two ways to fix it.
+# 9) authMode=oidc with both inline and existingSecret must FAIL. The subchart
+# gives existingSecret precedence, so accepting both would leave unused sensitive
+# values in the Helm inputs and make the active credential source unclear.
 assert_helm_fails "when authMode=oidc has both inline credentials and existingSecret" \
-  "mcp.config.oidc has both existingSecret and inline clientID/clientSecret set" \
+  "mcp.config.oidc.existingSecret cannot be combined with inline clientID or clientSecret values" \
   --set mcp.config.authMode=oidc \
   --set mcp.config.oidc.clientID=test-client-id \
+  --set mcp.config.oidc.clientSecret=test-client-secret \
+  --set mcp.config.oidc.existingSecret=my-oidc-secret \
+  --set mcp.config.oidc.issuerUrl=https://auth.example.com \
+  --set mcp.config.externalUrl=https://kubecost.example.com
+
+# A partial inline pair is also incompatible with existingSecret. It cannot be
+# used as a credential source and should not remain as an ignored sensitive value.
+assert_helm_fails "when authMode=oidc has existingSecret and a partial inline credential pair" \
+  "mcp.config.oidc.existingSecret cannot be combined with inline clientID or clientSecret values" \
+  --set mcp.config.authMode=oidc \
   --set mcp.config.oidc.clientSecret=test-client-secret \
   --set mcp.config.oidc.existingSecret=my-oidc-secret \
   --set mcp.config.oidc.issuerUrl=https://auth.example.com \

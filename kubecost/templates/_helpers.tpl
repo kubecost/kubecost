@@ -723,56 +723,30 @@ hostnames.
 {{- end -}}
 
 {{/*
-Fail when MCP is enabled, authMode is "oidc", but no OIDC credentials are supplied.
-Valid credential state = either (clientID AND clientSecret both non-empty)
-OR existingSecret non-empty. When CI/CD skipSanityChecks is set, emit a warning instead.
+Validate the parent chart's MCP OIDC configuration. Credentials must come from
+exactly one source: a complete inline clientID/clientSecret pair or an
+existingSecret. Whitespace-only values are treated as unset.
 
-Concern 2: All presence tests use (trim | empty) so whitespace-only strings are
-treated as absent, consistent with the intent of the validation.
-
-Concern 1: A mutual-exclusivity guard follows the credential-presence check. When
-both existingSecret and inline clientID/clientSecret are supplied simultaneously,
-the inline values would be rendered into a Kubernetes Secret alongside the
-referenced existing Secret (secret sprawl). The guard fails hard (or warns under
-skipSanityChecks) and instructs the operator to supply one credential source only.
-
-Concern 5 — INTENTIONAL REDUNDANCY: this helper fires during the parent chart's
-render (called from NOTES.txt). The mcp-kubecost subchart carries its own
-validateOIDC check that fires independently via the subchart's NOTES.txt render.
-Both checks cover the same credential-presence condition so that operators catch
-the error regardless of whether they are installing the parent or the subchart
-standalone. Do NOT remove one of these checks under the assumption it is a
-duplicate error — they serve different template contexts and have different
-error-message namespacing ("kubecost / mcp" vs the subchart's own prefix).
+This parent-level check is intentional. It can validate the Kubecost frontend's
+route and provide parent value paths in errors; the subchart's standalone check
+cannot see that parent context. Keep the shared credential and URL rules aligned
+with mcp-kubecost.validateOIDC.
 */}}
 {{- define "kubecost.mcp.validateOIDC" -}}
 {{- if (.Values.mcp).enabled -}}
 {{- $mode := default "none" ((.Values.mcp).config).authMode -}}
 {{- if eq $mode "oidc" -}}
 {{- $oidc := (((.Values.mcp).config).oidc) | default dict -}}
-{{- /* Concern 2: trim before empty so whitespace-only strings are treated as absent. */}}
-{{- $hasInline := and (not (empty (trim ($oidc.clientID | default "")))) (not (empty (trim ($oidc.clientSecret | default "")))) -}}
+{{- $clientID := trim ($oidc.clientID | default "") -}}
+{{- $clientSecret := trim ($oidc.clientSecret | default "") -}}
+{{- $hasAnyInline := or (not (empty $clientID)) (not (empty $clientSecret)) -}}
+{{- $hasInline := and (not (empty $clientID)) (not (empty $clientSecret)) -}}
 {{- $hasExisting := not (empty (trim ($oidc.existingSecret | default ""))) -}}
 {{- if not (or $hasInline $hasExisting) -}}
-{{- if and .Values.global.platforms.cicd.enabled .Values.global.platforms.cicd.skipSanityChecks }}
-
-WARNING: MCP.CONFIG.AUTHMODE IS "OIDC" BUT NO OIDC CREDENTIALS ARE CONFIGURED.
-SET MCP.CONFIG.OIDC.CLIENTID AND MCP.CONFIG.OIDC.CLIENTSECRET, OR SET MCP.CONFIG.OIDC.EXISTINGSECRET.
-SKIPSANITYCHECKS IS TRUE SO THIS CHECK DID NOT FAIL.
-{{- else }}
-{{- fail "\n\nFAILURE [kubecost / mcp]: mcp.config.authMode is \"oidc\" but no OIDC credentials are configured.\n\nTo fix, choose one of:\n  Option A — inline credentials:\n    mcp.config.oidc.clientID: \"<your-client-id>\"\n    mcp.config.oidc.clientSecret: \"<your-client-secret>\"\n\n  Option B — reference a pre-existing Secret (required keys: OIDC_CLIENT_ID, OIDC_CLIENT_SECRET):\n    mcp.config.oidc.existingSecret: \"<secret-name>\"\n\n  Option C — skip this sanity check (CI/CD only; the MCP OIDC deployment will still be broken until credentials are set):\n    global.platforms.cicd.enabled: true\n    global.platforms.cicd.skipSanityChecks: true\n" }}
-{{- end }}
+{{- fail "\n\nFAILURE [kubecost / mcp]: mcp.config.authMode is \"oidc\" but no OIDC credentials are configured.\n\nTo fix, choose one of:\n  Option A — inline credentials:\n    mcp.config.oidc.clientID: \"<your-client-id>\"\n    mcp.config.oidc.clientSecret: \"<your-client-secret>\"\n\n  Option B — reference a pre-existing Secret (required keys: OIDC_CLIENT_ID, OIDC_CLIENT_SECRET):\n    mcp.config.oidc.existingSecret: \"<secret-name>\"\n" }}
 {{- end -}}
-{{- if and $hasInline $hasExisting -}}
-{{- if and .Values.global.platforms.cicd.enabled .Values.global.platforms.cicd.skipSanityChecks }}
-
-WARNING: MCP.CONFIG.OIDC HAS BOTH EXISTINGSECRET AND INLINE CLIENTID/CLIENTSECRET SET.
-SUPPLY ONLY ONE CREDENTIAL SOURCE TO AVOID SECRET SPRAWL.
-USE EXISTINGSECRET ALONE, OR CLIENTID+CLIENTSECRET ALONE.
-SKIPSANITYCHECKS IS TRUE SO THIS CHECK DID NOT FAIL.
-{{- else }}
-{{- fail "\n\nFAILURE [kubecost / mcp]: mcp.config.oidc has both existingSecret and inline clientID/clientSecret set.\nSupply exactly one credential source to avoid secret sprawl:\n\n  Option A — inline credentials only (remove existingSecret):\n    mcp.config.oidc.clientID: \"<your-client-id>\"\n    mcp.config.oidc.clientSecret: \"<your-client-secret>\"\n    mcp.config.oidc.existingSecret: \"\"\n\n  Option B — existing Secret only (remove clientID and clientSecret):\n    mcp.config.oidc.existingSecret: \"<secret-name>\"\n    mcp.config.oidc.clientID: \"\"\n    mcp.config.oidc.clientSecret: \"\"\n\n  To skip this check (CI/CD only):\n    global.platforms.cicd.enabled: true\n    global.platforms.cicd.skipSanityChecks: true\n" }}
-{{- end }}
+{{- if and $hasAnyInline $hasExisting -}}
+{{- fail "\n\nFAILURE [kubecost / mcp]: mcp.config.oidc.existingSecret cannot be combined with inline clientID or clientSecret values.\nSupply exactly one credential source so the active credentials are unambiguous:\n\n  Option A — inline credentials only (remove existingSecret):\n    mcp.config.oidc.clientID: \"<your-client-id>\"\n    mcp.config.oidc.clientSecret: \"<your-client-secret>\"\n    mcp.config.oidc.existingSecret: \"\"\n\n  Option B — existing Secret only (remove clientID and clientSecret):\n    mcp.config.oidc.existingSecret: \"<secret-name>\"\n    mcp.config.oidc.clientID: \"\"\n    mcp.config.oidc.clientSecret: \"\"\n" }}
 {{- end -}}
 {{- /* Validate the shape and host of mcp.config.externalUrl when it is set. The
      unset case is left to the subchart: Helm renders charts/ before templates/,
@@ -785,14 +759,7 @@ SKIPSANITYCHECKS IS TRUE SO THIS CHECK DID NOT FAIL.
 {{- $issuerHost := (urlParse $issuer).host | default "" | splitList ":" | first -}}
 {{- $issuerLocal := and (hasPrefix "http://" $issuer) (or (eq $issuerHost "localhost") (hasPrefix "127.0.0.1" $issuerHost)) -}}
 {{- if not (or (hasPrefix "https://" $issuer) $issuerLocal) -}}
-{{- if and .Values.global.platforms.cicd.enabled .Values.global.platforms.cicd.skipSanityChecks }}
-
-WARNING: MCP.CONFIG.OIDC.ISSUERURL MUST BE SET TO AN HTTPS:// URL.
-EXAMPLE: mcp.config.oidc.issuerUrl: "https://kubecost.example.com/.well-known/openid-configuration"
-SKIPSANITYCHECKS IS TRUE SO THIS CHECK DID NOT FAIL.
-{{- else }}
-{{- fail "\n\nFAILURE [kubecost / mcp]: mcp.config.oidc.issuerUrl must be set to an https:// URL.\n\n  Example:\n    mcp.config.oidc.issuerUrl: \"https://kubecost.example.com/.well-known/openid-configuration\"\n\n  To skip this check (CI/CD only):\n    global.platforms.cicd.enabled: true\n    global.platforms.cicd.skipSanityChecks: true\n" }}
-{{- end }}
+{{- fail "\n\nFAILURE [kubecost / mcp]: mcp.config.oidc.issuerUrl must be an https:// URL, or http:// on localhost / 127.0.0.1 for local testing.\n\n  Example:\n    mcp.config.oidc.issuerUrl: \"https://kubecost.example.com/.well-known/openid-configuration\"\n" }}
 {{- end -}}
 {{- end -}}
 {{- end -}}
