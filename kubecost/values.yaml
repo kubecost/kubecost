@@ -660,11 +660,10 @@ finopsagent:
 ## the mcp-kubecost subchart that are most commonly changed.
 ## Ref: https://github.com/kubecost/mcp-kubecost/blob/main/charts/mcp-kubecost/values.yaml
 ##
-## The MCP endpoint is fixed at /mcp and its OAuth endpoints at /oauth/mcp; neither
-## path is configurable. By default the Kubecost frontend proxies both, so MCP is
-## reachable on the same hostname as the Kubecost UI. Enable mcp.httpRoute or
-## mcp.ingress below to give the MCP server its own route instead, in which case the
-## frontend stops proxying it.
+## The MCP endpoint is fixed at /mcp and its OAuth endpoints at /oauth/mcp. 
+## By default the Kubecost frontend proxies both, so MCP is reachable on the same hostname 
+## as the Kubecost UI. Enable mcp.httpRoute or mcp.ingress below to give the MCP 
+## server its own route instead, in which case the frontend stops proxying it.
 ##
 mcp:
   enabled: true
@@ -686,7 +685,7 @@ mcp:
     # OAuth metadata — scheme and host only, no path. Required when authMode is
     # "oidc". Because MCP is proxied through the Kubecost frontend, this must be the
     # Kubecost hostname, e.g. "https://kubecost.example.com". Leave empty when the
-    # MCP server has its own route below; the subchart infers it from that hostname.
+    # MCP server has its own ingress or HTTPRoute below; the subchart infers it from that hostname.
     externalUrl: ""
     # mcp.config.kubecostApiKey is sent to Kubecost as an X-API-KEY request header for outbound calls.
     # An MCP client may override it per request by sending its own X-API-KEY header.
@@ -718,7 +717,7 @@ mcp:
       # URI at the IdP. The callback path is fixed and cannot be changed.
   ## The MCP server is reachable in-cluster at <release>-mcp:3030 and, by default,
   ## through the Kubecost frontend. Enable one of these to give it its own external
-  ## route instead; the frontend then stops proxying /mcp and /oauth/mcp.
+  ## ingress or HTTPRoute instead; the frontend then stops proxying /mcp and /oauth/mcp.
   ## Either route requires mcp.config.authMode to be at least "open".
   httpRoute:
     enabled: false
