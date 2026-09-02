@@ -660,50 +660,66 @@ finopsagent:
 ## the mcp-kubecost subchart that are most commonly changed.
 ## Ref: https://github.com/kubecost/mcp-kubecost/blob/main/charts/mcp-kubecost/values.yaml
 ##
+## The MCP endpoint is fixed at /mcp and its OAuth endpoints at /oauth/mcp; neither
+## path is configurable. By default the Kubecost frontend proxies both, so MCP is
+## reachable on the same hostname as the Kubecost UI. Enable mcp.httpRoute or
+## mcp.ingress below to give the MCP server its own route instead, in which case the
+## frontend stops proxying it.
+##
 mcp:
   enabled: true
-  ## The MCP server reads cost data through the Kubecost aggregator Service.
+  ## The MCP server reads cost data through the Kubecost aggregator service.
   ## If Kubecost is deployed with SAML or OIDC authentication,
-  ## set mcp.config.kubecostApiPort to 9008 instead of 9004 to bypass authentication.
+  ## the MCP server must be configured with its own OIDC configuration.
+  ## When the mcp server has its own authentication, consider setting
+  ## mcp.config.kubecostApiPort to 9008 instead of 9004 to bypass Kubecost's API authentication
   config:
     kubecostApiBaseUrl: "http://{{ .Release.Name }}-aggregator"
     kubecostApiPort: 9004
-    kubecostApiBasePath: /
+    # The aggregator serves its API at the root, unlike the frontend's /model prefix.
+    kubecostApiBasePath: "/"
     ## Authentication for the MCP HTTP endpoint. One of: none, open, oidc, api_key.
-    ## The default of "none" leaves the endpoint unauthenticated inside the cluster;
+    ## The default of "none" leaves the endpoint unauthenticated inside the cluster.
     ## See https://github.com/kubecost/mcp-kubecost/tree/main/docs/auth for more details.
     authMode: none
+    # mcp.config.externalUrl is the public origin the MCP server advertises in its
+    # OAuth metadata — scheme and host only, no path. Required when authMode is
+    # "oidc". Because MCP is proxied through the Kubecost frontend, this must be the
+    # Kubecost hostname, e.g. "https://kubecost.example.com". Leave empty when the
+    # MCP server has its own route below; the subchart infers it from that hostname.
+    externalUrl: ""
+    # mcp.config.kubecostApiKey is sent to Kubecost as an X-API-KEY request header for outbound calls.
+    # An MCP client may override it per request by sending its own X-API-KEY header.
+    kubecostApiKey:
+      # mcp.config.kubecostApiKey.value optionally creates a Secret containing the API key; prefer existingSecret.
+      value: ""
+      # mcp.config.kubecostApiKey.existingSecret is the name of a pre-created Secret containing the API key.
+      existingSecret: ""
+      # mcp.config.kubecostApiKey.key is the key within the existing or generated API-key Secret.
+      key: KUBECOST_API_KEY
+    # mcp.config.requireClientApiKey rejects inbound HTTP requests that arrive without an X-API-KEY header.
+    # When true, the MCP endpoint requires callers to supply an API key (authMode api_key or combined with oidc).
+    requireClientApiKey: false
+    # mcp.config.logLevel is the FastMCP log level. One of: DEBUG, INFO, WARNING, ERROR, CRITICAL.
+    logLevel: INFO
     oidc:
       # mcp.config.oidc.issuerUrl is the provider's .well-known/openid-configuration URL.
       # Example: https://{domain}/.well-known/openid-configuration
       issuerUrl: ""
-      # mcp.config.oidc.baseUrl is the public URL of this MCP server (used for OAuth redirect callback).
-      #
-      # When the MCP server shares the Kubecost frontend hostname, give this a
-      # path prefix -- https://kubecost.example.com/mcp -- so FastMCP advertises
-      # every OAuth endpoint under that prefix (/mcp/authorize, /mcp/token,
-      # /mcp/register, /mcp/auth-mcp) instead of claiming those names at the
-      # root of a host it shares with Kubecost SSO. The frontend nginx strips
-      # the prefix, and the subchart then serves the MCP endpoint at "/".
-      # Register the redirect URI at the IdP with the prefix included.
-      #
-      # Leave the path off (https://mcp.example.com) only when the MCP server
-      # has its own hostname, where there is nothing to collide with.
-      baseUrl: ""
-      # mcp.config.oidc.redirectPath is the FastMCP OAuth callback path
-      # The default is /auth-mcp which is to avoid conflict with the Kubecost OIDC callback for the main UI
-      # With a path-prefixed baseUrl this is served under the prefix, so it no
-      # longer has to out-length the Kubecost /auth location.
-      redirectPath: "/auth-mcp"
       # mcp.config.oidc.clientId is the OIDC client ID. Prefer existingSecret for production.
       clientId: ""
       # mcp.config.oidc.clientSecret is the OIDC client secret. Prefer existingSecret for production.
       clientSecret: ""
       # mcp.config.oidc.existingSecret references a pre-created Secret containing OIDC credentials.
       # Required keys: OIDC_CLIENT_ID, OIDC_CLIENT_SECRET. Preferred over clientId/clientSecret.
+      # Supply either this or clientId/clientSecret, not both.
       existingSecret: ""
-  ## The MCP server is reachable in-cluster at <release>-mcp:3030. Enable
-  ## httpRoute (Gateway API) or ingress to expose it outside the cluster.
+      # Register https://<mcp.config.externalUrl host>/oauth/mcp/callback as the redirect
+      # URI at the IdP. The callback path is fixed and cannot be changed.
+  ## The MCP server is reachable in-cluster at <release>-mcp:3030 and, by default,
+  ## through the Kubecost frontend. Enable one of these to give it its own external
+  ## route instead; the frontend then stops proxying /mcp and /oauth/mcp.
+  ## Either route requires mcp.config.authMode to be at least "open".
   httpRoute:
     enabled: false
   ingress:

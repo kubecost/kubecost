@@ -595,38 +595,19 @@ To resolve this, either:
 {{- end -}}
 {{- end -}}
 
-{{- define "kubecost.mcp.redirectPath" -}}
-{{- default "/auth-mcp" (((.Values.mcp).config).oidc).redirectPath -}}
-{{- end -}}
-
 {{/*
-Path prefix the MCP server is served under on the Kubecost frontend host,
-derived from the path component of mcp.config.oidc.baseUrl. Empty when the MCP
-server has its own hostname (baseUrl at a host root) or when OIDC is off.
-
-When non-empty, FastMCP advertises {baseUrl}/authorize, {baseUrl}/token and
-{baseUrl}/register in its OAuth metadata, so every OAuth path the MCP clients
-touch lives under this prefix instead of the shared host root. The frontend
-nginx strips the prefix before proxying, and the subchart serves the MCP
-endpoint at "/" to match (mcp-kubecost.httpPath).
-
-Rejects characters that are not safe to interpolate into the nginx rewrite
-regexes that consume this value.
+Fixed public paths of the mcp-kubecost server. The subchart serves both at
+exactly these paths inside the container (MCP_PATH / OAUTH_PREFIX in
+src/mcp_kubecost/config/oidc.py), so the frontend proxies them without any
+rewrite. They are constants, not values: FastMCP advertises them in its OAuth
+metadata, and the MCP SDK derives the well-known discovery URLs from them.
 */}}
-{{- define "kubecost.mcp.pathPrefix" -}}
-{{- if eq (include "kubecost.mcp.authMode" .) "oidc" -}}
-{{- $raw := ((((.Values.mcp).config).oidc).baseUrl) | default "" | trim -}}
-{{- if $raw -}}
-{{- $path := (urlParse $raw).path | default "" -}}
-{{- $path = printf "/%s" (trimAll "/" $path) -}}
-{{- if ne $path "/" -}}
-{{- if not (regexMatch "^(/[A-Za-z0-9._~-]+)+$" $path) -}}
-{{- fail (printf "\n\nFAILURE [kubecost / mcp]: the path in mcp.config.oidc.baseUrl (%q) is not a usable nginx location prefix. Use only unreserved URL characters, e.g. https://kubecost.example.com/mcp\n" $path) -}}
+{{- define "kubecost.mcp.path" -}}
+/mcp
 {{- end -}}
-{{- $path -}}
-{{- end -}}
-{{- end -}}
-{{- end -}}
+
+{{- define "kubecost.mcp.oauthPrefix" -}}
+/oauth/mcp
 {{- end -}}
 
 {{- define "kubecost.mcp.kubecostApiBaseUrl" -}}
@@ -690,33 +671,88 @@ SKIPSANITYCHECKS IS TRUE SO THIS CHECK DID NOT FAIL.
 {{- end -}}
 
 {{/*
+Non-wildcard hostnames of the Kubecost route the frontend is served on, as a
+list. Reads .Values.ingress.hosts (a list of plain strings in this chart) or
+.Values.httpRoute.hostnames, whichever route is enabled. Empty when neither is.
+
+Used to validate mcp.config.externalUrl: the MCP server is proxied through the
+frontend, so the origin it advertises must be the Kubecost hostname.
+*/}}
+{{- define "kubecost.mcp.routeHosts" -}}
+{{- $hosts := list -}}
+{{- if .Values.httpRoute.enabled -}}
+{{- $hosts = .Values.httpRoute.hostnames | default (list) -}}
+{{- else if .Values.ingress.enabled -}}
+{{- $hosts = .Values.ingress.hosts | default (list) -}}
+{{- end -}}
+{{- $nonWildcard := list -}}
+{{- range $hosts -}}
+{{- if not (hasPrefix "*" .) -}}
+{{- $nonWildcard = append $nonWildcard . -}}
+{{- end -}}
+{{- end -}}
+{{- toJson $nonWildcard -}}
+{{- end -}}
+
+{{/*
+Resolve and validate mcp.config.externalUrl, the public origin the MCP server
+advertises in its OAuth metadata. Mirrors mcp-kubecost.externalUrl in the
+subchart, but validates against the *parent* chart's route rather than the
+subchart's, because the frontend nginx is what serves MCP in this topology.
+
+Returns the trimmed origin, or "" when unset. Fails on a value that is not a
+bare https:// origin, or whose host is not one of the enabled Kubecost route's
+hostnames.
+*/}}
+{{- define "kubecost.mcp.externalUrl" -}}
+{{- $explicit := (((.Values.mcp).config).externalUrl) | default "" | trim | trimSuffix "/" -}}
+{{- if $explicit -}}
+{{- if not (hasPrefix "https://" $explicit) -}}
+{{- fail (printf "\n\nFAILURE [kubecost / mcp]: mcp.config.externalUrl must be an https:// origin with no path: %s\n" $explicit) -}}
+{{- end -}}
+{{- $host := trimPrefix "https://" $explicit -}}
+{{- if contains "/" $host -}}
+{{- fail (printf "\n\nFAILURE [kubecost / mcp]: mcp.config.externalUrl must be a bare origin with no path, query, or fragment: %s\n\n  The MCP endpoint is fixed at /mcp and its OAuth endpoints at /oauth/mcp; neither is configurable.\n" $explicit) -}}
+{{- end -}}
+{{- $routeHosts := include "kubecost.mcp.routeHosts" . | fromJsonArray -}}
+{{- if and (gt (len $routeHosts) 0) (not (has $host $routeHosts)) -}}
+{{- fail (printf "\n\nFAILURE [kubecost / mcp]: mcp.config.externalUrl host %q is not one of the Kubecost route's hostnames %v.\n\n  MCP is proxied through the Kubecost frontend, so it must advertise the same host clients reach Kubecost on.\n" $host $routeHosts) -}}
+{{- end -}}
+{{- $explicit -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Fail when MCP is enabled, authMode is "oidc", but no OIDC credentials are supplied.
 Valid credential state = either (clientId AND clientSecret both non-empty)
 OR existingSecret non-empty. When CI/CD skipSanityChecks is set, emit a warning instead.
 
-CONCERNS:
-- No mutual-exclusivity guard: supplying both existingSecret and inline clientId/clientSecret
-  will not fail here. The subchart favours existingSecret at runtime but still renders the
-  inline values into a Kubernetes Secret (secret sprawl). This is intentional.
-- Presence != validity: whitespace-only strings pass this check. Runtime OIDC token exchange
-  is the real validation gate.
-- mcp.config.oidc.existingSecret was not in this chart's values.yaml historically. It was
-  added alongside this check so it is now discoverable. The subchart passes it through to the
-  pod via its own Secret-wiring logic.
-- The parent chart only passes through a subset of the subchart's oidc config keys. Operators
-  who need the full OIDC surface (audience, requiredScopes, authIngress.*) must add values
-  under mcp.config.oidc.* directly.
-- Ordering: this check runs during the parent chart's NOTES.txt render. The subchart's own
-  mcp-kubecost.validateOIDC also runs (via its NOTES.txt). Both fire independently when both
-  are misconfigured — this is intentional redundancy, not a bug.
+Concern 2: All presence tests use (trim | empty) so whitespace-only strings are
+treated as absent, consistent with the intent of the validation.
+
+Concern 1: A mutual-exclusivity guard follows the credential-presence check. When
+both existingSecret and inline clientId/clientSecret are supplied simultaneously,
+the inline values would be rendered into a Kubernetes Secret alongside the
+referenced existing Secret (secret sprawl). The guard fails hard (or warns under
+skipSanityChecks) and instructs the operator to supply one credential source only.
+
+Concern 5 — INTENTIONAL REDUNDANCY: this helper fires during the parent chart's
+render (called from NOTES.txt). The mcp-kubecost subchart carries its own
+validateOIDC check that fires independently via the subchart's NOTES.txt render.
+Both checks cover the same credential-presence condition so that operators catch
+the error regardless of whether they are installing the parent or the subchart
+standalone. Do NOT remove one of these checks under the assumption it is a
+duplicate error — they serve different template contexts and have different
+error-message namespacing ("kubecost / mcp" vs the subchart's own prefix).
 */}}
 {{- define "kubecost.mcp.validateOIDC" -}}
 {{- if (.Values.mcp).enabled -}}
 {{- $mode := default "none" ((.Values.mcp).config).authMode -}}
 {{- if eq $mode "oidc" -}}
 {{- $oidc := (((.Values.mcp).config).oidc) | default dict -}}
-{{- $hasInline := and $oidc.clientId $oidc.clientSecret -}}
-{{- $hasExisting := $oidc.existingSecret -}}
+{{- /* Concern 2: trim before empty so whitespace-only strings are treated as absent. */}}
+{{- $hasInline := and (not (empty (trim ($oidc.clientId | default "")))) (not (empty (trim ($oidc.clientSecret | default "")))) -}}
+{{- $hasExisting := not (empty (trim ($oidc.existingSecret | default ""))) -}}
 {{- if not (or $hasInline $hasExisting) -}}
 {{- if and .Values.global.platforms.cicd.enabled .Values.global.platforms.cicd.skipSanityChecks }}
 
@@ -727,7 +763,28 @@ SKIPSANITYCHECKS IS TRUE SO THIS CHECK DID NOT FAIL.
 {{- fail "\n\nFAILURE [kubecost / mcp]: mcp.config.authMode is \"oidc\" but no OIDC credentials are configured.\n\nTo fix, choose one of:\n  Option A — inline credentials:\n    mcp.config.oidc.clientId: \"<your-client-id>\"\n    mcp.config.oidc.clientSecret: \"<your-client-secret>\"\n\n  Option B — reference a pre-existing Secret (required keys: OIDC_CLIENT_ID, OIDC_CLIENT_SECRET):\n    mcp.config.oidc.existingSecret: \"<secret-name>\"\n\n  Option C — skip this sanity check (CI/CD only; the MCP OIDC deployment will still be broken until credentials are set):\n    global.platforms.cicd.enabled: true\n    global.platforms.cicd.skipSanityChecks: true\n" }}
 {{- end }}
 {{- end -}}
-{{- if not (hasPrefix "https://" ($oidc.issuerUrl | default "")) -}}
+{{- if and $hasInline $hasExisting -}}
+{{- if and .Values.global.platforms.cicd.enabled .Values.global.platforms.cicd.skipSanityChecks }}
+
+WARNING: MCP.CONFIG.OIDC HAS BOTH EXISTINGSECRET AND INLINE CLIENTID/CLIENTSECRET SET.
+SUPPLY ONLY ONE CREDENTIAL SOURCE TO AVOID SECRET SPRAWL.
+USE EXISTINGSECRET ALONE, OR CLIENTID+CLIENTSECRET ALONE.
+SKIPSANITYCHECKS IS TRUE SO THIS CHECK DID NOT FAIL.
+{{- else }}
+{{- fail "\n\nFAILURE [kubecost / mcp]: mcp.config.oidc has both existingSecret and inline clientId/clientSecret set.\nSupply exactly one credential source to avoid secret sprawl:\n\n  Option A — inline credentials only (remove existingSecret):\n    mcp.config.oidc.clientId: \"<your-client-id>\"\n    mcp.config.oidc.clientSecret: \"<your-client-secret>\"\n    mcp.config.oidc.existingSecret: \"\"\n\n  Option B — existing Secret only (remove clientId and clientSecret):\n    mcp.config.oidc.existingSecret: \"<secret-name>\"\n    mcp.config.oidc.clientId: \"\"\n    mcp.config.oidc.clientSecret: \"\"\n\n  To skip this check (CI/CD only):\n    global.platforms.cicd.enabled: true\n    global.platforms.cicd.skipSanityChecks: true\n" }}
+{{- end }}
+{{- end -}}
+{{- /* Validate the shape and host of mcp.config.externalUrl when it is set. The
+     unset case is left to the subchart: Helm renders charts/ before templates/,
+     so mcp-kubecost.externalUrl always reports a missing value first. */}}
+{{- include "kubecost.mcp.externalUrl" . -}}
+{{- /* Mirrors mcp-kubecost.validateOIDC: RFC 8414 requires https, and the MCP
+     SDK carves out http:// on localhost / 127.0.0.1 for testing. Rejecting
+     more than the subchart does would fail installs the subchart accepts. */}}
+{{- $issuer := $oidc.issuerUrl | default "" -}}
+{{- $issuerHost := (urlParse $issuer).host | default "" | splitList ":" | first -}}
+{{- $issuerLocal := and (hasPrefix "http://" $issuer) (or (eq $issuerHost "localhost") (hasPrefix "127.0.0.1" $issuerHost)) -}}
+{{- if not (or (hasPrefix "https://" $issuer) $issuerLocal) -}}
 {{- if and .Values.global.platforms.cicd.enabled .Values.global.platforms.cicd.skipSanityChecks }}
 
 WARNING: MCP.CONFIG.OIDC.ISSUERURL MUST BE SET TO AN HTTPS:// URL.
@@ -735,16 +792,6 @@ EXAMPLE: mcp.config.oidc.issuerUrl: "https://kubecost.example.com/.well-known/op
 SKIPSANITYCHECKS IS TRUE SO THIS CHECK DID NOT FAIL.
 {{- else }}
 {{- fail "\n\nFAILURE [kubecost / mcp]: mcp.config.oidc.issuerUrl must be set to an https:// URL.\n\n  Example:\n    mcp.config.oidc.issuerUrl: \"https://kubecost.example.com/.well-known/openid-configuration\"\n\n  To skip this check (CI/CD only):\n    global.platforms.cicd.enabled: true\n    global.platforms.cicd.skipSanityChecks: true\n" }}
-{{- end }}
-{{- end -}}
-{{- if not (hasPrefix "https://" ($oidc.baseUrl | default "")) -}}
-{{- if and .Values.global.platforms.cicd.enabled .Values.global.platforms.cicd.skipSanityChecks }}
-
-WARNING: MCP.CONFIG.OIDC.BASEURL MUST BE SET TO AN HTTPS:// URL.
-EXAMPLE: mcp.config.oidc.baseUrl: "https://kubecost.example.com"
-SKIPSANITYCHECKS IS TRUE SO THIS CHECK DID NOT FAIL.
-{{- else }}
-{{- fail "\n\nFAILURE [kubecost / mcp]: mcp.config.oidc.baseUrl must be set to an https:// URL.\n\n  Example:\n    mcp.config.oidc.baseUrl: \"https://kubecost.example.com\"\n\n  To skip this check (CI/CD only):\n    global.platforms.cicd.enabled: true\n    global.platforms.cicd.skipSanityChecks: true\n" }}
 {{- end }}
 {{- end -}}
 {{- end -}}
