@@ -762,7 +762,7 @@ helm template "$RELEASE_NAME" "$CHART_DIR" \
   --set "${values_key}.enabled=true" \
   --set global.platforms.cicd.enabled=true \
   --set global.platforms.cicd.skipSanityChecks=true \
-  --set "${values_key}.config.kubecostApiKey.existingSecret=does-not-exist" \
+  --set "${values_key}.kubecostApiKey.existingSecret=does-not-exist" \
   > "${RENDER_DIR}/cicd.yaml"
 pass "global.platforms.cicd.skipSanityChecks lets the subchart render for Argo CD"
 

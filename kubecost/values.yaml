@@ -687,15 +687,6 @@ mcp:
     # Kubecost hostname, e.g. "https://kubecost.example.com". Leave empty when the
     # MCP server has its own ingress or HTTPRoute below; the subchart infers it from that hostname.
     externalUrl: ""
-    # mcp.config.kubecostApiKey is sent to Kubecost as an X-API-KEY request header for outbound calls.
-    # An MCP client may override it per request by sending its own X-API-KEY header.
-    kubecostApiKey:
-      # mcp.config.kubecostApiKey.value optionally creates a Secret containing the API key; prefer existingSecret.
-      value: ""
-      # mcp.config.kubecostApiKey.existingSecret is the name of a pre-created Secret containing the API key.
-      existingSecret: ""
-      # mcp.config.kubecostApiKey.key is the key within the existing or generated API-key Secret.
-      key: KUBECOST_API_KEY
     # mcp.config.requireClientApiKey rejects inbound HTTP requests that arrive without an X-API-KEY header.
     # When true, the MCP endpoint requires callers to supply an API key (authMode api_key or combined with oidc).
     requireClientApiKey: false
@@ -715,6 +706,15 @@ mcp:
       existingSecret: ""
       # Register https://<mcp.config.externalUrl host>/oauth/mcp/callback as the redirect
       # URI at the IdP. The callback path is fixed and cannot be changed.
+  # mcp.kubecostApiKey is sent to Kubecost as an X-API-KEY request header for outbound calls.
+  # An MCP client may override it per request by sending its own X-API-KEY header.
+  kubecostApiKey:
+    # mcp.kubecostApiKey.value optionally creates a Secret containing the API key; prefer existingSecret.
+    value: ""
+    # mcp.kubecostApiKey.existingSecret is the name of a pre-created Secret containing the API key.
+    existingSecret: ""
+    # mcp.kubecostApiKey.key is the key within the existing or generated API-key Secret.
+    key: KUBECOST_API_KEY
   ## The MCP server is reachable in-cluster at <release>-mcp:3030 and, by default,
   ## through the Kubecost frontend. Enable one of these to give it its own external
   ## ingress or HTTPRoute instead; the frontend then stops proxying /mcp and /oauth/mcp.
