@@ -671,30 +671,28 @@ SKIPSANITYCHECKS IS TRUE SO THIS CHECK DID NOT FAIL.
 {{- end -}}
 
 {{/*
-Fail when the MCP server is enabled but points at an in-chart aggregator this
-release does not deploy. mcp.config.kubecostApiBaseUrl defaults to
-"http://<release>-aggregator", and templates/aggregator/aggregator-service.yaml
-is gated on aggregator.enabled -- so with the aggregator off, MCP renders
-cleanly and then fails every tool call against a Service that does not exist.
+Warn when MCP is enabled but mcp.config.kubecostApiBaseUrl still resolves to an
+aggregator Service this release does not deploy; every MCP tool call would fail
+at runtime.
 
-Only fires when the base URL still resolves to this release's aggregator; an
-operator who repointed it at an external aggregator is left alone. When CI/CD
-skipSanityChecks is set, emit a warning instead of failing.
+Warns rather than fails: mcp.enabled defaults to true, so failing would block
+every existing aggregator-less install (including values-cac.yaml) on upgrade.
 */}}
 {{- define "kubecost.mcp.aggregatorCheck" -}}
 {{- if and (.Values.mcp).enabled (not (.Values.aggregator).enabled) }}
 {{- $baseUrl := include "kubecost.mcp.kubecostApiBaseUrl" . -}}
 {{- $inChart := printf "http://%s" (include "kubecost.aggregator.serviceName" .) -}}
 {{- if or (eq $baseUrl $inChart) (hasPrefix (printf "%s." $inChart) $baseUrl) }}
-{{- if and .Values.global.platforms.cicd.enabled .Values.global.platforms.cicd.skipSanityChecks }}
 
 WARNING: MCP.ENABLED IS TRUE BUT AGGREGATOR.ENABLED IS FALSE, AND MCP.CONFIG.KUBECOSTAPIBASEURL STILL
-POINTS AT THIS RELEASE'S AGGREGATOR SERVICE, WHICH IS NOT DEPLOYED. EVERY MCP TOOL CALL WILL FAIL.
-SET MCP.ENABLED TO FALSE, OR POINT MCP.CONFIG.KUBECOSTAPIBASEURL AT AN EXTERNAL AGGREGATOR.
-SKIPSANITYCHECKS IS TRUE SO THIS CHECK DID NOT FAIL.
-{{- else }}
-{{- fail (printf "\n\nFAILURE [kubecost / mcp]: mcp.enabled is true but aggregator.enabled is false.\n\n  The MCP server reads all cost data through the aggregator, and mcp.config.kubecostApiBaseUrl still resolves to %q -- a Service this release does not create. Every MCP tool call would fail at runtime.\n\nTo fix, choose one of:\n  Option A — disable the MCP server:\n    mcp.enabled: false\n\n  Option B — enable the aggregator:\n    aggregator.enabled: true\n\n  Option C — point the MCP server at an aggregator deployed elsewhere:\n    mcp.config.kubecostApiBaseUrl: \"http://kubecost-aggregator.other-namespace.svc.cluster.local\"\n" $baseUrl) }}
-{{- end }}
+POINTS AT {{ $baseUrl | upper }}, A SERVICE THIS RELEASE DOES NOT CREATE. EVERY MCP TOOL CALL WILL FAIL
+AT RUNTIME. TO FIX, CHOOSE ONE OF:
+  Option A — disable the MCP server:
+    mcp.enabled: false
+  Option B — enable the aggregator:
+    aggregator.enabled: true
+  Option C — point the MCP server at an aggregator deployed elsewhere:
+    mcp.config.kubecostApiBaseUrl: "http://kubecost-aggregator.other-namespace.svc.cluster.local"
 {{- end }}
 {{- end }}
 {{- end -}}
