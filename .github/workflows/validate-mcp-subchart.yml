@@ -80,6 +80,8 @@ jobs:
             --skip-schema-validation \
             --set mcp.enabled=true \
             --set mcp.httpRoute.enabled=true \
+            --set mcp.httpRoute.parentRefs[0].name=mcp-gateway \
+            --set mcp.httpRoute.hostnames[0]=mcp.example.com \
             --set mcp.config.authMode=open \
             --set mcp.config.kubecostApiKey.existingSecret=kubecost-api-key \
             --set global.platforms.cicd.enabled=true \
@@ -89,6 +91,8 @@ jobs:
             --skip-schema-validation \
             --set mcp.enabled=true \
             --set mcp.httpRoute.enabled=true \
+            --set mcp.httpRoute.parentRefs[0].name=mcp-gateway \
+            --set mcp.httpRoute.hostnames[0]=mcp.example.com \
             --set mcp.config.authMode=open \
             > .helm-render/mcp-httproute-open.yaml
 

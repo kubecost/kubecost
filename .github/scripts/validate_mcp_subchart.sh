@@ -345,7 +345,7 @@ group "authMode routing guard"
 #   proxy_pass or 424 appears in the rendered nginx config. The MCP location
 #   blocks are only rendered at all when mcp.enabled=true.
 
-_subchart_route_fail='authMode = "none" with an exposed route is not permitted'
+_subchart_route_fail='authMode "none" with an exposed route is not permitted'
 _parent_route_fail='mcp.config.authMode is "none"'
 
 # ---------------------------------------------------------------------------
@@ -369,6 +369,18 @@ assert_helm_fails "when mcp.httpRoute.enabled=true, authMode=none, and skipSanit
   --set mcp.config.authMode=none \
   --set global.platforms.cicd.enabled=true \
   --set global.platforms.cicd.skipSanityChecks=true
+
+# 0.14.0 requires route identity after the authMode guard. authMode=open reaches
+# these checks; an incomplete route must still fail rather than publish a host.
+assert_helm_fails "when mcp.httpRoute.enabled=true but parentRefs is empty" \
+  "mcp.httpRoute.parentRefs is empty" \
+  --set mcp.httpRoute.enabled=true \
+  --set mcp.config.authMode=open
+
+assert_helm_fails "when mcp.ingress.enabled=true but hosts is empty" \
+  "mcp.ingress.hosts is empty" \
+  --set mcp.ingress.enabled=true \
+  --set mcp.config.authMode=open
 
 # ---------------------------------------------------------------------------
 # Guard 2: parent openRouteCheck — 3-way AND (route AND port=9008 AND authMode=none)
@@ -532,6 +544,8 @@ helm template "$RELEASE_NAME" "$CHART_DIR" \
   "${skip_schema[@]}" \
   --set "${values_key}.enabled=true" \
   --set mcp.httpRoute.enabled=true \
+  --set mcp.httpRoute.parentRefs[0].name=mcp-gateway \
+  --set mcp.httpRoute.hostnames[0]=mcp.example.com \
   --set mcp.config.authMode=open \
   > "${RENDER_DIR}/mcp-httproute-open.yaml"
 extract_nginx "${RENDER_DIR}/mcp-httproute-open.yaml" "${RENDER_DIR}/nginx-mcp-httproute-open.conf"
