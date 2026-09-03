@@ -4,6 +4,6 @@ dependencies:
   version: 1.0.25
 - name: mcp-kubecost
   repository: https://kubecost.github.io/mcp-kubecost
-  version: 0.9.0
-digest: sha256:6f168f3291bbebdc96144bb9223a1bf6d5cd8a242227ea7e35677e038896babd
-generated: "2026-08-25T16:34:57.820416-04:00"
+  version: 0.14.1
+digest: sha256:71669709b3bfa4c0cf1514224ae43aacd3b056ab0df21b5580186d564ed5f972
+generated: "2026-09-03T14:19:43.6806083Z"
