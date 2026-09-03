@@ -266,21 +266,45 @@ assert_contains "frontend nginx defines the mcpKubecost upstream when enabled" \
 assert_contains "frontend nginx targets the subchart Service" \
   "${RENDER_DIR}/nginx-enabled.conf" "server ${expected_fullname}."
 assert_contains "frontend nginx proxies /mcp" \
-  "${RENDER_DIR}/nginx-enabled.conf" "location /mcp"
-assert_absent "frontend nginx omits the MCP OIDC callback when authMode is not oidc" \
-  "${RENDER_DIR}/nginx-enabled.conf" "location /auth-mcp"
+  "${RENDER_DIR}/nginx-enabled.conf" "location ^~ /mcp"
+assert_absent "frontend nginx omits the MCP OAuth locations when authMode is not oidc" \
+  "${RENDER_DIR}/nginx-enabled.conf" "location ^~ /oauth/mcp/"
+assert_absent "frontend nginx no longer claims root-level OAuth paths" \
+  "${RENDER_DIR}/nginx-enabled.conf" "^/(register|authorize|token|consent)"
 assert_contains "productConfigs reports mcpEnabled=true" \
   "${RENDER_DIR}/nginx-enabled.conf" '"mcpEnabled": "true"'
 assert_contains "productConfigs reports default mcpAuthMode" \
   "${RENDER_DIR}/nginx-enabled.conf" '"mcpAuthMode": "none"'
-assert_contains "productConfigs reports mcpRedirectPath" \
-  "${RENDER_DIR}/nginx-enabled.conf" '"mcpRedirectPath": "/auth-mcp"'
+assert_absent "productConfigs no longer reports mcpRedirectPath" \
+  "${RENDER_DIR}/nginx-enabled.conf" '"mcpRedirectPath"'
+assert_absent "productConfigs no longer reports mcpPathPrefix" \
+  "${RENDER_DIR}/nginx-enabled.conf" '"mcpPathPrefix"'
 assert_contains "productConfigs reports tpl-evaluated kubecostApiBaseUrl" \
   "${RENDER_DIR}/nginx-enabled.conf" "\"kubecostApiBaseUrl\": \"http://${RELEASE_NAME}-aggregator\""
 assert_contains "productConfigs reports default kubecostApiPort" \
   "${RENDER_DIR}/nginx-enabled.conf" '"kubecostApiPort": "9004"'
 assert_contains "productConfigs reports default kubecostApiBasePath" \
   "${RENDER_DIR}/nginx-enabled.conf" '"kubecostApiBasePath": "/"'
+
+# authMode=api_key always requires a client API key. An explicit false value is
+# retained for backwards-compatible values files but must not weaken the mode.
+helm template "$RELEASE_NAME" "$CHART_DIR" \
+  "${skip_schema[@]}" \
+  --set "${values_key}.enabled=true" \
+  --set "${values_key}.config.authMode=api_key" \
+  --set "${values_key}.config.requireClientApiKey=false" \
+  > "${RENDER_DIR}/api-key.yaml"
+pass "helm template (authMode=api_key, requireClientApiKey=false) rendered without errors"
+
+api_key_required="$(yq -r \
+  "select(.kind == \"ConfigMap\" and .metadata.name == \"${expected_fullname}-config\") | .data.REQUIRE_CLIENT_API_KEY" \
+  "${RENDER_DIR}/api-key.yaml")"
+assert_eq "subchart forces REQUIRE_CLIENT_API_KEY=true when authMode=api_key" \
+  "true" "$api_key_required"
+
+extract_nginx "${RENDER_DIR}/api-key.yaml" "${RENDER_DIR}/nginx-api-key.conf"
+assert_contains "productConfigs forces mcpRequireClientApiKey=true when authMode=api_key" \
+  "${RENDER_DIR}/nginx-api-key.conf" '"mcpRequireClientApiKey": "true"'
 
 helm template "$RELEASE_NAME" "$CHART_DIR" \
   "${skip_schema[@]}" \
@@ -293,7 +317,7 @@ extract_nginx "${RENDER_DIR}/disabled.yaml" "${RENDER_DIR}/nginx-disabled.conf"
 assert_absent "frontend nginx omits the mcpKubecost upstream when disabled" \
   "${RENDER_DIR}/nginx-disabled.conf" "upstream mcpKubecost"
 assert_absent "frontend nginx omits /mcp proxy when disabled" \
-  "${RENDER_DIR}/nginx-disabled.conf" "location /mcp"
+  "${RENDER_DIR}/nginx-disabled.conf" "location ^~ /mcp"
 assert_contains "productConfigs reports mcpEnabled=false" \
   "${RENDER_DIR}/nginx-disabled.conf" '"mcpEnabled": "false"'
 
@@ -321,7 +345,7 @@ group "authMode routing guard"
 #   proxy_pass or 424 appears in the rendered nginx config. The MCP location
 #   blocks are only rendered at all when mcp.enabled=true.
 
-_subchart_route_fail='authMode = "none" with an exposed route is not permitted'
+_subchart_route_fail='authMode "none" with an exposed route is not permitted'
 _parent_route_fail='mcp.config.authMode is "none"'
 
 # ---------------------------------------------------------------------------
@@ -345,6 +369,18 @@ assert_helm_fails "when mcp.httpRoute.enabled=true, authMode=none, and skipSanit
   --set mcp.config.authMode=none \
   --set global.platforms.cicd.enabled=true \
   --set global.platforms.cicd.skipSanityChecks=true
+
+# 0.14.0 requires route identity after the authMode guard. authMode=open reaches
+# these checks; an incomplete route must still fail rather than publish a host.
+assert_helm_fails "when mcp.httpRoute.enabled=true but parentRefs is empty" \
+  "mcp.httpRoute.parentRefs is empty" \
+  --set mcp.httpRoute.enabled=true \
+  --set mcp.config.authMode=open
+
+assert_helm_fails "when mcp.ingress.enabled=true but hosts is empty" \
+  "mcp.ingress.hosts is empty" \
+  --set mcp.ingress.enabled=true \
+  --set mcp.config.authMode=open
 
 # ---------------------------------------------------------------------------
 # Guard 2: parent openRouteCheck — 3-way AND (route AND port=9008 AND authMode=none)
@@ -389,12 +425,13 @@ helm template "$RELEASE_NAME" "$CHART_DIR" \
   "${skip_schema[@]}" \
   --set "${values_key}.enabled=true" \
   --set ingress.enabled=true \
+  --set ingress.hosts[0]=kubecost.example.com \
   --set mcp.config.kubecostApiPort=9008 \
   --set mcp.config.authMode=oidc \
-  --set mcp.config.oidc.clientId=test-client-id \
+  --set mcp.config.oidc.clientID=test-client-id \
   --set mcp.config.oidc.clientSecret=test-client-secret \
   --set mcp.config.oidc.issuerUrl=https://auth.example.com \
-  --set mcp.config.oidc.baseUrl=https://kubecost.example.com \
+  --set mcp.config.externalUrl=https://kubecost.example.com \
   > /dev/null
 pass "openRouteCheck does not fire when route+port9008 but authMode=oidc"
 
@@ -415,7 +452,7 @@ helm template "$RELEASE_NAME" "$CHART_DIR" \
   > /dev/null
 pass "openRouteCheck does not fire when httpRoute+authMode=none but default port 9004"
 
-# Missing one condition: port 9008, authMode=none, but no route → no error.
+# Missing one condition: port 9008, authMode=none, but no route -> no error.
 helm template "$RELEASE_NAME" "$CHART_DIR" \
   "${skip_schema[@]}" \
   --set "${values_key}.enabled=true" \
@@ -507,13 +544,15 @@ helm template "$RELEASE_NAME" "$CHART_DIR" \
   "${skip_schema[@]}" \
   --set "${values_key}.enabled=true" \
   --set mcp.httpRoute.enabled=true \
+  --set mcp.httpRoute.parentRefs[0].name=mcp-gateway \
+  --set mcp.httpRoute.hostnames[0]=mcp.example.com \
   --set mcp.config.authMode=open \
   > "${RENDER_DIR}/mcp-httproute-open.yaml"
 extract_nginx "${RENDER_DIR}/mcp-httproute-open.yaml" "${RENDER_DIR}/nginx-mcp-httproute-open.conf"
 assert_absent "nginx omits proxy_pass http://mcpKubecost when mcp.httpRoute.enabled (subchart route handles traffic)" \
   "${RENDER_DIR}/nginx-mcp-httproute-open.conf" "proxy_pass http://mcpKubecost"
 assert_absent "nginx omits location /mcp when mcp.httpRoute.enabled (subchart route handles traffic)" \
-  "${RENDER_DIR}/nginx-mcp-httproute-open.conf" "location /mcp"
+  "${RENDER_DIR}/nginx-mcp-httproute-open.conf" "location ^~ /mcp"
 
 # OIDC nginx rendering: port 9008 + authMode=oidc with full required OIDC params.
 # openRouteCheck does not fire (authMode != none), and the subchart renders cleanly.
@@ -522,16 +561,26 @@ helm template "$RELEASE_NAME" "$CHART_DIR" \
   --set "${values_key}.enabled=true" \
   --set mcp.config.kubecostApiPort=9008 \
   --set mcp.config.authMode=oidc \
-  --set mcp.config.oidc.clientId=test-client-id \
+  --set mcp.config.oidc.clientID=test-client-id \
   --set mcp.config.oidc.clientSecret=test-client-secret \
   --set mcp.config.oidc.issuerUrl=https://auth.example.com \
-  --set mcp.config.oidc.baseUrl=https://kubecost.example.com \
+  --set mcp.config.externalUrl=https://kubecost.example.com \
   > "${RENDER_DIR}/apiport-9008-oidc.yaml"
 pass "helm template succeeds when kubecostApiPort=9008 and authMode=oidc"
 
 extract_nginx "${RENDER_DIR}/apiport-9008-oidc.yaml" "${RENDER_DIR}/nginx-oidc.conf"
-assert_contains "nginx defines the MCP OIDC callback location when authMode=oidc" \
-  "${RENDER_DIR}/nginx-oidc.conf" "location /auth-mcp"
+assert_contains "nginx proxies the fixed OAuth prefix when authMode=oidc" \
+  "${RENDER_DIR}/nginx-oidc.conf" "location ^~ /oauth/mcp/"
+assert_contains "nginx proxies RFC 9728 protected-resource metadata" \
+  "${RENDER_DIR}/nginx-oidc.conf" "location ^~ /.well-known/oauth-protected-resource/mcp"
+assert_contains "nginx proxies RFC 8414 authorization-server metadata" \
+  "${RENDER_DIR}/nginx-oidc.conf" "location ^~ /.well-known/oauth-authorization-server/oauth/mcp"
+assert_contains "nginx proxies the OIDC discovery alias" \
+  "${RENDER_DIR}/nginx-oidc.conf" "location ^~ /.well-known/openid-configuration/oauth/mcp"
+assert_absent "nginx rewrites nothing — the subchart serves these paths verbatim" \
+  "${RENDER_DIR}/nginx-oidc.conf" "rewrite ^/mcp"
+assert_absent "nginx no longer claims the bare authorization-server well-known path" \
+  "${RENDER_DIR}/nginx-oidc.conf" "location ^~ /.well-known/oauth-authorization-server {"
 assert_contains "nginx proxies /mcp when authMode=oidc" \
   "${RENDER_DIR}/nginx-oidc.conf" "proxy_pass http://mcpKubecost"
 assert_contains "productConfigs reports kubecostApiPort=9008" \
@@ -555,44 +604,42 @@ else
   pass "helm template fails when authMode=oidc and no OIDC credentials (exit code ${_exit_code})"
 fi
 
-# 6b) skipSanityChecks=true (parent chart warning path) with authMode=oidc and no credentials.
-# The parent chart's validateOIDC emits a warning; the subchart's validateOIDC always
-# hard-fails on missing credentials regardless of skipSanityChecks. Both credentials
-# AND issuerUrl AND baseUrl are required for the subchart to render cleanly.
+# 6b) skipSanityChecks does not bypass static OIDC validation. A complete OIDC
+# configuration still renders because the flag only skips live cluster lookups.
 helm template "$RELEASE_NAME" "$CHART_DIR" \
   "${skip_schema[@]}" \
   --set "${values_key}.enabled=true" \
   --set mcp.config.authMode=oidc \
-  --set mcp.config.oidc.clientId=test-client-id \
+  --set mcp.config.oidc.clientID=test-client-id \
   --set mcp.config.oidc.clientSecret=test-client-secret \
   --set mcp.config.oidc.issuerUrl=https://auth.example.com \
-  --set mcp.config.oidc.baseUrl=https://kubecost.example.com \
+  --set mcp.config.externalUrl=https://kubecost.example.com \
   --set global.platforms.cicd.enabled=true \
   --set global.platforms.cicd.skipSanityChecks=true \
   > "${RENDER_DIR}/oidc-none-creds-skip.yaml"
-pass "helm template succeeds with skipSanityChecks=true when authMode=oidc with full credentials"
+pass "helm template succeeds with complete OIDC values when skipSanityChecks=true"
 
 assert_contains "skipSanityChecks OIDC render includes a ConfigMap" \
   "${RENDER_DIR}/oidc-none-creds-skip.yaml" "kind: ConfigMap"
 
-# 7) authMode=oidc with inline clientId+clientSecret, issuerUrl, and baseUrl must SUCCEED.
+# 7) authMode=oidc with inline clientID+clientSecret, issuerUrl, and externalUrl must SUCCEED.
 # The subchart validates all four fields; all must be present for a clean render.
 helm template "$RELEASE_NAME" "$CHART_DIR" \
   "${skip_schema[@]}" \
   --set "${values_key}.enabled=true" \
   --set mcp.config.authMode=oidc \
-  --set mcp.config.oidc.clientId=test-client-id \
+  --set mcp.config.oidc.clientID=test-client-id \
   --set mcp.config.oidc.clientSecret=test-client-secret \
   --set mcp.config.oidc.issuerUrl=https://auth.example.com \
-  --set mcp.config.oidc.baseUrl=https://kubecost.example.com \
+  --set mcp.config.externalUrl=https://kubecost.example.com \
   > "${RENDER_DIR}/oidc-inline-creds.yaml"
-pass "helm template succeeds when authMode=oidc with inline clientId+clientSecret"
+pass "helm template succeeds when authMode=oidc with inline clientID+clientSecret"
 
 assert_contains "OIDC inline-creds render includes a ConfigMap" \
   "${RENDER_DIR}/oidc-inline-creds.yaml" "kind: ConfigMap"
 
 # 8) authMode=oidc with existingSecret (satisfies credentials check) plus issuerUrl
-# and baseUrl must SUCCEED. skipSanityChecks is not needed since all required
+# and externalUrl must SUCCEED. skipSanityChecks is not needed since all required
 # OIDC fields are present.
 helm template "$RELEASE_NAME" "$CHART_DIR" \
   "${skip_schema[@]}" \
@@ -600,30 +647,63 @@ helm template "$RELEASE_NAME" "$CHART_DIR" \
   --set mcp.config.authMode=oidc \
   --set mcp.config.oidc.existingSecret=my-oidc-secret \
   --set mcp.config.oidc.issuerUrl=https://auth.example.com \
-  --set mcp.config.oidc.baseUrl=https://kubecost.example.com \
+  --set mcp.config.externalUrl=https://kubecost.example.com \
   > "${RENDER_DIR}/oidc-existing-secret.yaml"
-pass "helm template succeeds when authMode=oidc with existingSecret, issuerUrl, and baseUrl"
+pass "helm template succeeds when authMode=oidc with existingSecret, issuerUrl, and externalUrl"
 
 assert_contains "OIDC existingSecret render includes a ConfigMap" \
   "${RENDER_DIR}/oidc-existing-secret.yaml" "kind: ConfigMap"
 
-# 9) authMode=oidc with both inline and existingSecret must SUCCEED (no mutual-exclusivity
-# guard). At runtime the subchart favours existingSecret, but the inline values are also
-# rendered into a Kubernetes Secret (secret sprawl — this is a documented concern, not a bug).
-helm template "$RELEASE_NAME" "$CHART_DIR" \
-  "${skip_schema[@]}" \
-  --set "${values_key}.enabled=true" \
+# 9) authMode=oidc with both inline and existingSecret must FAIL. The subchart
+# gives existingSecret precedence, so accepting both would leave unused sensitive
+# values in the Helm inputs and make the active credential source unclear.
+assert_helm_fails "when authMode=oidc has both inline credentials and existingSecret" \
+  "mcp.config.oidc.existingSecret cannot be combined with inline clientID or clientSecret values" \
   --set mcp.config.authMode=oidc \
-  --set mcp.config.oidc.clientId=test-client-id \
+  --set mcp.config.oidc.clientID=test-client-id \
   --set mcp.config.oidc.clientSecret=test-client-secret \
   --set mcp.config.oidc.existingSecret=my-oidc-secret \
   --set mcp.config.oidc.issuerUrl=https://auth.example.com \
-  --set mcp.config.oidc.baseUrl=https://kubecost.example.com \
-  > "${RENDER_DIR}/oidc-both-creds.yaml"
-pass "helm template succeeds when authMode=oidc with both inline and existingSecret (no mutual-exclusivity guard)"
+  --set mcp.config.externalUrl=https://kubecost.example.com
 
-assert_contains "OIDC both-creds render includes a ConfigMap" \
-  "${RENDER_DIR}/oidc-both-creds.yaml" "kind: ConfigMap"
+# A partial inline pair is also incompatible with existingSecret. It cannot be
+# used as a credential source and should not remain as an ignored sensitive value.
+assert_helm_fails "when authMode=oidc has existingSecret and a partial inline credential pair" \
+  "mcp.config.oidc.existingSecret cannot be combined with inline clientID or clientSecret values" \
+  --set mcp.config.authMode=oidc \
+  --set mcp.config.oidc.clientSecret=test-client-secret \
+  --set mcp.config.oidc.existingSecret=my-oidc-secret \
+  --set mcp.config.oidc.issuerUrl=https://auth.example.com \
+  --set mcp.config.externalUrl=https://kubecost.example.com
+
+# 10) mcp.config.externalUrl must match the hostname of the enabled Kubecost route,
+# since the frontend is what serves /mcp and /oauth/mcp.
+assert_helm_fails "when externalUrl does not match the Kubecost ingress host" \
+  "is not one of the Kubecost route's hostnames" \
+  --set mcp.config.authMode=oidc \
+  --set mcp.config.oidc.clientID=test-client-id \
+  --set mcp.config.oidc.clientSecret=test-client-secret \
+  --set mcp.config.oidc.issuerUrl=https://auth.example.com \
+  --set ingress.enabled=true \
+  --set "ingress.hosts[0]=kubecost.example.com" \
+  --set mcp.config.externalUrl=https://wrong.example.com
+
+# 11) mcp.config.oidc.baseUrl was removed in mcp-kubecost 0.12.0. The subchart's
+# schema is additionalProperties: false, so a stale value is rejected outright
+# rather than silently ignored.
+set +e
+helm template "$RELEASE_NAME" "$CHART_DIR" \
+  --set "${values_key}.enabled=true" \
+  --set mcp.config.oidc.baseUrl=https://kubecost.example.com \
+  > /dev/null 2>"${RENDER_DIR}/stale-baseurl.err"
+_exit_code=$?
+set -e
+if [[ "$_exit_code" -eq 0 ]]; then
+  fail "helm template should have rejected the removed mcp.config.oidc.baseUrl key"
+else
+  assert_contains "stale mcp.config.oidc.baseUrl is rejected by the subchart schema" \
+    "${RENDER_DIR}/stale-baseurl.err" "additional properties 'baseUrl' not allowed"
+fi
 
 # ---------------------------------------------------------------------------
 group "global: values conformance"
