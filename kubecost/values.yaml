@@ -671,7 +671,9 @@ mcp:
   ## If Kubecost is deployed with SAML or OIDC authentication,
   ## the MCP server must be configured with its own OIDC configuration.
   ## When the mcp server has its own authentication, consider setting
-  ## mcp.config.kubecostApiPort to 9008 instead of 9004 to bypass Kubecost's API authentication
+  ## mcp.config.kubecostApiPort to 9008 instead of 9004 to bypass Kubecost's API
+  ## authentication. The aggregator Service only exposes 9008 when saml.enabled or
+  ## oidc.enabled is true, so 9008 is a dead port on an installation without SSO.
   config:
     kubecostApiBaseUrl: "http://{{ .Release.Name }}-aggregator"
     kubecostApiPort: 9004
@@ -683,9 +685,17 @@ mcp:
     authMode: none
     # mcp.config.externalUrl is the public origin the MCP server advertises in its
     # OAuth metadata — scheme and host only, no path. Required when authMode is
-    # "oidc". Because MCP is proxied through the Kubecost frontend, this must be the
-    # Kubecost hostname, e.g. "https://kubecost.example.com". Leave empty when the
-    # MCP server has its own ingress or HTTPRoute below; the subchart infers it from that hostname.
+    # "oidc". Which value it takes depends on how MCP is exposed; the two are
+    # mutually exclusive:
+    #
+    #   Frontend-proxied (the default, mcp.httpRoute and mcp.ingress both disabled):
+    #     set this to the Kubecost hostname, e.g. "https://kubecost.example.com".
+    #     It must be one of ingress.hosts / httpRoute.hostnames at the top level of
+    #     this file, because the frontend is what serves /mcp on that host.
+    #
+    #   MCP-owned route (mcp.httpRoute or mcp.ingress enabled below): leave this
+    #     empty and set the route's own hostname instead. The subchart infers this
+    #     value from that hostname, and rejects a value that disagrees with it.
     externalUrl: ""
     # mcp.config.kubecostApiKey is sent to Kubecost as an X-API-KEY request header for outbound calls.
     # An MCP client may override it per request by sending its own X-API-KEY header.
@@ -720,17 +730,65 @@ mcp:
   ## through the Kubecost frontend. Enable one of these to give it its own external
   ## ingress or HTTPRoute instead; the frontend then stops proxying /mcp and /oauth/mcp.
   ## Either route requires mcp.config.authMode to be at least "open".
+  ##
+  ## These are a separate topology from the frontend proxy, not an addition to it.
+  ## Enabling one requires its hostnames below -- the subchart fails rather than
+  ## publishing a placeholder host -- and mcp.config.externalUrl is then inferred
+  ## from that hostname, so leave mcp.config.externalUrl empty.
+  ##
   httpRoute:
     enabled: false
+    # mcp.httpRoute.parentRefs is required when enabled. Reference the Gateway(s)
+    # this route attaches to.
+    # parentRefs:
+    #   - name: mcp-gateway
+    #     sectionName: https   # optional, listener name
+    # mcp.httpRoute.hostnames is required when enabled.
+    # hostnames:
+    #   - mcp.example.com
+    # annotations: {}
   ingress:
     enabled: false
-  resources:
-    requests:
-      cpu: 250m
-      memory: 1Gi
-    limits:
-      cpu: 1000m
-      memory: 1Gi
+    # mcp.ingress.className is the IngressClass name. Empty leaves the cluster's
+    # default IngressClass to claim the Ingress.
+    # className: nginx
+    # mcp.ingress.hosts is required when enabled. The subchart generates the fixed
+    # /mcp, /oauth/mcp, and OAuth discovery paths for each host.
+    # hosts:
+    #   - host: mcp.example.com
+    # mcp.ingress.tls configures TLS secrets and their hostnames.
+    # tls:
+    #   - secretName: kubecost-mcp-server-tls
+    #     hosts:
+    #       - mcp.example.com
+    # Certificate issuance is left to the operator, e.g.:
+    # annotations:
+    #   cert-manager.io/cluster-issuer: letsencrypt-http
+
+  ## The MCP server stores its FastMCP OAuth registrations, grants, and tokens on a
+  ## PVC. mcp.persistence.enabled is tri-state: null (default) creates the PVC only
+  ## when mcp.config.authMode is "oidc", true always creates it, and false never
+  ## does -- with false, clients must re-register on every pod restart.
+  ## mcp.persistence.storageClass falls back to global.defaultStorageClass, and then
+  ## to the cluster's default StorageClass.
+  ##
+  persistence:
+    enabled: null
+    storageClass: ""
+    size: 1Gi
+
+  ## Scheduling for the MCP server pod. The chart's top-level nodeSelector does not
+  ## cross the subchart boundary, so set these when the cluster needs the MCP pod
+  ## constrained -- for example a mixed Windows/Linux cluster, where
+  ## values-windows-node-affinity.yaml pins the other components but not this one.
+  ##
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+  ## Resource requests and limits default to 250m/1Gi and 1000m/1Gi in the subchart.
+  ## Set them here only to override those defaults.
+  # resources: {}
 
 ## Installs Kubecost/OpenCost plugins
 ## Ref: https://opencost.io/docs/integrations/plugins/
