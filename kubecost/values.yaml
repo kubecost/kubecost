@@ -660,9 +660,9 @@ finopsagent:
 ## the mcp-kubecost subchart that are most commonly changed.
 ## Ref: https://github.com/kubecost/mcp-kubecost/blob/main/charts/mcp-kubecost/values.yaml
 ##
-## The MCP endpoint is fixed at /mcp and its OAuth endpoints at /oauth/mcp. 
-## By default the Kubecost frontend proxies both, so MCP is reachable on the same hostname 
-## as the Kubecost UI. Enable mcp.httpRoute or mcp.ingress below to give the MCP 
+## The MCP endpoint is fixed at /mcp and its OAuth endpoints at /oauth/mcp.
+## By default the Kubecost frontend proxies both, so MCP is reachable on the same hostname
+## as the Kubecost UI. Enable mcp.httpRoute or mcp.ingress below to give the MCP
 ## server its own route instead, in which case the frontend stops proxying it.
 ##
 mcp:
