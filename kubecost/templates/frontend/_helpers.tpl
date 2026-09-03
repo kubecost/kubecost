@@ -93,6 +93,20 @@ Merge bufferConfig.directives with extraServerConfig lines, render nginx directi
 {{/*
 Shared proxy directives for MCP upstream locations. Long read/send timeouts
 and buffering off are required for FastMCP streamable HTTP.
+
+The add_header block relaxes `form-action` for these locations. The OAuth
+consent page POSTs back to this host and is then redirected on to the external
+IdP, and the IdP callback is redirected on again to the MCP client's own
+redirect_uri. Chromium enforces `form-action` across that whole redirect chain,
+so the server-level `form-action 'self'` blocks the POST and parks the browser
+on the consent page -- the login just appears to hang after Approve. Only the
+consent page needs this, but it rides along with every MCP location for
+simplicity: the others serve JSON or an SSE stream, never a document, so a CSP
+on them is inert.
+
+A location-level add_header discards every header inherited from the server
+block, so the operator's own frontend.nginxHeaders.server entries are repeated
+here, minus any Content-Security-Policy, before the relaxed one.
 */}}
   proxy_connect_timeout       300;
   proxy_send_timeout          3600;
@@ -108,4 +122,11 @@ and buffering off are required for FastMCP streamable HTTP.
   proxy_buffering off;
   proxy_cache off;
   chunked_transfer_encoding on;
+{{- range .Values.frontend.nginxHeaders.server }}
+{{- if not (contains "Content-Security-Policy" (toString .)) }}
+  add_header {{ . }}
+{{- end }}
+{{- end }}
+  add_header Content-Security-Policy "default-src 'self'; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'; form-action *;";
 {{- end -}}
+

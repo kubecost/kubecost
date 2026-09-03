@@ -20,6 +20,15 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v7
 
+      - name: Generate app token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.KC_ACTIONS_BOT_APP_CLIENT_ID }}
+          private-key: ${{ secrets.KC_ACTIONS_BOT_APP_PRIVATE_KEY }}
+          owner: kubecost
+          repositories: github-actions
+
       - name: Check out actions code
         uses: actions/checkout@v7
         with:
