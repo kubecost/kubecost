@@ -583,15 +583,34 @@ To resolve this, either:
 {{- end -}}
 {{- end -}}
 
-{{- define "kubecost.mcp.authMode" -}}
-{{- default "none" ((.Values.mcp).config).authMode -}}
-{{- end -}}
-
-{{- define "kubecost.mcp.requireClientApiKey" }}
-{{- if or (((.Values.mcp).config).requireClientApiKey) (eq (include "kubecost.mcp.authMode" .) "api_key") }}
+{{/*
+True when the frontend nginx serves MCP. Enabling a chart-managed route for the
+MCP server replaces the frontend proxy rather than adding to it.
+*/}}
+{{- define "kubecost.mcp.frontendProxied" -}}
+{{- if and (.Values.mcp).enabled (not ((.Values.mcp).httpRoute).enabled) (not ((.Values.mcp).ingress).enabled) -}}
 {{- printf "true" -}}
 {{- else -}}
 {{- printf "false" -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "kubecost.mcp.oidcEnabled" -}}
+{{- if (((.Values.mcp).config).oidc).enabled -}}true{{- else -}}false{{- end -}}
+{{- end -}}
+
+{{- define "kubecost.mcp.requireClientApiKey" -}}
+{{- if ((.Values.mcp).config).requireClientApiKey -}}true{{- else -}}false{{- end -}}
+{{- end -}}
+
+{{/*
+The MCP endpoint's protection, reported to the frontend. OIDC and an inbound API
+key are independent settings; OIDC is the stronger of the two when both are on.
+*/}}
+{{- define "kubecost.mcp.authMode" -}}
+{{- if eq (include "kubecost.mcp.oidcEnabled" .) "true" -}}oidc
+{{- else if eq (include "kubecost.mcp.requireClientApiKey" .) "true" -}}api_key
+{{- else -}}none
 {{- end -}}
 {{- end -}}
 
@@ -611,15 +630,15 @@ metadata, and the MCP SDK derives the well-known discovery URLs from them.
 {{- end -}}
 
 {{- define "kubecost.mcp.kubecostApiBaseUrl" -}}
-{{- tpl (default (printf "http://%s-aggregator" .Release.Name) ((.Values.mcp).config).kubecostApiBaseUrl) . -}}
+{{- tpl .Values.mcp.config.kubecostApiBaseUrl . -}}
 {{- end -}}
 
 {{- define "kubecost.mcp.kubecostApiPort" -}}
-{{- default 9004 ((.Values.mcp).config).kubecostApiPort -}}
+{{- .Values.mcp.config.kubecostApiPort -}}
 {{- end -}}
 
 {{- define "kubecost.mcp.kubecostApiBasePath" -}}
-{{- default "/" ((.Values.mcp).config).kubecostApiBasePath -}}
+{{- .Values.mcp.config.kubecostApiBasePath -}}
 {{- end -}}
 
 {{/*
@@ -644,27 +663,24 @@ frontend nginx upstream targets the same Service the subchart renders.
 {{- end -}}
 
 {{/*
-Fail when authMode is "none" AND a route (httpRoute or ingress) is exposed AND
-kubecostApiPort is 9008 (aggregator SSO bypass). All three conditions must be
-true simultaneously: a route alone at the default port (9004) is permitted, and
-port 9008 alone without an exposed route is also permitted. When CI/CD
-skipSanityChecks is set, emit a warning instead of failing.
-This does not prevent an mcp.httpRoute or mcp.ingress from being enabled. Those checks exist in the sub-chart itself.
+Fail when the MCP endpoint is unauthenticated AND externally reachable AND
+querying the aggregator on 9008, which bypasses Kubecost SSO. The subchart
+rejects its own unauthenticated route unless acknowledged, but it cannot see the
+Kubecost ingress that proxies MCP, and no acknowledgement covers an SSO bypass.
+When CI/CD skipSanityChecks is set, warn instead of failing.
 */}}
 {{- define "kubecost.mcp.openRouteCheck" -}}
 {{- if (.Values.mcp).enabled }}
 {{- $routeEnabled := or ((.Values.mcp).httpRoute).enabled ((.Values.mcp).ingress).enabled (.Values.ingress).enabled (.Values.httpRoute).enabled -}}
-{{- $apiPort := toString (include "kubecost.mcp.kubecostApiPort" .) -}}
-{{- $authMode := include "kubecost.mcp.authMode" . -}}
-{{- if and  ($routeEnabled) (eq $apiPort "9008") (eq $authMode "none") }}
+{{- $unauthenticated := eq (include "kubecost.mcp.authMode" .) "none" -}}
+{{- if and $routeEnabled $unauthenticated (eq (toString (include "kubecost.mcp.kubecostApiPort" .)) "9008") }}
 {{- if and .Values.global.platforms.cicd.enabled .Values.global.platforms.cicd.skipSanityChecks }}
 
-WARNING: MCP.CONFIG.AUTHMODE IS "NONE" WHILE an HTTPROUTE/INGRESS IS ENABLED AND MCP.CONFIG.KUBECOSTAPIPORT IS 9008.
-THE MCP ENDPOINT WOULD BE UNPROTECTED WHILE ABLE TO BYPASS KUBECOST SSO. SET MCP.CONFIG.AUTHMODE TO AT LEAST "OPEN"
-TO ACKNOWLEDGE THIS, OR USE "OIDC" OR "API_KEY" TO ENFORCE AUTHENTICATION.
-SKIPSANITYCHECKS IS TRUE SO THIS CHECK DID NOT FAIL.
+WARNING: THE MCP ENDPOINT IS UNAUTHENTICATED WHILE AN HTTPROUTE/INGRESS IS ENABLED AND
+MCP.CONFIG.KUBECOSTAPIPORT IS 9008, SO IT CAN BYPASS KUBECOST SSO. ENABLE MCP.CONFIG.OIDC.ENABLED
+OR MCP.CONFIG.REQUIRECLIENTAPIKEY. SKIPSANITYCHECKS IS TRUE SO THIS CHECK DID NOT FAIL.
 {{- else }}
-{{- fail "\n\nFAILURE: mcp.config.authMode is \"none\" while mcp.httpRoute or mcp.ingress is enabled, AND mcp.config.kubecostApiPort is 9008. The MCP endpoint would be unauthenticated while it can bypass Kubecost SSO on port 9008. Set mcp.config.authMode to at least \"open\" to acknowledge intentional unauthenticated exposure, or use \"oidc\" or \"api_key\" to enforce authentication.\n" }}
+{{- fail "\n\nFAILURE: the MCP endpoint is unauthenticated while an httpRoute or ingress is enabled, AND mcp.config.kubecostApiPort is 9008. It would be reachable externally while bypassing Kubecost SSO on port 9008. Enable mcp.config.oidc.enabled or mcp.config.requireClientApiKey.\n" }}
 {{- end }}
 {{- end }}
 {{- end }}
@@ -722,72 +738,21 @@ frontend, so the origin it advertises must be the Kubecost hostname.
 {{- end -}}
 
 {{/*
-Resolve and validate mcp.config.externalUrl, the public origin the MCP server
-advertises in its OAuth metadata. Mirrors mcp-kubecost.externalUrl in the
-subchart, but validates against the *parent* chart's route rather than the
-subchart's, because the frontend nginx is what serves MCP in this topology.
+The one MCP rule the subchart cannot check: it sees neither the parent's
+ingress.hosts nor its httpRoute.hostnames, and the frontend nginx is what serves
+MCP in the default topology. Credential, issuer, and externalUrl shape rules all
+live in mcp-kubecost.sanityChecks, which Helm renders first.
 
-Returns the trimmed origin, or "" when unset. Fails on a value that is not a
-bare https:// origin, or whose host is not one of the enabled Kubecost route's
-hostnames.
+Skipped when the MCP server owns its route, because the subchart then validates
+externalUrl against that route's own hostnames.
 */}}
-{{- define "kubecost.mcp.externalUrl" -}}
+{{- define "kubecost.mcp.validateExternalUrl" -}}
 {{- $explicit := (((.Values.mcp).config).externalUrl) | default "" | trim | trimSuffix "/" -}}
-{{- if $explicit -}}
-{{- if not (hasPrefix "https://" $explicit) -}}
-{{- fail (printf "\n\nFAILURE [kubecost / mcp]: mcp.config.externalUrl must be an https:// origin with no path: %s\n" $explicit) -}}
-{{- end -}}
+{{- if and $explicit (eq (include "kubecost.mcp.frontendProxied" .) "true") -}}
 {{- $host := trimPrefix "https://" $explicit -}}
-{{- if contains "/" $host -}}
-{{- fail (printf "\n\nFAILURE [kubecost / mcp]: mcp.config.externalUrl must be a bare origin with no path, query, or fragment: %s\n\n  The MCP endpoint is fixed at /mcp and its OAuth endpoints at /oauth/mcp; neither is configurable.\n" $explicit) -}}
-{{- end -}}
 {{- $routeHosts := include "kubecost.mcp.routeHosts" . | fromJsonArray -}}
-{{- if and (gt (len $routeHosts) 0) (not (has $host $routeHosts)) -}}
+{{- if and $routeHosts (not (has $host $routeHosts)) -}}
 {{- fail (printf "\n\nFAILURE [kubecost / mcp]: mcp.config.externalUrl host %q is not one of the Kubecost route's hostnames %v.\n\n  MCP is proxied through the Kubecost frontend, so it must advertise the same host clients reach Kubecost on.\n" $host $routeHosts) -}}
-{{- end -}}
-{{- $explicit -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Validate the parent chart's MCP OIDC configuration. Credentials must come from
-exactly one source: a complete inline clientID/clientSecret pair or an
-existingSecret. Whitespace-only values are treated as unset.
-
-This parent-level check is intentional. It can validate the Kubecost frontend's
-route and provide parent value paths in errors; the subchart's standalone check
-cannot see that parent context. Keep the shared credential and URL rules aligned
-with mcp-kubecost.validateOIDC.
-*/}}
-{{- define "kubecost.mcp.validateOIDC" -}}
-{{- if (.Values.mcp).enabled -}}
-{{- $mode := default "none" ((.Values.mcp).config).authMode -}}
-{{- if eq $mode "oidc" -}}
-{{- $oidc := (((.Values.mcp).config).oidc) | default dict -}}
-{{- $clientID := trim ($oidc.clientID | default "") -}}
-{{- $clientSecret := trim ($oidc.clientSecret | default "") -}}
-{{- $hasAnyInline := or (not (empty $clientID)) (not (empty $clientSecret)) -}}
-{{- $hasInline := and (not (empty $clientID)) (not (empty $clientSecret)) -}}
-{{- $hasExisting := not (empty (trim ($oidc.existingSecret | default ""))) -}}
-{{- if not (or $hasInline $hasExisting) -}}
-{{- fail "\n\nFAILURE [kubecost / mcp]: mcp.config.authMode is \"oidc\" but no OIDC credentials are configured.\n\nTo fix, choose one of:\n  Option A — inline credentials:\n    mcp.config.oidc.clientID: \"<your-client-id>\"\n    mcp.config.oidc.clientSecret: \"<your-client-secret>\"\n\n  Option B — reference a pre-existing Secret (required keys: OIDC_CLIENT_ID, OIDC_CLIENT_SECRET):\n    mcp.config.oidc.existingSecret: \"<secret-name>\"\n" }}
-{{- end -}}
-{{- if and $hasAnyInline $hasExisting -}}
-{{- fail "\n\nFAILURE [kubecost / mcp]: mcp.config.oidc.existingSecret cannot be combined with inline clientID or clientSecret values.\nSupply exactly one credential source so the active credentials are unambiguous:\n\n  Option A — inline credentials only (remove existingSecret):\n    mcp.config.oidc.clientID: \"<your-client-id>\"\n    mcp.config.oidc.clientSecret: \"<your-client-secret>\"\n    mcp.config.oidc.existingSecret: \"\"\n\n  Option B — existing Secret only (remove clientID and clientSecret):\n    mcp.config.oidc.existingSecret: \"<secret-name>\"\n    mcp.config.oidc.clientID: \"\"\n    mcp.config.oidc.clientSecret: \"\"\n" }}
-{{- end -}}
-{{- /* Validate the shape and host of mcp.config.externalUrl when it is set. The
-     unset case is left to the subchart: Helm renders charts/ before templates/,
-     so mcp-kubecost.externalUrl always reports a missing value first. */}}
-{{- include "kubecost.mcp.externalUrl" . -}}
-{{- /* Mirrors mcp-kubecost.validateOIDC: RFC 8414 requires https, and the MCP
-     SDK carves out http:// on localhost / 127.0.0.1 for testing. Rejecting
-     more than the subchart does would fail installs the subchart accepts. */}}
-{{- $issuer := $oidc.issuerUrl | default "" -}}
-{{- $issuerHost := (urlParse $issuer).host | default "" | splitList ":" | first -}}
-{{- $issuerLocal := and (hasPrefix "http://" $issuer) (or (eq $issuerHost "localhost") (hasPrefix "127.0.0.1" $issuerHost)) -}}
-{{- if not (or (hasPrefix "https://" $issuer) $issuerLocal) -}}
-{{- fail "\n\nFAILURE [kubecost / mcp]: mcp.config.oidc.issuerUrl must be an https:// URL, or http:// on localhost / 127.0.0.1 for local testing.\n\n  Example:\n    mcp.config.oidc.issuerUrl: \"https://kubecost.example.com/.well-known/openid-configuration\"\n" }}
-{{- end -}}
 {{- end -}}
 {{- end -}}
 {{- end -}}

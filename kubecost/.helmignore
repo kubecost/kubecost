@@ -21,3 +21,6 @@
 .idea/
 *.tmproj
 .vscode/
+
+# helm-unittest suites, not part of the packaged chart.
+/tests/

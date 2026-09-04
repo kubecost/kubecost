@@ -1,0 +1,71 @@
+suite: mcp exposure guards
+release:
+  name: kubecost
+templates:
+  - templates/NOTES.txt
+set:
+  mcp.config.oidc.issuerUrl: https://sso.example.com/.well-known/openid-configuration
+  mcp.config.oidc.existingSecret: mcp-oidc
+tests:
+  - it: refuses an unauthenticated MCP endpoint that is exposed and bypasses SSO
+    set:
+      ingress.enabled: true
+      mcp.config.kubecostApiPort: 9008
+    asserts:
+      - failedTemplate:
+          errorPattern: 'unauthenticated while an httpRoute or ingress is enabled'
+
+  - it: allows the SSO bypass port once the MCP endpoint enforces its own auth
+    set:
+      ingress.enabled: true
+      mcp.config.kubecostApiPort: 9008
+      mcp.config.requireClientApiKey: true
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: allows an exposed MCP endpoint on the authenticated aggregator port
+    set:
+      ingress.enabled: true
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: refuses an externalUrl that is not a Kubecost frontend hostname
+    set:
+      ingress.enabled: true
+      ingress.hosts:
+        - kubecost.example.com
+      mcp.config.oidc.enabled: true
+      mcp.config.externalUrl: https://mcp.example.com
+    asserts:
+      - failedTemplate:
+          errorPattern: 'is not one of the Kubecost route.s hostnames'
+
+  - it: accepts an externalUrl that matches the Kubecost ingress hostname
+    set:
+      ingress.enabled: true
+      ingress.hosts:
+        - kubecost.example.com
+      mcp.config.oidc.enabled: true
+      mcp.config.externalUrl: https://kubecost.example.com
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: leaves externalUrl to the subchart when the MCP server owns its route
+    set:
+      ingress.enabled: true
+      ingress.hosts:
+        - kubecost.example.com
+      mcp.config.oidc.enabled: true
+      mcp.ingress.enabled: true
+      mcp.ingress.hosts:
+        - host: mcp.example.com
+      mcp.config.externalUrl: https://mcp.example.com
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: warns when the MCP server points at an aggregator this release does not deploy
+    set:
+      aggregator.enabled: false
+    asserts:
+      - matchRegexRaw:
+          pattern: 'MCP.ENABLED IS TRUE BUT AGGREGATOR.ENABLED IS FALSE'

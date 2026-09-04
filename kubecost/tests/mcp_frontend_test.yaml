@@ -1,0 +1,111 @@
+suite: mcp frontend proxy and guards
+release:
+  name: kubecost
+templates:
+  - templates/frontend/frontend-configmap.yaml
+set:
+  mcp.config.oidc.issuerUrl: https://sso.example.com/.well-known/openid-configuration
+  mcp.config.oidc.existingSecret: mcp-oidc
+tests:
+  - it: proxies the MCP endpoint to the subchart Service
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf"]
+          pattern: 'upstream mcpKubecost \{\s+server kubecost-mcp\.[^:]+:3030;'
+      - matchRegex:
+          path: data["nginx.conf"]
+          pattern: 'location \^~ /mcp \{'
+
+  - it: leaves the OAuth locations out until OIDC is enabled
+    asserts:
+      - notMatchRegex:
+          path: data["nginx.conf"]
+          pattern: 'location \^~ /oauth/mcp'
+
+  - it: proxies every OAuth path the subchart's own routes publish
+    set:
+      mcp.config.oidc.enabled: true
+      mcp.config.externalUrl: https://kubecost.example.com
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf"]
+          pattern: 'location \^~ /oauth/mcp \{'
+      - matchRegex:
+          path: data["nginx.conf"]
+          pattern: 'location \^~ /\.well-known/oauth-protected-resource/mcp \{'
+      - matchRegex:
+          path: data["nginx.conf"]
+          pattern: 'location \^~ /\.well-known/oauth-authorization-server/oauth/mcp \{'
+      - matchRegex:
+          path: data["nginx.conf"]
+          pattern: 'location \^~ /\.well-known/openid-configuration/oauth/mcp \{'
+      - matchRegex:
+          path: data["nginx.conf"]
+          pattern: 'location \^~ /\.well-known/oauth-protected-resource \{'
+      - matchRegex:
+          path: data["nginx.conf"]
+          pattern: 'location \^~ /\.well-known/oauth-authorization-server \{'
+      - matchRegex:
+          path: data["nginx.conf"]
+          pattern: 'location \^~ /\.well-known/openid-configuration \{'
+
+  - it: relaxes form-action for the OAuth consent redirect chain
+    set:
+      mcp.config.oidc.enabled: true
+      mcp.config.externalUrl: https://kubecost.example.com
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf"]
+          pattern: "add_header Content-Security-Policy \"default-src 'self'.*form-action \\*;\";"
+
+  - it: drops the proxy and its upstream when the MCP server owns its route
+    set:
+      mcp.config.requireClientApiKey: true
+      mcp.ingress.enabled: true
+      mcp.ingress.hosts:
+        - host: mcp.example.com
+    asserts:
+      - notMatchRegex:
+          path: data["nginx.conf"]
+          pattern: 'upstream mcpKubecost'
+      - notMatchRegex:
+          path: data["nginx.conf"]
+          pattern: 'location \^~ /mcp'
+
+  - it: drops the proxy and its upstream when MCP is disabled
+    set:
+      mcp.enabled: false
+    asserts:
+      - notMatchRegex:
+          path: data["nginx.conf"]
+          pattern: 'upstream mcpKubecost'
+
+  - it: reports the MCP configuration to the frontend
+    set:
+      mcp.config.oidc.enabled: true
+      mcp.config.externalUrl: https://kubecost.example.com
+      mcp.config.requireClientApiKey: true
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf"]
+          pattern: '"mcpEnabled": "true"'
+      - matchRegex:
+          path: data["nginx.conf"]
+          pattern: '"mcpAuthMode": "oidc"'
+      - matchRegex:
+          path: data["nginx.conf"]
+          pattern: '"mcpRequireClientApiKey": "true"'
+      - matchRegex:
+          path: data["nginx.conf"]
+          pattern: '"kubecostApiBaseUrl": "http://kubecost-aggregator"'
+      - matchRegex:
+          path: data["nginx.conf"]
+          pattern: '"kubecostApiPort": "9004"'
+
+  - it: reports api_key mode when only an inbound API key is required
+    set:
+      mcp.config.requireClientApiKey: true
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf"]
+          pattern: '"mcpAuthMode": "api_key"'
