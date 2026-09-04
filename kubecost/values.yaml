@@ -660,61 +660,135 @@ finopsagent:
 ## the mcp-kubecost subchart that are most commonly changed.
 ## Ref: https://github.com/kubecost/mcp-kubecost/blob/main/charts/mcp-kubecost/values.yaml
 ##
+## The MCP endpoint is fixed at /mcp and its OAuth endpoints at /oauth/mcp.
+## By default the Kubecost frontend proxies both, so MCP is reachable on the same hostname
+## as the Kubecost UI. Enable mcp.httpRoute or mcp.ingress below to give the MCP
+## server its own route instead, in which case the frontend stops proxying it.
+##
 mcp:
   enabled: true
-  ## The MCP server reads cost data through the Kubecost aggregator Service.
+  ## The MCP server reads cost data through the Kubecost aggregator service.
   ## If Kubecost is deployed with SAML or OIDC authentication,
-  ## set mcp.config.kubecostApiPort to 9008 instead of 9004 to bypass authentication.
+  ## the MCP server must be configured with its own OIDC configuration.
+  ## When the mcp server has its own authentication, consider setting
+  ## mcp.config.kubecostApiPort to 9008 instead of 9004 to bypass Kubecost's API
+  ## authentication. The aggregator Service only exposes 9008 when saml.enabled or
+  ## oidc.enabled is true, so 9008 is a dead port on an installation without SSO.
   config:
     kubecostApiBaseUrl: "http://{{ .Release.Name }}-aggregator"
     kubecostApiPort: 9004
-    kubecostApiBasePath: /
+    # The aggregator serves its API at the root, unlike the frontend's /model prefix.
+    kubecostApiBasePath: "/"
     ## Authentication for the MCP HTTP endpoint. One of: none, open, oidc, api_key.
-    ## The default of "none" leaves the endpoint unauthenticated inside the cluster;
+    ## The default of "none" leaves the endpoint unauthenticated inside the cluster.
     ## See https://github.com/kubecost/mcp-kubecost/tree/main/docs/auth for more details.
     authMode: none
+    # mcp.config.externalUrl is the public origin the MCP server advertises in its
+    # OAuth metadata — scheme and host only, no path. Required when authMode is
+    # "oidc". Which value it takes depends on how MCP is exposed; the two are
+    # mutually exclusive:
+    #
+    #   Frontend-proxied (the default, mcp.httpRoute and mcp.ingress both disabled):
+    #     set this to the Kubecost hostname, e.g. "https://kubecost.example.com".
+    #     It must be one of ingress.hosts / httpRoute.hostnames at the top level of
+    #     this file, because the frontend is what serves /mcp on that host.
+    #
+    #   MCP-owned route (mcp.httpRoute or mcp.ingress enabled below): leave this
+    #     empty and set the route's own hostname instead. The subchart infers this
+    #     value from that hostname, and rejects a value that disagrees with it.
+    externalUrl: ""
+    # mcp.config.kubecostApiKey is sent to Kubecost as an X-API-KEY request header for outbound calls.
+    # An MCP client may override it per request by sending its own X-API-KEY header.
+    kubecostApiKey:
+      # mcp.config.kubecostApiKey.value optionally creates a Secret containing the API key; prefer existingSecret.
+      value: ""
+      # mcp.config.kubecostApiKey.existingSecret is the name of a pre-created Secret containing the API key.
+      existingSecret: ""
+      # mcp.config.kubecostApiKey.key is the key within the existing or generated API-key Secret.
+      key: KUBECOST_API_KEY
+    # mcp.config.requireClientApiKey rejects inbound HTTP requests that arrive without an X-API-KEY header.
+    # When authMode is "api_key", this value is ignored and forced to true.
+    # Set it to true with authMode "oidc" to require both OIDC and an API key.
+    requireClientApiKey: false
+    # mcp.config.logLevel is the FastMCP log level. One of: DEBUG, INFO, WARNING, ERROR, CRITICAL.
+    logLevel: INFO
     oidc:
       # mcp.config.oidc.issuerUrl is the provider's .well-known/openid-configuration URL.
       # Example: https://{domain}/.well-known/openid-configuration
       issuerUrl: ""
-      # mcp.config.oidc.baseUrl is the public URL of this MCP server (used for OAuth redirect callback).
-      #
-      # When the MCP server shares the Kubecost frontend hostname, give this a
-      # path prefix -- https://kubecost.example.com/mcp -- so FastMCP advertises
-      # every OAuth endpoint under that prefix (/mcp/authorize, /mcp/token,
-      # /mcp/register, /mcp/auth-mcp) instead of claiming those names at the
-      # root of a host it shares with Kubecost SSO. The frontend nginx strips
-      # the prefix, and the subchart then serves the MCP endpoint at "/".
-      # Register the redirect URI at the IdP with the prefix included.
-      #
-      # Leave the path off (https://mcp.example.com) only when the MCP server
-      # has its own hostname, where there is nothing to collide with.
-      baseUrl: ""
-      # mcp.config.oidc.redirectPath is the FastMCP OAuth callback path
-      # The default is /auth-mcp which is to avoid conflict with the Kubecost OIDC callback for the main UI
-      # With a path-prefixed baseUrl this is served under the prefix, so it no
-      # longer has to out-length the Kubecost /auth location.
-      redirectPath: "/auth-mcp"
-      # mcp.config.oidc.clientId is the OIDC client ID. Prefer existingSecret for production.
-      clientId: ""
+      # mcp.config.oidc.clientID is the OIDC client ID. Prefer existingSecret for production.
+      clientID: ""
       # mcp.config.oidc.clientSecret is the OIDC client secret. Prefer existingSecret for production.
       clientSecret: ""
       # mcp.config.oidc.existingSecret references a pre-created Secret containing OIDC credentials.
-      # Required keys: OIDC_CLIENT_ID, OIDC_CLIENT_SECRET. Preferred over clientId/clientSecret.
+      # Required keys: OIDC_CLIENT_ID, OIDC_CLIENT_SECRET. Preferred over clientID/clientSecret.
+      # Supply either this or clientID/clientSecret, not both.
       existingSecret: ""
-  ## The MCP server is reachable in-cluster at <release>-mcp:3030. Enable
-  ## httpRoute (Gateway API) or ingress to expose it outside the cluster.
+      # Register https://<mcp.config.externalUrl host>/oauth/mcp/callback as the redirect
+      # URI at the IdP. The callback path is fixed and cannot be changed.
+  ## The MCP server is reachable in-cluster at <release>-mcp:3030 and, by default,
+  ## through the Kubecost frontend. Enable one of these to give it its own external
+  ## ingress or HTTPRoute instead; the frontend then stops proxying /mcp and /oauth/mcp.
+  ## Either route requires mcp.config.authMode to be at least "open".
+  ##
+  ## These are a separate topology from the frontend proxy, not an addition to it.
+  ## Enabling one requires its hostnames below -- the subchart fails rather than
+  ## publishing a placeholder host -- and mcp.config.externalUrl is then inferred
+  ## from that hostname, so leave mcp.config.externalUrl empty.
+  ##
   httpRoute:
     enabled: false
+    # mcp.httpRoute.parentRefs is required when enabled. Reference the Gateway(s)
+    # this route attaches to.
+    # parentRefs:
+    #   - name: mcp-gateway
+    #     sectionName: https   # optional, listener name
+    # mcp.httpRoute.hostnames is required when enabled.
+    # hostnames:
+    #   - mcp.example.com
+    # annotations: {}
   ingress:
     enabled: false
-  resources:
-    requests:
-      cpu: 250m
-      memory: 1Gi
-    limits:
-      cpu: 1000m
-      memory: 1Gi
+    # mcp.ingress.className is the IngressClass name. Empty leaves the cluster's
+    # default IngressClass to claim the Ingress.
+    # className: nginx
+    # mcp.ingress.hosts is required when enabled. The subchart generates the fixed
+    # /mcp, /oauth/mcp, and OAuth discovery paths for each host.
+    # hosts:
+    #   - host: mcp.example.com
+    # mcp.ingress.tls configures TLS secrets and their hostnames.
+    # tls:
+    #   - secretName: kubecost-mcp-server-tls
+    #     hosts:
+    #       - mcp.example.com
+    # Certificate issuance is left to the operator, e.g.:
+    # annotations:
+    #   cert-manager.io/cluster-issuer: letsencrypt-http
+
+  ## The MCP server stores its FastMCP OAuth registrations, grants, and tokens on a
+  ## PVC. mcp.persistence.enabled is tri-state: null (default) creates the PVC only
+  ## when mcp.config.authMode is "oidc", true always creates it, and false never
+  ## does -- with false, clients must re-register on every pod restart.
+  ## mcp.persistence.storageClass falls back to global.defaultStorageClass, and then
+  ## to the cluster's default StorageClass.
+  ##
+  persistence:
+    enabled: null
+    storageClass: ""
+    size: 1Gi
+
+  ## Scheduling for the MCP server pod. The chart's top-level nodeSelector does not
+  ## cross the subchart boundary, so set these when the cluster needs the MCP pod
+  ## constrained -- for example a mixed Windows/Linux cluster, where
+  ## values-windows-node-affinity.yaml pins the other components but not this one.
+  ##
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+  ## Resource requests and limits default to 250m/1Gi and 1000m/1Gi in the subchart.
+  ## Set them here only to override those defaults.
+  # resources: {}
 
 ## Installs Kubecost/OpenCost plugins
 ## Ref: https://opencost.io/docs/integrations/plugins/
