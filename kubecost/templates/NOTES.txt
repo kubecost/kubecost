@@ -49,4 +49,4 @@ Copyright IBM Corp. 2019-2026
 {{- include "kubecost.v3-postconditions" . -}}
 {{- include "kubecost.mcp.aggregatorCheck" . -}}
 {{- include "kubecost.mcp.openRouteCheck" . -}}
-{{- include "kubecost.mcp.validateOIDC" . -}}
+{{- include "kubecost.mcp.validateExternalUrl" . -}}

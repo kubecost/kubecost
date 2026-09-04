@@ -10,6 +10,8 @@ on:
       - 'kubecost/templates/NOTES.txt'
       - 'kubecost/templates/frontend/_helpers.tpl'
       - 'kubecost/templates/frontend/frontend-configmap.yaml'
+      - 'kubecost/tests/**'
+      - 'kubecost/values-*.yaml'
       - '.github/scripts/validate_mcp_subchart.sh'
       - '.github/workflows/validate-mcp-subchart.yml'
   workflow_dispatch: {}
@@ -37,6 +39,9 @@ jobs:
       - name: Set up Helm
         uses: azure/setup-helm@v5
 
+      - name: Install helm-unittest
+        run: helm plugin install https://github.com/helm-unittest/helm-unittest --version 1.1.2
+
       # ubuntu-latest ships yq, but pin it so assertion syntax cannot drift
       # when the runner image is updated.
       - name: Set up yq
@@ -61,8 +66,7 @@ jobs:
       - name: Build chart dependencies
         run: helm dependency build "$CHART_DIR"
 
-      # helm lint with the subchart enabled, helm template for the default and
-      # enabled cases, resource assertions, and the global: conformance checks.
+      # Dependency pinning, helm lint, and the helm-unittest suites.
       - name: Validate mcp-kubecost subchart integration
         env:
           MCP_SUBCHART_SKIP_DEP_BUILD: "1"
@@ -72,29 +76,16 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p .helm-render
+          helm template kubecost "$CHART_DIR" > .helm-render/mcp-enabled.yaml
           helm template kubecost "$CHART_DIR" \
-            --skip-schema-validation \
-            --set mcp.enabled=true \
-            > .helm-render/mcp-enabled.yaml
-          helm template kubecost "$CHART_DIR" \
-            --skip-schema-validation \
-            --set mcp.enabled=true \
             --set mcp.httpRoute.enabled=true \
             --set mcp.httpRoute.parentRefs[0].name=mcp-gateway \
             --set mcp.httpRoute.hostnames[0]=mcp.example.com \
-            --set mcp.config.authMode=open \
+            --set mcp.config.requireClientApiKey=true \
             --set mcp.config.kubecostApiKey.existingSecret=kubecost-api-key \
             --set global.platforms.cicd.enabled=true \
             --set global.platforms.cicd.skipSanityChecks=true \
             > .helm-render/mcp-httproute.yaml
-          helm template kubecost "$CHART_DIR" \
-            --skip-schema-validation \
-            --set mcp.enabled=true \
-            --set mcp.httpRoute.enabled=true \
-            --set mcp.httpRoute.parentRefs[0].name=mcp-gateway \
-            --set mcp.httpRoute.hostnames[0]=mcp.example.com \
-            --set mcp.config.authMode=open \
-            > .helm-render/mcp-httproute-open.yaml
 
       # Ensure every rendered resource is valid Kubernetes YAML. HTTPRoute is a
       # Gateway API CRD, so that render tolerates missing schemas.

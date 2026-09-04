@@ -99,7 +99,7 @@ data:
     }
   {{- end }}
 
-  {{- if (.Values.mcp).enabled }}
+  {{- if eq (include "kubecost.mcp.frontendProxied" .) "true" }}
     upstream mcpKubecost {
         {{- if .Values.frontend.useDefaultFqdn }}
         server {{ include "kubecost.mcp.serviceName" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ include "kubecost.mcp.servicePort" . }};
@@ -498,8 +498,7 @@ data:
         }
         {{- end }}
 
-        {{- /* mcpProxy: Only proxy MCP if it is enabled and not using its own httproute or ingress */}}
-        {{- if and (.Values.mcp).enabled (not ((.Values.mcp).httpRoute).enabled) (not ((.Values.mcp).ingress).enabled) }}
+        {{- if eq (include "kubecost.mcp.frontendProxied" .) "true" }}
         {{- $mcpPath := include "kubecost.mcp.path" . }}
         {{- $mcpOauth := include "kubecost.mcp.oauthPrefix" . }}
         {{- /*
@@ -512,12 +511,12 @@ data:
         location ^~ {{ $mcpPath }} {
             {{- include "kubecost.frontend.mcpProxyDirectives" . | nindent 12 }}
         }
+        {{- if eq (include "kubecost.mcp.oidcEnabled" .) "true" }}
         {{- /* mcpOidc: OAuth endpoints, namespaced under {{ $mcpOauth }} so none of them
              claims a bare root path that collides with Kubecost SSO (/auth, /login,
              /logout, /oidc/, /saml/). */}}
-        {{- if eq (include "kubecost.mcp.authMode" .) "oidc" }}
         # {{ $mcpOauth }}/authorize, /token, /register, /consent and the IdP callback at {{ $mcpOauth }}/callback.
-        location ^~ {{ $mcpOauth }}/ {
+        location ^~ {{ $mcpOauth }} {
             {{- include "kubecost.frontend.mcpProxyDirectives" . | nindent 12 }}
         }
 
@@ -534,6 +533,18 @@ data:
             {{- include "kubecost.frontend.mcpProxyDirectives" . | nindent 12 }}
         }
         location ^~ /.well-known/openid-configuration{{ $mcpOauth }} {
+            {{- include "kubecost.frontend.mcpProxyDirectives" . | nindent 12 }}
+        }
+
+        # Root-probe fallbacks for clients that never read the advertised URL. The
+        # suffixed locations above are longer prefixes, so they still win.
+        location ^~ /.well-known/oauth-protected-resource {
+            {{- include "kubecost.frontend.mcpProxyDirectives" . | nindent 12 }}
+        }
+        location ^~ /.well-known/oauth-authorization-server {
+            {{- include "kubecost.frontend.mcpProxyDirectives" . | nindent 12 }}
+        }
+        location ^~ /.well-known/openid-configuration {
             {{- include "kubecost.frontend.mcpProxyDirectives" . | nindent 12 }}
         }
         {{- end }}

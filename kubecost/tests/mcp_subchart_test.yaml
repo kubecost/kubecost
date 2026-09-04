@@ -1,0 +1,113 @@
+suite: mcp-kubecost subchart integration
+release:
+  name: kubecost
+templates:
+  - charts/mcp/templates/configmap.yaml
+  - charts/mcp/templates/deployment.yaml
+  - charts/mcp/templates/service.yaml
+  - charts/mcp/templates/secret.yaml
+  - charts/mcp/templates/pvc.yaml
+tests:
+  - it: deploys the MCP server by default
+    template: charts/mcp/templates/deployment.yaml
+    asserts:
+      - equal:
+          path: metadata.name
+          value: kubecost-mcp
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: '^icr\.io/kubecost/mcp-kubecost:'
+
+  - it: exposes the MCP server in-cluster on 3030
+    template: charts/mcp/templates/service.yaml
+    asserts:
+      - equal:
+          path: metadata.name
+          value: kubecost-mcp
+      - equal:
+          path: spec.ports[0].port
+          value: 3030
+
+  - it: points the MCP server at this release's aggregator, which serves at the root
+    template: charts/mcp/templates/configmap.yaml
+    asserts:
+      - equal:
+          path: data.KUBECOST_BASE_URL
+          value: http://kubecost-aggregator:9004
+      - equal:
+          path: data.KUBECOST_API_BASE_PATH
+          value: "/"
+
+  - it: tracks the release name in the aggregator URL
+    template: charts/mcp/templates/configmap.yaml
+    release:
+      name: other
+    asserts:
+      - equal:
+          path: data.KUBECOST_BASE_URL
+          value: http://other-aggregator:9004
+
+  - it: leaves the MCP endpoint unauthenticated by default
+    template: charts/mcp/templates/configmap.yaml
+    asserts:
+      - isNull:
+          path: data.AUTH_MODE
+      - equal:
+          path: data.REQUIRE_CLIENT_API_KEY
+          value: "false"
+
+  - it: passes global.imageRegistry into the subchart
+    template: charts/mcp/templates/deployment.yaml
+    set:
+      global.imageRegistry: public.ecr.aws
+      mcp.image.repository: kubecost/mcp-kubecost
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: '^public\.ecr\.aws/kubecost/mcp-kubecost:'
+
+  - it: passes global.additionalLabels and global.podAnnotations into the subchart
+    template: charts/mcp/templates/deployment.yaml
+    set:
+      global.additionalLabels:
+        team: finops
+      global.podAnnotations:
+        example.com/scrape: "true"
+    asserts:
+      - equal:
+          path: metadata.labels.team
+          value: finops
+      - equal:
+          path: spec.template.metadata.annotations["example.com/scrape"]
+          value: "true"
+      - exists:
+          path: spec.template.metadata.annotations["checksum/config"]
+
+  - it: passes global.defaultStorageClass to the OAuth PVC
+    template: charts/mcp/templates/pvc.yaml
+    set:
+      global.defaultStorageClass: gp3
+      mcp.config.oidc.enabled: true
+      mcp.config.oidc.issuerUrl: https://sso.example.com/.well-known/openid-configuration
+      mcp.config.oidc.existingSecret: mcp-oidc
+      mcp.config.externalUrl: https://kubecost.example.com
+    asserts:
+      - equal:
+          path: spec.storageClassName
+          value: gp3
+
+  - it: lets OpenShift assign the MCP pod's UID and GID
+    template: charts/mcp/templates/deployment.yaml
+    set:
+      global.platforms.openshift.enabled: true
+    asserts:
+      - isNull:
+          path: spec.template.spec.securityContext.runAsUser
+
+  - it: names subchart values with the mcp prefix in its errors
+    template: charts/mcp/templates/deployment.yaml
+    set:
+      mcp.config.oidc.enabled: true
+    asserts:
+      - failedTemplate:
+          errorPattern: 'mcp\.config\.oidc\.enabled is true but its durable OAuth secrets are incomplete'

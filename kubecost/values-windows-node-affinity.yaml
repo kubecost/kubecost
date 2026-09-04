@@ -4,3 +4,8 @@ nodeSelector:
 networkCosts:
   nodeSelector:
     kubernetes.io/os: linux
+
+# Subcharts do not inherit the top-level nodeSelector.
+mcp:
+  nodeSelector:
+    kubernetes.io/os: linux
