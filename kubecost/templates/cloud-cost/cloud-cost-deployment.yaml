@@ -253,6 +253,8 @@ spec:
               value: {{ .Values.cloudCost.queryWindowDays | default 7 | quote }}
             - name: CLOUD_COST_RUN_WINDOW_DAYS
               value: {{ .Values.cloudCost.runWindowDays | default 3 | quote }}
+            - name: AZURE_DOWNLOAD_BILLING_DATA_TO_DISK
+              value: {{ .Values.cloudCost.downloadBillingDataToDisk | default false | quote }}
             - name: CUSTOM_COST_ENABLED
               value: {{ .Values.plugins.enabled | quote }}
             - name: LOG_LEVEL
