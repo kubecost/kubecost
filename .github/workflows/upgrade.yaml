@@ -7,6 +7,11 @@ on:
   schedule:
     - cron: '30 22 * * 4' # Every Thursday at 10:30 PM
 
+env:
+  CHART_REPO: kubecost
+  CHART_REPO_URL: https://kubecost.github.io/kubecost/
+  CHART_NAME: kubecost
+
 jobs:
   discover-versions:
     runs-on: ubuntu-latest
@@ -17,39 +22,33 @@ jobs:
       - name: Discover versions
         id: versions
         run: |
-          ## Find the latest version of a Helm chart and the previous minor version.
-          REPO=kubecost
+          ## Find the latest published version of the chart and the newest
+          ## patch of the preceding minor.
+          set -euo pipefail
 
-          # Init empty array
-          VERSIONS='[]'
-
-          helm repo add $REPO https://kubecost.github.io/cost-analyzer/
-
+          helm repo add "$CHART_REPO" "$CHART_REPO_URL"
           helm repo update
 
-          # Get the current latest version of the chart.
-          LATEST=$(helm search repo $REPO -l -o json | jq -r .[].version | head -n1)
+          ALL=$(helm search repo "$CHART_REPO/$CHART_NAME" -l -o json \
+                | jq -r --arg n "$CHART_REPO/$CHART_NAME" '.[] | select(.name==$n) | .version')
 
-          # Sanity check that LATEST is not empty
-          if [ -n "$LATEST" ]; then
-              VERSIONS=$(echo $VERSIONS | jq --arg value "$LATEST" '. += [$value]')
-          else
+          LATEST=$(echo "$ALL" | head -n1)
+
+          if [ -z "$LATEST" ]; then
               echo "Latest version is empty when it shouldn't be. Something is wrong. Failing."
               exit 1
           fi
 
-          # Split the version into parts
-          IFS='.' read -r -a parts <<< "$LATEST"
+          VERSIONS=$(jq -cn --arg v "$LATEST" '[$v]')
 
-          # Get the previous minor version from the latest.
-          PREVIOUS_MINOR=$((parts[1]-1))
+          LATEST_MINOR=$(echo "$LATEST" | cut -d. -f1,2)
+          PREVIOUS_MINOR=$(echo "$ALL" | cut -d. -f1,2 | sort -Vu | grep -vx "$LATEST_MINOR" | tail -n1 || true)
 
-          # Check if PREVIOUS_MINOR is not equal to "-1" indicating that there is no previous minor version, only a major.
-          if [ -n "$PREVIOUS_MINOR" ] && [ "$PREVIOUS_MINOR" != "-1" ]; then
-              LATEST_MINOR=$(helm search repo $REPO -l -o json | jq -r .[].version | head -n10 | grep -E "\.$PREVIOUS_MINOR\." | head -n1)
-              VERSIONS=$(echo $VERSIONS | jq --arg value "$LATEST_MINOR" '. += [$value]')
+          if [ -n "$PREVIOUS_MINOR" ]; then
+              PREVIOUS=$(echo "$ALL" | grep "^${PREVIOUS_MINOR}\." | head -n1)
+              VERSIONS=$(echo "$VERSIONS" | jq --arg v "$PREVIOUS" '. += [$v]')
           else
-              echo "No previous minor available, only major."
+              echo "No previous minor available, only $LATEST_MINOR."
           fi
 
           echo Test matrix is $VERSIONS
@@ -70,27 +69,46 @@ jobs:
       - name: Create KinD cluster
         uses: helm/kind-action@ef37e7f390d99f746eb8b610417061a60e82a6cc # v1.14.0
         with:
-          version: v0.23.0
-          node_image: kindest/node:v1.28.9
-          kubectl_version: v1.28.9
-  
-      # Install the chart with default values and check results.
+          version: v0.31.0
+          node_image: kindest/node:v1.36.4
+          kubectl_version: v1.36.4
+
+      # Install the published chart with default values and check results.
       - name: Install Kubecost chart
         run: |
-          helm repo add kubecost https://kubecost.github.io/cost-analyzer/
+          helm repo add "$CHART_REPO" "$CHART_REPO_URL"
           helm repo update
-          helm install --wait --wait-for-jobs kubecost kubecost/cost-analyzer -n kubecost --create-namespace --version ${{ matrix.target }}
+          helm install --wait --wait-for-jobs kubecost "$CHART_REPO/$CHART_NAME" -n kubecost --create-namespace --version ${{ matrix.target }}
 
-      - name: Wait for ready 
-        run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/name=cost-analyzer --timeout=120s
+      - name: Wait for ready
+        run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/instance=kubecost --timeout=300s
 
-      - name: Run Helm tests 
+      - name: Run Helm tests
         run: helm test -n kubecost kubecost
 
-      - name: Upgrade to current working version
-        run: helm upgrade kubecost -n kubecost cost-analyzer/ --wait
-
-      - name: Wait for ready 
+      # Subcharts are not vendored into the repo, so they have to be fetched
+      # before the working copy of the chart can be rendered.
+      - name: Build chart dependencies
         run: |
-          kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/name=cost-analyzer --timeout=120s
+          helm repo add finops-agent-chart https://kubecost.github.io/finops-agent-chart
+          helm repo add mcp-kubecost https://kubecost.github.io/mcp-kubecost
+          helm repo update
+          helm dependency build ./kubecost
+
+      - name: Upgrade to current working version
+        run: helm upgrade kubecost -n kubecost ./kubecost --wait --wait-for-jobs
+
+      - name: Wait for ready
+        run: |
+          kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/instance=kubecost --timeout=300s
           kubectl -n kubecost get pods
+
+      - name: Run Helm tests post-upgrade
+        run: helm test -n kubecost kubecost
+
+      - name: gather debug info
+        if: failure()
+        run: |
+          kubectl -n kubecost get pods
+          kubectl -n kubecost describe pods
+          kubectl -n kubecost logs -l app.kubernetes.io/instance=kubecost --all-containers --tail=200
