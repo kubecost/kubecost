@@ -1,9 +1,9 @@
 dependencies:
 - name: finops-agent
   repository: https://kubecost.github.io/finops-agent-chart
-  version: 1.0.25
+  version: 1.0.26
 - name: mcp-kubecost
   repository: https://kubecost.github.io/mcp-kubecost
-  version: 0.14.1
-digest: sha256:da016b3257b89e27709b74d9ff6cd7c55fa855d96a3c04c352b922eccc4a3674
-generated: "2026-09-09T08:54:20.510376-04:00"
+  version: 0.16.0
+digest: sha256:6f3090ccade8296d5a88bd1a5bc0f3f9c2e76950311865ac133b13bd23b0bfc0
+generated: "2026-09-15T17:35:39.170723-04:00"
