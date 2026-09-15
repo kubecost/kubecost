@@ -4,11 +4,17 @@ This repository contains the Helm chart templates for the development of [Kubeco
 
 ## 3.x Technical Overview
 
+### Agent compatibility
+
+Upgrade order: The Kubecost Primary should be upgraded before the agents. If the agents are upgraded first, no data is lost; however, the new agent data will remain incompatible with the primary cluster until the primary is upgraded, after which the queued agent data will be processed.
+
+A Kubecost 3.x primary cluster is compatible with 2.x agents and newer.
+
 ### Migration path from 2.x to 3.x
 
-In order to upgrade from Kubecost 2.x to 3.x, it is recommended that all agents be updated to 2.9 for two days prior to upgrading to 3.0. See <https://github.com/kubecost/kubecost/tree/v2.9/examples> for how to upgrade to 2.9 before upgrading to 3.0.
+In order to upgrade from Kubecost 2.x to 3.x, it is recommended that all agents be updated to 2.9 for two days prior to upgrading to 3.0. See <https://github.com/kubecost/kubecost/tree/v2.9/examples> for how to upgrade to 2.9 before upgrading to 3.x.
 
-> Note: With the exception of the diagnostics compatibility section below, the agent data is backwards compatible with Kubecost 2.x. Which means there is flexibility in the order of upgrades. For example, the primary does not need to be upgraded first, though it is recommended to do so.
+> Note: With the exception of the diagnostics compatibility section below, the agent data is backwards compatible with Kubecost 2.x. Which means there is flexibility in the order of upgrades.
 
 ### Key changes in 3.0
 
@@ -17,12 +23,9 @@ In order to upgrade from Kubecost 2.x to 3.x, it is recommended that all agents 
 | 2.x     | DuckDB     | Prometheus     |
 | 3.0     | ClickHouse | Direct         |
 
-Due to the new database, a complete re-ingestion of data will begin as soon as 3.x is installed. This will take anywhere from 20 minutes to 2 days to complete depending on the size of the dataset and performance of the storage backing the Persistent Volume. During this time, the UI will be available, but will show a progress indicator. Data will be imported from today and going backwards in time until the full history is available.
+Due to the new database in 3.x, a complete re-ingestion of data will begin as soon as 3.x is installed. This will take anywhere from 20 minutes to 2 days to complete depending on the size of the dataset and performance of the storage backing the Persistent Volume. During this time, the UI will be available, but will show a progress indicator. Data will be imported from today and going backwards in time until the full history is available.
 
-### Agent compatibility
-
-A Kubecost 3.0 primary cluster is compatible with 2.x agents and newer.
-3.0 has significant changes to the agent (previously called secondaries). The old agent container was called `cost-model`. The new agent is the `finops-agent`, delivered as a sub-chart (`finopsagent`).
+3.x has significant changes to the agent (previously called secondaries). The old agent container was called `cost-model`. The new agent is the `finops-agent`, delivered as a sub-chart (`finopsagent`).
 
 The new agent has major benefits over the old agent:
 
@@ -41,9 +44,9 @@ The new agent has major benefits over the old agent:
 
 ## Sub-charts
 
-| Sub-chart      | Alias         | Default | Description                                                                                           |
-| -------------- | ------------- | ------- | ----------------------------------------------------------------------------------------------------- |
-| `finops-agent` | `finopsagent` | enabled | Lightweight agent for secondary (agent-only) clusters                                                 |
+| Sub-chart      | Alias         | Default            | Description                                                                                           |
+| -------------- | ------------- | ------------------ | ----------------------------------------------------------------------------------------------------- |
+| `finops-agent` | `finopsagent` | enabled            | Lightweight agent for collecting metrics from the clusters                                            |
 | `mcp-kubecost` | `mcp`         | follows aggregator | FinOps MCP server — exposes Kubecost analytics via the Model Context Protocol at `<release>-mcp:3030` |
 
 The MCP server deploys when `aggregator.enabled` is true unless `mcp.enabled` is set. It is proxied through the Kubecost frontend at `/mcp`. Set `mcp.config.authMode` before exposing it outside the cluster. See [mcp-kubecost](https://github.com/kubecost/mcp-kubecost) for full configuration options.
@@ -72,12 +75,12 @@ helm install kubecost kubecost/kubecost \
 The default branch of this repository is the `develop` branch. This branch is not stable and is subject to change. Please use the following command to show values available for the chart you are using:
 
 ```sh
-helm show values kubecost/kubecost --version 3.3.0
+helm show values kubecost/kubecost --version VERSION
 ```
 
 ## Beta/Release Candidates and Nightly Builds
 
-To upgrade to the beta/release candidates pass the `--devel` flag:
+To upgrade to the latest beta/release candidates pass the `--devel` flag:
 
 ```sh
 helm upgrade kubecost \
