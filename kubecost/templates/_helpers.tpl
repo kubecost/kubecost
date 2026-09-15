@@ -600,31 +600,9 @@ result with eq "true"; a non-empty "false" string is truthy in Go templates.
 {{- end -}}
 {{- end -}}
 
-{{/*
-Fixed public paths of the mcp-kubecost server. The subchart serves both at
-exactly these paths inside the container (MCP_PATH / OAUTH_PREFIX in
-src/mcp_kubecost/config/oidc.py), so the frontend proxies them without any
-rewrite. They are constants, not values: FastMCP advertises them in its OAuth
-metadata, and the MCP SDK derives the well-known discovery URLs from them.
-*/}}
-{{- define "kubecost.mcp.path" -}}
-/mcp
-{{- end -}}
-
-{{- define "kubecost.mcp.oauthPrefix" -}}
-/oauth/mcp
-{{- end -}}
-
+{{/* tpl because the values.yaml default embeds {{ .Release.Name }}. */}}
 {{- define "kubecost.mcp.kubecostApiBaseUrl" -}}
-{{- tpl (default (printf "http://%s-aggregator" .Release.Name) ((.Values.mcp).config).kubecostApiBaseUrl) . -}}
-{{- end -}}
-
-{{- define "kubecost.mcp.kubecostApiPort" -}}
-{{- default 9004 ((.Values.mcp).config).kubecostApiPort -}}
-{{- end -}}
-
-{{- define "kubecost.mcp.kubecostApiBasePath" -}}
-{{- default "/" ((.Values.mcp).config).kubecostApiBasePath -}}
+{{- tpl ((.Values.mcp).config).kubecostApiBaseUrl . -}}
 {{- end -}}
 
 {{/*
@@ -659,7 +637,7 @@ This does not prevent an mcp.httpRoute or mcp.ingress from being enabled. Those 
 {{- define "kubecost.mcp.openRouteCheck" -}}
 {{- if eq (include "kubecost.mcp.enabled" .) "true" }}
 {{- $routeEnabled := or ((.Values.mcp).httpRoute).enabled ((.Values.mcp).ingress).enabled (.Values.ingress).enabled (.Values.httpRoute).enabled -}}
-{{- $apiPort := toString (include "kubecost.mcp.kubecostApiPort" .) -}}
+{{- $apiPort := toString ((.Values.mcp).config).kubecostApiPort -}}
 {{- $authMode := include "kubecost.mcp.authMode" . -}}
 {{- if and  ($routeEnabled) (eq $apiPort "9008") (eq $authMode "none") }}
 {{- if and .Values.global.platforms.cicd.enabled .Values.global.platforms.cicd.skipSanityChecks }}

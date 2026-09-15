@@ -603,7 +603,7 @@ localStore:
 ## Collects kubernetes metrics and sends them to storage. Below are a subset of
 ## values from the finopsagent subchart that are most commonly changed.
 ## Ref: https://github.com/kubecost/finops-agent-chart/blob/main/charts/finops-agent/values.yaml
-##
+## Note: External labels are commented out by default. For configuration details, refer to the FinOps Agent chart documentation.
 finopsagent:
   enabled: true
   image:
@@ -655,6 +655,18 @@ finopsagent:
       gpuLabelValue: ""
       spotLabel: ""
       spotLabelValue: ""
+  ## External labels allow users to apply custom labels to node assets and
+  ## allocations so they can be used for filtering and grouping in the
+  ## Kubecost UI.
+  ##
+  ## Commented out by default. Refer to the finops-agent-chart for details.
+  # external:
+  #   nodeLabels:
+  #     configMapName: ""
+  #     namespace: ""
+  #     key: ""
+  #     route: ""
+
 
 ## The FinOps MCP server for Kubecost analytics. Below are a subset of values from
 ## the mcp-kubecost subchart that are most commonly changed.
@@ -666,12 +678,11 @@ finopsagent:
 ## server its own route instead, in which case the frontend stops proxying it.
 ##
 mcp:
-  ## mcp.enabled is omitted on purpose. Chart.yaml condition is
-  ## mcp.enabled,aggregator.enabled: the first boolean wins, otherwise the
-  ## subchart follows aggregator.enabled. Agent-only installs that only set
-  ## aggregator.enabled=false therefore skip MCP without a new flag.
-  ## Override with mcp.enabled: true or mcp.enabled: false.
-  ##
+  ## mcp.enabled is deliberately unset so the Chart.yaml condition
+  ## "mcp.enabled,aggregator.enabled" falls through and MCP follows the
+  ## aggregator. Set it to true to run MCP against an aggregator deployed
+  ## elsewhere (with config.kubecostApiBaseUrl), or false to always skip it.
+
   ## The MCP server reads cost data through the Kubecost aggregator service.
   ## If Kubecost is deployed with SAML or OIDC authentication,
   ## the MCP server must be configured with its own OIDC configuration.
@@ -731,42 +742,38 @@ mcp:
       existingSecret: ""
       # Register https://<mcp.config.externalUrl host>/oauth/mcp/callback as the redirect
       # URI at the IdP. The callback path is fixed and cannot be changed.
+
   ## The MCP server is reachable in-cluster at <release>-mcp:3030 and, by default,
   ## through the Kubecost frontend. Enable one of these to give it its own external
   ## ingress or HTTPRoute instead; the frontend then stops proxying /mcp and /oauth/mcp.
   ## Either route requires mcp.config.authMode to be at least "open".
   ##
-  ## These are a separate topology from the frontend proxy, not an addition to it.
-  ## Enabling one requires its hostnames below -- the subchart fails rather than
-  ## publishing a placeholder host -- and mcp.config.externalUrl is then inferred
-  ## from that hostname, so leave mcp.config.externalUrl empty.
-  ##
   httpRoute:
     enabled: false
-    # mcp.httpRoute.parentRefs is required when enabled. Reference the Gateway(s)
-    # this route attaches to.
+    ## mcp.httpRoute.parentRefs is required when enabled. Reference the Gateway(s)
+    ## this route attaches to.
     # parentRefs:
     #   - name: mcp-gateway
     #     sectionName: https   # optional, listener name
-    # mcp.httpRoute.hostnames is required when enabled.
+    ## mcp.httpRoute.hostnames is required when enabled.
     # hostnames:
     #   - mcp.example.com
     # annotations: {}
   ingress:
     enabled: false
-    # mcp.ingress.className is the IngressClass name. Empty leaves the cluster's
-    # default IngressClass to claim the Ingress.
+    ## mcp.ingress.className is the IngressClass name. Empty leaves the cluster's
+    ## default IngressClass to claim the Ingress.
     # className: nginx
-    # mcp.ingress.hosts is required when enabled. The subchart generates the fixed
-    # /mcp, /oauth/mcp, and OAuth discovery paths for each host.
+    ## mcp.ingress.hosts is required when enabled. The subchart generates the fixed
+    ## /mcp, /oauth/mcp, and OAuth discovery paths for each host.
     # hosts:
     #   - host: mcp.example.com
-    # mcp.ingress.tls configures TLS secrets and their hostnames.
+    ## mcp.ingress.tls configures TLS secrets and their hostnames.
     # tls:
     #   - secretName: kubecost-mcp-server-tls
     #     hosts:
     #       - mcp.example.com
-    # Certificate issuance is left to the operator, e.g.:
+    ## Certificate issuance is left to the operator, e.g.:
     # annotations:
     #   cert-manager.io/cluster-issuer: letsencrypt-http
 
@@ -1535,12 +1542,12 @@ clusterController:
   ## If not set, the image will be pulled from the registry and repository specified in the image block.
   ## If set, the fullImageName will be used to pull the image.
   ## Example:
-  ## fullImageName: icr.io/kubecost/cluster-controller:v0.16.37
+  ## fullImageName: icr.io/kubecost/cluster-controller:v0.16.40
   fullImageName: ""
   image:
     registry: ""  # Default is "icr.io"
     repository: kubecost/cluster-controller
-    tag: v0.16.39
+    tag: v0.16.40
   imagePullPolicy: IfNotPresent
   logLevel: info
   extraEnv: []
@@ -1953,7 +1960,7 @@ extraObjects: []
 basicHealth:
   registry: docker.io
   repository: alpine/curl
-  tag: 8.17.0
+  tag: latest
 
 # -- Optional override for the image used for the HTTPRoute helm test (only when httpRoute.enabled)
 httprouteTest:
