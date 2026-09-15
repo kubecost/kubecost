@@ -20,7 +20,7 @@ dependencies:
   # Ref: https://github.com/kubecost/mcp-kubecost
   - name: mcp-kubecost
     alias: mcp
-    version: "0.14.1"
+    version: "0.16.0"
     repository: https://kubecost.github.io/mcp-kubecost
     # First boolean path wins. mcp.enabled is omitted from values.yaml so existing
     # aggregator.enabled=false installs skip MCP on upgrade without a new flag.
