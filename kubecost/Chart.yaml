@@ -11,7 +11,7 @@ annotations:
 dependencies:
   - name: finops-agent
     alias: finopsagent
-    version: "v1.0.25"
+    version: "v1.0.26"
     repository: https://kubecost.github.io/finops-agent-chart
     condition: finopsagent.enabled
   # The FinOps MCP server for Kubecost analytics. Follows aggregator.enabled

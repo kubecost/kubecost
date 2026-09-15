@@ -38,6 +38,9 @@ spec:
         value: {{ . | quote }}
     {{- end }}
     backendRefs:
-    - name: {{ include "kubecost.frontend.serviceName" . }}
+    - group: ""
+      kind: Service
+      name: {{ include "kubecost.frontend.serviceName" . }}
       port: {{ .Values.frontend.service.port | int }}
+      weight: 1
 {{- end }}
