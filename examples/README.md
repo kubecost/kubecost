@@ -4,7 +4,7 @@
 
 Extensive documentation is available at [https://www.ibm.com/docs/en/kubecost/self-hosted/3.x](https://www.ibm.com/docs/en/kubecost/self-hosted/3.x).
 
-The 3.0 helm chart has been updated to simplify many of the configurations that had been added over time.
+The 3.x helm chart has been updated to simplify many of the configurations that had been added over time.
 Changes will be required when upgrading from previous versions.
 
 ## Federated Storage Configurations
