@@ -604,7 +604,7 @@ localStore:
 ## Collects kubernetes metrics and sends them to storage. Below are a subset of
 ## values from the finopsagent subchart that are most commonly changed.
 ## Ref: https://github.com/kubecost/finops-agent-chart/blob/main/charts/finops-agent/values.yaml
-##
+## Note: External labels are commented out by default. For configuration details, refer to the FinOps Agent chart documentation.
 finopsagent:
   enabled: true
   image:
@@ -656,6 +656,18 @@ finopsagent:
       gpuLabelValue: ""
       spotLabel: ""
       spotLabelValue: ""
+  ## External labels allow users to apply custom labels to node assets and
+  ## allocations so they can be used for filtering and grouping in the
+  ## Kubecost UI.
+  ##
+  ## Commented out by default. Refer to the finops-agent-chart for details.
+  # external:
+  #   nodeLabels:
+  #     configMapName: ""
+  #     namespace: ""
+  #     key: ""
+  #     route: ""
+
 
 ## The FinOps MCP server for Kubecost analytics. Below are a subset of values from
 ## the mcp-kubecost subchart that are most commonly changed.
@@ -1531,12 +1543,12 @@ clusterController:
   ## If not set, the image will be pulled from the registry and repository specified in the image block.
   ## If set, the fullImageName will be used to pull the image.
   ## Example:
-  ## fullImageName: icr.io/kubecost/cluster-controller:v0.16.37
+  ## fullImageName: icr.io/kubecost/cluster-controller:v0.16.40
   fullImageName: ""
   image:
     registry: ""  # Default is "icr.io"
     repository: kubecost/cluster-controller
-    tag: v0.16.39
+    tag: v0.16.40
   imagePullPolicy: IfNotPresent
   logLevel: info
   extraEnv: []
@@ -1949,7 +1961,7 @@ extraObjects: []
 basicHealth:
   registry: docker.io
   repository: alpine/curl
-  tag: 8.17.0
+  tag: latest
 
 # -- Optional override for the image used for the HTTPRoute helm test (only when httpRoute.enabled)
 httprouteTest:

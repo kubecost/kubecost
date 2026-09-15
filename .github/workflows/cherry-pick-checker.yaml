@@ -1,0 +1,208 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+
+name: Cherry-Pick Status Checker
+
+# Required secrets, all are set at org level and can be overridden at repo level:
+#   SLACK_FAILURE_WEBHOOK_URL_PASS — Slack workflow webhook when no missing cherry-picks
+#   SLACK_FAILURE_WEBHOOK_URL_FAIL — Slack workflow webhook when cherry-picks are missing
+#   KC_ACTIONS_BOT_APP_PRIVATE_KEY — GitHub App private key (existing)
+# Required vars:
+#   KC_ACTIONS_BOT_APP_CLIENT_ID   — GitHub App client ID (existing)
+
+on:
+  workflow_dispatch:
+    inputs:
+      only-missing:
+        description: Only report PRs whose cherry-pick is missing
+        type: boolean
+        default: true
+      branch:
+        description: Check only this branch ex v3.3 (leave empty to auto-detect GA + RC)
+        type: string
+        required: false
+      limit:
+        description: Max PRs to fetch per version label
+        type: number
+        default: 200
+  schedule:
+    - cron: '0 7 * * *'  # 07:00 UTC daily
+
+permissions:
+  contents: read
+
+jobs:
+  backport-status:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Generate app token for kubecost/kubecost access
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.KC_ACTIONS_BOT_APP_CLIENT_ID }}
+          private-key: ${{ secrets.KC_ACTIONS_BOT_APP_PRIVATE_KEY }}
+          owner: kubecost
+          repositories: kubecost
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: scripts/cherry-pick-checker.py
+
+      - name: Run backport status check
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          INPUT_ONLY_MISSING: ${{ github.event.inputs.only-missing || 'true' }}
+          INPUT_BRANCH: ${{ github.event.inputs.branch }}
+          INPUT_LIMIT: ${{ github.event.inputs.limit || '200' }}
+        run: |
+          echo "::add-mask::$GITHUB_TOKEN"
+          extra_args=()
+          if [ "$INPUT_ONLY_MISSING" = "true" ]; then
+            extra_args+=(--only-missing)
+          fi
+          if [ -n "$INPUT_BRANCH" ]; then
+            extra_args+=(--branch "$INPUT_BRANCH")
+          fi
+          uv run ./scripts/cherry-pick-checker.py \
+            --limit "$INPUT_LIMIT" \
+            --output-file report.md \
+            --summary-json summary.json \
+            "${extra_args[@]}"
+
+      - name: Upload missing-cherry-picks report
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: pr-backport-status-report
+          path: report.md
+          retention-days: 30
+
+      - name: Build Slack payload
+        id: get-failed
+        env:
+          RUN_ID: ${{ github.run_id }}
+          REPO_NAME: ${{ github.repository }}
+          WORKFLOW_NAME: ${{ github.workflow }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          python3 - <<'EOF'
+          import json
+          import os
+          import re
+
+          with open("summary.json") as f:
+              data = json.load(f)
+
+          run_url = os.environ["RUN_URL"]
+          generated_at = data["generated_at"]
+          branches = data["branches"]
+          failures_found = any(branch["missing"] for branch in branches)
+
+          lines = [
+              (
+                  ":x: PR Backport Status — missing cherry-picks"
+                  if failures_found
+                  else ":white_check_mark: PR Backport Status — all accounted for*"
+              ),
+              "",
+              f"{generated_at}  |  Repo: `{os.environ['REPO_NAME']}`",
+              "",
+          ]
+
+          for branch in branches:
+              version = branch["version"]
+              total = branch["total"]
+              missing = branch["missing"]
+              needs_attention = branch["needs_attention"]
+
+              lines.append(
+                  f"- Branch `{version}` — {missing} missing cherry-pick"
+                  f"{'' if missing == 1 else 's'}"
+                  f" ({total} labeled merged PRs checked)"
+              )
+
+              if needs_attention:
+                  lines.append("*Missing cherry-picks:*")
+                  for pr in needs_attention:
+                      lines.append(
+                          f":x: https://github.com/{os.environ['REPO_NAME']}/pull/{pr['number']}|#{pr['number']} "
+                          f"{pr['title']} _(merged: {pr['merged_at']})_"
+                      )
+              else:
+                  lines.append(":tada: All PRs accounted for in this branch.")
+
+              lines.append("")
+
+          lines.append(f":page_facing_up: <{run_url}|Full Report>")
+          message = "\n".join(lines).rstrip() + "\n"
+
+          payload = {
+              "runid": os.environ["RUN_ID"],
+              "repo": os.environ["REPO_NAME"],
+              "workflow": os.environ["WORKFLOW_NAME"],
+              "message": message,
+              "mrkdwn": True,
+          }
+
+          with open("slack_payload.json", "w") as f:
+              json.dump(payload, f)
+
+          def slack_mrkdwn_to_gfm(text):
+              text = re.sub(r"<(https?://[^|>]+)\|([^>]+)>", r"[\2](\1)", text)
+              text = re.sub(r"<(https?://[^>]+)>", r"\1", text)
+              return text
+
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
+              summary.write(slack_mrkdwn_to_gfm(message))
+              summary.write("\n<details>\n<summary>slack_payload.json</summary>\n\n```json\n")
+              summary.write(json.dumps(payload, indent=2))
+              summary.write("\n```\n</details>\n")
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as out:
+              out.write(f"FAILURES_FOUND={'true' if failures_found else 'false'}\n")
+          EOF
+
+      - name: Check Slack webhook is configured
+        env:
+          FAILURES_FOUND: ${{ steps.get-failed.outputs.FAILURES_FOUND }}
+          SLACK_WEBHOOK_URL_PASS: ${{ secrets.SLACK_FAILURE_WEBHOOK_URL_PASS }}
+          SLACK_WEBHOOK_URL_FAIL: ${{ secrets.SLACK_FAILURE_WEBHOOK_URL_FAIL }}
+        run: |
+          if [ "$FAILURES_FOUND" = "false" ]; then
+            kind=PASS
+            webhook="$SLACK_WEBHOOK_URL_PASS"
+          else
+            kind=FAIL
+            webhook="$SLACK_WEBHOOK_URL_FAIL"
+          fi
+          echo "failures_found=$FAILURES_FOUND"
+          echo "using_secret=SLACK_FAILURE_WEBHOOK_URL_${kind}"
+          echo "webhook_length=${#webhook}"
+          if [ -z "$webhook" ]; then
+            echo "::error::SLACK_FAILURE_WEBHOOK_URL_${kind} is empty. Check that the org/repo secret exists and is available to this repository."
+            exit 1
+          fi
+
+      # Use PASS webhook when no missing cherry-picks, FAIL webhook when missing cherry-picks found
+      - name: Send Slack notification (missing cherry-picks)
+        if: steps.get-failed.outputs.FAILURES_FOUND == 'true'
+        uses: slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d # v4.0.0
+        with:
+          webhook: ${{ secrets.SLACK_FAILURE_WEBHOOK_URL_FAIL }}
+          webhook-type: webhook-trigger
+          payload-file-path: slack_payload.json
+          errors: true
+
+      - name: Send Slack notification (all accounted for)
+        if: steps.get-failed.outputs.FAILURES_FOUND == 'false'
+        uses: slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d # v4.0.0
+        with:
+          webhook: ${{ secrets.SLACK_FAILURE_WEBHOOK_URL_PASS }}
+          webhook-type: webhook-trigger
+          payload-file-path: slack_payload.json
+          errors: true
