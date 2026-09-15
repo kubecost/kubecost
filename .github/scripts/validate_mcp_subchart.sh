@@ -519,6 +519,14 @@ assert_absent "nginx does not emit 424 with default settings" \
   "${RENDER_DIR}/nginx-baseline.conf" "return 424"
 assert_contains "nginx MCP CSP allows the consent page inline logo" \
   "${RENDER_DIR}/nginx-baseline.conf" "img-src 'self' data:"
+# The upstream HTML owns the script hash. The proxy must not independently
+# reject it, and the exception must not reach the Kubecost UI server policy.
+assert_contains "nginx MCP CSP delegates inline-script authorization to the page CSP" \
+  "${RENDER_DIR}/nginx-baseline.conf" "script-src 'unsafe-inline'"
+assert_absent "nginx MCP CSP does not pin a server-release-specific script hash" \
+  "${RENDER_DIR}/nginx-baseline.conf" "sha256-"
+assert_contains "Kubecost UI retains its separate server CSP" \
+  "${RENDER_DIR}/nginx-baseline.conf" "frame-ancestors 'none'; form-action 'self';"
 assert_contains "nginx MCP CSP still relaxes form-action for the IdP redirect chain" \
   "${RENDER_DIR}/nginx-baseline.conf" "form-action *"
 
