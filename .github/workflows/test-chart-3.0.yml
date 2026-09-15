@@ -2,15 +2,8 @@ name: Chart build and test 3.x
 
 on:
   workflow_dispatch: {}
-  # Normally using pull_request_target along with checking out the ref of the PR is not
-  # a good idea, but this is low risk since it's a Helm chart repo.
-  pull_request_target:
+  pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-
-  # Uncomment this if you need to actively test this workflow from a PR draft
-  # pull_request:
-  #   branches:
-  #     - develop
 
 # Prevents multiple runs of the same workflow on the same branch from executing
 # simultaneously. Saves resources.
@@ -25,8 +18,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Set up chart-testing
         uses: helm/chart-testing-action@v2.8.0
@@ -77,12 +68,11 @@ jobs:
           - name: v1.36
             version: v1.36.4
     needs: test-chart
+    if: github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'workflow_dispatch'
     name: ${{ matrix.k8s-version.name }} test
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Set up chart-testing
         uses: helm/chart-testing-action@v2.8.0
@@ -211,6 +201,7 @@ jobs:
   deploy-ocp:
     runs-on: ubuntu-latest
     needs: test-chart
+    if: github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'workflow_dispatch'
     strategy:
       matrix:
         cluster:
@@ -218,8 +209,6 @@ jobs:
           version: 4.22.0-okd
     steps:
       - uses: actions/checkout@v7
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
       # Outputs: `cluster-kubeconfig`, `cluster-id`
       - name: Create Cluster
         id: create-cluster
@@ -273,6 +262,7 @@ jobs:
   deploy-eks:
     runs-on: ubuntu-latest
     needs: test-chart
+    if: github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'workflow_dispatch'
     strategy:
       matrix:
         cluster:
@@ -280,8 +270,6 @@ jobs:
           version: v1.36
     steps:
       - uses: actions/checkout@v7
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
       - name: Create Cluster
         id: create-cluster
         uses: replicatedhq/replicated-actions/create-cluster@0fbf5395cf3e8c744f447bbc92b7de9135eead8e # v1.27.1
