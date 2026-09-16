@@ -40,7 +40,7 @@ global:
   ##   - myRegistryKeySecretName
   ##
   imagePullSecrets: []
-  ## @param global.defaultStorageClass The default storage class to use, unless overridden by the storageClass parameter in the finopsagent, aggregator, or localStore blocks.
+  ## @param global.defaultStorageClass The default storage class to use, unless overridden by the storageClass parameter in the finopsagent, aggregator, localStore, or mcp blocks.
   ##
   defaultStorageClass: ""
   ## @param global.zone The zone to use for the finops agent
@@ -730,8 +730,18 @@ mcp:
       clientID: ""
       # mcp.config.oidc.clientSecret is the OIDC client secret. Prefer existingSecret for production.
       clientSecret: ""
+      # Optional — auto-generated as an ephemeral key at startup when unset. Set explicitly in
+      # production to ensure token consistency across restarts.
+      # Generate with: openssl rand -base64 32
+      jwtSigningKey: ""
+      # Optional — auto-generated as an ephemeral Fernet key at startup when unset. Leaving this
+      # unset wipes the OAuth storage directory on every restart, so clients must re-register and
+      # re-authorize after each redeploy. Set explicitly in production to preserve OAuth sessions.
+      # Generate with: openssl rand -base64 32
+      storageEncryptionKey: ""
       # mcp.config.oidc.existingSecret references a pre-created Secret containing OIDC credentials.
-      # Required keys: OIDC_CLIENT_ID, OIDC_CLIENT_SECRET. Preferred over clientID/clientSecret.
+      # Required keys: OIDC_CLIENT_ID, OIDC_CLIENT_SECRET. Optional keys: OIDC_JWT_SIGNING_KEY,
+      # OIDC_STORAGE_ENCRYPTION_KEY. Preferred over clientID/clientSecret.
       # Supply either this or clientID/clientSecret, not both.
       existingSecret: ""
       # Register https://<mcp.config.externalUrl host>/oauth/mcp/callback as the redirect
@@ -1085,7 +1095,7 @@ forecasting:
   image:
     registry: ""  # Default is "icr.io"
     repository: kubecost/modeling
-    tag: v0.2.0
+    tag: v0.2.2
   imagePullPolicy: IfNotPresent
 
   # Resource specification block for the forecasting container.
