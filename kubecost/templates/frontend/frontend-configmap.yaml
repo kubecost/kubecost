@@ -560,7 +560,7 @@ data:
                 "kubecostApiBaseUrl": "{{ include "kubecost.mcp.kubecostApiBaseUrl" . }}",
                 "kubecostApiPort": "{{ ((.Values.mcp).config).kubecostApiPort }}",
                 "kubecostApiBasePath": "{{ ((.Values.mcp).config).kubecostApiBasePath }}",
-                "chartVersion": "3.3.0-rc.9",
+                "chartVersion": "3.3.0-rc.10",
                 "tenMinuteDataRetention": "{{ (.Values.aggregator.retention10m) }}",
                 "hourlyDataRetention": "{{ (.Values.aggregator.retention1h) }}",
                 "dailyDataRetention": "{{ (.Values.aggregator.retention1d) }}",
