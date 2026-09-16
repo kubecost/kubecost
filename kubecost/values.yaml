@@ -1540,6 +1540,10 @@ clusterController:
     ## @param clusterController.serviceAccount.create Whether to create a service account for cluster controller
     create: true
 
+    ## By default, the cluster controller pod will use <deployment-name>-cluster-controller for the service account name.
+    ## This can be overridden to use a different service account.
+    name: ""
+
     ## @param clusterController.serviceAccount.annotations Annotations for the cluster controller service account
     ## Configure cloud provider authentication for federated storage access:
     ##   AWS:   eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/ROLE_NAME
