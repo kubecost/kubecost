@@ -1,4 +1,0 @@
-{
-    "name": "Default",
-    "postCreateCommand": "./.devcontainer/tools.sh"
-}
