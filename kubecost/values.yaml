@@ -706,6 +706,7 @@ mcp:
     #   MCP-owned route (mcp.httpRoute or mcp.ingress enabled below): leave this
     #     empty and set the route's own hostname instead. The subchart infers this
     #     value from that hostname, and rejects a value that disagrees with it.
+    # If clients get the error: "Error: Client error '421 Misdirected Request'", a mismatch here is likely the issue.
     externalUrl: ""
     # mcp.config.kubecostApiKey is sent to Kubecost as an X-API-KEY request header for outbound calls.
     # An MCP client may override it per request by sending its own X-API-KEY header.
