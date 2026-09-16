@@ -110,6 +110,15 @@ operator's own frontend.nginxHeaders.server entries are repeated here, minus
 any Content-Security-Policy, before the relaxed one. `img-src 'self' data:`
 is required so the consent page's inline PNG logo is not blocked; browsers
 AND this header with FastMCP's meta CSP, which already allows `img-src data:`.
+
+Allow inline scripts through this proxy policy so the consent page's own CSP
+can authorize its submit-once script by hash. Without script-src, default-src
+'self' blocks that script even when the page's meta CSP permits its hash.
+'unsafe-inline' here does not override the page's hash-only policy: both must
+permit execution. Keep the hash in the application so server upgrades do not
+require synchronized chart changes. This relies on MCP HTML retaining its
+own restrictive CSP; do not strip the upstream policy or apply this exception
+to Kubecost UI locations.
 */}}
   proxy_connect_timeout       300;
   proxy_send_timeout          3600;
@@ -130,6 +139,6 @@ AND this header with FastMCP's meta CSP, which already allows `img-src data:`.
   add_header {{ . }}
 {{- end }}
 {{- end }}
-  add_header Content-Security-Policy "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; frame-ancestors 'none'; form-action *;";
+  add_header Content-Security-Policy "default-src 'self'; script-src 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; frame-ancestors 'none'; form-action *;";
 {{- end -}}
 
