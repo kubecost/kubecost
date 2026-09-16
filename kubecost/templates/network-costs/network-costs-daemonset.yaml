@@ -125,12 +125,10 @@ spec:
           name: network-costs-federated-store
           readOnly: true
         {{- end }}
-        {{- /* Defaults are merged with additionalSecurityContext so that a user-supplied
-             key overrides the default of the same name instead of being appended
-             alongside it, which would emit a duplicate YAML key. */}}
-        {{- $securityContext := mergeOverwrite (dict "privileged" true "runAsUser" 0) (deepCopy (.Values.networkCosts.additionalSecurityContext | default dict)) }}
+        {{- if .Values.networkCosts.securityContext }}
         securityContext:
-          {{- toYaml $securityContext | nindent 10 }}
+          {{- toYaml .Values.networkCosts.securityContext | nindent 10 }}
+        {{- end }}
         ports:
         - name: http-server
           containerPort: {{ .Values.networkCosts.port | default 3001 }}

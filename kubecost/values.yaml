@@ -1083,25 +1083,21 @@ networkCosts:
   nodeSelector: {}
   annotations: {}
   healthCheckProbes: {}
-  ## Merged over the container securityContext defaults of
-  ## `privileged: true` and `runAsUser: 0`. Keys set here take precedence, so
-  ## this may be used to drop privileges rather than only to add fields.
+  ## Container securityContext for the network-costs DaemonSet.
   ##
   ## network-costs reads conntrack flows over the netlink (ctnetlink) API, which
   ## requires CAP_NET_ADMIN. A full privileged container is not required; the
-  ## following is sufficient:
-  ##
-  ## additionalSecurityContext:
-  ##   privileged: false
-  ##   allowPrivilegeEscalation: false
-  ##   capabilities:
-  ##     drop: ["ALL"]
-  ##     add: ["NET_ADMIN"]
-  ##
-  ## Note that `runAsUser: 0` is still required: the conntrack accounting sysctl
+  ## following is sufficient to enable network-costs.
+  ## Note that `runAsUser: 0` is required: the conntrack accounting sysctl
   ## under /netfilter and, in `hostProc` mode, /proc/net/nf_conntrack are only
   ## readable by root.
-  additionalSecurityContext: {}
+  securityContext:
+    privileged: false
+    allowPrivilegeEscalation: false
+    runAsUser: 0
+    capabilities:
+      drop: ["ALL"]
+      add: ["NET_ADMIN"]
 
 ## Kubecost Forecasting forecasts future cost patterns based on historical
 ## patterns observed by Kubecost.
