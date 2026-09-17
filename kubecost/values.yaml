@@ -1540,6 +1540,7 @@ clusterController:
     ## @param clusterController.serviceAccount.create Whether to create a service account for cluster controller
     create: true
 
+    ## @param clusterController.serviceAccount.name The name of the service account to use for cluster controller
     ## By default, the cluster controller pod will use <deployment-name>-cluster-controller for the service account name.
     ## This can be overridden to use a different service account.
     name: ""

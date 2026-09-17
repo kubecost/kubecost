@@ -30,7 +30,7 @@
 {{- if .Values.clusterController.serviceAccount.create -}}
     {{ default (include "kubecost.clusterController.name" .) .Values.clusterController.serviceAccount.name }}
 {{- else -}}
-    {{ default (include "kubecost.serviceAccountName" .) .Values.clusterController.serviceAccount.name }}
+    {{ default (printf "%s-%s" .Release.Name "cluster-controller" .) .Values.clusterController.serviceAccount.name }}
 {{- end -}}
 {{- end -}}
 
