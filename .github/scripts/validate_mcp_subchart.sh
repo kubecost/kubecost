@@ -263,7 +263,7 @@ mcp_image="$(yq -r \
   "select(.kind == \"Deployment\" and .metadata.name == \"${expected_fullname}\") | .spec.template.spec.containers[0].image" \
   "${RENDER_DIR}/enabled.yaml")"
 assert_eq "subchart Deployment uses the pinned appVersion image" \
-  "icr.io/kubecost/mcp-kubecost:${dep_version#v}" "$mcp_image"
+  "icr.io/kubecost/mcp-kubecost:v${dep_version#v}" "$mcp_image"
 
 svc_port="$(yq -r \
   "select(.kind == \"Service\" and .metadata.name == \"${expected_fullname}\") | .spec.ports[0].port" \
@@ -783,7 +783,7 @@ yq -r \
 overridden_image="$(yq -r '.spec.template.spec.containers[0].image' \
   "${RENDER_DIR}/globals-deployment.yaml")"
 assert_eq "global.imageRegistry overrides the subchart image registry" \
-  "test-registry.io/kubecost/mcp-kubecost:${dep_version#v}" "$overridden_image"
+  "test-registry.io/kubecost/mcp-kubecost:v${dep_version#v}" "$overridden_image"
 
 pull_secret="$(yq -r '.spec.template.spec.imagePullSecrets[0].name' \
   "${RENDER_DIR}/globals-deployment.yaml")"
