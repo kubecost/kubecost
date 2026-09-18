@@ -162,8 +162,8 @@ spec:
         resources:
           {{- toYaml .Values.clusterController.resources | nindent 12 }}
       {{- include "kubecost.imagePullSecrets" . | nindent 6 }}
-      serviceAccount: {{ include "kubecost.clusterController.name" . }}
-      serviceAccountName: {{ include "kubecost.clusterController.name" . }}
+      serviceAccount: {{ include "kubecost.clusterController.serviceAccountName" . }}
+      serviceAccountName: {{ include "kubecost.clusterController.serviceAccountName" . }}
       {{- with .Values.clusterController.tolerations }}
       tolerations:
       {{- toYaml . | nindent 8 }}
