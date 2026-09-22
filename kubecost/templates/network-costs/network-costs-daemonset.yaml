@@ -43,6 +43,82 @@ spec:
       {{- include "kubecost.imagePullSecrets" . | nindent 6 }}
       hostNetwork: true
       serviceAccountName: {{ template "kubecost.networkCosts.name" . }}
+      {{- $acctFile := "/netfilter/nf_conntrack_acct" }}
+      {{- if .Values.networkCosts.hostProc }}
+      {{- $acctFile = printf "%s/sys/net/netfilter/nf_conntrack_acct" .Values.networkCosts.hostProc.mountPath }}
+      {{- end }}
+      # See notes in values.yaml for context
+      initContainers:
+      {{- if .Values.networkCosts.sysctlInit.enabled }}
+      - name: sysctl
+        image: {{ include "kubecost.networkCosts.image" . }}
+        imagePullPolicy: {{ .Values.networkCosts.imagePullPolicy | default "Always" }}
+        ## Written via procfs rather than `sysctl -w`: the network-costs image is
+        ## minimal and does not ship the procps sysctl binary.
+        command:
+        - /bin/sh
+        - -c
+        - |
+          set -e
+          f=/proc/sys/net/netfilter/nf_conntrack_acct
+          if [ ! -w "$f" ]; then
+            echo "ERROR: $f is not writable. Is the nf_conntrack kernel module loaded on this node?" >&2
+            exit 1
+          fi
+          echo 1 > "$f"
+          echo "net.netfilter.nf_conntrack_acct=$(cat "$f")"
+        securityContext:
+          # Required to write host kernel sysctl; CAP_NET_ADMIN alone is not sufficient.
+          # Note: allowPrivilegeEscalation cannot be set to false when privileged is true.
+          privileged: true
+          runAsUser: 0
+      {{- else }}
+      ## sysctlInit is disabled, so the sysctl is expected to be applied out of
+      ## band (machine config, tuned profile, node bootstrap). Verify it and fail
+      ## fast rather than let network-costs report zero egress bytes silently.
+      ## This container needs no privileges at all: nf_conntrack_acct is
+      ## world-readable (0644 root:root). It must run in the host network
+      ## namespace — the value is per-netns, so a pod-local read returns the
+      ## namespace default of 0 — which it inherits from the pod's hostNetwork.
+      - name: sysctl-verify
+        image: {{ include "kubecost.networkCosts.image" . }}
+        imagePullPolicy: {{ .Values.networkCosts.imagePullPolicy | default "Always" }}
+        command:
+        - /bin/sh
+        - -c
+        - |
+          f={{ $acctFile }}
+          v=$(cat "$f" 2>/dev/null || echo "")
+          if [ "$v" != "1" ]; then
+            echo "ERROR: net.netfilter.nf_conntrack_acct is '$v', expected '1' (read from $f)." >&2
+            echo "network-costs cannot attribute egress bytes to pods without it." >&2
+            echo "Either set the sysctl on every node, or re-enable the sysctlInit container" >&2
+            echo "to automatically set it --set networkCosts.sysctlInit.enabled=true" >&2
+            exit 1
+          fi
+          echo "net.netfilter.nf_conntrack_acct=$v"
+        securityContext:
+          privileged: false
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 65534
+          readOnlyRootFilesystem: true
+          seccompProfile:
+            type: RuntimeDefault
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        {{- if .Values.networkCosts.hostProc }}
+        - mountPath: {{ .Values.networkCosts.hostProc.mountPath }}
+          name: host-proc
+          readOnly: true
+        {{- else }}
+        - mountPath: /netfilter
+          name: netfilter
+          readOnly: true
+        {{- end }}
+      {{- end }}
       containers:
       - name: {{ template "kubecost.networkCosts.name" . }}
         {{- if eq (typeOf .Values.networkCosts.image) "string" }}
@@ -102,12 +178,22 @@ spec:
         {{- toYaml .Values.networkCosts.healthCheckProbes | nindent 8 }}
         {{- end }}
         volumeMounts:
+        ## These mounts must stay writable. network-costs re-enables conntrack
+        ## accounting itself if it finds nf_conntrack_acct set to 0 at startup,
+        ## and mounting the sysctl read-only turns that self-heal into a
+        ## crashloop ("Failed to enable conntrack byte/packet accounting ...
+        ## Read-only file system"). The sysctlInit container normally sets the
+        ## value first, but init containers are not re-run when the main
+        ## container restarts, so this path still matters if the value is
+        ## changed on the node while the pod is alive.
         {{- if .Values.networkCosts.hostProc }}
         - mountPath: {{ .Values.networkCosts.hostProc.mountPath }}
           name: host-proc
         {{- else }}
+        ## /net is host /proc/net, which network-costs only ever reads.
         - mountPath: /net
           name: nf-conntrack
+          readOnly: true
         - mountPath: /netfilter
           name: netfilter
         {{- end }}

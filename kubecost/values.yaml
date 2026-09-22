@@ -1078,18 +1078,44 @@ networkCosts:
   nodeSelector: {}
   annotations: {}
   healthCheckProbes: {}
-  ## Container securityContext for the network-costs DaemonSet.
+  ## sysctlInit runs a short-lived init container that sets the kernel parameter
+  ## net.netfilter.nf_conntrack_acct=1, which makes the kernel track byte and
+  ## packet counts per conntrack entry. network-costs reads those counters to
+  ## attribute egress bytes to individual pods; without it the counters are zero
+  ## and per-pod network costs are silently wrong.
   ##
-  ## network-costs reads conntrack flows over the netlink (ctnetlink) API, which
-  ## requires CAP_NET_ADMIN. A full privileged container is not required; the
-  ## following is sufficient to enable network-costs.
-  ## Note that `runAsUser: 0` is required: the conntrack accounting sysctl
-  ## under /netfilter and, in `hostProc` mode, /proc/net/nf_conntrack are only
-  ## readable by root.
+  ## This init container is privileged. Writing a host kernel sysctl requires it
+  ## (CAP_NET_ADMIN alone is not sufficient), and pod-level
+  ## `securityContext.sysctls` is not an option because kubelet rejects
+  ## namespaced net sysctls on a hostNetwork pod. The container writes that one
+  ## value and exits; the main network-costs container is not privileged.
+  ##
+  ## Enabled by default because most node images do not set this sysctl. Disable
+  ## it if the sysctl is already applied at the node level (machine config, tuned
+  ## profile, or node bootstrap) and you do not want a privileged init container
+  ## in the pod. A `sysctl-verify` init container then runs in its place: it
+  ## reads the sysctl — which is world-readable, so it needs no privileges at
+  ## all — and fails the pod if the value is not 1, so a missing node-level
+  ## setting surfaces as a failing pod rather than as silently zeroed egress.
+  sysctlInit:
+    enabled: true
+
+  ## Container securityContext for the network-costs DaemonSet. A privileged
+  ## container is not required; the following is the minimum that works.
+  ##
+  ## NET_ADMIN is required to read conntrack flows over the netlink (ctnetlink)
+  ## API. It also lets network-costs re-enable conntrack accounting itself if it
+  ## starts up and finds nf_conntrack_acct set to 0, which is why the chart
+  ## mounts that sysctl read-write.
+  ## runAsUser: 0 is required to read the host's /proc/net/nf_conntrack, which is
+  ## mode 0440 root:root. (The accounting sysctl is mode 0644 and needs no
+  ## special access to read.)
   securityContext:
     privileged: false
     allowPrivilegeEscalation: false
     runAsUser: 0
+    seccompProfile:
+      type: RuntimeDefault
     capabilities:
       drop: ["ALL"]
       add: ["NET_ADMIN"]

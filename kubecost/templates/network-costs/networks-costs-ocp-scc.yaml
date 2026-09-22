@@ -6,7 +6,21 @@ metadata:
   labels:
     {{- include "kubecost.commonLabels" . | nindent 4 }}
 priority: 10
-allowPrivilegedContainer: true
+# SCCs are pod-level policy: allowPrivilegedContainer permits any container in
+# the pod to declare privileged: true, but does not force it. The main
+# network-costs container explicitly sets privileged: false and will run
+# unprivileged regardless. allowPrivilegedContainer is set to true only when
+# sysctlInit is enabled, because the init container requires privileged mode to
+# write the host kernel sysctl net.netfilter.nf_conntrack_acct=1.
+# When sysctlInit is disabled (sysctl managed externally), this is false and
+# no container in the pod may run privileged.
+allowPrivilegedContainer: {{ .Values.networkCosts.sysctlInit.enabled }}
+# Drop everything by default, then permit only NET_ADMIN, which network-costs
+# requires to read conntrack flows over the netlink (ctnetlink) API.
+requiredDropCapabilities:
+- ALL
+allowedCapabilities:
+- NET_ADMIN
 allowHostDirVolumePlugin: true
 allowHostNetwork: true
 allowHostPorts: true
@@ -27,6 +41,9 @@ volumes:
   - hostPath
   - projected
   - configMap
+  # secret is required by networkCosts.storageConfig, networkCosts.natGatewayConfig
+  # and global.federatedStorage, which mount secret volumes into the DaemonSet.
+  - secret
 users:
   - system:serviceaccount:{{ .Release.Namespace }}:{{ template "kubecost.networkCosts.name" . }}
 {{- end }}

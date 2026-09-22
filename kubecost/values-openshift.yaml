@@ -27,6 +27,13 @@ global:
 ## Ref: https://docs.openshift.com/container-platform/latest/installing/install_config/configuring-firewall.html
 networkCosts:
   port: 9009
+  ## Note: networkCosts.sysctlInit and networkCosts.securityContext are not
+  ## overridden here — the values.yaml defaults are already correct for
+  ## OpenShift. OpenShift nodes do not set net.netfilter.nf_conntrack_acct=1,
+  ## so the default sysctlInit init container is required for per-pod egress
+  ## attribution, and the SCC created by
+  ## global.platforms.openshift.scc.networkCosts permits it while the main
+  ## container runs unprivileged with only CAP_NET_ADMIN.
 finopsagent:
   agent:
     collectorDataSource:
