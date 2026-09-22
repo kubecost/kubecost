@@ -1,0 +1,1 @@
+{"id":"70b5adf6-3b21-43f6-ac98-4b8f8c00af94","fileUri":"file:///Users/jesse/git/kubecost/kubecost/templates/network-costs/networks-costs-ocp-scc.yaml","repoName":"kubecost/kubecost","branchName":"fix/network-costs-ocp-net-admin-sysctl","toolName":"apply_diff","startLine":9,"endLine":16,"taskId":null,"createdAt":1790092432967}
