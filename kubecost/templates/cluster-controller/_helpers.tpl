@@ -26,6 +26,10 @@
 {{- printf "%s-%s" .Release.Name "cluster-controller" -}}
 {{- end -}}
 
+{{- define "kubecost.clusterController.serviceAccountName" -}}
+{{- default (include "kubecost.clusterController.name" .) .Values.clusterController.serviceAccount.name -}}
+{{- end -}}
+
 {{- define "kubecost.clusterController.actionsBucketConfigSecretName" -}}
 {{- if (.Values.clusterController).storageConfigSecret }}
 {{- printf "%s" .Values.clusterController.storageConfigSecret -}}

@@ -29,5 +29,5 @@ volumes:
   - configMap
   - secret
 users:
-  - system:serviceaccount:{{ .Release.Namespace }}:{{ include "kubecost.clusterController.name" . }}
+  - system:serviceaccount:{{ .Release.Namespace }}:{{ include "kubecost.clusterController.serviceAccountName" . }}
 {{- end }}

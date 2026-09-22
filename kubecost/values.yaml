@@ -27,12 +27,6 @@ global:
     existingSecret: ""
     # If you want to use a different file name for the federated storage config, you can set the fileName value.
     fileName: federated-store.yaml  # set this value to change what the file name for the yaml config is
-  ## @param global.acknowledged Acknowledgment flag for Kubecost 3.0 major upgrade
-  ## REQUIRED FOR ENTERPRISE: Kubecost 3.0 introduces breaking changes and potential data disruption
-  ## risks. Review release notes and migration guide before proceeding.
-  ## Ref: https://github.com/kubecost/kubecost/releases
-  ##
-  acknowledged: false
   ## @param cspPricingApiKey.existingSecret The name of an existing secret to use for the GCP API key. If this is set, the secret will be used. Leave empty to create a new secret.
   ## @param cspPricingApiKey.apiKey The GCP API key value. If this is set, the secret will be created. Leave empty to use an existing secret.
   ## This is currently only used for GCP.
@@ -712,6 +706,7 @@ mcp:
     #   MCP-owned route (mcp.httpRoute or mcp.ingress enabled below): leave this
     #     empty and set the route's own hostname instead. The subchart infers this
     #     value from that hostname, and rejects a value that disagrees with it.
+    # If clients get the error: "Error: Client error '421 Misdirected Request'", a mismatch here is likely the issue.
     externalUrl: ""
     # mcp.config.kubecostApiKey is sent to Kubecost as an X-API-KEY request header for outbound calls.
     # An MCP client may override it per request by sending its own X-API-KEY header.
@@ -895,12 +890,12 @@ networkCosts:
   ## If not set, the image will be pulled from the registry and repository specified in the image block.
   ## If set, the fullImageName will be used to pull the image.
   ## Example:
-  ## fullImageName: icr.io/kubecost/network-costs:v0.19.2
+  ## fullImageName: icr.io/kubecost/network-costs:v0.19.3
   fullImageName: ""
   image:
     registry: ""  # Default is "icr.io"
     repository: kubecost/network-costs
-    tag: v0.19.2
+    tag: v0.19.3
   imagePullPolicy: IfNotPresent
 
   updateStrategy:
@@ -1553,6 +1548,11 @@ clusterController:
   serviceAccount:
     ## @param clusterController.serviceAccount.create Whether to create a service account for cluster controller
     create: true
+
+    ## @param clusterController.serviceAccount.name The name of the service account to use for cluster controller
+    ## By default, the cluster controller pod will use <deployment-name>-cluster-controller for the service account name.
+    ## This can be overridden to use a different service account.
+    name: ""
 
     ## @param clusterController.serviceAccount.annotations Annotations for the cluster controller service account
     ## Configure cloud provider authentication for federated storage access:
