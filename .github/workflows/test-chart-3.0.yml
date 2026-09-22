@@ -41,6 +41,7 @@ jobs:
           ct lint --chart-dirs=kubecost/ --charts kubecost/ --validate-maintainers=false
 
       # Run `helm template` on the main values file plus all those in the ci directory.
+      # Also templates with the EKS values file to include public.ecr.aws images in the check.
       - name: Helm template
         run: |
           helm template kubecost/ -f .github/ci-helmValues/helmValues-federated-store.yaml > full.yaml
@@ -51,6 +52,21 @@ jobs:
               helm template kubecost/ -f "$file" >> full.yaml
           fi
           done
+          echo "Templating with EKS values (public.ecr.aws registry)"
+          helm template kubecost/ -f kubecost/values-eks-cost-monitoring.yaml >> full.yaml
+
+      - name: Set up yq
+        run: |
+          set -euo pipefail
+          YQ_VERSION=v4.53.4
+          curl -fsSL -o /tmp/yq \
+            "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64"
+          sudo install -m 0755 /tmp/yq /usr/local/bin/yq
+          yq --version
+
+      # this step is designed to fail fail before creating clusters
+      - name: Verify container images exist
+        run: .github/scripts/check-images.sh full.yaml
 
       # Run Kubeconform on the combined, templatized output across all tested values stored in `full.yaml`.
       # Ensure all the rendered resources are valid.
