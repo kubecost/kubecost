@@ -7,6 +7,8 @@ metadata:
     {{- include "kubecost.commonLabels" . | nindent 4 }}
 priority: 10
 allowPrivilegedContainer: true
+allowedCapabilities:
+- NET_ADMIN
 allowHostDirVolumePlugin: true
 allowHostNetwork: true
 allowHostPorts: true

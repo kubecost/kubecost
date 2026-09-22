@@ -27,6 +27,15 @@ global:
 ## Ref: https://docs.openshift.com/container-platform/latest/installing/install_config/configuring-firewall.html
 networkCosts:
   port: 9009
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      add:
+      - NET_ADMIN
+      drop:
+      - ALL
+    privileged: false
+    runAsUser: 0
 finopsagent:
   agent:
     collectorDataSource:
