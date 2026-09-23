@@ -18,11 +18,11 @@ jobs:
       github.event.comment.body == '/backport')
     steps:
       - name: Checkout kubecost
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7.0.1
 
       - name: Generate app token
         id: app-token
-        uses: actions/create-github-app-token@v3
+        uses: actions/create-github-app-token@v3.2.0
         with:
           client-id: ${{ vars.KC_ACTIONS_BOT_APP_CLIENT_ID }}
           private-key: ${{ secrets.KC_ACTIONS_BOT_APP_PRIVATE_KEY }}
@@ -30,7 +30,7 @@ jobs:
           repositories: github-actions
 
       - name: Check out actions code
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
         with:
           repository: kubecost/github-actions
           path: ./github-actions
