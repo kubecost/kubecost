@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
@@ -80,7 +80,7 @@ jobs:
     name: ${{ matrix.k8s-version.name }} test
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
@@ -186,7 +186,7 @@ jobs:
           done
 
       - name: Checkout Target Branch
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
         with:
           ref: ${{ github.event.pull_request.base.ref }}
           path: ./target-branch
@@ -217,13 +217,13 @@ jobs:
         - distribution: openshift
           version: 4.22.0-okd
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       # Outputs: `cluster-kubeconfig`, `cluster-id`
       - name: Create Cluster
         id: create-cluster
-        uses: replicatedhq/replicated-actions/create-cluster@0fbf5395cf3e8c744f447bbc92b7de9135eead8e # v1.27.1
+        uses: replicatedhq/replicated-actions/create-cluster@v1.27.1
         with:
           kubernetes-distribution: ${{ matrix.cluster.distribution }}
           kubernetes-version: ${{ matrix.cluster.version }}
@@ -267,7 +267,7 @@ jobs:
         run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/name=network-costs --timeout=120s
       - name: Remove Cluster
         id: remove-cluster
-        uses: replicatedhq/replicated-actions/remove-cluster@0fbf5395cf3e8c744f447bbc92b7de9135eead8e # v1.27.1
+        uses: replicatedhq/replicated-actions/remove-cluster@v1.27.1
         with:
           api-token: ${{ secrets.REPLICATED_API_TOKEN }}
           cluster-id: ${{ steps.create-cluster.outputs.cluster-id }}
@@ -281,12 +281,12 @@ jobs:
         - distribution: eks
           version: v1.36
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Create Cluster
         id: create-cluster
-        uses: replicatedhq/replicated-actions/create-cluster@0fbf5395cf3e8c744f447bbc92b7de9135eead8e # v1.27.1
+        uses: replicatedhq/replicated-actions/create-cluster@v1.27.1
         with:
           kubernetes-distribution: ${{ matrix.cluster.distribution }}
           kubernetes-version: ${{ matrix.cluster.version }}
@@ -323,7 +323,7 @@ jobs:
         run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/name=network-costs --timeout=120s
       - name: Remove Cluster
         id: remove-cluster
-        uses: replicatedhq/replicated-actions/remove-cluster@0fbf5395cf3e8c744f447bbc92b7de9135eead8e # v1.27.1
+        uses: replicatedhq/replicated-actions/remove-cluster@v1.27.1
         continue-on-error: true
         with:
           api-token: ${{ secrets.REPLICATED_API_TOKEN }}
