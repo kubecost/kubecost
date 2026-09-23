@@ -270,18 +270,20 @@ jobs:
           helm repo add mcp-kubecost https://kubecost.github.io/mcp-kubecost
           helm repo update
           helm dependency build
-          helm install --wait --wait-for-jobs kubecost . -n kubecost -f values-openshift.yaml \
-          --set global.platforms.openshift.route.enabled=true \
-          --set global.platforms.openshift.scc.networkCosts=true \
-          --set global.platforms.openshift.scc.clusterController=true \
+          helm install --wait --wait-for-jobs kubecost . -n kubecost \
+          -f values-openshift.yaml \
           --set networkCosts.enabled=true \
           --set clusterController.enabled=true \
           --set clusterController.storageConfigSecret=actions-bucket-config \
+          --set-json 'networkCosts.affinity=null'
 
       - name: Wait for ready
         run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/instance=kubecost --timeout=120s
       - name: Run Helm tests
         run: helm test -n kubecost kubecost
+      - name: Test — network-costs starts
+        ## nodes do not have regions, no data expected. Just verify it starts:
+        run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/name=network-costs --timeout=120s
       - name: Remove Cluster
         id: remove-cluster
         uses: replicatedhq/replicated-actions/remove-cluster@v1.27.1
@@ -336,6 +338,8 @@ jobs:
         run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/instance=kubecost --timeout=120s
       - name: Run Helm tests
         run: helm test -n kubecost kubecost
+      - name: Test — network-costs
+        run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/name=network-costs --timeout=120s
       - name: Remove Cluster
         id: remove-cluster
         uses: replicatedhq/replicated-actions/remove-cluster@v1.27.1
