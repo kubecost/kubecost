@@ -50,7 +50,7 @@ body:
       description: >-
         By submitting this issue, you agree to the following.
       options:
-        - label: I have read and followed the [issue guidelines](https://github.com/kubecost/cost-analyzer-helm-chart/blob/develop/ISSUE_GUIDELINES.md) and this is a feature request only for the Helm chart.
+        - label: I have read and followed the [issue guidelines](https://github.com/kubecost/kubecost/blob/develop/ISSUE_GUIDELINES.md) and this is a feature request only for the Helm chart.
           required: true
         - label: I have searched other issues in this repository and mine is not recorded.
           required: true
