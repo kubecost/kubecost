@@ -29,3 +29,12 @@ helm template kubecost ./kubecost
 ## Additional rules
 
 Always check for rules that agents must follow in the [.bob/rules](.bob/rules) folder.
+
+## Changelog
+
+The file is [`CHANGELOG.md`](CHANGELOG.md) at the repository root (Keep a Changelog).
+
+- Every commit that changes user-facing behavior MUST add an entry under `## [Unreleased]`, in Added / Changed / Fixed / Removed.
+- Use Conventional Commits (`feat:`, `fix:`, `refactor:`) so entries can be generated from commit messages.
+- Skip for: ci-only changes, docs-only changes, test-only changes, formatting/lint fixes.
+- At release, move `[Unreleased]` into a new `## [X.Y.Z] - YYYY-MM-DD` section and retarget the compare links at the bottom of the file.
