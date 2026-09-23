@@ -252,7 +252,7 @@ jobs:
           helm repo update
           helm dependency build
           helm install --wait --wait-for-jobs kubecost . -n kubecost \
-          -f kubecost/values-openshift.yaml \
+          -f values-openshift.yaml \
           --set networkCosts.enabled=true \
           --set clusterController.enabled=true \
           --set clusterController.storageConfigSecret=actions-bucket-config \
