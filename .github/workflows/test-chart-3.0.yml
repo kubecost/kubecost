@@ -256,7 +256,7 @@ jobs:
           --set networkCosts.enabled=true \
           --set clusterController.enabled=true \
           --set clusterController.storageConfigSecret=actions-bucket-config \
-          --set networkCosts.affinity=""
+          --set-json 'networkCosts.affinity=null'
 
       - name: Wait for ready
         run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/instance=kubecost --timeout=120s
