@@ -1057,7 +1057,7 @@ networkCosts:
   tolerations: []
   ## networkCosts requires that the node has topology.kubernetes.io/region and topology.kubernetes.io/zone labels.
   ## The below nodeAffinity policy will prevent the pods from running on any node that does not have both labels.
-  ## to override this, set affinity: ""
+  ## to override this, add --set-json 'networkCosts.affinity=null'
   affinity:
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
