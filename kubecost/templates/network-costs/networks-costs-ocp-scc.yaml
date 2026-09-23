@@ -6,7 +6,13 @@ metadata:
   labels:
     {{- include "kubecost.commonLabels" . | nindent 4 }}
 priority: 10
-allowPrivilegedContainer: true
+allowPrivilegedContainer: false
+# Drop everything by default, then permit only NET_ADMIN, which network-costs
+# requires to read conntrack flows over the netlink (ctnetlink) API.
+requiredDropCapabilities:
+- ALL
+allowedCapabilities:
+- NET_ADMIN
 allowHostDirVolumePlugin: true
 allowHostNetwork: true
 allowHostPorts: true
@@ -27,6 +33,7 @@ volumes:
   - hostPath
   - projected
   - configMap
+  - secret
 users:
   - system:serviceaccount:{{ .Release.Namespace }}:{{ template "kubecost.networkCosts.name" . }}
 {{- end }}
