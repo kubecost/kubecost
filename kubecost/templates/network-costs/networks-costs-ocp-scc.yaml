@@ -6,13 +6,19 @@ metadata:
   labels:
     {{- include "kubecost.commonLabels" . | nindent 4 }}
 priority: 10
-allowPrivilegedContainer: false
-# Drop everything by default, then permit only NET_ADMIN, which network-costs
-# requires to read conntrack flows over the netlink (ctnetlink) API.
+{{- $sc := .Values.networkCosts.securityContext | default dict }}
+{{- $caps := $sc.capabilities | default dict }}
+# Privileged and capabilities are sourced from networkCosts.securityContext so
+# the SCC stays aligned with the DaemonSet container (NET_ADMIN for ctnetlink).
+allowPrivilegedContainer: {{ dig "privileged" false $sc }}
+{{- with $caps.drop }}
 requiredDropCapabilities:
-- ALL
+  {{- toYaml . | nindent 2 }}
+{{- end }}
+{{- with $caps.add }}
 allowedCapabilities:
-- NET_ADMIN
+  {{- toYaml . | nindent 2 }}
+{{- end }}
 allowHostDirVolumePlugin: true
 allowHostNetwork: true
 allowHostPorts: true
