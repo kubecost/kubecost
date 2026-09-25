@@ -88,6 +88,11 @@ Kubecost 3.0 preconditions
   {{- if .Values.awsstore -}}
     {{ fail "`.Values.awsstore` is no longer supported. Please remove this configuration." }}
   {{- end -}}
+
+  {{/* Network Costs security context migration */}}
+  {{- if and .Values.networkCosts .Values.networkCosts.additionalSecurityContext -}}
+    {{ fail "\n`.Values.networkCosts.additionalSecurityContext` is no longer supported.\nPlease use `.Values.networkCosts.securityContext` instead.\nRefer to https://github.com/kubecost/kubecost/releases/tag/v3.3.1 for more information." }}
+  {{- end -}}
 {{- end -}}
 
 {{/*
