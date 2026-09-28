@@ -52,13 +52,16 @@ jobs:
           fi
           done
 
-      # Run Kubeconform on the combined, templatized output across all tested values stored in `full.yaml`.
-      # Ensure all the rendered resources are valid.
-      - name: Kubeconform
-        uses: docker://ghcr.io/yannh/kubeconform:latest
+      - name: Create KinD cluster
+        uses: helm/kind-action@v1.15.0
         with:
-          entrypoint: /kubeconform
-          args: "-summary -ignore-missing-schemas -output text full.yaml"
+          version: v0.31.0
+          node_image: kindest/node:v1.36.4
+          kubectl_version: v1.36.4
+
+      # Validate the rendered resources in `full.yaml` against the KinD API server.
+      - name: Validate rendered manifests
+        run: kubectl create --dry-run=server --validate=warn -f full.yaml
 
       - name: Frontend serverBlockConfig template tests
         run: |
@@ -88,7 +91,7 @@ jobs:
         uses: helm/chart-testing-action@v2.8.0
 
       - name: Create KinD cluster
-        uses: helm/kind-action@ef37e7f390d99f746eb8b610417061a60e82a6cc #v1.14.0
+        uses: helm/kind-action@v1.15.0
         with:
           version: v0.31.0
           node_image: kindest/node:${{ matrix.k8s-version.version }}
