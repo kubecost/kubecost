@@ -1057,7 +1057,7 @@ networkCosts:
   tolerations: []
   ## networkCosts requires that the node has topology.kubernetes.io/region and topology.kubernetes.io/zone labels.
   ## The below nodeAffinity policy will prevent the pods from running on any node that does not have both labels.
-  ## to override this, set affinity: ""
+  ## to override this, add --set-json 'networkCosts.affinity=null'
   affinity:
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
@@ -1078,7 +1078,21 @@ networkCosts:
   nodeSelector: {}
   annotations: {}
   healthCheckProbes: {}
-  additionalSecurityContext: {}
+  ## Container securityContext for the network-costs DaemonSet.
+  ##
+  ## network-costs reads conntrack flows over the netlink (ctnetlink) API, which
+  ## requires CAP_NET_ADMIN. A full privileged container is not required; the
+  ## following is sufficient to enable network-costs.
+  ## Note that `runAsUser: 0` is required: the conntrack accounting sysctl
+  ## under /netfilter and, in `hostProc` mode, /proc/net/nf_conntrack are only
+  ## readable by root.
+  securityContext:
+    privileged: false
+    allowPrivilegeEscalation: false
+    runAsUser: 0
+    capabilities:
+      drop: ["ALL"]
+      add: ["NET_ADMIN"]
 
 ## Kubecost Forecasting forecasts future cost patterns based on historical
 ## patterns observed by Kubecost.
