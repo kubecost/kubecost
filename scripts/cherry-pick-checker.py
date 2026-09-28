@@ -22,7 +22,7 @@ Versions are auto-detected: the two highest semver branches matching v\\d+\\.\\d
 in the target repo are used — highest = RC, second-highest = GA.
 
 Requirements: PyGithub, git
-Environment: GITHUB_TOKEN must be set.
+Environment: GITHUB_TOKEN, or an authenticated `gh` CLI session as fallback.
 
 Usage:
     uv run ./scripts/cherry-pick-checker.py [options]
@@ -535,6 +535,44 @@ def render_summary_json(
 
 
 # ---------------------------------------------------------------------------
+# Auth
+# ---------------------------------------------------------------------------
+
+
+def resolve_github_token() -> str:
+    """Return a GitHub token from GITHUB_TOKEN or an authenticated gh CLI."""
+    token = os.environ.get("GITHUB_TOKEN", "").strip()
+    if token:
+        return token
+
+    if not shutil.which("gh"):
+        sys.exit(
+            "ERROR: GITHUB_TOKEN is not set and `gh` was not found on PATH.\n"
+            "Set GITHUB_TOKEN or run `gh auth login`."
+        )
+
+    result = subprocess.run(
+        ["gh", "auth", "token"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    token = (result.stdout or "").strip()
+    if result.returncode != 0 or not token:
+        err = (result.stderr or "").strip() or "gh auth token failed"
+        sys.exit(
+            f"ERROR: GITHUB_TOKEN is not set and could not use authenticated gh user.\n"
+            f"{err}\n"
+            "Set GITHUB_TOKEN or run `gh auth login`."
+        )
+
+    # Ensure git helpers that read GITHUB_TOKEN also work for local runs.
+    os.environ["GITHUB_TOKEN"] = token
+    print("Using authenticated gh CLI token (GITHUB_TOKEN was unset).")
+    return token
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -557,9 +595,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    token = os.environ.get("GITHUB_TOKEN")
-    if not token:
-        sys.exit("ERROR: GITHUB_TOKEN environment variable is not set.")
+    token = resolve_github_token()
 
     g = Github(auth=Auth.Token(token))
     repo = g.get_repo(args.repo)
