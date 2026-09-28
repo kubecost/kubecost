@@ -6,19 +6,11 @@ metadata:
   labels:
     {{- include "kubecost.commonLabels" . | nindent 4 }}
 priority: 10
-{{- $sc := .Values.networkCosts.securityContext | default dict }}
-{{- $caps := $sc.capabilities | default dict }}
 # Privileged and capabilities are sourced from networkCosts.securityContext so
 # the SCC stays aligned with the DaemonSet container (NET_ADMIN for ctnetlink).
-allowPrivilegedContainer: {{ dig "privileged" false $sc }}
-{{- with $caps.drop }}
-requiredDropCapabilities:
-  {{- toYaml . | nindent 2 }}
-{{- end }}
-{{- with $caps.add }}
-allowedCapabilities:
-  {{- toYaml . | nindent 2 }}
-{{- end }}
+allowPrivilegedContainer: {{ (.Values.networkCosts.securityContext).privileged | default false }}
+requiredDropCapabilities: {{- toYaml ((.Values.networkCosts.securityContext).capabilities).drop | nindent 2 }}
+allowedCapabilities: {{- toYaml ((.Values.networkCosts.securityContext).capabilities).add | nindent 2 }}
 allowHostDirVolumePlugin: true
 allowHostNetwork: true
 allowHostPorts: true
