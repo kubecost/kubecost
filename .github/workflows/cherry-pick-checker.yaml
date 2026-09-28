@@ -131,7 +131,7 @@ jobs:
                   for pr in needs_attention:
                       lines.append(
                           f":x: https://github.com/{os.environ['REPO_NAME']}/pull/{pr['number']}|#{pr['number']} "
-                          f"{pr['title']} _(merged: {pr['merged_at']})_"
+                          f"by @{pr['author']} {pr['title']} _(merged: {pr['merged_at']})_"
                       )
               else:
                   lines.append(":tada: All PRs accounted for in this branch.")

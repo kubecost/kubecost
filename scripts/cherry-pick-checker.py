@@ -81,6 +81,7 @@ SKIP_LABEL = "ignore-cherry-pick-checker"
 class PRResult:
     number: int
     title: str
+    author: str
     merged_at: str | None  # ISO date string YYYY-MM-DD or None
     status: str
     cherry_pick_pr: int | None = None
@@ -138,6 +139,7 @@ def fetch_prs(repo, label: str, limit: int) -> list[dict]:
             {
                 "number": pr.number,
                 "title": pr.title,
+                "author": pr.user.login if pr.user else "unknown",
                 "state": pr.state,
                 "merge_sha": merge_sha,
                 "merged_at": merged_at,
@@ -158,7 +160,9 @@ def fetch_prs(repo, label: str, limit: int) -> list[dict]:
 
 def _git_env() -> dict[str, str]:
     env = os.environ.copy()
-    env["GIT_ASKPASS"] = "sh -c 'case \"$1\" in *Username*) echo x-access-token;; *) echo \"$GIT_PASSWORD\";; esac' --"
+    env["GIT_ASKPASS"] = (
+        'sh -c \'case "$1" in *Username*) echo x-access-token;; *) echo "$GIT_PASSWORD";; esac\' --'
+    )
     env["GIT_PASSWORD"] = env["GITHUB_TOKEN"]
     env["GIT_TERMINAL_PROMPT"] = "0"
     return env
@@ -375,6 +379,7 @@ def check_branch(
     for pr in all_prs:
         num = pr["number"]
         title = pr["title"]
+        author = pr["author"]
         merged_at = pr["merged_at"]
         merge_sha = pr["merge_sha"]
 
@@ -382,7 +387,7 @@ def check_branch(
             continue
 
         if SKIP_LABEL in pr.get("labels", []):
-            results.append(PRResult(num, title, merged_at, Status.SKIPPED))
+            results.append(PRResult(num, title, author, merged_at, Status.SKIPPED))
             continue
 
         if not ensure_commit(tmpdir, merge_sha):
@@ -391,21 +396,23 @@ def check_branch(
             pass
 
         if is_in_branch(tmpdir, merge_sha):
-            results.append(PRResult(num, title, merged_at, Status.IN_BRANCH))
+            results.append(PRResult(num, title, author, merged_at, Status.IN_BRANCH))
             continue
 
         cp_num = find_cherrypick_pr(repo, g, num, title, all_prs, tmpdir, version)
         if cp_num is not None:
             results.append(
-                PRResult(num, title, merged_at, Status.CHERRY_PICKED, cp_num)
+                PRResult(num, title, author, merged_at, Status.CHERRY_PICKED, cp_num)
             )
             continue
 
         if is_already_on_branch(tmpdir, merge_sha):
-            results.append(PRResult(num, title, merged_at, Status.ALREADY_ON_BRANCH))
+            results.append(
+                PRResult(num, title, author, merged_at, Status.ALREADY_ON_BRANCH)
+            )
             continue
 
-        results.append(PRResult(num, title, merged_at, Status.MISSING))
+        results.append(PRResult(num, title, author, merged_at, Status.MISSING))
 
     return results
 
@@ -464,7 +471,7 @@ def render_markdown(
             title = title[:57] + "..."
         lines.append(
             f"| [#{r.number}](https://github.com/{repo}/pull/{r.number}) "
-            f"| {title} | {r.merged_at or '—'} | {emoji} {label} |"
+            f"by @{r.author} | {title} | {r.merged_at or '—'} | {emoji} {label} |"
         )
 
     if only_missing:
@@ -500,6 +507,7 @@ def render_summary_json(
             {
                 "number": r.number,
                 "title": r.title,
+                "author": r.author,
                 "status": STATUS_LABEL[r.status],
                 "merged_at": r.merged_at,
             }
