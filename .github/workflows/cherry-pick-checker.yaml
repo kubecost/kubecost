@@ -5,9 +5,6 @@ name: Cherry-Pick Status Checker
 # Required secrets, all are set at org level and can be overridden at repo level:
 #   SLACK_FAILURE_WEBHOOK_URL_PASS — Slack workflow webhook when no missing cherry-picks
 #   SLACK_FAILURE_WEBHOOK_URL_FAIL — Slack workflow webhook when cherry-picks are missing
-#   KC_ACTIONS_BOT_APP_PRIVATE_KEY — GitHub App private key (existing)
-# Required vars:
-#   KC_ACTIONS_BOT_APP_CLIENT_ID   — GitHub App client ID (existing)
 
 on:
   workflow_dispatch:
@@ -29,6 +26,8 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
+  issues: read
 
 jobs:
   cherry-pick-status:
@@ -38,15 +37,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7.0.1
 
-      - name: Generate app token for repo access
-        id: app-token
-        uses: actions/create-github-app-token@v3.2.0
-        with:
-          client-id: ${{ vars.KC_ACTIONS_BOT_APP_CLIENT_ID }}
-          private-key: ${{ secrets.KC_ACTIONS_BOT_APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          repositories: ${{ github.event.repository.name }}
-
       - name: Install uv
         uses: astral-sh/setup-uv@v10.2.0
         with:
@@ -54,8 +44,9 @@ jobs:
           cache-dependency-glob: .github/scripts/cherry-pick-checker.py
 
       - name: Run cherry-pick status check
+        id: run-checker
         env:
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          GITHUB_TOKEN: ${{ github.token }}
           GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           INPUT_ONLY_MISSING: ${{ github.event.inputs.only-missing || 'true' }}
           INPUT_BRANCH: ${{ github.event.inputs.branch }}
@@ -76,7 +67,7 @@ jobs:
             "${extra_args[@]}"
 
       - name: Upload missing-cherry-picks report
-        uses: actions/upload-artifact@v7.0.1 # v7.0.1
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: cherry-pick-status-report
           path: report.md
@@ -205,4 +196,22 @@ jobs:
           webhook: ${{ secrets.SLACK_FAILURE_WEBHOOK_URL_PASS }}
           webhook-type: webhook-trigger
           payload-file-path: slack_payload.json
+          errors: true
+
+      # Runs when the checker script itself errored out (e.g. GitHub API 403/rate-limit)
+      # so a crash doesn't silently look like "no missing cherry-picks".
+      - name: Send Slack notification (checker crashed)
+        if: failure() && steps.run-checker.outcome == 'failure'
+        uses: slackapi/slack-github-action@v4.0.0
+        with:
+          webhook: ${{ secrets.SLACK_FAILURE_WEBHOOK_URL_FAIL }}
+          webhook-type: webhook-trigger
+          payload: |
+            {
+              "runid": "${{ github.run_id }}",
+              "repo": "${{ github.repository }}",
+              "workflow": "${{ github.workflow }}",
+              "message": ":rotating_light: Cherry-Pick Status Checker crashed before finishing — results are incomplete, not clean. <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View logs>\n",
+              "mrkdwn": true
+            }
           errors: true
