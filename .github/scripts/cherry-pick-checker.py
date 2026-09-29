@@ -651,6 +651,7 @@ def main() -> None:
     ]
 
     all_branch_results = {}
+    fetch_errors: list[str] = []
 
     for version in versions:
         print(f"\nChecking branch {version}...")
@@ -661,7 +662,8 @@ def main() -> None:
             try:
                 prs = fetch_prs(repo, version, args.limit)
             except GithubException as e:
-                print(f"  WARNING: Could not fetch PRs for label '{version}': {e}")
+                print(f"  ERROR: Could not fetch PRs for label '{version}': {e}")
+                fetch_errors.append(f"{version}: {e}")
                 prs = []
 
             print(f"  Found {len(prs)} PRs. Checking status...")
@@ -696,6 +698,13 @@ def main() -> None:
         with open(args.summary_json, "w") as f:
             json.dump(summary, f, indent=2)
         print(f"JSON summary written to {args.summary_json}")
+
+    if fetch_errors:
+        sys.exit(
+            "\nERROR: failed to fetch PRs for "
+            f"{len(fetch_errors)} branch(es); results above are incomplete:\n"
+            + "\n".join(f"  - {e}" for e in fetch_errors)
+        )
 
 
 if __name__ == "__main__":
