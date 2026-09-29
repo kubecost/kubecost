@@ -1,4 +1,4 @@
-#!/usr/bin/env -S uv run
+#!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.12"
 # dependencies = [
@@ -6,13 +6,18 @@
 # ]
 # ///
 
-"""
+# Default GitHub org and repo. Override the slug with --repo.
+GITHUB_ORG = "kubecost"
+GITHUB_REPO = "kubecost"
+DEFAULT_REPO = f"{GITHUB_ORG}/{GITHUB_REPO}"
+
+__doc__ = f"""
 cherry-pick-checker.py
 
-Used by the PR Backport Status workflow to check the status of PRs labeled with each detected release version.
-@ .github/workflows/pr-backport-status.yaml
+Used by the Cherry-Pick Status Checker workflow to check the status of PRs labeled with each detected release version.
+@ .github/workflows/cherry-pick-checker.yaml
 
-Lists merged PRs labeled with each detected release version in kubecost/kubecost
+Lists merged PRs labeled with each detected release version in {DEFAULT_REPO}
 and checks whether each PR's merge commit is present in the corresponding
 release branch. Also detects cherry-pick PRs and PRs whose diff is already
 on the branch (superseded / empty cherry-pick). Open and closed-unmerged PRs
@@ -25,9 +30,9 @@ Requirements: PyGithub, git
 Environment: GITHUB_TOKEN, or an authenticated `gh` CLI session as fallback.
 
 Usage:
-    uv run ./scripts/cherry-pick-checker.py [options]
+    ./.github/scripts/cherry-pick-checker.py [options]
 
-    --repo REPO            GitHub repo slug (default: kubecost/kubecost)
+    --repo REPO            GitHub repo slug (default: {DEFAULT_REPO})
     --limit N              Max PRs to fetch per label (default: 200)
     --output-file PATH     Write Markdown report to this file
     --summary-json PATH    Write per-branch JSON summary to this file
@@ -40,9 +45,9 @@ Suppressing the MISSING alert:
     MISSING (❌) and exclude it from needs-attention counts.
 
 Run locally:
-uv run ./scripts/cherry-pick-checker.py                              # GA + RC, all labeled PRs
-uv run ./scripts/cherry-pick-checker.py --only-missing               # GA + RC, missing cherry-picks
-uv run ./scripts/cherry-pick-checker.py --branch v3.3 --only-missing # one branch only, missing cherry-picks only
+./.github/scripts/cherry-pick-checker.py                              # GA + RC, all labeled PRs
+./.github/scripts/cherry-pick-checker.py --only-missing               # GA + RC, missing cherry-picks
+./.github/scripts/cherry-pick-checker.py --branch v3.3 --only-missing # one branch only, missing cherry-picks only
 """
 
 import argparse
@@ -159,12 +164,26 @@ def fetch_prs(repo, label: str, limit: int) -> list[dict]:
 
 
 def _git_env() -> dict[str, str]:
+    """Environment for git subprocesses.
+
+    Use ``gh auth git-credential``, the same helper ``gh auth setup-git``
+    installs. In Actions it reads GITHUB_TOKEN. Locally it reads the logged-in
+    gh user. GIT_ASKPASS is removed: Git execs that value as a program path, so
+    a shell snippet cannot run, and it also blocks this helper. GIT_CONFIG_* is
+    process-local and does not change the user's git config.
+    """
     env = os.environ.copy()
-    env["GIT_ASKPASS"] = (
-        'sh -c \'case "$1" in *Username*) echo x-access-token;; *) echo "$GIT_PASSWORD";; esac\' --'
-    )
-    env["GIT_PASSWORD"] = env["GITHUB_TOKEN"]
+    env.pop("GIT_ASKPASS", None)
+    env.pop("SSH_ASKPASS", None)
     env["GIT_TERMINAL_PROMPT"] = "0"
+    token = env.get("GITHUB_TOKEN", "")
+    if token:
+        env["GH_TOKEN"] = token
+    env["GIT_CONFIG_COUNT"] = "2"
+    env["GIT_CONFIG_KEY_0"] = "credential.https://github.com.helper"
+    env["GIT_CONFIG_VALUE_0"] = ""
+    env["GIT_CONFIG_KEY_1"] = "credential.https://github.com.helper"
+    env["GIT_CONFIG_VALUE_1"] = "!gh auth git-credential"
     return env
 
 
@@ -443,7 +462,7 @@ def render_markdown(
     results: list[PRResult],
     *,
     only_missing: bool = False,
-    repo: str = "kubecost/kubecost",
+    repo: str = DEFAULT_REPO,
 ) -> str:
     counts = {s: 0 for s in STATUS_LABEL}
     for r in results:
@@ -579,7 +598,11 @@ def resolve_github_token() -> str:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--repo", default="kubecost/kubecost")
+    parser.add_argument(
+        "--repo",
+        default=DEFAULT_REPO,
+        help=f"GitHub repo slug (default: {DEFAULT_REPO})",
+    )
     parser.add_argument("--limit", type=int, default=200)
     parser.add_argument("--output-file", metavar="PATH")
     parser.add_argument("--summary-json", metavar="PATH")
@@ -614,9 +637,9 @@ def main() -> None:
 
     remote = f"https://github.com/{args.repo}.git"
     report_title = (
-        "# PR Backport Status Report (missing cherry-picks)"
+        "# PR Cherry-Pick Status Report (missing cherry-picks)"
         if args.only_missing
-        else "# PR Backport Status Report"
+        else "# PR Cherry-Pick Status Report"
     )
     report_sections = [
         report_title,

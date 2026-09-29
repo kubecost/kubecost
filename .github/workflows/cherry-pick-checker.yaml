@@ -31,29 +31,29 @@ permissions:
   contents: read
 
 jobs:
-  backport-status:
+  cherry-pick-status:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.1
 
-      - name: Generate app token for kubecost/kubecost access
+      - name: Generate app token for repo access
         id: app-token
         uses: actions/create-github-app-token@v3.2.0
         with:
           client-id: ${{ vars.KC_ACTIONS_BOT_APP_CLIENT_ID }}
           private-key: ${{ secrets.KC_ACTIONS_BOT_APP_PRIVATE_KEY }}
-          owner: kubecost
-          repositories: kubecost
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@v10.2.0
         with:
           enable-cache: true
-          cache-dependency-glob: scripts/cherry-pick-checker.py
+          cache-dependency-glob: .github/scripts/cherry-pick-checker.py
 
-      - name: Run backport status check
+      - name: Run cherry-pick status check
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -69,7 +69,7 @@ jobs:
           if [ -n "$INPUT_BRANCH" ]; then
             extra_args+=(--branch "$INPUT_BRANCH")
           fi
-          uv run ./scripts/cherry-pick-checker.py \
+          uv run --script ./.github/scripts/cherry-pick-checker.py \
             --limit "$INPUT_LIMIT" \
             --output-file report.md \
             --summary-json summary.json \
@@ -78,7 +78,7 @@ jobs:
       - name: Upload missing-cherry-picks report
         uses: actions/upload-artifact@v7.0.1 # v7.0.1
         with:
-          name: pr-backport-status-report
+          name: cherry-pick-status-report
           path: report.md
           retention-days: 30
 
@@ -105,9 +105,9 @@ jobs:
 
           lines = [
               (
-                  ":x: PR Backport Status — missing cherry-picks"
+                  ":x: Cherry-Pick Status — missing cherry-picks"
                   if failures_found
-                  else ":white_check_mark: PR Backport Status — all accounted for*"
+                  else ":white_check_mark: Cherry-Pick Status — all accounted for*"
               ),
               "",
               f"{generated_at}  |  Repo: `{os.environ['REPO_NAME']}`",
