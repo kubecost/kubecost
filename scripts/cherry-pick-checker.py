@@ -22,7 +22,7 @@ Versions are auto-detected: the two highest semver branches matching v\\d+\\.\\d
 in the target repo are used — highest = RC, second-highest = GA.
 
 Requirements: PyGithub, git
-Environment: GITHUB_TOKEN must be set.
+Environment: GITHUB_TOKEN, or an authenticated `gh` CLI session as fallback.
 
 Usage:
     uv run ./scripts/cherry-pick-checker.py [options]
@@ -81,6 +81,7 @@ SKIP_LABEL = "ignore-cherry-pick-checker"
 class PRResult:
     number: int
     title: str
+    author: str
     merged_at: str | None  # ISO date string YYYY-MM-DD or None
     status: str
     cherry_pick_pr: int | None = None
@@ -138,6 +139,7 @@ def fetch_prs(repo, label: str, limit: int) -> list[dict]:
             {
                 "number": pr.number,
                 "title": pr.title,
+                "author": pr.user.login if pr.user else "unknown",
                 "state": pr.state,
                 "merge_sha": merge_sha,
                 "merged_at": merged_at,
@@ -158,7 +160,9 @@ def fetch_prs(repo, label: str, limit: int) -> list[dict]:
 
 def _git_env() -> dict[str, str]:
     env = os.environ.copy()
-    env["GIT_ASKPASS"] = "sh -c 'case \"$1\" in *Username*) echo x-access-token;; *) echo \"$GIT_PASSWORD\";; esac' --"
+    env["GIT_ASKPASS"] = (
+        'sh -c \'case "$1" in *Username*) echo x-access-token;; *) echo "$GIT_PASSWORD";; esac\' --'
+    )
     env["GIT_PASSWORD"] = env["GITHUB_TOKEN"]
     env["GIT_TERMINAL_PROMPT"] = "0"
     return env
@@ -375,6 +379,7 @@ def check_branch(
     for pr in all_prs:
         num = pr["number"]
         title = pr["title"]
+        author = pr["author"]
         merged_at = pr["merged_at"]
         merge_sha = pr["merge_sha"]
 
@@ -382,7 +387,7 @@ def check_branch(
             continue
 
         if SKIP_LABEL in pr.get("labels", []):
-            results.append(PRResult(num, title, merged_at, Status.SKIPPED))
+            results.append(PRResult(num, title, author, merged_at, Status.SKIPPED))
             continue
 
         if not ensure_commit(tmpdir, merge_sha):
@@ -391,21 +396,23 @@ def check_branch(
             pass
 
         if is_in_branch(tmpdir, merge_sha):
-            results.append(PRResult(num, title, merged_at, Status.IN_BRANCH))
+            results.append(PRResult(num, title, author, merged_at, Status.IN_BRANCH))
             continue
 
         cp_num = find_cherrypick_pr(repo, g, num, title, all_prs, tmpdir, version)
         if cp_num is not None:
             results.append(
-                PRResult(num, title, merged_at, Status.CHERRY_PICKED, cp_num)
+                PRResult(num, title, author, merged_at, Status.CHERRY_PICKED, cp_num)
             )
             continue
 
         if is_already_on_branch(tmpdir, merge_sha):
-            results.append(PRResult(num, title, merged_at, Status.ALREADY_ON_BRANCH))
+            results.append(
+                PRResult(num, title, author, merged_at, Status.ALREADY_ON_BRANCH)
+            )
             continue
 
-        results.append(PRResult(num, title, merged_at, Status.MISSING))
+        results.append(PRResult(num, title, author, merged_at, Status.MISSING))
 
     return results
 
@@ -464,7 +471,7 @@ def render_markdown(
             title = title[:57] + "..."
         lines.append(
             f"| [#{r.number}](https://github.com/{repo}/pull/{r.number}) "
-            f"| {title} | {r.merged_at or '—'} | {emoji} {label} |"
+            f"by @{r.author} | {title} | {r.merged_at or '—'} | {emoji} {label} |"
         )
 
     if only_missing:
@@ -500,6 +507,7 @@ def render_summary_json(
             {
                 "number": r.number,
                 "title": r.title,
+                "author": r.author,
                 "status": STATUS_LABEL[r.status],
                 "merged_at": r.merged_at,
             }
@@ -527,6 +535,44 @@ def render_summary_json(
 
 
 # ---------------------------------------------------------------------------
+# Auth
+# ---------------------------------------------------------------------------
+
+
+def resolve_github_token() -> str:
+    """Return a GitHub token from GITHUB_TOKEN or an authenticated gh CLI."""
+    token = os.environ.get("GITHUB_TOKEN", "").strip()
+    if token:
+        return token
+
+    if not shutil.which("gh"):
+        sys.exit(
+            "ERROR: GITHUB_TOKEN is not set and `gh` was not found on PATH.\n"
+            "Set GITHUB_TOKEN or run `gh auth login`."
+        )
+
+    result = subprocess.run(
+        ["gh", "auth", "token"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    token = (result.stdout or "").strip()
+    if result.returncode != 0 or not token:
+        err = (result.stderr or "").strip() or "gh auth token failed"
+        sys.exit(
+            f"ERROR: GITHUB_TOKEN is not set and could not use authenticated gh user.\n"
+            f"{err}\n"
+            "Set GITHUB_TOKEN or run `gh auth login`."
+        )
+
+    # Ensure git helpers that read GITHUB_TOKEN also work for local runs.
+    os.environ["GITHUB_TOKEN"] = token
+    print("Using authenticated gh CLI token (GITHUB_TOKEN was unset).")
+    return token
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -549,9 +595,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    token = os.environ.get("GITHUB_TOKEN")
-    if not token:
-        sys.exit("ERROR: GITHUB_TOKEN environment variable is not set.")
+    token = resolve_github_token()
 
     g = Github(auth=Auth.Token(token))
     repo = g.get_repo(args.repo)
