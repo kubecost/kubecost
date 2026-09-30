@@ -1110,7 +1110,7 @@ forecasting:
   image:
     registry: ""  # Default is "icr.io"
     repository: kubecost/modeling
-    tag: v0.2.2
+    tag: v0.2.3
   imagePullPolicy: IfNotPresent
 
   # Resource specification block for the forecasting container.
