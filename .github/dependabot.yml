@@ -1,6 +1,5 @@
 version: 2
 registries:
-  # values.yaml images with `registry: null` default to icr.io at render time
   icr:
     type: docker-registry
     url: https://icr.io
