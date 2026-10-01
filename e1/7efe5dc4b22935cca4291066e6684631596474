@@ -1,0 +1,16 @@
+.github/scripts/check-images.sh
+  h_cca6aa2712613d 14-16,45,55
+.github/workflows/test-chart-3.0.yml
+  h_cca6aa2712613d 24-27,72-77
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e17efe5dc4b22935cca4291066e6684631596474",
+  "prompts": {},
+  "humans": {
+    "h_cca6aa2712613d": {
+      "author": "jesse goodier <31039225+jessegoodier@users.noreply.github.com>"
+    }
+  }
+}
