@@ -1,0 +1,21 @@
+.github/scripts/check-images.sh
+  s_de3e7e4a942f52::t_d9632934e5a1e8 18-21
+.github/workflows/test-chart-3.0.yml
+  s_de3e7e4a942f52::t_ae206d187cc709 78-84
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "fa3d86a0a7481a572763e5ee1d8d891f9c359aba",
+  "prompts": {},
+  "sessions": {
+    "s_de3e7e4a942f52": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0e53f2bb-1c0f-4d60-ac48-a51d49f18e53",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "jesse goodier <31039225+jessegoodier@users.noreply.github.com>"
+    }
+  }
+}
