@@ -893,7 +893,7 @@ networkCosts:
   ## fullImageName: icr.io/kubecost/network-costs:v0.19.4
   fullImageName: ""
   image:
-    registry: ""  # Default is "icr.io"
+    registry: null  # Default is "icr.io". null, not "", so Dependabot can track the tag
     repository: kubecost/network-costs
     tag: v0.19.4
   imagePullPolicy: IfNotPresent
@@ -1108,7 +1108,7 @@ forecasting:
   ## fullImageName: icr.io/kubecost/modeling:v0.1.36
   fullImageName: ""
   image:
-    registry: ""  # Default is "icr.io"
+    registry: null  # Default is "icr.io". null, not "", so Dependabot can track the tag
     repository: kubecost/modeling
     tag: v0.2.3
   imagePullPolicy: IfNotPresent
@@ -1569,7 +1569,7 @@ clusterController:
   ## fullImageName: icr.io/kubecost/cluster-controller:v0.16.40
   fullImageName: ""
   image:
-    registry: ""  # Default is "icr.io"
+    registry: null  # Default is "icr.io". null, not "", so Dependabot can track the tag
     repository: kubecost/cluster-controller
     tag: v0.16.40
   imagePullPolicy: IfNotPresent
