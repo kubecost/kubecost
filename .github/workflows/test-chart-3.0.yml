@@ -75,6 +75,13 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ECR_ROLE }}
           aws-region: us-east-1
 
+      # icr.io/kubecost and icr.io/ibm-finops images are public, but anonymous
+      # pulls from GitHub-hosted runners time out, so authenticate instead.
+      - name: Configure ICR credentials
+        env:
+          IBM_CLOUD_API_KEY: ${{ secrets.IBM_CLOUD_API_KEY }}
+        run: echo "$IBM_CLOUD_API_KEY" | docker login -u iamapikey --password-stdin icr.io
+
       - name: Verify container images exist
         run: .github/scripts/check-images.sh full.yaml
 

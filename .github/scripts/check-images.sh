@@ -15,6 +15,10 @@
 # configured in the calling workflow before this script runs (e.g. via
 # aws-actions/configure-aws-credentials with an OIDC role).
 #
+# icr.io images are public, but anonymous pulls from GitHub-hosted runners
+# time out, so the calling workflow must also `docker login` to icr.io
+# (e.g. with an IBM Cloud API key) before this script runs.
+#
 # All images are checked regardless of earlier failures. A summary of every
 # failed image is printed at the end, then the script exits non-zero if any
 # failure was recorded.
