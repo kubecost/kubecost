@@ -4,6 +4,8 @@ registries:
   icr:
     type: docker-registry
     url: https://icr.io
+    username: dummy  # icr.io images are public; Dependabot requires credentials
+    password: dummy
     replaces-base: true
 updates:
   # GitHub Actions - Monthly updates to reduce update frequency
