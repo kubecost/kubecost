@@ -56,7 +56,7 @@ helm repo update
 helm dependency build ./kubecost
 ```
 
-> **Note:** `helm dependency update` also works but will regenerate `Chart.lock`. Use `helm dependency build` to reproduce the exact pinned versions from `Chart.lock`.
+> **Note:** `helm dependency build` reproduces the exact pinned versions from `Chart.lock`. To bump a sub-chart, set its `version` in `Chart.yaml`, run `helm dependency update ./kubecost` to regenerate `Chart.lock`, and commit both. Dependabot checks for new versions daily.
 
 ## Local Testing
 
