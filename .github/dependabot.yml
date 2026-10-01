@@ -28,6 +28,9 @@ updates:
     directory: /kubecost
     schedule:
       interval: daily
+    ignore:
+      # Skip values.yaml images: their registry is set at render time, and tag bumps drop the "v" prefix
+      - dependency-name: "*/*"
     rebase-strategy: disabled
     labels:
       - "dependencies"
