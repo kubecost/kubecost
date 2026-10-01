@@ -1,0 +1,14 @@
+CHANGELOG.md
+  h_cca6aa2712613d 11-13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b1848bdaecd2ad867249f821ddfbf74ce84ea72f",
+  "prompts": {},
+  "humans": {
+    "h_cca6aa2712613d": {
+      "author": "jesse goodier <31039225+jessegoodier@users.noreply.github.com>"
+    }
+  }
+}
