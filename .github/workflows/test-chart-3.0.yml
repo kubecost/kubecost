@@ -21,6 +21,10 @@ concurrency:
 jobs:
   test-chart:
     runs-on: ubuntu-latest
+    permissions:
+      # id-token required for GitHub OIDC token exchange for aws role
+      id-token: write
+      contents: read
 
     steps:
       - name: Checkout
@@ -65,6 +69,12 @@ jobs:
           yq --version
 
       # this step is designed to fail fail before creating clusters
+      - name: Configure AWS credentials (ECR Public)
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ secrets.AWS_ECR_ROLE }}
+          aws-region: us-east-1
+
       - name: Verify container images exist
         run: .github/scripts/check-images.sh full.yaml
 

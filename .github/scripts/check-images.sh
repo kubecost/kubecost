@@ -11,8 +11,9 @@
 #   1. Exists in its registry (docker manifest inspect succeeds)
 #   2. Is a multi-arch manifest list with both linux/amd64 and linux/arm64
 #
-# ECR Public images (*.ecr.aws/*) are handled with an anonymous login before
-# the check loop runs.
+# ECR Public images (*.ecr.aws/*) require AWS credentials, which must be
+# configured in the calling workflow before this script runs (e.g. via
+# aws-actions/configure-aws-credentials with an OIDC role).
 #
 # All images are checked regardless of earlier failures. A summary of every
 # failed image is printed at the end, then the script exits non-zero if any
@@ -41,7 +42,7 @@ echo "Found ${#IMAGES[@]} unique image(s) to check:"
 printf '  %s\n' "${IMAGES[@]}"
 echo ""
 
-# ── ECR Public login (anonymous, one-time) ──────────────────────────────────
+# ── ECR Public login (one-time) ─────────────────────────────────────────────
 HAS_ECR=false
 for img in "${IMAGES[@]}"; do
   if [[ "$img" == *".ecr.aws/"* ]]; then
@@ -51,7 +52,7 @@ for img in "${IMAGES[@]}"; do
 done
 
 if [ "$HAS_ECR" = true ]; then
-  echo "ECR Public images detected — logging in anonymously..."
+  echo "ECR Public images detected — logging in via AWS credentials..."
   aws ecr-public get-login-password --region us-east-1 \
     | docker login --username AWS --password-stdin public.ecr.aws
   echo ""
