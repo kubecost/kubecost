@@ -1,0 +1,70 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+
+name: Upgrade Risk
+
+# Comments on chart PRs with values/template changes that may affect `helm upgrade`.
+# Advisory only, never fails the PR.
+#
+# Required secrets:
+#   TYPESAFE_API_KEY — TypeSafe (Jev) API key. Without it only the deterministic diff is posted.
+#
+# pull_request_target is used so fork PRs can read the secret. The script runs from the
+# base branch; the PR head is only read with git (show/grep/diff), never checked out or executed.
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, edited]
+    paths:
+      - kubecost/values.yaml
+      - kubecost/templates/**
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  upgrade-risk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true  # Advisory: a Jev or git error must not fail the PR.
+    steps:
+      - name: Checkout base
+        uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Fetch PR head
+        run: git fetch origin "refs/pull/${{ github.event.pull_request.number }}/head"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.2.0
+
+      - name: Run upgrade risk check
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          printf '%s' "$PR_BODY" > pr-body.md
+          uv run --script ./.github/scripts/upgrade-risk.py "$BASE_SHA" "$HEAD_SHA" --pr-body-file pr-body.md > comment.md
+          cat comment.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Post or update comment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          [ -s comment.md ] || exit 0
+          id=$(gh api "repos/$REPO/issues/$PR/comments" --paginate \
+            -q '.[] | select(.body | startswith("<!-- upgrade-risk -->")) | .id' | head -n1)
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/$REPO/issues/comments/$id" -F body=@comment.md > /dev/null
+          else
+            gh pr comment "$PR" -R "$REPO" --body-file comment.md
+          fi
