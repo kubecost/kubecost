@@ -5,9 +5,6 @@ name: Cherry-Pick Status Checker
 # Required secrets, all are set at org level and can be overridden at repo level:
 #   SLACK_FAILURE_WEBHOOK_URL_PASS — Slack workflow webhook when no missing cherry-picks
 #   SLACK_FAILURE_WEBHOOK_URL_FAIL — Slack workflow webhook when cherry-picks are missing
-#   KC_ACTIONS_BOT_APP_PRIVATE_KEY — GitHub App private key (existing)
-# Required vars:
-#   KC_ACTIONS_BOT_APP_CLIENT_ID   — GitHub App client ID (existing)
 
 on:
   workflow_dispatch:
@@ -29,33 +26,27 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
+  issues: read
 
 jobs:
-  backport-status:
+  cherry-pick-status:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.1
 
-      - name: Generate app token for kubecost/kubecost access
-        id: app-token
-        uses: actions/create-github-app-token@v3.2.0
-        with:
-          client-id: ${{ vars.KC_ACTIONS_BOT_APP_CLIENT_ID }}
-          private-key: ${{ secrets.KC_ACTIONS_BOT_APP_PRIVATE_KEY }}
-          owner: kubecost
-          repositories: kubecost
-
       - name: Install uv
         uses: astral-sh/setup-uv@v10.2.0
         with:
           enable-cache: true
-          cache-dependency-glob: scripts/cherry-pick-checker.py
+          cache-dependency-glob: .github/scripts/cherry-pick-checker.py
 
-      - name: Run backport status check
+      - name: Run cherry-pick status check
+        id: run-checker
         env:
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          GITHUB_TOKEN: ${{ github.token }}
           GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           INPUT_ONLY_MISSING: ${{ github.event.inputs.only-missing || 'true' }}
           INPUT_BRANCH: ${{ github.event.inputs.branch }}
@@ -69,16 +60,16 @@ jobs:
           if [ -n "$INPUT_BRANCH" ]; then
             extra_args+=(--branch "$INPUT_BRANCH")
           fi
-          uv run ./scripts/cherry-pick-checker.py \
+          uv run --script ./.github/scripts/cherry-pick-checker.py \
             --limit "$INPUT_LIMIT" \
             --output-file report.md \
             --summary-json summary.json \
             "${extra_args[@]}"
 
       - name: Upload missing-cherry-picks report
-        uses: actions/upload-artifact@v7.0.1 # v7.0.1
+        uses: actions/upload-artifact@v7.0.1
         with:
-          name: pr-backport-status-report
+          name: cherry-pick-status-report
           path: report.md
           retention-days: 30
 
@@ -105,9 +96,9 @@ jobs:
 
           lines = [
               (
-                  ":x: PR Backport Status — missing cherry-picks"
+                  ":x: Cherry-Pick Status — missing cherry-picks"
                   if failures_found
-                  else ":white_check_mark: PR Backport Status — all accounted for*"
+                  else ":white_check_mark: Cherry-Pick Status — all accounted for*"
               ),
               "",
               f"{generated_at}  |  Repo: `{os.environ['REPO_NAME']}`",
@@ -205,4 +196,22 @@ jobs:
           webhook: ${{ secrets.SLACK_FAILURE_WEBHOOK_URL_PASS }}
           webhook-type: webhook-trigger
           payload-file-path: slack_payload.json
+          errors: true
+
+      # Runs when the checker script itself errored out (e.g. GitHub API 403/rate-limit)
+      # so a crash doesn't silently look like "no missing cherry-picks".
+      - name: Send Slack notification (checker crashed)
+        if: failure() && steps.run-checker.outcome == 'failure'
+        uses: slackapi/slack-github-action@v4.0.0
+        with:
+          webhook: ${{ secrets.SLACK_FAILURE_WEBHOOK_URL_FAIL }}
+          webhook-type: webhook-trigger
+          payload: |
+            {
+              "runid": "${{ github.run_id }}",
+              "repo": "${{ github.repository }}",
+              "workflow": "${{ github.workflow }}",
+              "message": ":rotating_light: Cherry-Pick Status Checker crashed before finishing — results are incomplete, not clean. <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View logs>\n",
+              "mrkdwn": true
+            }
           errors: true
