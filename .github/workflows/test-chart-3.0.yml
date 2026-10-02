@@ -21,6 +21,10 @@ concurrency:
 jobs:
   test-chart:
     runs-on: ubuntu-latest
+    permissions:
+      # id-token required for GitHub OIDC token exchange for aws role
+      id-token: write
+      contents: read
 
     steps:
       - name: Checkout
@@ -41,6 +45,7 @@ jobs:
           ct lint --chart-dirs=kubecost/ --charts kubecost/ --validate-maintainers=false
 
       # Run `helm template` on the main values file plus all those in the ci directory.
+      # Also templates with the EKS values file to include public.ecr.aws images in the check.
       - name: Helm template
         run: |
           helm template kubecost/ -f .github/ci-helmValues/helmValues-federated-store.yaml > full.yaml
@@ -51,6 +56,34 @@ jobs:
               helm template kubecost/ -f "$file" >> full.yaml
           fi
           done
+          echo "Templating with EKS values (public.ecr.aws registry)"
+          helm template kubecost/ -f kubecost/values-eks-cost-monitoring.yaml >> full.yaml
+
+      - name: Set up yq
+        run: |
+          set -euo pipefail
+          YQ_VERSION=v4.53.4
+          curl -fsSL -o /tmp/yq \
+            "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64"
+          sudo install -m 0755 /tmp/yq /usr/local/bin/yq
+          yq --version
+
+      # this step is designed to fail fail before creating clusters
+      - name: Configure AWS credentials (ECR Public)
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ secrets.AWS_ECR_ROLE }}
+          aws-region: us-east-1
+
+      # icr.io/kubecost and icr.io/ibm-finops images are public, but anonymous
+      # pulls from GitHub-hosted runners time out, so authenticate instead.
+      - name: Configure ICR credentials
+        env:
+          IBM_CLOUD_API_KEY: ${{ secrets.IBM_CLOUD_API_KEY }}
+        run: echo "$IBM_CLOUD_API_KEY" | docker login -u iamapikey --password-stdin icr.io
+
+      - name: Verify container images exist
+        run: .github/scripts/check-images.sh full.yaml
 
       # Run Kubeconform on the combined, templatized output across all tested values stored in `full.yaml`.
       # Ensure all the rendered resources are valid.
@@ -66,6 +99,12 @@ jobs:
           helm repo update
           helm dependency build kubecost/
           .github/scripts/extra_server_config_test.sh
+
+      - name: Install helm-unittest plugin
+        run: helm plugin install https://github.com/helm-unittest/helm-unittest --version v1.2.0
+
+      - name: Cluster Controller service account name template tests
+        run: helm unittest kubecost/
 
   # Test cluster versions.
   deploy-chart:
