@@ -160,6 +160,11 @@ def ask_jev(state):
     return r.scores["risk"], r.nouls["described"].noul
 
 
+def changed(old, new):
+    """Sorted keys in both dicts whose values differ."""
+    return sorted(k for k in old.keys() & new.keys() if old[k] != new[k])
+
+
 def bullets(title, items):
     if not items:
         return []
@@ -188,20 +193,12 @@ def main():
 
     old, new = values_defaults(base), values_defaults(args.head)
     removed_keys = sorted(old.keys() - new.keys())
-    changed_defaults = sorted(
-        f"{k}: {old[k]!r} → {new[k]!r}"
-        for k in old.keys() & new.keys()
-        if old[k] != new[k]
-    )
+    changed_defaults = [f"{k}: {old[k]!r} → {new[k]!r}" for k in changed(old, new)]
     unused_values = sorted(
         values_used_by_templates(base) - values_used_by_templates(args.head)
     )
     old_fields, new_fields = immutable_fields(base), immutable_fields(args.head)
-    rejected = sorted(
-        k
-        for k in old_fields.keys() & new_fields.keys()
-        if old_fields[k] != new_fields[k]
-    )
+    rejected = changed(old_fields, new_fields)
     body = Path(args.pr_body_file).read_text() if args.pr_body_file else ""
 
     lines = [MARKER, "### Helm upgrade risk", ""]
@@ -234,7 +231,6 @@ def main():
     lines += bullets("Removed values keys", removed_keys)
     lines += bullets("Changed defaults", changed_defaults)
     lines += bullets("Values no longer read by templates", unused_values)
-    lines.append("_Advisory only. Compares this PR against its merge base._")
     print("\n".join(lines))
 
 
