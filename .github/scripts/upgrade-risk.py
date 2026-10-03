@@ -13,11 +13,12 @@ upgrade-risk.py
 Used by the Upgrade Risk workflow to flag chart changes that can break `helm upgrade`
 for users with existing values. @ .github/workflows/upgrade-risk.yaml
 
-Diffs values.yaml keys and `.Values.*` template references between the merge base of
-BASE and HEAD, then asks Jev (TypeSafe) to rate the risk. Prints a Markdown comment to
-stdout, or nothing if the chart is unchanged. Jev is skipped if TYPESAFE_API_KEY is unset.
+Diffs values.yaml keys, `.Values.*` template references, and immutable fields in the
+rendered manifests between the merge base of BASE and HEAD, then asks Jev (TypeSafe)
+to rate the risk. Prints a Markdown comment to stdout, or nothing if the chart is
+unchanged. Jev is skipped if TYPESAFE_API_KEY is unset.
 
-Requirements: uv, git
+Requirements: uv, git, helm (with the chart's dependency repos added)
 Environment: TYPESAFE_API_KEY (optional). Create one at https://console.typesafe.ai/
 
 Usage:
@@ -38,6 +39,7 @@ Example:
 import argparse
 import os
 import subprocess
+import tempfile
 from pathlib import Path
 
 import yaml
@@ -90,6 +92,50 @@ def values_used_by_templates(ref):
     return {match.removeprefix(".Values.") for match in out.splitlines()}
 
 
+# Fields Kubernetes rejects changes to, so `helm upgrade` fails if the chart changes them.
+IMMUTABLE_FIELDS = {
+    "Deployment": ["spec.selector"],
+    "DaemonSet": ["spec.selector"],
+    "StatefulSet": [
+        "spec.selector",
+        "spec.serviceName",
+        "spec.podManagementPolicy",
+        "spec.volumeClaimTemplates",
+    ],
+    "PersistentVolumeClaim": ["spec.accessModes", "spec.storageClassName"],
+    "RoleBinding": ["roleRef"],
+    "ClusterRoleBinding": ["roleRef"],
+}
+
+
+def immutable_fields(ref):
+    """Immutable fields of the chart rendered at ref, e.g.
+    {"StatefulSet/kubecost-aggregator spec.selector": {...}}."""
+    with tempfile.TemporaryDirectory() as tmp:
+        chart = f"{tmp}/{CHART}"
+        subprocess.run(
+            f"git archive {ref} {CHART} | tar -x -C {tmp}", shell=True, check=True
+        )
+        subprocess.run(
+            ["helm", "dependency", "build", chart], capture_output=True, check=True
+        )
+        manifests = subprocess.run(
+            ["helm", "template", "kubecost", chart],
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout
+
+    out = {}
+    for doc in filter(None, yaml.safe_load_all(manifests)):
+        for path in IMMUTABLE_FIELDS.get(doc["kind"], []):
+            value = doc
+            for key in path.split("."):
+                value = (value or {}).get(key)
+            out[f"{doc['kind']}/{doc['metadata']['name']} {path}"] = value
+    return out
+
+
 def ask_jev(state):
     from typesafe_sdk import Noul, Score, TypeSafeClient
 
@@ -134,9 +180,9 @@ def main():
     os.chdir(git("rev-parse", "--show-toplevel").strip())
     # Diff from the branch point so newer commits on BASE aren't blamed on this PR.
     base = git("merge-base", args.base, args.head).strip()
-    diff = git(
-        "diff", base, args.head, "--", f"{CHART}/values.yaml", f"{CHART}/templates"
-    )
+    # Chart.yaml pins the subcharts, which render into the same release.
+    paths = [f"{CHART}/Chart.yaml", f"{CHART}/values.yaml", f"{CHART}/templates"]
+    diff = git("diff", base, args.head, "--", *paths)
     if not diff:
         return
 
@@ -150,6 +196,12 @@ def main():
     unused_values = sorted(
         values_used_by_templates(base) - values_used_by_templates(args.head)
     )
+    old_fields, new_fields = immutable_fields(base), immutable_fields(args.head)
+    rejected = sorted(
+        k
+        for k in old_fields.keys() & new_fields.keys()
+        if old_fields[k] != new_fields[k]
+    )
     body = Path(args.pr_body_file).read_text() if args.pr_body_file else ""
 
     lines = [MARKER, "### Helm upgrade risk", ""]
@@ -160,6 +212,7 @@ def main():
                 "values_keys_removed": removed_keys,
                 "values_defaults_changed": changed_defaults,
                 "values_no_longer_read_by_templates": unused_values,
+                "immutable_fields_changed": rejected,
                 "diff": diff[:MAX_DIFF],
             }
         )
@@ -175,6 +228,9 @@ def main():
             else:
                 note = f"⚠️ Upgrade impact is not described in the PR ({described:.2f}). Please add an upgrade note."
             lines += [note, ""]
+    lines += bullets(
+        "🔴 Kubernetes will reject this upgrade (immutable field changed)", rejected
+    )
     lines += bullets("Removed values keys", removed_keys)
     lines += bullets("Changed defaults", changed_defaults)
     lines += bullets("Values no longer read by templates", unused_values)
