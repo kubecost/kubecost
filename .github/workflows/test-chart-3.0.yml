@@ -111,6 +111,8 @@ jobs:
   # Test cluster versions.
   deploy-chart:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -251,6 +253,8 @@ jobs:
 
   deploy-ocp:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     needs: test-chart
     strategy:
       matrix:
@@ -315,6 +319,8 @@ jobs:
 
   deploy-eks:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     needs: test-chart
     strategy:
       matrix:
