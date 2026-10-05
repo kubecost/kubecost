@@ -1,0 +1,14 @@
+.github/workflows/stale.yaml
+  h_cca6aa2712613d 14-15,19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0e0746be5e29b453d258ed70bf764d39e3e77c30",
+  "prompts": {},
+  "humans": {
+    "h_cca6aa2712613d": {
+      "author": "jesse goodier <31039225+jessegoodier@users.noreply.github.com>"
+    }
+  }
+}
