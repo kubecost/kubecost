@@ -137,9 +137,18 @@ jobs:
           node_image: kindest/node:${{ matrix.k8s-version.version }}
           kubectl_version: ${{ matrix.k8s-version.version }}
 
+      # The secret is passed via env (not interpolated into the script) and
+      # substituted with a literal string replace, so any characters in the value
+      # (| & \ / quotes, $) are safe.
       - name: Populate federated storage config secret
+        env:
+          FEDERATED_STORAGE_CONFIG_YAML: ${{ secrets.FEDERATED_STORAGE_CONFIG_YAML }}
         run: |
-          sed -i "s|FEDERATED_STORAGE_CONFIG_YAML|${{ secrets.FEDERATED_STORAGE_CONFIG_YAML }}|" .github/ci-files/federatedStorageConfigSecret.yaml
+          python3 - <<'PY'
+          import os, pathlib
+          p = pathlib.Path(".github/ci-files/federatedStorageConfigSecret.yaml")
+          p.write_text(p.read_text().replace("FEDERATED_STORAGE_CONFIG_YAML", os.environ["FEDERATED_STORAGE_CONFIG_YAML"], 1))
+          PY
 
       # Create necessary test files in the cluster. Some configurations of the chart
       # require pre-existing files like Secrets in order for volume mounts to be valid. Without them,
@@ -279,9 +288,18 @@ jobs:
           disk: 150
           api-token: ${{ secrets.REPLICATED_API_TOKEN }}
 
+      # The secret is passed via env (not interpolated into the script) and
+      # substituted with a literal string replace, so any characters in the value
+      # (| & \ / quotes, $) are safe.
       - name: Populate federated storage config secret
+        env:
+          FEDERATED_STORAGE_CONFIG_YAML: ${{ secrets.FEDERATED_STORAGE_CONFIG_YAML }}
         run: |
-          sed -i "s|FEDERATED_STORAGE_CONFIG_YAML|${{ secrets.FEDERATED_STORAGE_CONFIG_YAML }}|" .github/ci-files/federatedStorageConfigSecret.yaml
+          python3 - <<'PY'
+          import os, pathlib
+          p = pathlib.Path(".github/ci-files/federatedStorageConfigSecret.yaml")
+          p.write_text(p.read_text().replace("FEDERATED_STORAGE_CONFIG_YAML", os.environ["FEDERATED_STORAGE_CONFIG_YAML"], 1))
+          PY
 
       - name: Create kubecost Namespace and test files
         run: |
