@@ -20,6 +20,13 @@ concurrency:
 
 jobs:
   test-chart:
+    # This job uses secrets (AWS role, ICR API key) and checks out PR code, so
+    # only run it for same-repo PRs. pull_request_target hands secrets to fork
+    # PRs, so skip those instead. Manual dispatches have no PR payload and
+    # must still run. Downstream jobs `need` this job, so they skip too.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     permissions:
       # id-token required for GitHub OIDC token exchange for aws role
