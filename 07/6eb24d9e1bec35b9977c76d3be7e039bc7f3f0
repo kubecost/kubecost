@@ -1,0 +1,20 @@
+.github/workflows/check_pr_labels.yaml
+  h_cca6aa2712613d 15-21
+.github/workflows/link-checker.yaml
+  h_cca6aa2712613d 12-14
+.github/workflows/test-chart-3.0.yml
+  h_cca6aa2712613d 114-115,256-257,322-323
+.github/workflows/upgrade.yaml
+  h_cca6aa2712613d 10-12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "076eb24d9e1bec35b9977c76d3be7e039bc7f3f0",
+  "prompts": {},
+  "humans": {
+    "h_cca6aa2712613d": {
+      "author": "jesse goodier <31039225+jessegoodier@users.noreply.github.com>"
+    }
+  }
+}
