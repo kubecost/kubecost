@@ -5,8 +5,8 @@
 # This is here for troubleshooting lychee failures due to bots.
 
 # Usage:
-#   ./scripts/check-ibm-links.sh            # coloured output
-#   ./scripts/check-ibm-links.sh --no-color # plain output (CI-friendly)
+#   ./.github/scripts/check-ibm-links.sh            # coloured output
+#   ./.github/scripts/check-ibm-links.sh --no-color # plain output (CI-friendly)
 #
 # Exit code: 0 if all links return 200/redirect, 1 if any return an unexpected status.
 # Note: ibm.com/docs returns 403 for all automated requests regardless of User-Agent.

@@ -1,4 +1,4 @@
-#!/usr/bin/env -S uv run
+#!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.12"
 # dependencies = [
@@ -6,13 +6,18 @@
 # ]
 # ///
 
-"""
+# Default GitHub org and repo. Override the slug with --repo.
+GITHUB_ORG = "kubecost"
+GITHUB_REPO = "kubecost"
+DEFAULT_REPO = f"{GITHUB_ORG}/{GITHUB_REPO}"
+
+__doc__ = f"""
 cherry-pick-checker.py
 
-Used by the PR Backport Status workflow to check the status of PRs labeled with each detected release version.
-@ .github/workflows/pr-backport-status.yaml
+Used by the Cherry-Pick Status Checker workflow to check the status of PRs labeled with each detected release version.
+@ .github/workflows/cherry-pick-checker.yaml
 
-Lists merged PRs labeled with each detected release version in kubecost/kubecost
+Lists merged PRs labeled with each detected release version in {DEFAULT_REPO}
 and checks whether each PR's merge commit is present in the corresponding
 release branch. Also detects cherry-pick PRs and PRs whose diff is already
 on the branch (superseded / empty cherry-pick). Open and closed-unmerged PRs
@@ -22,12 +27,12 @@ Versions are auto-detected: the two highest semver branches matching v\\d+\\.\\d
 in the target repo are used — highest = RC, second-highest = GA.
 
 Requirements: PyGithub, git
-Environment: GITHUB_TOKEN must be set.
+Environment: GITHUB_TOKEN, or an authenticated `gh` CLI session as fallback.
 
 Usage:
-    uv run ./scripts/cherry-pick-checker.py [options]
+    ./.github/scripts/cherry-pick-checker.py [options]
 
-    --repo REPO            GitHub repo slug (default: kubecost/kubecost)
+    --repo REPO            GitHub repo slug (default: {DEFAULT_REPO})
     --limit N              Max PRs to fetch per label (default: 200)
     --output-file PATH     Write Markdown report to this file
     --summary-json PATH    Write per-branch JSON summary to this file
@@ -40,9 +45,9 @@ Suppressing the MISSING alert:
     MISSING (❌) and exclude it from needs-attention counts.
 
 Run locally:
-uv run ./scripts/cherry-pick-checker.py                              # GA + RC, all labeled PRs
-uv run ./scripts/cherry-pick-checker.py --only-missing               # GA + RC, missing cherry-picks
-uv run ./scripts/cherry-pick-checker.py --branch v3.3 --only-missing # one branch only, missing cherry-picks only
+./.github/scripts/cherry-pick-checker.py                              # GA + RC, all labeled PRs
+./.github/scripts/cherry-pick-checker.py --only-missing               # GA + RC, missing cherry-picks
+./.github/scripts/cherry-pick-checker.py --branch v3.3 --only-missing # one branch only, missing cherry-picks only
 """
 
 import argparse
@@ -81,6 +86,7 @@ SKIP_LABEL = "ignore-cherry-pick-checker"
 class PRResult:
     number: int
     title: str
+    author: str
     merged_at: str | None  # ISO date string YYYY-MM-DD or None
     status: str
     cherry_pick_pr: int | None = None
@@ -138,6 +144,7 @@ def fetch_prs(repo, label: str, limit: int) -> list[dict]:
             {
                 "number": pr.number,
                 "title": pr.title,
+                "author": pr.user.login if pr.user else "unknown",
                 "state": pr.state,
                 "merge_sha": merge_sha,
                 "merged_at": merged_at,
@@ -157,10 +164,26 @@ def fetch_prs(repo, label: str, limit: int) -> list[dict]:
 
 
 def _git_env() -> dict[str, str]:
+    """Environment for git subprocesses.
+
+    Use ``gh auth git-credential``, the same helper ``gh auth setup-git``
+    installs. In Actions it reads GITHUB_TOKEN. Locally it reads the logged-in
+    gh user. GIT_ASKPASS is removed: Git execs that value as a program path, so
+    a shell snippet cannot run, and it also blocks this helper. GIT_CONFIG_* is
+    process-local and does not change the user's git config.
+    """
     env = os.environ.copy()
-    env["GIT_ASKPASS"] = "sh -c 'case \"$1\" in *Username*) echo x-access-token;; *) echo \"$GIT_PASSWORD\";; esac' --"
-    env["GIT_PASSWORD"] = env["GITHUB_TOKEN"]
+    env.pop("GIT_ASKPASS", None)
+    env.pop("SSH_ASKPASS", None)
     env["GIT_TERMINAL_PROMPT"] = "0"
+    token = env.get("GITHUB_TOKEN", "")
+    if token:
+        env["GH_TOKEN"] = token
+    env["GIT_CONFIG_COUNT"] = "2"
+    env["GIT_CONFIG_KEY_0"] = "credential.https://github.com.helper"
+    env["GIT_CONFIG_VALUE_0"] = ""
+    env["GIT_CONFIG_KEY_1"] = "credential.https://github.com.helper"
+    env["GIT_CONFIG_VALUE_1"] = "!gh auth git-credential"
     return env
 
 
@@ -375,6 +398,7 @@ def check_branch(
     for pr in all_prs:
         num = pr["number"]
         title = pr["title"]
+        author = pr["author"]
         merged_at = pr["merged_at"]
         merge_sha = pr["merge_sha"]
 
@@ -382,7 +406,7 @@ def check_branch(
             continue
 
         if SKIP_LABEL in pr.get("labels", []):
-            results.append(PRResult(num, title, merged_at, Status.SKIPPED))
+            results.append(PRResult(num, title, author, merged_at, Status.SKIPPED))
             continue
 
         if not ensure_commit(tmpdir, merge_sha):
@@ -391,21 +415,23 @@ def check_branch(
             pass
 
         if is_in_branch(tmpdir, merge_sha):
-            results.append(PRResult(num, title, merged_at, Status.IN_BRANCH))
+            results.append(PRResult(num, title, author, merged_at, Status.IN_BRANCH))
             continue
 
         cp_num = find_cherrypick_pr(repo, g, num, title, all_prs, tmpdir, version)
         if cp_num is not None:
             results.append(
-                PRResult(num, title, merged_at, Status.CHERRY_PICKED, cp_num)
+                PRResult(num, title, author, merged_at, Status.CHERRY_PICKED, cp_num)
             )
             continue
 
         if is_already_on_branch(tmpdir, merge_sha):
-            results.append(PRResult(num, title, merged_at, Status.ALREADY_ON_BRANCH))
+            results.append(
+                PRResult(num, title, author, merged_at, Status.ALREADY_ON_BRANCH)
+            )
             continue
 
-        results.append(PRResult(num, title, merged_at, Status.MISSING))
+        results.append(PRResult(num, title, author, merged_at, Status.MISSING))
 
     return results
 
@@ -436,7 +462,7 @@ def render_markdown(
     results: list[PRResult],
     *,
     only_missing: bool = False,
-    repo: str = "kubecost/kubecost",
+    repo: str = DEFAULT_REPO,
 ) -> str:
     counts = {s: 0 for s in STATUS_LABEL}
     for r in results:
@@ -464,7 +490,7 @@ def render_markdown(
             title = title[:57] + "..."
         lines.append(
             f"| [#{r.number}](https://github.com/{repo}/pull/{r.number}) "
-            f"| {title} | {r.merged_at or '—'} | {emoji} {label} |"
+            f"by @{r.author} | {title} | {r.merged_at or '—'} | {emoji} {label} |"
         )
 
     if only_missing:
@@ -500,6 +526,7 @@ def render_summary_json(
             {
                 "number": r.number,
                 "title": r.title,
+                "author": r.author,
                 "status": STATUS_LABEL[r.status],
                 "merged_at": r.merged_at,
             }
@@ -527,13 +554,55 @@ def render_summary_json(
 
 
 # ---------------------------------------------------------------------------
+# Auth
+# ---------------------------------------------------------------------------
+
+
+def resolve_github_token() -> str:
+    """Return a GitHub token from GITHUB_TOKEN or an authenticated gh CLI."""
+    token = os.environ.get("GITHUB_TOKEN", "").strip()
+    if token:
+        return token
+
+    if not shutil.which("gh"):
+        sys.exit(
+            "ERROR: GITHUB_TOKEN is not set and `gh` was not found on PATH.\n"
+            "Set GITHUB_TOKEN or run `gh auth login`."
+        )
+
+    result = subprocess.run(
+        ["gh", "auth", "token"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    token = (result.stdout or "").strip()
+    if result.returncode != 0 or not token:
+        err = (result.stderr or "").strip() or "gh auth token failed"
+        sys.exit(
+            f"ERROR: GITHUB_TOKEN is not set and could not use authenticated gh user.\n"
+            f"{err}\n"
+            "Set GITHUB_TOKEN or run `gh auth login`."
+        )
+
+    # Ensure git helpers that read GITHUB_TOKEN also work for local runs.
+    os.environ["GITHUB_TOKEN"] = token
+    print("Using authenticated gh CLI token (GITHUB_TOKEN was unset).")
+    return token
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--repo", default="kubecost/kubecost")
+    parser.add_argument(
+        "--repo",
+        default=DEFAULT_REPO,
+        help=f"GitHub repo slug (default: {DEFAULT_REPO})",
+    )
     parser.add_argument("--limit", type=int, default=200)
     parser.add_argument("--output-file", metavar="PATH")
     parser.add_argument("--summary-json", metavar="PATH")
@@ -549,9 +618,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    token = os.environ.get("GITHUB_TOKEN")
-    if not token:
-        sys.exit("ERROR: GITHUB_TOKEN environment variable is not set.")
+    token = resolve_github_token()
 
     g = Github(auth=Auth.Token(token))
     repo = g.get_repo(args.repo)
@@ -570,9 +637,9 @@ def main() -> None:
 
     remote = f"https://github.com/{args.repo}.git"
     report_title = (
-        "# PR Backport Status Report (missing cherry-picks)"
+        "# PR Cherry-Pick Status Report (missing cherry-picks)"
         if args.only_missing
-        else "# PR Backport Status Report"
+        else "# PR Cherry-Pick Status Report"
     )
     report_sections = [
         report_title,
@@ -584,6 +651,7 @@ def main() -> None:
     ]
 
     all_branch_results = {}
+    fetch_errors: list[str] = []
 
     for version in versions:
         print(f"\nChecking branch {version}...")
@@ -594,7 +662,8 @@ def main() -> None:
             try:
                 prs = fetch_prs(repo, version, args.limit)
             except GithubException as e:
-                print(f"  WARNING: Could not fetch PRs for label '{version}': {e}")
+                print(f"  ERROR: Could not fetch PRs for label '{version}': {e}")
+                fetch_errors.append(f"{version}: {e}")
                 prs = []
 
             print(f"  Found {len(prs)} PRs. Checking status...")
@@ -629,6 +698,13 @@ def main() -> None:
         with open(args.summary_json, "w") as f:
             json.dump(summary, f, indent=2)
         print(f"JSON summary written to {args.summary_json}")
+
+    if fetch_errors:
+        sys.exit(
+            "\nERROR: failed to fetch PRs for "
+            f"{len(fetch_errors)} branch(es); results above are incomplete:\n"
+            + "\n".join(f"  - {e}" for e in fetch_errors)
+        )
 
 
 if __name__ == "__main__":
