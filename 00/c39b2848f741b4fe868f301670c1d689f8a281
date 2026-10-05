@@ -1,0 +1,14 @@
+.github/workflows/test-chart-3.0.yml
+  h_cca6aa2712613d 140-142,144-145,147-151,291-293,295-296,298-302
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "00c39b2848f741b4fe868f301670c1d689f8a281",
+  "prompts": {},
+  "humans": {
+    "h_cca6aa2712613d": {
+      "author": "jesse goodier <31039225+jessegoodier@users.noreply.github.com>"
+    }
+  }
+}
