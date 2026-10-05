@@ -2,15 +2,10 @@ name: Chart build and test 3.x
 
 on:
   workflow_dispatch: {}
-  # Normally using pull_request_target along with checking out the ref of the PR is not
-  # a good idea, but this is low risk since it's a Helm chart repo.
-  pull_request_target:
+  # pull_request (not pull_request_target) so fork PRs never get secrets or an
+  # OIDC token. The test-chart job is skipped for forks, see its `if`.
+  pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-
-  # Uncomment this if you need to actively test this workflow from a PR draft
-  # pull_request:
-  #   branches:
-  #     - develop
 
 # Prevents multiple runs of the same workflow on the same branch from executing
 # simultaneously. Saves resources.
@@ -21,8 +16,8 @@ concurrency:
 jobs:
   test-chart:
     # This job uses secrets (AWS role, ICR API key) and checks out PR code, so
-    # only run it for same-repo PRs. pull_request_target hands secrets to fork
-    # PRs, so skip those instead. Manual dispatches have no PR payload and
+    # only run it for same-repo PRs. Fork PRs get no secrets under pull_request,
+    # so skip them instead of failing. Manual dispatches have no PR payload and
     # must still run. Downstream jobs `need` this job, so they skip too.
     if: >-
       github.event_name == 'workflow_dispatch' ||
