@@ -7,6 +7,9 @@ on:
   schedule:
     - cron: '30 22 * * 4' # Every Thursday at 10:30 PM
 
+permissions:
+  contents: read
+
 env:
   CHART_REPO: kubecost
   CHART_REPO_URL: https://kubecost.github.io/kubecost/

@@ -12,10 +12,15 @@ permissions:
 jobs:
   cherrypick:
     runs-on: ubuntu-latest
-    # A labeled PR was merged, or someone commented `/backport` on one.
+    # A labeled PR was merged, or a repo member commented `/backport` on one.
+    # The merge path is intentionally unrestricted so merged fork PRs still get
+    # backported. The comment path is limited to trusted commenters because this
+    # job holds contents:write and pull-requests:write.
     if: >
       github.event.pull_request.merged || (github.event.issue.pull_request &&
-      github.event.comment.body == '/backport')
+      github.event.comment.body == '/backport' &&
+      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'),
+      github.event.comment.author_association))
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v7.0.1
