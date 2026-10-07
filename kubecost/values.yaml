@@ -1018,7 +1018,7 @@ aggregator:
   legacyMode: false
 
   ## Enable or disable kubemodel ingestion
-  kubemodelIngestionEnabled: false
+  kubemodelIngestionEnabled: true
 
   # How much container resource usage data to retain in the DB, in terms of days.
   #
