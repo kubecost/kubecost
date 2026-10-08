@@ -2,15 +2,10 @@ name: Chart build and test 3.x
 
 on:
   workflow_dispatch: {}
-  # Normally using pull_request_target along with checking out the ref of the PR is not
-  # a good idea, but this is low risk since it's a Helm chart repo.
-  pull_request_target:
+  # pull_request (not pull_request_target) so fork PRs never get secrets or an
+  # OIDC token. The test-chart job is skipped for forks, see its `if`.
+  pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-
-  # Uncomment this if you need to actively test this workflow from a PR draft
-  # pull_request:
-  #   branches:
-  #     - develop
 
 # Prevents multiple runs of the same workflow on the same branch from executing
 # simultaneously. Saves resources.
@@ -20,7 +15,18 @@ concurrency:
 
 jobs:
   test-chart:
+    # This job uses secrets (AWS role, ICR API key) and checks out PR code, so
+    # only run it for same-repo PRs. Fork PRs get no secrets under pull_request,
+    # so skip them instead of failing. Manual dispatches have no PR payload and
+    # must still run. Downstream jobs `need` this job, so they skip too.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
+    permissions:
+      # id-token required for GitHub OIDC token exchange for aws role
+      id-token: write
+      contents: read
 
     steps:
       - name: Checkout
@@ -41,6 +47,7 @@ jobs:
           ct lint --chart-dirs=kubecost/ --charts kubecost/ --validate-maintainers=false
 
       # Run `helm template` on the main values file plus all those in the ci directory.
+      # Also templates with the EKS values file to include public.ecr.aws images in the check.
       - name: Helm template
         run: |
           helm template kubecost/ -f .github/ci-helmValues/helmValues-federated-store.yaml > full.yaml
@@ -51,6 +58,34 @@ jobs:
               helm template kubecost/ -f "$file" >> full.yaml
           fi
           done
+          echo "Templating with EKS values (public.ecr.aws registry)"
+          helm template kubecost/ -f kubecost/values-eks-cost-monitoring.yaml >> full.yaml
+
+      - name: Set up yq
+        run: |
+          set -euo pipefail
+          YQ_VERSION=v4.53.4
+          curl -fsSL -o /tmp/yq \
+            "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64"
+          sudo install -m 0755 /tmp/yq /usr/local/bin/yq
+          yq --version
+
+      # this step is designed to fail fail before creating clusters
+      - name: Configure AWS credentials (ECR Public)
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ secrets.AWS_ECR_ROLE }}
+          aws-region: us-east-1
+
+      # icr.io/kubecost and icr.io/ibm-finops images are public, but anonymous
+      # pulls from GitHub-hosted runners time out, so authenticate instead.
+      - name: Configure ICR credentials
+        env:
+          IBM_CLOUD_API_KEY: ${{ secrets.IBM_CLOUD_API_KEY }}
+        run: echo "$IBM_CLOUD_API_KEY" | docker login -u iamapikey --password-stdin icr.io
+
+      - name: Verify container images exist
+        run: .github/scripts/check-images.sh full.yaml
 
       - name: Create KinD cluster
         uses: helm/kind-action@v1.15.0
@@ -70,9 +105,17 @@ jobs:
           helm dependency build kubecost/
           .github/scripts/extra_server_config_test.sh
 
+      - name: Install helm-unittest plugin
+        run: helm plugin install https://github.com/helm-unittest/helm-unittest --version v1.2.0
+
+      - name: Cluster Controller service account name template tests
+        run: helm unittest kubecost/
+
   # Test cluster versions.
   deploy-chart:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -97,9 +140,18 @@ jobs:
           node_image: kindest/node:${{ matrix.k8s-version.version }}
           kubectl_version: ${{ matrix.k8s-version.version }}
 
+      # The secret is passed via env (not interpolated into the script) and
+      # substituted with a literal string replace, so any characters in the value
+      # (| & \ / quotes, $) are safe.
       - name: Populate federated storage config secret
+        env:
+          FEDERATED_STORAGE_CONFIG_YAML: ${{ secrets.FEDERATED_STORAGE_CONFIG_YAML }}
         run: |
-          sed -i "s|FEDERATED_STORAGE_CONFIG_YAML|${{ secrets.FEDERATED_STORAGE_CONFIG_YAML }}|" .github/ci-files/federatedStorageConfigSecret.yaml
+          python3 - <<'PY'
+          import os, pathlib
+          p = pathlib.Path(".github/ci-files/federatedStorageConfigSecret.yaml")
+          p.write_text(p.read_text().replace("FEDERATED_STORAGE_CONFIG_YAML", os.environ["FEDERATED_STORAGE_CONFIG_YAML"], 1))
+          PY
 
       # Create necessary test files in the cluster. Some configurations of the chart
       # require pre-existing files like Secrets in order for volume mounts to be valid. Without them,
@@ -213,6 +265,8 @@ jobs:
 
   deploy-ocp:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     needs: test-chart
     strategy:
       matrix:
@@ -226,7 +280,7 @@ jobs:
       # Outputs: `cluster-kubeconfig`, `cluster-id`
       - name: Create Cluster
         id: create-cluster
-        uses: replicatedhq/replicated-actions/create-cluster@v1.27.1
+        uses: replicatedhq/replicated-actions/create-cluster@0fbf5395cf3e8c744f447bbc92b7de9135eead8e # v1.27.1
         with:
           kubernetes-distribution: ${{ matrix.cluster.distribution }}
           kubernetes-version: ${{ matrix.cluster.version }}
@@ -237,9 +291,18 @@ jobs:
           disk: 150
           api-token: ${{ secrets.REPLICATED_API_TOKEN }}
 
+      # The secret is passed via env (not interpolated into the script) and
+      # substituted with a literal string replace, so any characters in the value
+      # (| & \ / quotes, $) are safe.
       - name: Populate federated storage config secret
+        env:
+          FEDERATED_STORAGE_CONFIG_YAML: ${{ secrets.FEDERATED_STORAGE_CONFIG_YAML }}
         run: |
-          sed -i "s|FEDERATED_STORAGE_CONFIG_YAML|${{ secrets.FEDERATED_STORAGE_CONFIG_YAML }}|" .github/ci-files/federatedStorageConfigSecret.yaml
+          python3 - <<'PY'
+          import os, pathlib
+          p = pathlib.Path(".github/ci-files/federatedStorageConfigSecret.yaml")
+          p.write_text(p.read_text().replace("FEDERATED_STORAGE_CONFIG_YAML", os.environ["FEDERATED_STORAGE_CONFIG_YAML"], 1))
+          PY
 
       - name: Create kubecost Namespace and test files
         run: |
@@ -270,13 +333,15 @@ jobs:
         run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/name=network-costs --timeout=120s
       - name: Remove Cluster
         id: remove-cluster
-        uses: replicatedhq/replicated-actions/remove-cluster@v1.27.1
+        uses: replicatedhq/replicated-actions/remove-cluster@0fbf5395cf3e8c744f447bbc92b7de9135eead8e # v1.27.1
         with:
           api-token: ${{ secrets.REPLICATED_API_TOKEN }}
           cluster-id: ${{ steps.create-cluster.outputs.cluster-id }}
 
   deploy-eks:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     needs: test-chart
     strategy:
       matrix:
@@ -289,7 +354,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Create Cluster
         id: create-cluster
-        uses: replicatedhq/replicated-actions/create-cluster@v1.27.1
+        uses: replicatedhq/replicated-actions/create-cluster@0fbf5395cf3e8c744f447bbc92b7de9135eead8e # v1.27.1
         with:
           kubernetes-distribution: ${{ matrix.cluster.distribution }}
           kubernetes-version: ${{ matrix.cluster.version }}
@@ -326,7 +391,7 @@ jobs:
         run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/name=network-costs --timeout=120s
       - name: Remove Cluster
         id: remove-cluster
-        uses: replicatedhq/replicated-actions/remove-cluster@v1.27.1
+        uses: replicatedhq/replicated-actions/remove-cluster@0fbf5395cf3e8c744f447bbc92b7de9135eead8e # v1.27.1
         continue-on-error: true
         with:
           api-token: ${{ secrets.REPLICATED_API_TOKEN }}

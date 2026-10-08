@@ -12,6 +12,13 @@ on:
     merge_group:
       types: [checks_requested]
 
+# Least privilege: the repo default GITHUB_TOKEN is write. pull-requests: write is
+# needed for the required-labels action to post its comment (add_comment: true).
+# Checking out the private actions repo uses the app token, not GITHUB_TOKEN.
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   check_labels:
     name: Check labels
