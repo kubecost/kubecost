@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Document the `gpuRightSizing` action (executes GPU Share/Optimize recommendations, off by default, requires cluster-controller v0.17.0 or later) in the commented `kubecostProductConfigs.actions.config` example
+
 ### Fixed
 
 - Bump network costs image to v0.19.4 to remove CVEs, no code changes (#4877)
