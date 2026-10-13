@@ -67,7 +67,7 @@ jobs:
             "${extra_args[@]}"
 
       - name: Upload missing-cherry-picks report
-        uses: actions/upload-artifact@v7.0.1
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: cherry-pick-status-report
           path: report.md
