@@ -1,0 +1,18 @@
+{{- if include "kubecost.spark.enabled" . }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "kubecost.spark.clickhouseServiceName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "kubecost.aggregator.commonLabels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "kubecost.aggregator.selectorLabels" . | nindent 4 }}
+    statefulset.kubernetes.io/pod-name: {{ include "kubecost.aggregator.fullname" . }}-0
+  ports:
+    - name: tcp-clickhouse-http
+      port: 8123
+      targetPort: 8123
+{{- end }}

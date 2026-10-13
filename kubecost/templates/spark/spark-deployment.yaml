@@ -1,0 +1,150 @@
+{{- if include "kubecost.spark.enabled" . }}
+{{- $spark := .Values.aggregator.kubecostSpark }}
+{{- $decorator := eq (lower (default "" $spark.mode)) "decorator" }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "kubecost.spark.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "kubecost.spark.commonLabels" . | nindent 4 }}
+    {{- with .Values.global.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  annotations:
+    {{- with .Values.global.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "kubecost.spark.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "kubecost.spark.selectorLabels" . | nindent 8 }}
+        {{- with .Values.global.additionalLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- if or .Values.global.podAnnotations $spark.podAnnotations }}
+      annotations:
+        {{- with .Values.global.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with $spark.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+    spec:
+      restartPolicy: Always
+      serviceAccountName: {{ template "kubecost.aggregator.serviceAccountName" . }}
+      {{- with $spark.securityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: kubecost-spark-data
+          emptyDir:
+            sizeLimit: {{ $spark.emptyDirSizeLimit }}
+      containers:
+        - name: kubecost-spark
+          image: {{ required "aggregator.kubecostSpark.image is required when enabled" $spark.image | quote }}
+          imagePullPolicy: {{ $spark.imagePullPolicy }}
+          securityContext:
+            {{- toYaml $spark.containerSecurityContext | nindent 12 }}
+          resources:
+            {{- toYaml $spark.resources | nindent 12 }}
+          {{- if not $decorator }}
+          ports:
+            - name: spark-health
+              containerPort: 8081
+              protocol: TCP
+          startupProbe:
+            httpGet:
+              path: /startup
+              port: spark-health
+            periodSeconds: {{ $spark.startupProbe.periodSeconds }}
+            timeoutSeconds: {{ $spark.startupProbe.timeoutSeconds }}
+            failureThreshold: {{ $spark.startupProbe.failureThreshold }}
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: spark-health
+            periodSeconds: {{ $spark.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ $spark.readinessProbe.timeoutSeconds }}
+            failureThreshold: {{ $spark.readinessProbe.failureThreshold }}
+          livenessProbe:
+            httpGet:
+              path: /live
+              port: spark-health
+            periodSeconds: {{ $spark.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ $spark.livenessProbe.timeoutSeconds }}
+            failureThreshold: {{ $spark.livenessProbe.failureThreshold }}
+          {{- end }}
+          env:
+            {{- if $spark.mode }}
+            - name: MODE
+              value: {{ $spark.mode | quote }}
+            {{- end }}
+            {{- if $decorator }}
+            - name: DECORATOR_ORG_ID
+              value: {{ required "aggregator.kubecostSpark.decorator.orgId is required in decorator mode" $spark.decorator.orgId | quote }}
+            - name: DECORATOR_POLL_SECONDS
+              value: {{ $spark.decorator.pollSeconds | quote }}
+            - name: CH_READ_DATABASE
+              value: {{ $spark.decorator.readDatabase | quote }}
+            - name: CH_WRITE_DATABASE
+              value: {{ $spark.decorator.writeDatabase | quote }}
+            {{- end }}
+            - name: JAVA_TOOL_OPTIONS
+              value: {{ $spark.javaToolOptions | quote }}
+            - name: CH_URL
+              value: {{ include "kubecost.spark.clickhouseUrl" . | quote }}
+            - name: CH_DATABASE
+              value: {{ $spark.clickhouseDatabase | quote }}
+            - name: CH_WRITE_CONNECTIONS
+              value: {{ $spark.clickhouseWriteConnections | quote }}
+            - name: AWS_REGION
+              value: {{ required "aggregator.kubecostSpark.awsRegion is required when enabled" $spark.awsRegion | quote }}
+            - name: AWS_DEFAULT_REGION
+              value: {{ required "aggregator.kubecostSpark.awsRegion is required when enabled" $spark.awsRegion | quote }}
+            - name: FJORD_QUEUE_URL
+              value: {{ required "aggregator.kubecostSpark.fjordQueueUrl is required when enabled" $spark.fjordQueueUrl | quote }}
+            - name: FJORD_ROLE_ARN
+              value: {{ required "aggregator.kubecostSpark.fjordRoleArn is required when enabled" $spark.fjordRoleArn | quote }}
+            - name: BUSINESS_MAPPINGS_URL
+              value: {{ required "aggregator.kubecostSpark.businessMappingsUrl is required when enabled" $spark.businessMappingsUrl | quote }}
+            - name: TAG_MAPPINGS_URL
+              value: {{ required "aggregator.kubecostSpark.tagMappingsUrl is required when enabled" $spark.tagMappingsUrl | quote }}
+            - name: METRICS_AGENT_BUCKET
+              value: {{ required "aggregator.kubecostSpark.metricsAgentBucket is required when enabled" $spark.metricsAgentBucket | quote }}
+            - name: METRICS_AGENT_ROOT_PREFIX
+              value: {{ $spark.metricsAgentRootPrefix | quote }}
+            - name: ALLOWED_ORG_IDS
+              value: {{ join "," $spark.allowedOrganizationIds | quote }}
+            - name: SPARK_LOCAL_THREADS
+              value: {{ $spark.sparkLocalThreads | quote }}
+            - name: SPARK_LOCAL_DIR
+              value: {{ $spark.sparkLocalDirectory | quote }}
+            - name: SPARK_WAREHOUSE_DIR
+              value: {{ $spark.sparkWarehouseDirectory | quote }}
+          volumeMounts:
+            - name: kubecost-spark-data
+              mountPath: /var/lib/kubecost-spark
+      {{- include "kubecost.imagePullSecrets" . | nindent 6 }}
+      {{- with $spark.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $spark.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $spark.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}
