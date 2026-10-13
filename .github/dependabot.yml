@@ -6,6 +6,12 @@ registries:
     username: dummy  # icr.io images are public; Dependabot requires credentials
     password: dummy
     replaces-base: true
+  # Allowlists the finops-agent and mcp-kubecost chart repos for the Dependabot proxy
+  kubecost-charts:
+    type: helm-registry
+    url: https://kubecost.github.io
+    username: dummy  # public repos; Dependabot requires credentials
+    password: dummy
 updates:
   # GitHub Actions - Monthly updates to reduce update frequency
   # Provides time for community feedback before adopting new action versions
@@ -38,6 +44,8 @@ updates:
   # Monitors the finops-agent dependency in Chart.yaml
   - package-ecosystem: helm
     directory: /kubecost
+    registries:
+      - kubecost-charts
     schedule:
       interval: daily
     ignore:
