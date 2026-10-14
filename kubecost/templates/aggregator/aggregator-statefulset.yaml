@@ -621,6 +621,12 @@ spec:
             {{- end }}
             - name: COLLECTIONS_MEMORY_CACHE_ENABLED
               value: {{ (quote .Values.aggregator.collections.cache.enabled) }}
+            - name: COLLECTIONS_DB_CACHE_ENABLED
+              value: {{ (quote .Values.aggregator.collections.cache.db.enabled) }}
+            - name: COLLECTIONS_DB_CACHE_SUB_BATCH_SIZE
+              value: {{ (quote .Values.aggregator.collections.cache.db.subBatchSize) }}
+            - name: COLLECTIONS_DB_CACHE_MAX_WARM_REQUESTS
+              value: {{ (quote .Values.aggregator.collections.cache.db.maxWarmRequests) }}
             {{- if ((.Values.global.integrations).turbonomic).enabled }}
             - name: TURBONOMIC_ENABLED
               value: "true"
