@@ -686,6 +686,10 @@ spec:
             {{- end }}
             - name: KUBEMODEL_INGESTION_ENABLED
               value: {{ .Values.aggregator.kubemodelIngestionEnabled | quote }}
+            {{- if .Values.aggregator.viewSupportEnabled }}
+            - name: VIEW_SUPPORT_ENABLED
+              value: "true"
+            {{- end }}
             {{- if .Values.aggregator.extraEnv -}}
             {{- toYaml .Values.aggregator.extraEnv | nindent 12 }}
             {{- end }}

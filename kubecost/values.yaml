@@ -1020,6 +1020,9 @@ aggregator:
   ## Enable or disable kubemodel ingestion
   kubemodelIngestionEnabled: true
 
+  ## Enable or disable view support
+  viewSupportEnabled: false
+
   # How much container resource usage data to retain in the DB, in terms of days.
   #
   # In high scale environments setting this to `0` can improve performance if hourly
