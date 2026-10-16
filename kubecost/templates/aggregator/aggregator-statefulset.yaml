@@ -692,8 +692,6 @@ spec:
             {{- if .Values.aggregator.viewSupportEnabled }}
             - name: VIEW_SUPPORT_ENABLED
               value: "true"
-            {{- end }}
-            {{- if include "kubecost.spark.enabled" . }}
             - name: DATABASE_DEBUG_ACCESS_ENABLED
               value: "true"
             {{- end }}

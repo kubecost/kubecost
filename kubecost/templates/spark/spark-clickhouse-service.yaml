@@ -1,4 +1,4 @@
-{{- if include "kubecost.spark.enabled" . }}
+{{- if .Values.aggregator.viewSupportEnabled }}
 apiVersion: v1
 kind: Service
 metadata:

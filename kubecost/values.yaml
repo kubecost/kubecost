@@ -1155,7 +1155,6 @@ aggregator:
   extraVolumeMounts: []
 
   kubecostSpark:
-    enabled: false
     image: docker.apps.papt.to/cake/releases/kubecost-spark:dev
     imagePullPolicy: Always
     mode: decorator

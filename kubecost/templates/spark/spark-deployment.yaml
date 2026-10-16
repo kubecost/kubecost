@@ -1,4 +1,4 @@
-{{- if include "kubecost.spark.enabled" . }}
+{{- if .Values.aggregator.viewSupportEnabled }}
 {{- $spark := .Values.aggregator.kubecostSpark }}
 {{- $decorator := eq (lower (default "" $spark.mode)) "decorator" }}
 apiVersion: apps/v1
@@ -50,8 +50,8 @@ spec:
           emptyDir:
             sizeLimit: {{ $spark.emptyDirSizeLimit }}
       containers:
-        - name: kubecost-spark
-          image: {{ required "aggregator.kubecostSpark.image is required when enabled" $spark.image | quote }}
+        - name: business-mapping-decorator
+          image: {{ required "aggregator.kubecostSpark.image is required when aggregator.viewSupportEnabled is true" $spark.image | quote }}
           imagePullPolicy: {{ $spark.imagePullPolicy }}
           securityContext:
             {{- toYaml $spark.containerSecurityContext | nindent 12 }}
@@ -108,19 +108,19 @@ spec:
             - name: CH_WRITE_CONNECTIONS
               value: {{ $spark.clickhouseWriteConnections | quote }}
             - name: AWS_REGION
-              value: {{ required "aggregator.kubecostSpark.awsRegion is required when enabled" $spark.awsRegion | quote }}
+              value: {{ required "aggregator.kubecostSpark.awsRegion is required when aggregator.viewSupportEnabled is true" $spark.awsRegion | quote }}
             - name: AWS_DEFAULT_REGION
-              value: {{ required "aggregator.kubecostSpark.awsRegion is required when enabled" $spark.awsRegion | quote }}
+              value: {{ required "aggregator.kubecostSpark.awsRegion is required when aggregator.viewSupportEnabled is true" $spark.awsRegion | quote }}
             - name: FJORD_QUEUE_URL
-              value: {{ required "aggregator.kubecostSpark.fjordQueueUrl is required when enabled" $spark.fjordQueueUrl | quote }}
+              value: {{ required "aggregator.kubecostSpark.fjordQueueUrl is required when aggregator.viewSupportEnabled is true" $spark.fjordQueueUrl | quote }}
             - name: FJORD_ROLE_ARN
-              value: {{ required "aggregator.kubecostSpark.fjordRoleArn is required when enabled" $spark.fjordRoleArn | quote }}
+              value: {{ required "aggregator.kubecostSpark.fjordRoleArn is required when aggregator.viewSupportEnabled is true" $spark.fjordRoleArn | quote }}
             - name: BUSINESS_MAPPINGS_URL
-              value: {{ required "aggregator.kubecostSpark.businessMappingsUrl is required when enabled" $spark.businessMappingsUrl | quote }}
+              value: {{ required "aggregator.kubecostSpark.businessMappingsUrl is required when aggregator.viewSupportEnabled is true" $spark.businessMappingsUrl | quote }}
             - name: TAG_MAPPINGS_URL
-              value: {{ required "aggregator.kubecostSpark.tagMappingsUrl is required when enabled" $spark.tagMappingsUrl | quote }}
+              value: {{ required "aggregator.kubecostSpark.tagMappingsUrl is required when aggregator.viewSupportEnabled is true" $spark.tagMappingsUrl | quote }}
             - name: METRICS_AGENT_BUCKET
-              value: {{ required "aggregator.kubecostSpark.metricsAgentBucket is required when enabled" $spark.metricsAgentBucket | quote }}
+              value: {{ required "aggregator.kubecostSpark.metricsAgentBucket is required when aggregator.viewSupportEnabled is true" $spark.metricsAgentBucket | quote }}
             - name: METRICS_AGENT_ROOT_PREFIX
               value: {{ $spark.metricsAgentRootPrefix | quote }}
             - name: ALLOWED_ORG_IDS
