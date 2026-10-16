@@ -1,5 +1,5 @@
 {{- define "kubecost.spark.fullname" -}}
-{{- printf "%s-business-mapping-decorator" (include "kubecost.aggregator.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- printf "%s-%s" .Release.Name "business-mapping-decorator" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{- define "kubecost.spark.clickhouseServiceName" -}}
