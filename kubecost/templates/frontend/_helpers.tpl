@@ -89,6 +89,41 @@ Merge bufferConfig.directives with extraServerConfig lines, render nginx directi
   {{- trimSuffix "\n" $out -}}
 {{- end -}}
 
+{{/*
+Proxy directives shared by every location that reaches the aggregator's
+authenticated listener (port 9004): timeouts, failover when an upstream
+aggregator configuration is set, headers, and frontend.extraModelConfigs.
+Call with (dict "ctx" . "target" "http://aggregator/...") and nindent the result.
+*/}}
+{{- define "kubecost.frontend.aggregatorProxyDirectives" -}}
+{{- $ctx := .ctx -}}
+{{- if ($ctx.Values.frontend.upstreamAggregatorConfiguration) -}}
+# Shorter timeout for faster failover when backup server is configured
+proxy_connect_timeout       2s;
+proxy_send_timeout          {{ $ctx.Values.frontend.timeoutSeconds | default 300 }};
+proxy_read_timeout          {{ $ctx.Values.frontend.timeoutSeconds | default 300 }};
+{{- else -}}
+proxy_connect_timeout       {{ $ctx.Values.frontend.timeoutSeconds | default 300 }};
+proxy_send_timeout          {{ $ctx.Values.frontend.timeoutSeconds | default 300 }};
+proxy_read_timeout          {{ $ctx.Values.frontend.timeoutSeconds | default 300 }};
+{{- end }}
+proxy_pass {{ .target }};
+proxy_redirect off;
+proxy_http_version 1.1;
+proxy_set_header Connection "";
+proxy_set_header  X-Real-IP  $remote_addr;
+proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
+{{- if ($ctx.Values.frontend.upstreamAggregatorConfiguration) }}
+# Enable failover to next upstream server on errors/timeouts
+proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
+proxy_next_upstream_tries 2;
+proxy_next_upstream_timeout 0;
+{{- end }}
+{{- if $ctx.Values.frontend.extraModelConfigs }}
+{{ $ctx.Values.frontend.extraModelConfigs | toString }}
+{{- end }}
+{{- end -}}
+
 {{- define "kubecost.frontend.mcpProxyDirectives" -}}
 {{/*
 Shared proxy directives for MCP upstream locations. Long read/send timeouts
