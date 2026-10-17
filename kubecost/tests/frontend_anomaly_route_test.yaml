@@ -1,0 +1,103 @@
+# helm-unittest suite for the frontend nginx route of the Anomalies endpoint.
+#
+# GET /forecasting/anomaly/detect is served by the aggregator (authenticated
+# listener, RBAC team filters applied), not by the forecasting pod. It must be
+# proxied exactly like /model/, and only that one path: every other
+# /forecasting/ path still goes to the forecasting upstream.
+#
+# Run locally:
+#   helm plugin install https://github.com/helm-unittest/helm-unittest
+#   helm dependency build kubecost/
+#   helm unittest kubecost/
+suite: Frontend nginx routes /forecasting/anomaly/detect to the aggregator
+
+release:
+  name: kubecost
+
+templates:
+  - templates/frontend/frontend-configmap.yaml
+
+tests:
+  - it: "default: the anomaly path is proxied to the aggregator with the path rewritten"
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf"]
+          pattern: '(?s)location = /forecasting/anomaly/detect \{[^}]*proxy_pass http://aggregator/anomaly/detect;[^}]*\}'
+
+  - it: "default: it is an exact match, so no other anomaly path is rerouted"
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf"]
+          pattern: 'location = /forecasting/anomaly/detect \{'
+      - notMatchRegex:
+          path: data["nginx.conf"]
+          pattern: 'location (\^~ |~ )?/forecasting/anomaly'
+
+  - it: "default: every other forecasting path still goes to the forecasting upstream"
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf"]
+          pattern: '(?s)location /forecasting/ \{[^}]*proxy_pass http://forecasting/;'
+
+  - it: "forecasting disabled: the anomaly path is still served, the rest of /forecasting still 405s"
+    set:
+      forecasting.enabled: false
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf"]
+          pattern: '(?s)location = /forecasting/anomaly/detect \{[^}]*proxy_pass http://aggregator/anomaly/detect;'
+      - matchRegex:
+          path: data["nginx.conf"]
+          pattern: '(?s)location /forecasting \{[^}]*return 405'
+      - notMatchRegex:
+          path: data["nginx.conf"]
+          pattern: 'proxy_pass http://forecasting/'
+
+  - it: "it forwards headers and uses HTTP/1.1 exactly like /model/"
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf"]
+          pattern: '(?s)location = /forecasting/anomaly/detect \{[^}]*proxy_redirect off;[^}]*proxy_http_version 1.1;[^}]*proxy_set_header Connection "";[^}]*proxy_set_header  X-Real-IP  \$remote_addr;[^}]*proxy_set_header  X-Forwarded-For \$proxy_add_x_forwarded_for;'
+
+  - it: "it uses the same timeouts as /model/"
+    set:
+      frontend.timeoutSeconds: 600
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf"]
+          pattern: '(?s)location = /forecasting/anomaly/detect \{[^}]*proxy_connect_timeout\s+600;[^}]*proxy_send_timeout\s+600;[^}]*proxy_read_timeout\s+600;'
+
+  - it: "with an upstream aggregator configuration it gets the same fast failover as /model/"
+    set:
+      frontend.upstreamAggregatorConfiguration: |
+        server a.example:9004;
+        server b.example:9004 backup;
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf"]
+          pattern: '(?s)location = /forecasting/anomaly/detect \{[^}]*proxy_connect_timeout\s+2s;[^}]*proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;[^}]*proxy_next_upstream_tries 2;'
+
+  - it: "frontend.extraModelConfigs applies to it as it does to /model/"
+    set:
+      frontend.extraModelConfigs: 'proxy_set_header X-Extra "1";'
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf"]
+          pattern: '(?s)location = /forecasting/anomaly/detect \{[^}]*proxy_set_header X-Extra "1";'
+
+  - it: "with OIDC the route is not gated by nginx auth_request: the aggregator enforces auth from the cookies, as for /model/"
+    set:
+      oidc.enabled: true
+      oidc.clientID: id
+      oidc.clientSecret: s
+      oidc.secretName: x
+      oidc.authURL: https://idp.example/auth
+      oidc.loginRedirectURL: https://kc.example/login
+      oidc.discoveryURL: https://idp.example/.well-known/openid-configuration
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf"]
+          pattern: '(?s)location = /forecasting/anomaly/detect \{[^}]*proxy_pass http://aggregator/anomaly/detect;'
+      - notMatchRegex:
+          path: data["nginx.conf"]
+          pattern: '(?s)location = /forecasting/anomaly/detect \{[^}]*auth_request'

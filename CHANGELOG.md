@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- The frontend nginx now proxies `GET /forecasting/anomaly/detect` to the aggregator (authenticated listener, same as `/model/`) instead of the forecasting pod, so the Anomalies page respects RBAC Teams allocation and cloud-cost filters. Requires an aggregator that serves `/anomaly/detect`. Deployments that set `frontend.nginxConfigMapName` supply their own nginx config and must add this location themselves (KCM-6595)
+
 ### Fixed
 
 - Bump network costs image to v0.19.4 to remove CVEs, no code changes (#4877)
