@@ -141,6 +141,13 @@ data:
 
 {{- if or .Values.saml.enabled .Values.oidc.enabled }}
 
+        # index.html references its bundles relatively (./static/...), so a hard load of a
+        # deep link such as /monitor/allocations asks for /monitor/static/<bundle>. Without
+        # this, try_files falls through to index.html (text/html) and the browser refuses the
+        # module: a white page. Serve static assets under any path prefix.
+        location ~ ^/.+/(static/.+)$ {
+            try_files /$1 =404;
+        }
         add_header Cache-Control "max-age=0";
         location / {
             auth_request /auth;
@@ -157,6 +164,13 @@ data:
         location = /images/kubecost-logo.svg { }
 
 {{- else }}
+        # index.html references its bundles relatively (./static/...), so a hard load of a
+        # deep link such as /monitor/allocations asks for /monitor/static/<bundle>. Without
+        # this, try_files falls through to index.html (text/html) and the browser refuses the
+        # module: a white page. Serve static assets under any path prefix.
+        location ~ ^/.+/(static/.+)$ {
+            try_files /$1 =404;
+        }
         add_header Cache-Control "max-age=300";
         location / {
             try_files $uri $uri/ /index.html;
