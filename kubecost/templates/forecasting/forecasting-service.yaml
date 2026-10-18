@@ -7,6 +7,17 @@ metadata:
   labels:
     {{- include "kubecost.forecasting.commonLabels" . | nindent 4 }}
 spec:
+  {{- if eq (include "kubecost.forecasting.engine" .) "aggregator" }}
+  # The aggregator serves /forecast/* on 9004; keeping this Service's name and
+  # port means nginx's /forecasting/ upstream and custom nginx configs need no change.
+  selector:
+    {{- include "kubecost.aggregator.selectorLabels" . | nindent 4 }}
+  type: ClusterIP
+  ports:
+    - name: tcp-api
+      port: 5000
+      targetPort: 9004
+  {{- else }}
   selector:
     {{- include "kubecost.forecasting.selectorLabels" . | nindent 4 }}
   type: ClusterIP
@@ -14,4 +25,5 @@ spec:
     - name: tcp-api
       port: 5000
       targetPort: 5000
+  {{- end }}
 {{- end }}

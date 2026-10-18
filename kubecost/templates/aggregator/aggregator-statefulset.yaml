@@ -689,6 +689,10 @@ spec:
             {{- end }}
             - name: KUBEMODEL_INGESTION_ENABLED
               value: {{ .Values.aggregator.kubemodelIngestionEnabled | quote }}
+            {{- if and (.Values.forecasting).enabled (ne (include "kubecost.forecasting.engine" .) "python") }}
+            - name: FORECASTING_ENABLED
+              value: "true"
+            {{- end }}
             {{- if .Values.aggregator.extraEnv -}}
             {{- toYaml .Values.aggregator.extraEnv | nindent 12 }}
             {{- end }}
