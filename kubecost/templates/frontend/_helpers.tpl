@@ -10,7 +10,7 @@
   {{- if .Values.frontend.fullImageName }}
     {{- .Values.frontend.fullImageName }}
   {{- else if eq "development" .Chart.AppVersion -}}
-    gcr.io/kubecost1/frontend-nightly:latest
+    icr.io/kubecost/frontend-nightly:latest
   {{- else if .Values.frontend.image.tag -}}
     {{- include "frontend.imageRegistry" . }}/{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}
   {{- else -}}
