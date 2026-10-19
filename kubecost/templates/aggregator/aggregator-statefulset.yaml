@@ -79,6 +79,9 @@ spec:
         {{- with .Values.global.podAnnotations}}
         {{- toYaml . | nindent 8 }}
         {{- end }}
+        {{- with .Values.aggregator.podAnnotations}}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
         checksum/configs: {{ include "kubecost.configsChecksum" . }}
     spec:
       restartPolicy: Always
@@ -688,6 +691,8 @@ spec:
               value: {{ .Values.aggregator.kubemodelIngestionEnabled | quote }}
             {{- if .Values.aggregator.viewSupportEnabled }}
             - name: VIEW_SUPPORT_ENABLED
+              value: "true"
+            - name: DATABASE_DEBUG_ACCESS_ENABLED
               value: "true"
             {{- end }}
             {{- if .Values.aggregator.extraEnv -}}
