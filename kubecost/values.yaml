@@ -1160,7 +1160,7 @@ aggregator:
     mode: decorator
     decorator:
       orgId: ""
-      pollSeconds: 3600
+      pollSeconds: 60
       readDatabase: kubecostread
       writeDatabase: kubecostwrite
     javaToolOptions: "-Xms4g -Xmx8g -Djava.io.tmpdir=/var/lib/kubecost-spark"
