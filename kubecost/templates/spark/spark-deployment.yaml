@@ -90,8 +90,6 @@ spec:
               value: {{ $spark.mode | quote }}
             {{- end }}
             {{- if $decorator }}
-            - name: DECORATOR_ORG_ID
-              value: {{ required "aggregator.kubecostSpark.decorator.orgId is required in decorator mode" $spark.decorator.orgId | quote }}
             - name: DECORATOR_POLL_SECONDS
               value: {{ $spark.decorator.pollSeconds | quote }}
             - name: CH_READ_DATABASE
