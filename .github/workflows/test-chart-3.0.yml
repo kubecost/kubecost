@@ -34,6 +34,20 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
+      # Install the latest Helm release ourselves rather than relying on the
+      # runner image's preinstalled one, which changes without notice.
+      - name: Set up Helm
+        run: |
+          set -euo pipefail
+          HELM_VERSION=$(curl -fsSL https://get.helm.sh/helm-latest-version)
+          HELM_TARBALL="helm-${HELM_VERSION}-linux-amd64.tar.gz"
+          curl -fsSL -o "/tmp/${HELM_TARBALL}" "https://get.helm.sh/${HELM_TARBALL}"
+          curl -fsSL -o "/tmp/${HELM_TARBALL}.sha256sum" "https://get.helm.sh/${HELM_TARBALL}.sha256sum"
+          (cd /tmp && sha256sum -c "${HELM_TARBALL}.sha256sum")
+          tar -xzf "/tmp/${HELM_TARBALL}" -C /tmp
+          sudo install -m 0755 /tmp/linux-amd64/helm /usr/local/bin/helm
+          helm version
+
       - name: Set up chart-testing
         uses: helm/chart-testing-action@v2.8.0
 
@@ -102,8 +116,9 @@ jobs:
           helm dependency build kubecost/
           .github/scripts/extra_server_config_test.sh
 
+      # Helm 4 verifies plugins on install, which git-sourced plugins can't support.
       - name: Install helm-unittest plugin
-        run: helm plugin install https://github.com/helm-unittest/helm-unittest --version v1.2.0
+        run: helm plugin install https://github.com/helm-unittest/helm-unittest --version v1.2.0 --verify=false
 
       - name: Cluster Controller service account name template tests
         run: helm unittest kubecost/
