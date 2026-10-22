@@ -18,6 +18,20 @@ rules:
   - apiGroups: ['batch']
     resources: ['cronjobs']
     verbs: ['get', 'patch']
+  # In-place resize finds a controller's pods: Deployment -> ReplicaSets -> pods,
+  # CronJob -> Jobs -> pods.
+  - apiGroups: ['apps']
+    resources: ['replicasets']
+    verbs: ['list']
+  - apiGroups: ['batch']
+    resources: ['jobs']
+    verbs: ['list']
+  - apiGroups: ['']
+    resources: ['pods/resize']
+    verbs: ['patch']
+  - apiGroups: ['']
+    resources: ['pods']
+    verbs: ['get', 'list']
   {{- end }}
   {{- if .Values.clusterController.rbac.clusterRightSizing }}
   - apiGroups: ['']
