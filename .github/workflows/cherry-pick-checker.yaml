@@ -81,7 +81,6 @@ jobs:
           WORKFLOW_NAME: ${{ github.workflow }}
         run: |
           python3 - <<'EOF'
-          import html
           import json
           import os
           import re
@@ -94,22 +93,22 @@ jobs:
           failures_found = any(branch["missing"] for branch in branches)
 
           # The Slack workflow template already shows the workflow, repo, status and run link.
-          # Example:
-          #   :white_check_mark: *v3.2*: all 34 labeled PRs accounted for
-          #   :x: *v3.3*: 1 missing of 93 labeled PRs
-          #   • <url|#4970> Key asset carbon rows the same way as asset rows · @kevinguy-ibm · merged 2026-10-20
+          # It posts the message as plain text (no *bold* or <url|text> links), so keep it ASCII.
+          # Slack still auto-links bare URLs. Example:
+          #   v3.2: all 34 labeled PRs accounted for
+          #   v3.3: 1 missing of 93 labeled PRs
+          #   - https://github.com/kubecost/kubecost-cost-model/pull/4970 Key asset carbon rows the same way as asset rows (@kevinguy-ibm, merged 2026-10-20)
           lines = []
           for branch in branches:
               if not branch["missing"]:
-                  lines.append(f":white_check_mark: *{branch['version']}*: all {branch['total']} labeled PRs accounted for")
+                  lines.append(f"{branch['version']}: all {branch['total']} labeled PRs accounted for")
                   continue
-              lines.append(f":x: *{branch['version']}*: {branch['missing']} missing of {branch['total']} labeled PRs")
+              lines.append(f"{branch['version']}: {branch['missing']} missing of {branch['total']} labeled PRs")
               newest_first = sorted(branch["needs_attention"], key=lambda pr: pr["merged_at"] or "", reverse=True)
               for pr in newest_first:
-                  # Slack mrkdwn needs &, <, > escaped or titles break the formatting
                   lines.append(
-                      f"• <https://github.com/{repo}/pull/{pr['number']}|#{pr['number']}> "
-                      f"{html.escape(pr['title'], quote=False)} · @{pr['author']} · merged {pr['merged_at']}"
+                      f"- https://github.com/{repo}/pull/{pr['number']} {pr['title']} "
+                      f"(@{pr['author']}, merged {pr['merged_at']})"
                   )
               lines.append("")
           message = "\n".join(lines).rstrip() + "\n"
