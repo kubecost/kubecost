@@ -79,9 +79,9 @@ jobs:
           RUN_ID: ${{ github.run_id }}
           REPO_NAME: ${{ github.repository }}
           WORKFLOW_NAME: ${{ github.workflow }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           python3 - <<'EOF'
+          import html
           import json
           import os
           import re
@@ -89,47 +89,29 @@ jobs:
           with open("summary.json") as f:
               data = json.load(f)
 
-          run_url = os.environ["RUN_URL"]
-          generated_at = data["generated_at"]
+          repo = os.environ["REPO_NAME"]
           branches = data["branches"]
           failures_found = any(branch["missing"] for branch in branches)
 
-          lines = [
-              (
-                  ":x: Cherry-Pick Status — missing cherry-picks"
-                  if failures_found
-                  else ":white_check_mark: Cherry-Pick Status — all accounted for*"
-              ),
-              "",
-              f"{generated_at}  |  Repo: `{os.environ['REPO_NAME']}`",
-              "",
-          ]
-
+          # The Slack workflow template already shows the workflow, repo, status and run link.
+          # Example:
+          #   :white_check_mark: *v3.2*: all 34 labeled PRs accounted for
+          #   :x: *v3.3*: 1 missing of 93 labeled PRs
+          #   • <url|#4970> Key asset carbon rows the same way as asset rows · @kevinguy-ibm · merged 2026-10-20
+          lines = []
           for branch in branches:
-              version = branch["version"]
-              total = branch["total"]
-              missing = branch["missing"]
-              needs_attention = branch["needs_attention"]
-
-              lines.append(
-                  f"- Branch `{version}` — {missing} missing cherry-pick"
-                  f"{'' if missing == 1 else 's'}"
-                  f" ({total} labeled merged PRs checked)"
-              )
-
-              if needs_attention:
-                  lines.append("*Missing cherry-picks:*")
-                  for pr in needs_attention:
-                      lines.append(
-                          f":x: https://github.com/{os.environ['REPO_NAME']}/pull/{pr['number']}|#{pr['number']} "
-                          f"by @{pr['author']} {pr['title']} _(merged: {pr['merged_at']})_"
-                      )
-              else:
-                  lines.append(":tada: All PRs accounted for in this branch.")
-
+              if not branch["missing"]:
+                  lines.append(f":white_check_mark: *{branch['version']}*: all {branch['total']} labeled PRs accounted for")
+                  continue
+              lines.append(f":x: *{branch['version']}*: {branch['missing']} missing of {branch['total']} labeled PRs")
+              newest_first = sorted(branch["needs_attention"], key=lambda pr: pr["merged_at"] or "", reverse=True)
+              for pr in newest_first:
+                  # Slack mrkdwn needs &, <, > escaped or titles break the formatting
+                  lines.append(
+                      f"• <https://github.com/{repo}/pull/{pr['number']}|#{pr['number']}> "
+                      f"{html.escape(pr['title'], quote=False)} · @{pr['author']} · merged {pr['merged_at']}"
+                  )
               lines.append("")
-
-          lines.append(f":page_facing_up: <{run_url}|Full Report>")
           message = "\n".join(lines).rstrip() + "\n"
 
           payload = {
