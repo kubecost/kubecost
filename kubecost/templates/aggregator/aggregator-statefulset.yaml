@@ -619,14 +619,12 @@ spec:
             - name: RBAC_TEAMS_HELM_CONFIG_PATH
               value: "/var/configs/rbac-teams-configs/rbac-teams-configs.json"
             {{- end }}
-            - name: COLLECTIONS_MEMORY_CACHE_ENABLED
-              value: {{ (quote .Values.aggregator.collections.cache.enabled) }}
             - name: COLLECTIONS_DB_CACHE_ENABLED
-              value: {{ (quote .Values.aggregator.collections.cache.db.enabled) }}
-            - name: COLLECTIONS_DB_CACHE_SUB_BATCH_SIZE
-              value: {{ (quote .Values.aggregator.collections.cache.db.subBatchSize) }}
+              value: {{ (quote .Values.aggregator.collections.cache.enabled) }}
+            {{- with .Values.aggregator.collections.cache.maxRequests }}
             - name: COLLECTIONS_DB_CACHE_MAX_WARM_REQUESTS
-              value: {{ (quote .Values.aggregator.collections.cache.db.maxWarmRequests) }}
+              value: {{ quote . }}
+            {{- end }}
             {{- if ((.Values.global.integrations).turbonomic).enabled }}
             - name: TURBONOMIC_ENABLED
               value: "true"
