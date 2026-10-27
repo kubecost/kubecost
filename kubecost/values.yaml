@@ -1246,8 +1246,8 @@ aggregator:
   collections:
     cache:
       enabled: true
-      # Maximum number of cache-warming requests per cycle.
-      # If unset, no limit is applied.
+      # Caps how many cache entries are filled per hourly warm cycle. Lower it to reduce ClickHouse load per cycle.
+      # Must be a positive integer, as a string (e.g. "1000"). Empty or invalid = no limit.
       maxRequests: ""
 
   ## The aggregator pod has 2 PVCs that will need to be in the same availability zone unless using multi-zone storage.
