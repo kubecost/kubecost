@@ -1780,6 +1780,11 @@ kubecostProductConfigs:
     #       enabled: true
     #     namespaceTurndown:
     #       enabled: true
+    #     # gpuRightSizing executes the GPU Share/Optimize recommendations from the GPU Optimization Savings Insights page.
+    #     # It is off unless it is enabled here or in the Actions settings, and requires cluster-controller v0.17.0 or later.
+    #     # It relies on the existing clusterController.rbac.containerRequestRightSizing permissions (get/patch on workloads).
+    #     gpuRightSizing:
+    #       enabled: true
     #   clusters: # Define cluster-specific action configuration, where top-level keys are cluster names
     #     cluster-1:
     #       containerRequestRightSizing:
@@ -1788,12 +1793,16 @@ kubecostProductConfigs:
     #         enabled: false
     #       namespaceTurndown:
     #         enabled: false
+    #       gpuRightSizing:
+    #         enabled: false
     #     cluster-2:
     #       containerRequestRightSizing:
     #         enabled: false
     #       resourceQuotaRightSizing:
     #         enabled: false
     #       namespaceTurndown:
+    #         enabled: false
+    #       gpuRightSizing:
     #         enabled: false
     #   actions:
     #     containerRequestRightSizing:
