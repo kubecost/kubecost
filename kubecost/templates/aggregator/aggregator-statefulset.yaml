@@ -20,6 +20,11 @@ metadata:
 spec:
   replicas: {{ .Values.aggregator.replicas }}
   serviceName: {{ template "kubecost.aggregator.serviceName" . }}
+  {{- with .Values.aggregator.persistentVolumeClaimRetentionPolicy }}
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: {{ .whenDeleted | default "Retain" }}
+    whenScaled: {{ .whenScaled | default "Retain" }}
+  {{- end }}
   selector:
     matchLabels:
     {{- include "kubecost.aggregator.selectorLabels" . | nindent 6 }}
@@ -77,6 +82,7 @@ spec:
         checksum/configs: {{ include "kubecost.configsChecksum" . }}
     spec:
       restartPolicy: Always
+      terminationGracePeriodSeconds: {{ .Values.aggregator.terminationGracePeriodSeconds }}
     {{- if .Values.aggregator.securityContext }}
       securityContext:
     {{- toYaml .Values.aggregator.securityContext | nindent 8 }}
@@ -585,6 +591,10 @@ spec:
               value: {{ .Release.Namespace }}
             - name: TELEMETRY_ENABLED
               value: {{ (quote .Values.telemetry.enabled) }}
+            {{- if .Values.telemetry.autoConsent }}
+            - name: TELEMETRY_AUTO_CONSENT
+              value: "true"
+            {{- end }}
             {{- if .Values.oidc.enabled }}
             - name: OIDC_ENABLED
               value: "true"

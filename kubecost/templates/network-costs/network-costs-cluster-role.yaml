@@ -17,6 +17,14 @@ rules:
       - get
       - list
       - watch
+  - apiGroups:
+      - discovery.k8s.io
+    resources:
+      - endpointslices
+    verbs:
+      - get
+      - list
+      - watch
   {{- if .Values.networkCosts.leaderKubernetesWatcher }}
   - apiGroups:
       - coordination.k8s.io

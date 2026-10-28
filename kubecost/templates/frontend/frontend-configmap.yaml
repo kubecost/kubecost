@@ -99,6 +99,20 @@ data:
     }
   {{- end }}
 
+  {{- if eq (include "kubecost.mcp.enabled" .) "true" }}
+    {{- $mcpService := include "kubecost.mcp.serviceName" . }}
+    {{- $mcpPort := include "kubecost.mcp.servicePort" . }}
+    upstream mcpKubecost {
+        {{- if .Values.frontend.useDefaultFqdn }}
+        server {{ $mcpService }}.{{ .Release.Namespace }}.svc.cluster.local:{{ $mcpPort }};
+        {{- else if (.Values.frontend.mcp).fqdn }}
+        server {{ .Values.frontend.mcp.fqdn }};
+        {{- else }}
+        server {{ $mcpService }}.{{ .Release.Namespace }}:{{ $mcpPort }};
+        {{- end }}
+    }
+  {{- end }}
+
     server {
         server_name _;
         root /var/www;
@@ -484,6 +498,48 @@ data:
         }
         {{- end }}
 
+        {{- /* mcpProxy: Only proxy MCP if it is enabled and not using its own httproute or ingress */}}
+        {{- if and (eq (include "kubecost.mcp.enabled" .) "true") (not ((.Values.mcp).httpRoute).enabled) (not ((.Values.mcp).ingress).enabled) }}
+        {{- /* Fixed public paths of the mcp-kubecost server. FastMCP advertises these paths in its OAuth metadata and the MCP SDK derives the discovery URLs from them. */}}
+        {{- $mcpPath := "/mcp" }}
+        {{- $mcpOauth := "/oauth/mcp" }}
+        {{- /*
+        The mcp-kubecost server serves every path below at exactly the same path
+        inside the container, so nothing here rewrites. `^~` outranks `location /`
+        and its auth_request, which would otherwise answer an MCP client with the
+        Kubecost SSO login page as HTML where it expects OAuth JSON.
+        */}}
+        # MCP streamable HTTP — FastMCP serves {{ $mcpPath }} on port {{ include "kubecost.mcp.servicePort" . }}
+        location ^~ {{ $mcpPath }} {
+            {{- include "kubecost.frontend.mcpProxyDirectives" . | nindent 12 }}
+        }
+        {{- /* mcpOidc: OAuth endpoints, namespaced under {{ $mcpOauth }} so none of them
+             claims a bare root path that collides with Kubecost SSO (/auth, /login,
+             /logout, /oidc/, /saml/). */}}
+        {{- if eq (include "kubecost.mcp.authMode" .) "oidc" }}
+        # {{ $mcpOauth }}/authorize, /token, /register, /consent and the IdP callback at {{ $mcpOauth }}/callback.
+        location ^~ {{ $mcpOauth }}/ {
+            {{- include "kubecost.frontend.mcpProxyDirectives" . | nindent 12 }}
+        }
+
+        # RFC 9728 protected-resource metadata. Clients derive this URL from the
+        # resource identifier, so it is requested at the host root.
+        location ^~ /.well-known/oauth-protected-resource{{ $mcpPath }} {
+            {{- include "kubecost.frontend.mcpProxyDirectives" . | nindent 12 }}
+        }
+
+        # RFC 8414 authorization-server metadata, and the OIDC discovery alias, for
+        # issuer {{ $mcpOauth }}. Scoped by suffix so a future Kubecost OAuth surface
+        # can still claim the bare /.well-known/ paths.
+        location ^~ /.well-known/oauth-authorization-server{{ $mcpOauth }} {
+            {{- include "kubecost.frontend.mcpProxyDirectives" . | nindent 12 }}
+        }
+        location ^~ /.well-known/openid-configuration{{ $mcpOauth }} {
+            {{- include "kubecost.frontend.mcpProxyDirectives" . | nindent 12 }}
+        }
+        {{- end }}
+        {{- end }}
+
         location /model/productConfigs {
             default_type 'application/json';
             return 200 '\n
@@ -498,6 +554,12 @@ data:
                 "clusterControllerEnabled": "{{ include "kubecost.clusterController.enabled" . }}",
                 "forecastingEnabled": "{{ include "kubecost.forecasting.enabled" . }}",
                 "turbonomicEnabled": "{{ include "kubecost.turbonomic.enabled" . }}",
+                "mcpEnabled": "{{ include "kubecost.mcp.enabled" . }}",
+                "mcpAuthMode": "{{ include "kubecost.mcp.authMode" . }}",
+                "mcpRequireClientApiKey": "{{ include "kubecost.mcp.requireClientApiKey" . }}",
+                "kubecostApiBaseUrl": "{{ include "kubecost.mcp.kubecostApiBaseUrl" . }}",
+                "kubecostApiPort": "{{ ((.Values.mcp).config).kubecostApiPort }}",
+                "kubecostApiBasePath": "{{ ((.Values.mcp).config).kubecostApiBasePath }}",
                 "chartVersion": "DEVELOP_BRANCH",
                 "tenMinuteDataRetention": "{{ (.Values.aggregator.retention10m) }}",
                 "hourlyDataRetention": "{{ (.Values.aggregator.retention1h) }}",

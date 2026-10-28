@@ -11,6 +11,6 @@ roleRef:
   name: {{ include "kubecost.clusterController.name" . }}
 subjects:
   - kind: ServiceAccount
-    name: {{ include "kubecost.clusterController.name" . }}
+    name: {{ include "kubecost.clusterController.serviceAccountName" . }}
     namespace: {{ .Release.Namespace }}
 {{- end }}

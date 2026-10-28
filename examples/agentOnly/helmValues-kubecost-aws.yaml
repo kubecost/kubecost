@@ -13,6 +13,8 @@ global:
         bucket: kubecost-federated-storage
         endpoint: s3.amazonaws.com
         region: us-west-2
+finopsagent:
+  enabled: true  # required, for agentOnly mode
 clusterController:
   enabled: true  # optional, automated rightsizing of containers
 networkCosts:
@@ -25,7 +27,7 @@ cloudCost:
   enabled: false
 forecasting:
   enabled: false
-finopsagent:
-  enabled: true
 localStore:
+  enabled: false
+mcp:
   enabled: false

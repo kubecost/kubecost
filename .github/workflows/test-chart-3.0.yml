@@ -2,17 +2,12 @@ name: Chart build and test 3.x
 
 on:
   workflow_dispatch: {}
-  # Normally using pull_request_target along with checking out the ref of the PR is not
-  # a good idea, but this is low risk since it's a Helm chart repo.
-  pull_request_target:
+  # pull_request (not pull_request_target) so fork PRs never get secrets or an
+  # OIDC token. The test-chart job is skipped for forks, see its `if`.
+  pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
 
-  # Uncomment this if you need to actively test this workflow from a PR draft
-  # pull_request:
-  #   branches:
-  #     - develop
-
-# Prevents multiple runs of the same workflow on the same branch from executing 
+# Prevents multiple runs of the same workflow on the same branch from executing
 # simultaneously. Saves resources.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -20,26 +15,53 @@ concurrency:
 
 jobs:
   test-chart:
+    # This job uses secrets (AWS role, ICR API key) and checks out PR code, so
+    # only run it for same-repo PRs. Fork PRs get no secrets under pull_request,
+    # so skip them instead of failing. Manual dispatches have no PR payload and
+    # must still run. Downstream jobs `need` this job, so they skip too.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
+    permissions:
+      # id-token required for GitHub OIDC token exchange for aws role
+      id-token: write
+      contents: read
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
+      # Install the latest Helm release ourselves rather than relying on the
+      # runner image's preinstalled one, which changes without notice.
+      - name: Set up Helm
+        run: |
+          set -euo pipefail
+          HELM_VERSION=$(curl -fsSL https://get.helm.sh/helm-latest-version)
+          HELM_TARBALL="helm-${HELM_VERSION}-linux-amd64.tar.gz"
+          curl -fsSL -o "/tmp/${HELM_TARBALL}" "https://get.helm.sh/${HELM_TARBALL}"
+          curl -fsSL -o "/tmp/${HELM_TARBALL}.sha256sum" "https://get.helm.sh/${HELM_TARBALL}.sha256sum"
+          (cd /tmp && sha256sum -c "${HELM_TARBALL}.sha256sum")
+          tar -xzf "/tmp/${HELM_TARBALL}" -C /tmp
+          sudo install -m 0755 /tmp/linux-amd64/helm /usr/local/bin/helm
+          helm version
+
       - name: Set up chart-testing
-        uses: helm/chart-testing-action@v2.8.0
+        uses: helm/chart-testing-action@v2.9.0
 
       # Lint all chart values including those in the ci directory.
       - name: Run chart-testing (lint)
         run: |
           helm repo add finops-agent-chart https://kubecost.github.io/finops-agent-chart
+          helm repo add mcp-kubecost https://kubecost.github.io/mcp-kubecost
           helm repo update
           helm dependency build kubecost/
           ct lint --chart-dirs=kubecost/ --charts kubecost/ --validate-maintainers=false
 
       # Run `helm template` on the main values file plus all those in the ci directory.
+      # Also templates with the EKS values file to include public.ecr.aws images in the check.
       - name: Helm template
         run: |
           helm template kubecost/ -f .github/ci-helmValues/helmValues-federated-store.yaml > full.yaml
@@ -50,6 +72,34 @@ jobs:
               helm template kubecost/ -f "$file" >> full.yaml
           fi
           done
+          echo "Templating with EKS values (public.ecr.aws registry)"
+          helm template kubecost/ -f kubecost/values-eks-cost-monitoring.yaml >> full.yaml
+
+      - name: Set up yq
+        run: |
+          set -euo pipefail
+          YQ_VERSION=v4.53.4
+          curl -fsSL -o /tmp/yq \
+            "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64"
+          sudo install -m 0755 /tmp/yq /usr/local/bin/yq
+          yq --version
+
+      # this step is designed to fail fail before creating clusters
+      - name: Configure AWS credentials (ECR Public)
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ secrets.AWS_ECR_ROLE }}
+          aws-region: us-east-1
+
+      # icr.io/kubecost and icr.io/ibm-finops images are public, but anonymous
+      # pulls from GitHub-hosted runners time out, so authenticate instead.
+      - name: Configure ICR credentials
+        env:
+          IBM_CLOUD_API_KEY: ${{ secrets.IBM_CLOUD_API_KEY }}
+        run: echo "$IBM_CLOUD_API_KEY" | docker login -u iamapikey --password-stdin icr.io
+
+      - name: Verify container images exist
+        run: .github/scripts/check-images.sh full.yaml
 
       # Run Kubeconform on the combined, templatized output across all tested values stored in `full.yaml`.
       # Ensure all the rendered resources are valid.
@@ -61,39 +111,59 @@ jobs:
 
       - name: Frontend serverBlockConfig template tests
         run: |
+          helm repo add mcp-kubecost https://kubecost.github.io/mcp-kubecost
+          helm repo update
           helm dependency build kubecost/
           .github/scripts/extra_server_config_test.sh
+
+      # Helm 4 verifies plugins on install, which git-sourced plugins can't support.
+      - name: Install helm-unittest plugin
+        run: helm plugin install https://github.com/helm-unittest/helm-unittest --version v1.2.0 --verify=false
+
+      - name: Cluster Controller service account name template tests
+        run: helm unittest kubecost/
 
   # Test cluster versions.
   deploy-chart:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
         k8s-version:
-          - name: v1.34
-            version: v1.34.0
+          - name: v1.36
+            version: v1.36.4
     needs: test-chart
     name: ${{ matrix.k8s-version.name }} test
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Set up chart-testing
-        uses: helm/chart-testing-action@v2.8.0
+        uses: helm/chart-testing-action@v2.9.0
 
       - name: Create KinD cluster
-        uses: helm/kind-action@ef37e7f390d99f746eb8b610417061a60e82a6cc #v1.14.0
+        uses: helm/kind-action@06c1ae10762d3b9c1644e7fe69596ae519e015a2 #v1.15.0
         with:
-          version: v0.20.0
+          version: v0.31.0
           node_image: kindest/node:${{ matrix.k8s-version.version }}
           kubectl_version: ${{ matrix.k8s-version.version }}
 
+      # The secret is passed via env (not interpolated into the script) and
+      # substituted with a literal string replace, so any characters in the value
+      # (| & \ / quotes, $) are safe.
       - name: Populate federated storage config secret
+        env:
+          FEDERATED_STORAGE_CONFIG_YAML: ${{ secrets.FEDERATED_STORAGE_CONFIG_YAML }}
         run: |
-          sed -i "s|FEDERATED_STORAGE_CONFIG_YAML|${{ secrets.FEDERATED_STORAGE_CONFIG_YAML }}|" .github/ci-files/federatedStorageConfigSecret.yaml
+          python3 - <<'PY'
+          import os, pathlib
+          p = pathlib.Path(".github/ci-files/federatedStorageConfigSecret.yaml")
+          p.write_text(p.read_text().replace("FEDERATED_STORAGE_CONFIG_YAML", os.environ["FEDERATED_STORAGE_CONFIG_YAML"], 1))
+          PY
 
       # Create necessary test files in the cluster. Some configurations of the chart
       # require pre-existing files like Secrets in order for volume mounts to be valid. Without them,
@@ -108,14 +178,15 @@ jobs:
         working-directory: ./kubecost
         run: |
           helm repo add finops-agent-chart https://kubecost.github.io/finops-agent-chart
+          helm repo add mcp-kubecost https://kubecost.github.io/mcp-kubecost
           helm repo update
           helm dependency build
           helm install --wait --wait-for-jobs kubecost . -n kubecost
 
-      - name: Wait for ready 
+      - name: Wait for ready
         run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/instance=kubecost --timeout=120s
-      
-      - name: gather debug info - install 
+
+      - name: gather debug info - install
         if: failure()
         run: |
           kubectl get pods -n kubecost
@@ -126,7 +197,7 @@ jobs:
           kubectl -n kubecost describe pods
           kubectl -n kubecost logs -l app.kubernetes.io/instance=kubecost
 
-      - name: Run Helm tests 
+      - name: Run Helm tests
         run: helm test -n kubecost kubecost
 
       - name: gather debug info - test
@@ -182,15 +253,16 @@ jobs:
           done
 
       - name: Checkout Target Branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7.0.1
         with:
           ref: ${{ github.event.pull_request.base.ref }}
           path: ./target-branch
-  
+
       - name: Install, Upgrade, Test, and Uninstall chart for default values
         run: |
           cd ./target-branch/kubecost
           helm repo add finops-agent-chart https://kubecost.github.io/finops-agent-chart
+          helm repo add mcp-kubecost https://kubecost.github.io/mcp-kubecost
           helm repo update
           helm dependency build
           helm install --wait --wait-for-jobs kubecost . -n kubecost
@@ -205,20 +277,22 @@ jobs:
 
   deploy-ocp:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     needs: test-chart
     strategy:
       matrix:
         cluster:
         - distribution: openshift
-          version: 4.19.0-okd
+          version: 4.22.0-okd
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       # Outputs: `cluster-kubeconfig`, `cluster-id`
       - name: Create Cluster
         id: create-cluster
-        uses: replicatedhq/replicated-actions/create-cluster@6803131db735f7cc067de88fa14237c7462b247a # v1.27.0
+        uses: replicatedhq/replicated-actions/create-cluster@0fbf5395cf3e8c744f447bbc92b7de9135eead8e # v1.27.1
         with:
           kubernetes-distribution: ${{ matrix.cluster.distribution }}
           kubernetes-version: ${{ matrix.cluster.version }}
@@ -229,56 +303,70 @@ jobs:
           disk: 150
           api-token: ${{ secrets.REPLICATED_API_TOKEN }}
 
+      # The secret is passed via env (not interpolated into the script) and
+      # substituted with a literal string replace, so any characters in the value
+      # (| & \ / quotes, $) are safe.
       - name: Populate federated storage config secret
+        env:
+          FEDERATED_STORAGE_CONFIG_YAML: ${{ secrets.FEDERATED_STORAGE_CONFIG_YAML }}
         run: |
-          sed -i "s|FEDERATED_STORAGE_CONFIG_YAML|${{ secrets.FEDERATED_STORAGE_CONFIG_YAML }}|" .github/ci-files/federatedStorageConfigSecret.yaml
-      
+          python3 - <<'PY'
+          import os, pathlib
+          p = pathlib.Path(".github/ci-files/federatedStorageConfigSecret.yaml")
+          p.write_text(p.read_text().replace("FEDERATED_STORAGE_CONFIG_YAML", os.environ["FEDERATED_STORAGE_CONFIG_YAML"], 1))
+          PY
+
       - name: Create kubecost Namespace and test files
         run: |
           kubectl create ns kubecost
           kubectl -n kubecost create -f .github/ci-files
-  
+
       # Install the chart with OCP values and check results.
       - name: Install Kubecost chart with OCP values
         working-directory: ./kubecost
         run: |
           helm repo add finops-agent-chart https://kubecost.github.io/finops-agent-chart
+          helm repo add mcp-kubecost https://kubecost.github.io/mcp-kubecost
           helm repo update
           helm dependency build
-          helm install --wait --wait-for-jobs kubecost . -n kubecost -f values-openshift.yaml \
-          --set global.platforms.openshift.route.enabled=true \
-          --set global.platforms.openshift.scc.networkCosts=true \
-          --set global.platforms.openshift.scc.clusterController=true \
+          helm install --wait --wait-for-jobs kubecost . -n kubecost \
+          -f values-openshift.yaml \
           --set networkCosts.enabled=true \
           --set clusterController.enabled=true \
           --set clusterController.storageConfigSecret=actions-bucket-config \
+          --set-json 'networkCosts.affinity=null'
 
-      - name: Wait for ready 
+      - name: Wait for ready
         run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/instance=kubecost --timeout=120s
-      - name: Run Helm tests 
+      - name: Run Helm tests
         run: helm test -n kubecost kubecost
+      - name: Test — network-costs starts
+        ## nodes do not have regions, no data expected. Just verify it starts:
+        run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/name=network-costs --timeout=120s
       - name: Remove Cluster
         id: remove-cluster
-        uses: replicatedhq/replicated-actions/remove-cluster@6803131db735f7cc067de88fa14237c7462b247a # v1.27.0
+        uses: replicatedhq/replicated-actions/remove-cluster@0fbf5395cf3e8c744f447bbc92b7de9135eead8e # v1.27.1
         with:
           api-token: ${{ secrets.REPLICATED_API_TOKEN }}
           cluster-id: ${{ steps.create-cluster.outputs.cluster-id }}
 
   deploy-eks:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     needs: test-chart
     strategy:
       matrix:
         cluster:
         - distribution: eks
-          version: v1.33
+          version: v1.36
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Create Cluster
         id: create-cluster
-        uses: replicatedhq/replicated-actions/create-cluster@6803131db735f7cc067de88fa14237c7462b247a # v1.27.0
+        uses: replicatedhq/replicated-actions/create-cluster@0fbf5395cf3e8c744f447bbc92b7de9135eead8e # v1.27.1
         with:
           kubernetes-distribution: ${{ matrix.cluster.distribution }}
           kubernetes-version: ${{ matrix.cluster.version }}
@@ -302,17 +390,20 @@ jobs:
         working-directory: ./kubecost
         run: |
           helm repo add finops-agent-chart https://kubecost.github.io/finops-agent-chart
+          helm repo add mcp-kubecost https://kubecost.github.io/mcp-kubecost
           helm repo update
           helm dependency build
           helm install --wait --wait-for-jobs kubecost . -n kubecost -f values-eks-cost-monitoring.yaml
 
-      - name: Wait for ready 
+      - name: Wait for ready
         run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/instance=kubecost --timeout=120s
-      - name: Run Helm tests 
+      - name: Run Helm tests
         run: helm test -n kubecost kubecost
+      - name: Test — network-costs
+        run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/name=network-costs --timeout=120s
       - name: Remove Cluster
         id: remove-cluster
-        uses: replicatedhq/replicated-actions/remove-cluster@6803131db735f7cc067de88fa14237c7462b247a # v1.27.0
+        uses: replicatedhq/replicated-actions/remove-cluster@0fbf5395cf3e8c744f447bbc92b7de9135eead8e # v1.27.1
         continue-on-error: true
         with:
           api-token: ${{ secrets.REPLICATED_API_TOKEN }}

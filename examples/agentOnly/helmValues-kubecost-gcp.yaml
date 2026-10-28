@@ -17,6 +17,8 @@ global:
     ## A secret is recommended- though the apiKey is can be a read only service account exclusively for downloading public pricing data.
     apiKey: ""
     existingSecret: ""
+finopsagent:
+  enabled: true  # required, for agentOnly mode
 clusterController:
   enabled: true  # optional, automated rightsizing of containers
 networkCosts:
@@ -29,7 +31,7 @@ cloudCost:
   enabled: false
 forecasting:
   enabled: false
-finopsagent:
-  enabled: true
 localStore:
+  enabled: false
+mcp:
   enabled: false

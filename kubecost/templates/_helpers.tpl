@@ -4,11 +4,6 @@
 Kubecost 3.0 preconditions
 */}}
 {{- define "kubecost.v3-preconditions" -}}
-  {{/* Acknowledgment check for Kubecost 3.0 major upgrade - required for enterprise users */}}
-  {{- if and .Values.kubecostProductConfigs.productKey.enabled (not .Values.global.acknowledged) -}}
-    {{ fail "Kubecost 3.0 contains breaking changes and potential data disruption risks. Review release notes at https://github.com/kubecost/kubecost/releases before proceeding. To acknowledge and proceed, use the flag `--set global.acknowledged=true`" }}
-  {{- end -}}
-
   {{/* Federated Storage config migration */}}
   {{- if (.Values.kubecostModel).federatedStorageConfig -}}
     {{ fail "`.Values.kubecostModel.federatedStorageConfig` is no longer supported. Please use `.Values.global.federatedStorage.config` instead." }}
@@ -92,6 +87,11 @@ Kubecost 3.0 preconditions
   {{- end -}}
   {{- if .Values.awsstore -}}
     {{ fail "`.Values.awsstore` is no longer supported. Please remove this configuration." }}
+  {{- end -}}
+
+  {{/* Network Costs security context migration */}}
+  {{- if and .Values.networkCosts .Values.networkCosts.additionalSecurityContext -}}
+    {{ fail "\n`.Values.networkCosts.additionalSecurityContext` is no longer supported.\nPlease use `.Values.networkCosts.securityContext` instead.\nRefer to https://github.com/kubecost/kubecost/releases/tag/v3.3.1 for more information." }}
   {{- end -}}
 {{- end -}}
 
@@ -572,6 +572,206 @@ To resolve this, either:
 {{- printf "true" -}}
 {{- else -}}
 {{- printf "false" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Whether the MCP subchart should be treated as enabled in parent templates.
+
+Mirrors Chart.yaml condition mcp.enabled,aggregator.enabled: an explicit
+boolean mcp.enabled wins, otherwise follow aggregator.enabled. Compare the
+result with eq "true"; a non-empty "false" string is truthy in Go templates.
+*/}}
+{{- define "kubecost.mcp.enabled" -}}
+{{- if kindIs "bool" ((.Values.mcp).enabled) -}}
+{{- if (.Values.mcp).enabled -}}true{{- else -}}false{{- end -}}
+{{- else if (.Values.aggregator).enabled -}}true{{- else -}}false{{- end -}}
+{{- end -}}
+
+{{- define "kubecost.mcp.authMode" -}}
+{{- default "none" ((.Values.mcp).config).authMode -}}
+{{- end -}}
+
+{{- define "kubecost.mcp.requireClientApiKey" }}
+{{- if or (((.Values.mcp).config).requireClientApiKey) (eq (include "kubecost.mcp.authMode" .) "api_key") }}
+{{- printf "true" -}}
+{{- else -}}
+{{- printf "false" -}}
+{{- end -}}
+{{- end -}}
+
+{{/* tpl because the values.yaml default embeds {{ .Release.Name }}. */}}
+{{- define "kubecost.mcp.kubecostApiBaseUrl" -}}
+{{- tpl ((.Values.mcp).config).kubecostApiBaseUrl . -}}
+{{- end -}}
+
+{{/*
+Service name of the mcp-kubecost subchart. Mirrors mcp-kubecost.fullname so the
+frontend nginx upstream targets the same Service the subchart renders.
+*/}}
+{{- define "kubecost.mcp.serviceName" -}}
+{{- if ((.Values.mcp).fullnameOverride) -}}
+{{- .Values.mcp.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- $name := default "mcp" (.Values.mcp).nameOverride -}}
+{{- if contains $name .Release.Name -}}
+{{- .Release.Name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "kubecost.mcp.servicePort" -}}
+{{- default 3030 ((.Values.mcp).service).port -}}
+{{- end -}}
+
+{{/*
+Fail when authMode is "none" AND a route (httpRoute or ingress) is exposed AND
+kubecostApiPort is 9008 (aggregator SSO bypass). All three conditions must be
+true simultaneously: a route alone at the default port (9004) is permitted, and
+port 9008 alone without an exposed route is also permitted. When CI/CD
+skipSanityChecks is set, emit a warning instead of failing.
+This does not prevent an mcp.httpRoute or mcp.ingress from being enabled. Those checks exist in the sub-chart itself.
+*/}}
+{{- define "kubecost.mcp.openRouteCheck" -}}
+{{- if eq (include "kubecost.mcp.enabled" .) "true" }}
+{{- $routeEnabled := or ((.Values.mcp).httpRoute).enabled ((.Values.mcp).ingress).enabled (.Values.ingress).enabled (.Values.httpRoute).enabled -}}
+{{- $apiPort := toString ((.Values.mcp).config).kubecostApiPort -}}
+{{- $authMode := include "kubecost.mcp.authMode" . -}}
+{{- if and  ($routeEnabled) (eq $apiPort "9008") (eq $authMode "none") }}
+{{- if and .Values.global.platforms.cicd.enabled .Values.global.platforms.cicd.skipSanityChecks }}
+
+WARNING: MCP.CONFIG.AUTHMODE IS "NONE" WHILE an HTTPROUTE/INGRESS IS ENABLED AND MCP.CONFIG.KUBECOSTAPIPORT IS 9008.
+THE MCP ENDPOINT WOULD BE UNPROTECTED WHILE ABLE TO BYPASS KUBECOST SSO. SET MCP.CONFIG.AUTHMODE TO AT LEAST "OPEN"
+TO ACKNOWLEDGE THIS, OR USE "OIDC" OR "API_KEY" TO ENFORCE AUTHENTICATION.
+SKIPSANITYCHECKS IS TRUE SO THIS CHECK DID NOT FAIL.
+{{- else }}
+{{- fail "\n\nFAILURE: mcp.config.authMode is \"none\" while mcp.httpRoute or mcp.ingress is enabled, AND mcp.config.kubecostApiPort is 9008. The MCP endpoint would be unauthenticated while it can bypass Kubecost SSO on port 9008. Set mcp.config.authMode to at least \"open\" to acknowledge intentional unauthenticated exposure, or use \"oidc\" or \"api_key\" to enforce authentication.\n" }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end -}}
+
+{{/*
+Warn when MCP is enabled but mcp.config.kubecostApiBaseUrl still resolves to an
+aggregator Service this release does not deploy; every MCP tool call would fail
+at runtime.
+
+Warns rather than fails: an explicit mcp.enabled=true with aggregator off is
+allowed for an external aggregator, but the default in-chart URL would be dead.
+*/}}
+{{- define "kubecost.mcp.aggregatorCheck" -}}
+{{- if and (eq (include "kubecost.mcp.enabled" .) "true") (not (.Values.aggregator).enabled) }}
+{{- $baseUrl := include "kubecost.mcp.kubecostApiBaseUrl" . -}}
+{{- $inChart := printf "http://%s" (include "kubecost.aggregator.serviceName" .) -}}
+{{- if or (eq $baseUrl $inChart) (hasPrefix (printf "%s." $inChart) $baseUrl) }}
+
+WARNING: MCP.ENABLED IS TRUE BUT AGGREGATOR.ENABLED IS FALSE, AND MCP.CONFIG.KUBECOSTAPIBASEURL STILL
+POINTS AT {{ $baseUrl | upper }}, A SERVICE THIS RELEASE DOES NOT CREATE. EVERY MCP TOOL CALL WILL FAIL
+AT RUNTIME. TO FIX, CHOOSE ONE OF:
+  Option A — disable the MCP server:
+    mcp.enabled: false
+  Option B — enable the aggregator:
+    aggregator.enabled: true
+  Option C — point the MCP server at an aggregator deployed elsewhere:
+    mcp.config.kubecostApiBaseUrl: "http://kubecost-aggregator.other-namespace.svc.cluster.local"
+{{- end }}
+{{- end }}
+{{- end -}}
+
+{{/*
+Non-wildcard hostnames of the Kubecost route the frontend is served on, as a
+list. Reads .Values.ingress.hosts (a list of plain strings in this chart) or
+.Values.httpRoute.hostnames, whichever route is enabled. Empty when neither is.
+
+Used to validate mcp.config.externalUrl: the MCP server is proxied through the
+frontend, so the origin it advertises must be the Kubecost hostname.
+*/}}
+{{- define "kubecost.mcp.routeHosts" -}}
+{{- $hosts := list -}}
+{{- if .Values.httpRoute.enabled -}}
+{{- $hosts = .Values.httpRoute.hostnames | default (list) -}}
+{{- else if .Values.ingress.enabled -}}
+{{- $hosts = .Values.ingress.hosts | default (list) -}}
+{{- end -}}
+{{- $nonWildcard := list -}}
+{{- range $hosts -}}
+{{- if not (hasPrefix "*" .) -}}
+{{- $nonWildcard = append $nonWildcard . -}}
+{{- end -}}
+{{- end -}}
+{{- toJson $nonWildcard -}}
+{{- end -}}
+
+{{/*
+Resolve and validate mcp.config.externalUrl, the public origin the MCP server
+advertises in its OAuth metadata. Mirrors mcp-kubecost.externalUrl in the
+subchart, but validates against the *parent* chart's route rather than the
+subchart's, because the frontend nginx is what serves MCP in this topology.
+
+Returns the trimmed origin, or "" when unset. Fails on a value that is not a
+bare https:// origin, or whose host is not one of the enabled Kubecost route's
+hostnames.
+*/}}
+{{- define "kubecost.mcp.externalUrl" -}}
+{{- $explicit := (((.Values.mcp).config).externalUrl) | default "" | trim | trimSuffix "/" -}}
+{{- if $explicit -}}
+{{- if not (hasPrefix "https://" $explicit) -}}
+{{- fail (printf "\n\nFAILURE [kubecost / mcp]: mcp.config.externalUrl must be an https:// origin with no path: %s\n" $explicit) -}}
+{{- end -}}
+{{- $host := trimPrefix "https://" $explicit -}}
+{{- if contains "/" $host -}}
+{{- fail (printf "\n\nFAILURE [kubecost / mcp]: mcp.config.externalUrl must be a bare origin with no path, query, or fragment: %s\n\n  The MCP endpoint is fixed at /mcp and its OAuth endpoints at /oauth/mcp; neither is configurable.\n" $explicit) -}}
+{{- end -}}
+{{- $routeHosts := include "kubecost.mcp.routeHosts" . | fromJsonArray -}}
+{{- if and (gt (len $routeHosts) 0) (not (has $host $routeHosts)) -}}
+{{- fail (printf "\n\nFAILURE [kubecost / mcp]: mcp.config.externalUrl host %q is not one of the Kubecost route's hostnames %v.\n\n  MCP is proxied through the Kubecost frontend, so it must advertise the same host clients reach Kubecost on.\n" $host $routeHosts) -}}
+{{- end -}}
+{{- $explicit -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Validate the parent chart's MCP OIDC configuration. Credentials must come from
+exactly one source: a complete inline clientID/clientSecret pair or an
+existingSecret. Whitespace-only values are treated as unset.
+
+This parent-level check is intentional. It can validate the Kubecost frontend's
+route and provide parent value paths in errors; the subchart's standalone check
+cannot see that parent context. Keep the shared credential and URL rules aligned
+with mcp-kubecost.validateOIDC.
+*/}}
+{{- define "kubecost.mcp.validateOIDC" -}}
+{{- if eq (include "kubecost.mcp.enabled" .) "true" -}}
+{{- $mode := default "none" ((.Values.mcp).config).authMode -}}
+{{- if eq $mode "oidc" -}}
+{{- $oidc := (((.Values.mcp).config).oidc) | default dict -}}
+{{- $clientID := trim ($oidc.clientID | default "") -}}
+{{- $clientSecret := trim ($oidc.clientSecret | default "") -}}
+{{- $hasAnyInline := or (not (empty $clientID)) (not (empty $clientSecret)) -}}
+{{- $hasInline := and (not (empty $clientID)) (not (empty $clientSecret)) -}}
+{{- $hasExisting := not (empty (trim ($oidc.existingSecret | default ""))) -}}
+{{- if not (or $hasInline $hasExisting) -}}
+{{- fail "\n\nFAILURE [kubecost / mcp]: mcp.config.authMode is \"oidc\" but no OIDC credentials are configured.\n\nTo fix, choose one of:\n  Option A — inline credentials:\n    mcp.config.oidc.clientID: \"<your-client-id>\"\n    mcp.config.oidc.clientSecret: \"<your-client-secret>\"\n    (jwtSigningKey and storageEncryptionKey are optional; ephemeral keys are auto-generated when omitted)\n\n  Option B — reference a pre-existing Secret (required keys: OIDC_CLIENT_ID, OIDC_CLIENT_SECRET; optional: OIDC_JWT_SIGNING_KEY, OIDC_STORAGE_ENCRYPTION_KEY):\n    mcp.config.oidc.existingSecret: \"<secret-name>\"\n" }}
+{{- end -}}
+{{- if and $hasAnyInline $hasExisting -}}
+{{- fail "\n\nFAILURE [kubecost / mcp]: mcp.config.oidc.existingSecret cannot be combined with inline clientID or clientSecret values.\nSupply exactly one credential source so the active credentials are unambiguous:\n\n  Option A — inline credentials only (remove existingSecret):\n    mcp.config.oidc.clientID: \"<your-client-id>\"\n    mcp.config.oidc.clientSecret: \"<your-client-secret>\"\n    mcp.config.oidc.existingSecret: \"\"\n\n  Option B — existing Secret only (remove clientID and clientSecret):\n    mcp.config.oidc.existingSecret: \"<secret-name>\"\n    mcp.config.oidc.clientID: \"\"\n    mcp.config.oidc.clientSecret: \"\"\n" }}
+{{- end -}}
+{{- /* Validate the shape and host of mcp.config.externalUrl when it is set. The
+     unset case is left to the subchart: Helm renders charts/ before templates/,
+     so mcp-kubecost.externalUrl always reports a missing value first. */}}
+{{- include "kubecost.mcp.externalUrl" . -}}
+{{- /* Mirrors mcp-kubecost.validateOIDC: RFC 8414 requires https, and the MCP
+     SDK carves out http:// on localhost / 127.0.0.1 for testing. Rejecting
+     more than the subchart does would fail installs the subchart accepts. */}}
+{{- $issuer := $oidc.issuerUrl | default "" -}}
+{{- $issuerHost := (urlParse $issuer).host | default "" | splitList ":" | first -}}
+{{- $issuerLocal := and (hasPrefix "http://" $issuer) (or (eq $issuerHost "localhost") (hasPrefix "127.0.0.1" $issuerHost)) -}}
+{{- if not (or (hasPrefix "https://" $issuer) $issuerLocal) -}}
+{{- fail "\n\nFAILURE [kubecost / mcp]: mcp.config.oidc.issuerUrl must be an https:// URL, or http:// on localhost / 127.0.0.1 for local testing.\n\n  Example:\n    mcp.config.oidc.issuerUrl: \"https://kubecost.example.com/.well-known/openid-configuration\"\n" }}
+{{- end -}}
+{{- end -}}
 {{- end -}}
 {{- end -}}
 

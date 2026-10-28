@@ -12,6 +12,8 @@ global:
       config:
         container: kubecost-data
         storage_account: kubecost-federated-storage
+finopsagent:
+  enabled: true  # required, for agentOnly mode
 clusterController:
   enabled: true  # optional, automated rightsizing of containers
 networkCosts:
@@ -24,7 +26,7 @@ cloudCost:
   enabled: false
 forecasting:
   enabled: false
-finopsagent:
-  enabled: true
 localStore:
+  enabled: false
+mcp:
   enabled: false

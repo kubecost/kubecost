@@ -1,4 +1,17 @@
 version: 2
+registries:
+  icr:
+    type: docker-registry
+    url: https://icr.io
+    username: dummy  # icr.io images are public; Dependabot requires credentials
+    password: dummy
+    replaces-base: true
+  # Allowlists the finops-agent and mcp-kubecost chart repos for the Dependabot proxy
+  kubecost-charts:
+    type: helm-registry
+    url: https://kubecost.github.io
+    username: dummy  # public repos; Dependabot requires credentials
+    password: dummy
 updates:
   # GitHub Actions - Monthly updates to reduce update frequency
   # Provides time for community feedback before adopting new action versions
@@ -15,8 +28,13 @@ updates:
   # Docker images - Daily updates for Kubecost-owned container images
   - package-ecosystem: docker
     directory: /kubecost
+    registries:
+      - icr
     schedule:
       interval: daily
+    ignore:
+      # Docker Hub image; not resolvable once icr.io replaces the base registry
+      - dependency-name: bitnami/kubectl
     rebase-strategy: disabled
     labels:
       - "dependencies"
@@ -26,8 +44,13 @@ updates:
   # Monitors the finops-agent dependency in Chart.yaml
   - package-ecosystem: helm
     directory: /kubecost
+    registries:
+      - kubecost-charts
     schedule:
       interval: daily
+    ignore:
+      # Skip values.yaml images: their registry is set at render time, and tag bumps drop the "v" prefix
+      - dependency-name: "*/*"
     rebase-strategy: disabled
     labels:
       - "dependencies"

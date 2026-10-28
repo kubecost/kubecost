@@ -21,6 +21,8 @@ finopsagent:
   enabled: false
 aggregator:
   enabled: false
+mcp:
+  enabled: false
 frontend:
   enabled: false
 localStore:

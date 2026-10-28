@@ -1,0 +1,199 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+
+name: Cherry-Pick Status Checker
+
+# Required secrets, all are set at org level and can be overridden at repo level:
+#   SLACK_FAILURE_WEBHOOK_URL_PASS — Slack workflow webhook when no missing cherry-picks
+#   SLACK_FAILURE_WEBHOOK_URL_FAIL — Slack workflow webhook when cherry-picks are missing
+
+on:
+  workflow_dispatch:
+    inputs:
+      only-missing:
+        description: Only report PRs whose cherry-pick is missing
+        type: boolean
+        default: true
+      branch:
+        description: Check only this branch ex v3.3 (leave empty to auto-detect GA + RC)
+        type: string
+        required: false
+      limit:
+        description: Max PRs to fetch per version label
+        type: number
+        default: 200
+  schedule:
+    - cron: '0 7 * * *'  # 07:00 UTC daily
+
+permissions:
+  contents: read
+  pull-requests: read
+  issues: read
+
+jobs:
+  cherry-pick-status:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.3.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: .github/scripts/cherry-pick-checker.py
+
+      - name: Run cherry-pick status check
+        id: run-checker
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          INPUT_ONLY_MISSING: ${{ github.event.inputs.only-missing || 'true' }}
+          INPUT_BRANCH: ${{ github.event.inputs.branch }}
+          INPUT_LIMIT: ${{ github.event.inputs.limit || '200' }}
+        run: |
+          echo "::add-mask::$GITHUB_TOKEN"
+          extra_args=()
+          if [ "$INPUT_ONLY_MISSING" = "true" ]; then
+            extra_args+=(--only-missing)
+          fi
+          if [ -n "$INPUT_BRANCH" ]; then
+            extra_args+=(--branch "$INPUT_BRANCH")
+          fi
+          uv run --script ./.github/scripts/cherry-pick-checker.py \
+            --limit "$INPUT_LIMIT" \
+            --output-file report.md \
+            --summary-json summary.json \
+            "${extra_args[@]}"
+
+      - name: Upload missing-cherry-picks report
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: cherry-pick-status-report
+          path: report.md
+          retention-days: 30
+
+      - name: Build Slack payload
+        id: get-failed
+        env:
+          RUN_ID: ${{ github.run_id }}
+          REPO_NAME: ${{ github.repository }}
+          WORKFLOW_NAME: ${{ github.workflow }}
+        run: |
+          python3 - <<'EOF'
+          import json
+          import os
+          import re
+
+          with open("summary.json") as f:
+              data = json.load(f)
+
+          repo = os.environ["REPO_NAME"]
+          branches = data["branches"]
+          failures_found = any(branch["missing"] for branch in branches)
+
+          # The Slack workflow template already shows the workflow, repo, status and run link.
+          # It posts the message as plain text (no *bold* or <url|text> links), so keep it ASCII.
+          # Slack still auto-links bare URLs. Example:
+          #   v3.2: all 34 labeled PRs accounted for
+          #   v3.3: 1 missing of 93 labeled PRs
+          #   - <PR URL> Add ingress annotations (@octocat, merged 2026-10-20)
+          lines = []
+          for branch in branches:
+              if not branch["missing"]:
+                  lines.append(f"{branch['version']}: all {branch['total']} labeled PRs accounted for")
+                  continue
+              lines.append(f"{branch['version']}: {branch['missing']} missing of {branch['total']} labeled PRs")
+              newest_first = sorted(branch["needs_attention"], key=lambda pr: pr["merged_at"] or "", reverse=True)
+              for pr in newest_first:
+                  # GITHUB_SERVER_URL (https://github.com) keeps the link checker off this templated URL
+                  lines.append(
+                      f"- {os.environ['GITHUB_SERVER_URL']}/{repo}/pull/{pr['number']} {pr['title']} "
+                      f"(@{pr['author']}, merged {pr['merged_at']})"
+                  )
+              lines.append("")
+          message = "\n".join(lines).rstrip() + "\n"
+
+          payload = {
+              "runid": os.environ["RUN_ID"],
+              "repo": os.environ["REPO_NAME"],
+              "workflow": os.environ["WORKFLOW_NAME"],
+              "message": message,
+              "mrkdwn": True,
+          }
+
+          with open("slack_payload.json", "w") as f:
+              json.dump(payload, f)
+
+          def slack_mrkdwn_to_gfm(text):
+              text = re.sub(r"<(https?://[^|>]+)\|([^>]+)>", r"[\2](\1)", text)
+              text = re.sub(r"<(https?://[^>]+)>", r"\1", text)
+              return text
+
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
+              summary.write(slack_mrkdwn_to_gfm(message))
+              summary.write("\n<details>\n<summary>slack_payload.json</summary>\n\n```json\n")
+              summary.write(json.dumps(payload, indent=2))
+              summary.write("\n```\n</details>\n")
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as out:
+              out.write(f"FAILURES_FOUND={'true' if failures_found else 'false'}\n")
+          EOF
+
+      - name: Check Slack webhook is configured
+        env:
+          FAILURES_FOUND: ${{ steps.get-failed.outputs.FAILURES_FOUND }}
+          SLACK_WEBHOOK_URL_PASS: ${{ secrets.SLACK_FAILURE_WEBHOOK_URL_PASS }}
+          SLACK_WEBHOOK_URL_FAIL: ${{ secrets.SLACK_FAILURE_WEBHOOK_URL_FAIL }}
+        run: |
+          if [ "$FAILURES_FOUND" = "false" ]; then
+            kind=PASS
+            webhook="$SLACK_WEBHOOK_URL_PASS"
+          else
+            kind=FAIL
+            webhook="$SLACK_WEBHOOK_URL_FAIL"
+          fi
+          echo "failures_found=$FAILURES_FOUND"
+          echo "using_secret=SLACK_FAILURE_WEBHOOK_URL_${kind}"
+          echo "webhook_length=${#webhook}"
+          if [ -z "$webhook" ]; then
+            echo "::error::SLACK_FAILURE_WEBHOOK_URL_${kind} is empty. Check that the org/repo secret exists and is available to this repository."
+            exit 1
+          fi
+
+      # Use PASS webhook when no missing cherry-picks, FAIL webhook when missing cherry-picks found
+      - name: Send Slack notification (missing cherry-picks)
+        if: steps.get-failed.outputs.FAILURES_FOUND == 'true'
+        uses: slackapi/slack-github-action@v4.0.0
+        with:
+          webhook: ${{ secrets.SLACK_FAILURE_WEBHOOK_URL_FAIL }}
+          webhook-type: webhook-trigger
+          payload-file-path: slack_payload.json
+          errors: true
+
+      - name: Send Slack notification (all accounted for)
+        if: steps.get-failed.outputs.FAILURES_FOUND == 'false'
+        uses: slackapi/slack-github-action@v4.0.0
+        with:
+          webhook: ${{ secrets.SLACK_FAILURE_WEBHOOK_URL_PASS }}
+          webhook-type: webhook-trigger
+          payload-file-path: slack_payload.json
+          errors: true
+
+      # Runs when the checker script itself errored out (e.g. GitHub API 403/rate-limit)
+      # so a crash doesn't silently look like "no missing cherry-picks".
+      - name: Send Slack notification (checker crashed)
+        if: failure() && steps.run-checker.outcome == 'failure'
+        uses: slackapi/slack-github-action@v4.0.0
+        with:
+          webhook: ${{ secrets.SLACK_FAILURE_WEBHOOK_URL_FAIL }}
+          webhook-type: webhook-trigger
+          payload: |
+            {
+              "runid": "${{ github.run_id }}",
+              "repo": "${{ github.repository }}",
+              "workflow": "${{ github.workflow }}",
+              "message": ":rotating_light: Cherry-Pick Status Checker crashed before finishing — results are incomplete, not clean. <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View logs>\n",
+              "mrkdwn": true
+            }
+          errors: true

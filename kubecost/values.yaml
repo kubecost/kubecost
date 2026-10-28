@@ -27,12 +27,6 @@ global:
     existingSecret: ""
     # If you want to use a different file name for the federated storage config, you can set the fileName value.
     fileName: federated-store.yaml  # set this value to change what the file name for the yaml config is
-  ## @param global.acknowledged Acknowledgment flag for Kubecost 3.0 major upgrade
-  ## REQUIRED FOR ENTERPRISE: Kubecost 3.0 introduces breaking changes and potential data disruption
-  ## risks. Review release notes and migration guide before proceeding.
-  ## Ref: https://github.com/kubecost/kubecost/releases
-  ##
-  acknowledged: false
   ## @param cspPricingApiKey.existingSecret The name of an existing secret to use for the GCP API key. If this is set, the secret will be used. Leave empty to create a new secret.
   ## @param cspPricingApiKey.apiKey The GCP API key value. If this is set, the secret will be created. Leave empty to use an existing secret.
   ## This is currently only used for GCP.
@@ -46,7 +40,7 @@ global:
   ##   - myRegistryKeySecretName
   ##
   imagePullSecrets: []
-  ## @param global.defaultStorageClass The default storage class to use, unless overridden by the storageClass parameter in the finopsagent, aggregator, or localStore blocks.
+  ## @param global.defaultStorageClass The default storage class to use, unless overridden by the storageClass parameter in the finopsagent, aggregator, localStore, or mcp blocks.
   ##
   defaultStorageClass: ""
   ## @param global.zone The zone to use for the finops agent
@@ -452,7 +446,7 @@ frontend:
   ## If not set, the image will be pulled from the registry and repository specified in the image block.
   ## If set, the fullImageName will be used to pull the image.
   ## Example:
-  ## fullImageName: gcr.io/kubecost1/frontend:v3.0.0
+  ## fullImageName: icr.io/kubecost/frontend:3.2.1
   fullImageName: ""
   image:
     registry: ""  # Default is "icr.io"
@@ -544,6 +538,8 @@ frontend:
     fqdn: ""  # Example: kubecost-cloud-cost.kubecost.svc.cluster.local:9005
   clusterController:
     fqdn: ""  # Example: cluster-controller.kubecost.svc.cluster.local:9731
+  mcp:
+    fqdn: ""  # Example: kubecost-mcp.kubecost.svc.cluster.local:3030
 
 ## Kubecost Local Store
 ## When no federated storage bucket is configured, localStore provides local storage via a
@@ -601,14 +597,14 @@ localStore:
 ## Collects kubernetes metrics and sends them to storage. Below are a subset of
 ## values from the finopsagent subchart that are most commonly changed.
 ## Ref: https://github.com/kubecost/finops-agent-chart/blob/main/charts/finops-agent/values.yaml
-##
+## Note: External labels are commented out by default. For configuration details, refer to the FinOps Agent chart documentation.
 finopsagent:
   enabled: true
   image:
     repository: ibm-finops/agent
   #   registry: ""  # Default is "icr.io"
   #   tag: ""  # Default is set in Chart.yaml
-  # fullImageName: ""  # fullImageName If set, will override the image registry, repo/name and tag.
+  # fullImageName: ""  # fullImageName If set, will override the image registry, repo/name and tag. Ex: icr.io/ibm-finops/agent:v1.0.20
   # serviceAccount:
   #   create: true
   #   name: finops-agent
@@ -653,6 +649,163 @@ finopsagent:
       gpuLabelValue: ""
       spotLabel: ""
       spotLabelValue: ""
+  ## External labels allow users to apply custom labels to node assets and
+  ## allocations so they can be used for filtering and grouping in the
+  ## Kubecost UI.
+  ##
+  ## Commented out by default. Refer to the finops-agent-chart for details.
+  # external:
+  #   nodeLabels:
+  #     configMapName: ""
+  #     namespace: ""
+  #     key: ""
+  #     route: ""
+
+
+## The FinOps MCP server for Kubecost analytics. Below are a subset of values from
+## the mcp-kubecost subchart that are most commonly changed.
+## Ref: https://github.com/kubecost/mcp-kubecost/blob/main/charts/mcp-kubecost/values.yaml
+##
+## The MCP endpoint is fixed at /mcp and its OAuth endpoints at /oauth/mcp.
+## By default the Kubecost frontend proxies both, so MCP is reachable on the same hostname
+## as the Kubecost UI. Enable mcp.httpRoute or mcp.ingress below to give the MCP
+## server its own route instead, in which case the frontend stops proxying it.
+##
+mcp:
+  ## mcp.enabled is deliberately unset so the Chart.yaml condition
+  ## "mcp.enabled,aggregator.enabled" falls through and MCP follows the
+  ## aggregator. Set it to true to run MCP against an aggregator deployed
+  ## elsewhere (with config.kubecostApiBaseUrl), or false to always skip it.
+
+  ## The MCP server reads cost data through the Kubecost aggregator service.
+  ## If Kubecost is deployed with SAML or OIDC authentication,
+  ## the MCP server must be configured with its own OIDC configuration.
+  ## When the mcp server has its own authentication, consider setting
+  ## mcp.config.kubecostApiPort to 9008 instead of 9004 to bypass Kubecost's API
+  ## authentication. The aggregator Service only exposes 9008 when saml.enabled or
+  ## oidc.enabled is true, so 9008 is a dead port on an installation without SSO.
+  config:
+    kubecostApiBaseUrl: "http://{{ .Release.Name }}-aggregator"
+    kubecostApiPort: 9004
+    # The aggregator serves its API at the root, unlike the frontend's /model prefix.
+    kubecostApiBasePath: "/"
+    ## Authentication for the MCP HTTP endpoint. One of: none, open, oidc, api_key.
+    ## The default of "none" leaves the endpoint unauthenticated inside the cluster.
+    ## See https://github.com/kubecost/mcp-kubecost/tree/main/docs/auth for more details.
+    authMode: none
+    # mcp.config.externalUrl is the public origin the MCP server advertises in its
+    # OAuth metadata — scheme and host only, no path. Required when authMode is
+    # "oidc". Which value it takes depends on how MCP is exposed; the two are
+    # mutually exclusive:
+    #
+    #   Frontend-proxied (the default, mcp.httpRoute and mcp.ingress both disabled):
+    #     set this to the Kubecost hostname, e.g. "https://kubecost.example.com".
+    #     It must be one of ingress.hosts / httpRoute.hostnames at the top level of
+    #     this file, because the frontend is what serves /mcp on that host.
+    #
+    #   MCP-owned route (mcp.httpRoute or mcp.ingress enabled below): leave this
+    #     empty and set the route's own hostname instead. The subchart infers this
+    #     value from that hostname, and rejects a value that disagrees with it.
+    # If clients get the error: "Error: Client error '421 Misdirected Request'", a mismatch here is likely the issue.
+    externalUrl: ""
+    # mcp.config.kubecostApiKey is sent to Kubecost as an X-API-KEY request header for outbound calls.
+    # An MCP client may override it per request by sending its own X-API-KEY header.
+    kubecostApiKey:
+      # mcp.config.kubecostApiKey.value optionally creates a Secret containing the API key; prefer existingSecret.
+      value: ""
+      # mcp.config.kubecostApiKey.existingSecret is the name of a pre-created Secret containing the API key.
+      existingSecret: ""
+      # mcp.config.kubecostApiKey.key is the key within the existing or generated API-key Secret.
+      key: KUBECOST_API_KEY
+    # mcp.config.requireClientApiKey rejects inbound HTTP requests that arrive without an X-API-KEY header.
+    # When authMode is "api_key", this value is ignored and forced to true.
+    # Set it to true with authMode "oidc" to require both OIDC and an API key.
+    requireClientApiKey: false
+    # mcp.config.logLevel is the FastMCP log level. One of: DEBUG, INFO, WARNING, ERROR, CRITICAL.
+    logLevel: INFO
+    oidc:
+      # mcp.config.oidc.issuerUrl is the provider's .well-known/openid-configuration URL.
+      # Example: https://{domain}/.well-known/openid-configuration
+      issuerUrl: ""
+      # mcp.config.oidc.clientID is the OIDC client ID. Prefer existingSecret for production.
+      clientID: ""
+      # mcp.config.oidc.clientSecret is the OIDC client secret. Prefer existingSecret for production.
+      clientSecret: ""
+      # Optional — auto-generated as an ephemeral key at startup when unset. Set explicitly in
+      # production to ensure token consistency across restarts.
+      # Generate with: openssl rand -base64 32
+      jwtSigningKey: ""
+      # Optional — auto-generated as an ephemeral Fernet key at startup when unset. Leaving this
+      # unset wipes the OAuth storage directory on every restart, so clients must re-register and
+      # re-authorize after each redeploy. Set explicitly in production to preserve OAuth sessions.
+      # Generate with: openssl rand -base64 32
+      storageEncryptionKey: ""
+      # mcp.config.oidc.existingSecret references a pre-created Secret containing OIDC credentials.
+      # Required keys: OIDC_CLIENT_ID, OIDC_CLIENT_SECRET. Optional keys: OIDC_JWT_SIGNING_KEY,
+      # OIDC_STORAGE_ENCRYPTION_KEY. Preferred over clientID/clientSecret.
+      # Supply either this or clientID/clientSecret, not both.
+      existingSecret: ""
+      # Register https://<mcp.config.externalUrl host>/oauth/mcp/callback as the redirect
+      # URI at the IdP. The callback path is fixed and cannot be changed.
+
+  ## The MCP server is reachable in-cluster at <release>-mcp:3030 and, by default,
+  ## through the Kubecost frontend. Enable one of these to give it its own external
+  ## ingress or HTTPRoute instead; the frontend then stops proxying /mcp and /oauth/mcp.
+  ## Either route requires mcp.config.authMode to be at least "open".
+  ##
+  httpRoute:
+    enabled: false
+    ## mcp.httpRoute.parentRefs is required when enabled. Reference the Gateway(s)
+    ## this route attaches to.
+    # parentRefs:
+    #   - name: mcp-gateway
+    #     sectionName: https   # optional, listener name
+    ## mcp.httpRoute.hostnames is required when enabled.
+    # hostnames:
+    #   - mcp.example.com
+    # annotations: {}
+  ingress:
+    enabled: false
+    ## mcp.ingress.className is the IngressClass name. Empty leaves the cluster's
+    ## default IngressClass to claim the Ingress.
+    # className: nginx
+    ## mcp.ingress.hosts is required when enabled. The subchart generates the fixed
+    ## /mcp, /oauth/mcp, and OAuth discovery paths for each host.
+    # hosts:
+    #   - host: mcp.example.com
+    ## mcp.ingress.tls configures TLS secrets and their hostnames.
+    # tls:
+    #   - secretName: kubecost-mcp-server-tls
+    #     hosts:
+    #       - mcp.example.com
+    ## Certificate issuance is left to the operator, e.g.:
+    # annotations:
+    #   cert-manager.io/cluster-issuer: letsencrypt-http
+
+  ## The MCP server stores its FastMCP OAuth registrations, grants, and tokens on a
+  ## PVC. mcp.persistence.enabled is tri-state: null (default) creates the PVC only
+  ## when mcp.config.authMode is "oidc", true always creates it, and false never
+  ## does -- with false, clients must re-register on every pod restart.
+  ## mcp.persistence.storageClass falls back to global.defaultStorageClass, and then
+  ## to the cluster's default StorageClass.
+  ##
+  persistence:
+    enabled: null
+    storageClass: ""
+    size: 1Gi
+
+  ## Scheduling for the MCP server pod. The chart's top-level nodeSelector does not
+  ## cross the subchart boundary, so set these when the cluster needs the MCP pod
+  ## constrained -- for example a mixed Windows/Linux cluster, where
+  ## values-windows-node-affinity.yaml pins the other components but not this one.
+  ##
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+  ## Resource requests and limits default to 250m/1Gi and 1000m/1Gi in the subchart.
+  ## Set them here only to override those defaults.
+  # resources: {}
 
 ## Installs Kubecost/OpenCost plugins
 ## Ref: https://opencost.io/docs/integrations/plugins/
@@ -737,12 +890,12 @@ networkCosts:
   ## If not set, the image will be pulled from the registry and repository specified in the image block.
   ## If set, the fullImageName will be used to pull the image.
   ## Example:
-  ## fullImageName: gcr.io/kubecost1/kubecost-network-costs:v0.18.1
+  ## fullImageName: icr.io/kubecost/network-costs:v0.19.4
   fullImageName: ""
   image:
-    registry: ""  # Default is "icr.io"
+    registry: null  # Default is "icr.io". null, not "", so Dependabot can track the tag
     repository: kubecost/network-costs
-    tag: v0.19.0
+    tag: v0.19.4
   imagePullPolicy: IfNotPresent
 
   updateStrategy:
@@ -861,6 +1014,9 @@ networkCosts:
 
   ## Storage configuration for NAT gateway traffic logs
   ## Used when NAT gateway traffic detection is enabled to access VPC flow logs
+  ## Note: when set, storageConfig takes priority over global.federatedStorage for
+  ## the STORAGE_CONFIG_PATH env var in the network-costs DaemonSet. If both are
+  ## configured, global.federatedStorage will be ignored for network-costs.
   ## Example for S3:
   ##   storageConfig:
   ##     type: S3
@@ -883,7 +1039,7 @@ networkCosts:
   ##       access_key: my-access-key
   ##       secret_key: my-secret-key
   ##       aws_sdk_auth: false
-  ##     refresh-interval: "10m"
+  ##     refresh-interval: "5m"
   natGatewayConfig: {}
 
   ## Network costs is a daemonset and may need to be scheduled on nodes with specific taints.
@@ -901,7 +1057,7 @@ networkCosts:
   tolerations: []
   ## networkCosts requires that the node has topology.kubernetes.io/region and topology.kubernetes.io/zone labels.
   ## The below nodeAffinity policy will prevent the pods from running on any node that does not have both labels.
-  ## to override this, set affinity: ""
+  ## to override this, add --set-json 'networkCosts.affinity=null'
   affinity:
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
@@ -922,7 +1078,21 @@ networkCosts:
   nodeSelector: {}
   annotations: {}
   healthCheckProbes: {}
-  additionalSecurityContext: {}
+  ## Container securityContext for the network-costs DaemonSet.
+  ##
+  ## network-costs reads conntrack flows over the netlink (ctnetlink) API, which
+  ## requires CAP_NET_ADMIN. A full privileged container is not required; the
+  ## following is sufficient to enable network-costs.
+  ## Note that `runAsUser: 0` is required: the conntrack accounting sysctl
+  ## under /netfilter and, in `hostProc` mode, /proc/net/nf_conntrack are only
+  ## readable by root.
+  securityContext:
+    privileged: false
+    allowPrivilegeEscalation: false
+    runAsUser: 0
+    capabilities:
+      drop: ["ALL"]
+      add: ["NET_ADMIN"]
 
 ## Kubecost Forecasting forecasts future cost patterns based on historical
 ## patterns observed by Kubecost.
@@ -935,12 +1105,12 @@ forecasting:
   ## If not set, the image will be pulled from the registry and repository specified in the image block.
   ## If set, the fullImageName will be used to pull the image.
   ## Example:
-  ## fullImageName: gcr.io/kubecost1/kubecost-modeling:v0.1.35
+  ## fullImageName: icr.io/kubecost/modeling:v0.1.36
   fullImageName: ""
   image:
-    registry: ""  # Default is "icr.io"
+    registry: null  # Default is "icr.io". null, not "", so Dependabot can track the tag
     repository: kubecost/modeling
-    tag: v0.1.36
+    tag: v0.2.3
   imagePullPolicy: IfNotPresent
 
   # Resource specification block for the forecasting container.
@@ -986,17 +1156,31 @@ aggregator:
     registry: ""  # Default is "icr.io"
     repository: kubecost/cost-model
     tag: ""  # Default is to match the Chart.AppVersion
-  fullImageName: ""  # Overrides the default image construction logic.
+  fullImageName: ""  # Overrides the default image construction logic. Ex: icr.io/kubecost/cost-model:3.2.1
   imagePullPolicy: IfNotPresent
 
   ## Retention values determine for what duration into the past data will be
-  ## ingested into Aggregator's database
+  ## ingested into Aggregator's database. 10m resolution data is only used for the
+  ## Node Group Right-Sizing and Resource Quota Right-Sizing features for further
+  ## granularity. Enabling 10m data will increase resource usage of the Aggregator.
+  ## A good starting value would be `retention10m: 36`
   retention1d: 91
   retention1h: 49
-  retention10m: 36
+  retention10m: 0
 
   # Replicas sets the number of Aggregator replicas.
   replicas: 1
+
+  ## Controls what happens to the Aggregator's PVCs when its StatefulSet is
+  ## deleted or scaled down.
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
+
+  ## Sets the pod termination grace period for the Aggregator StatefulSet. Must
+  ## exceed shutdown_wait_unfinished (120s in kc-embedded-ch-config.xml) plus
+  ## app drain time.
+  terminationGracePeriodSeconds: 180
 
   # Log level for the aggregator container. Options are "trace", "debug", "info", "warn", "error", "fatal", "panic"
   logLevel: info
@@ -1356,7 +1540,7 @@ cloudCost:
       helm.sh/resource-policy: keep
 
 ## Kubecost Cluster Controller for Automated Right Sizing and Turndown
-## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=configuration-cluster-controller
+## Ref: https://www.ibm.com/docs/en/kubecost/self-hosted/3.x?topic=savings-actions
 ##
 clusterController:
   enabled: true
@@ -1364,6 +1548,11 @@ clusterController:
   serviceAccount:
     ## @param clusterController.serviceAccount.create Whether to create a service account for cluster controller
     create: true
+
+    ## @param clusterController.serviceAccount.name The name of the service account to use for cluster controller
+    ## By default, the cluster controller pod will use <deployment-name>-cluster-controller for the service account name.
+    ## This can be overridden to use a different service account.
+    name: ""
 
     ## @param clusterController.serviceAccount.annotations Annotations for the cluster controller service account
     ## Configure cloud provider authentication for federated storage access:
@@ -1377,12 +1566,12 @@ clusterController:
   ## If not set, the image will be pulled from the registry and repository specified in the image block.
   ## If set, the fullImageName will be used to pull the image.
   ## Example:
-  ## fullImageName: gcr.io/kubecost1/cluster-controller:v0.16.34
+  ## fullImageName: icr.io/kubecost/cluster-controller:v0.16.40
   fullImageName: ""
   image:
-    registry: ""  # Default is "icr.io"
+    registry: null  # Default is "icr.io". null, not "", so Dependabot can track the tag
     repository: kubecost/cluster-controller
-    tag: v0.16.37
+    tag: v0.16.40
   imagePullPolicy: IfNotPresent
   logLevel: info
   extraEnv: []
@@ -1516,6 +1705,10 @@ costEventsAudit:
 ##
 telemetry:
   enabled: true
+  ## When true, telemetry consent is granted automatically at startup instead of
+  ## requiring a user action in the Settings UI. Defaults to false, so consent
+  ## stays user-driven unless explicitly enabled.
+  autoConsent: false
 
 ## These configs can also be set from the Settings page in the Kubecost product
 ## UI. Values in this block override config changes in the Settings UI on pod
@@ -1795,7 +1988,7 @@ extraObjects: []
 basicHealth:
   registry: docker.io
   repository: alpine/curl
-  tag: 8.17.0
+  tag: latest
 
 # -- Optional override for the image used for the HTTPRoute helm test (only when httpRoute.enabled)
 httprouteTest:

@@ -1,0 +1,130 @@
+# helm-unittest test suite for Cluster Controller ServiceAccount name propagation.
+#
+# Equivalent coverage to .github/scripts/cluster_controller_sa_test.sh.
+#
+# Run locally:
+#   helm plugin install https://github.com/helm-unittest/helm-unittest
+#   helm dependency build kubecost/
+#   helm unittest kubecost/
+suite: Cluster Controller ServiceAccount name propagation
+
+# Use the same release name as the original bash script
+# (`helm template kubecost ...`) so that the default generated SA name
+# resolves to "kubecost-cluster-controller".
+release:
+  name: kubecost
+
+# No top-level `templates:` restriction — the Deployment template calls
+# kubecost.configsChecksum which includes ~15 other templates at render time.
+# Restricting templates breaks that cross-template helper. Instead, each test
+# uses `documentSelector` to target the specific resource kind and name.
+
+tests:
+
+  # ── Test 1: default SA name ──────────────────────────────────────────────────
+  # When clusterController.serviceAccount.name is empty the helper falls back to
+  # <release>-cluster-controller = "kubecost-cluster-controller".
+
+  - it: "default: ServiceAccount has name kubecost-cluster-controller"
+    set:
+      clusterController.enabled: true
+    documentSelector:
+      path: kind
+      value: ServiceAccount
+    template: templates/cluster-controller/cluster-controller-service-account.yaml
+    asserts:
+      - isKind:
+          of: ServiceAccount
+      - equal:
+          path: metadata.name
+          value: kubecost-cluster-controller
+
+  - it: "default: Deployment references serviceAccountName kubecost-cluster-controller"
+    set:
+      clusterController.enabled: true
+    documentSelector:
+      path: kind
+      value: Deployment
+    template: templates/cluster-controller/cluster-controller-deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: kubecost-cluster-controller
+
+  - it: "default: ClusterRoleBinding subject references SA kubecost-cluster-controller"
+    set:
+      clusterController.enabled: true
+    documentSelector:
+      path: kind
+      value: ClusterRoleBinding
+    template: templates/cluster-controller/cluster-controller-cluster-role-binding.yaml
+    asserts:
+      - equal:
+          path: subjects[0].name
+          value: kubecost-cluster-controller
+
+  # ── Test 2: custom SA name ───────────────────────────────────────────────────
+  # When clusterController.serviceAccount.name is set, every reference must use
+  # that custom name and the default generated name must not appear.
+
+  - it: "custom: ServiceAccount has the custom name"
+    set:
+      clusterController.enabled: true
+      clusterController.serviceAccount.name: my-custom-sa
+    documentSelector:
+      path: kind
+      value: ServiceAccount
+    template: templates/cluster-controller/cluster-controller-service-account.yaml
+    asserts:
+      - equal:
+          path: metadata.name
+          value: my-custom-sa
+
+  - it: "custom: Deployment references the custom serviceAccountName"
+    set:
+      clusterController.enabled: true
+      clusterController.serviceAccount.name: my-custom-sa
+    documentSelector:
+      path: kind
+      value: Deployment
+    template: templates/cluster-controller/cluster-controller-deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: my-custom-sa
+
+  - it: "custom: ClusterRoleBinding subject references the custom SA"
+    set:
+      clusterController.enabled: true
+      clusterController.serviceAccount.name: my-custom-sa
+    documentSelector:
+      path: kind
+      value: ClusterRoleBinding
+    template: templates/cluster-controller/cluster-controller-cluster-role-binding.yaml
+    asserts:
+      - equal:
+          path: subjects[0].name
+          value: my-custom-sa
+
+  - it: "custom: default generated name is absent from Deployment serviceAccountName"
+    set:
+      clusterController.enabled: true
+      clusterController.serviceAccount.name: my-custom-sa
+    documentSelector:
+      path: kind
+      value: Deployment
+    template: templates/cluster-controller/cluster-controller-deployment.yaml
+    asserts:
+      - notEqual:
+          path: spec.template.spec.serviceAccountName
+          value: kubecost-cluster-controller
+
+  # ── Guard: disabled renders no ServiceAccount ────────────────────────────────
+
+  - it: "disabled: ServiceAccount is not rendered when clusterController.enabled is false"
+    set:
+      clusterController.enabled: false
+    template: templates/cluster-controller/cluster-controller-service-account.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
