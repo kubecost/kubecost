@@ -7,7 +7,9 @@
 {{- end -}}
 
 {{- define "kubecost.spark.clickhouseUrl" -}}
-{{- default (printf "jdbc:clickhouse://%s:8123" (include "kubecost.spark.clickhouseServiceName" .)) .Values.aggregator.kubecostSpark.clickhouseUrl -}}
+{{- $spark := .Values.aggregator.kubecostSpark -}}
+{{- $group := ternary $spark.decorator $spark.pipeline (eq (lower (default "" $spark.mode)) "decorator") -}}
+{{- coalesce $group.clickhouseUrl (printf "jdbc:clickhouse://%s:8123" (include "kubecost.spark.clickhouseServiceName" .)) -}}
 {{- end -}}
 
 {{- define "kubecost.spark.selectorLabels" -}}

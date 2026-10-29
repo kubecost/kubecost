@@ -1,6 +1,9 @@
 {{- if .Values.aggregator.viewSupportEnabled }}
 {{- $spark := .Values.aggregator.kubecostSpark }}
 {{- $decorator := eq (lower (default "" $spark.mode)) "decorator" }}
+{{- $groupName := ternary "decorator" "pipeline" $decorator }}
+{{- $group := ternary $spark.decorator $spark.pipeline $decorator }}
+{{- $pipeline := $spark.pipeline }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -92,45 +95,49 @@ spec:
             {{- if $decorator }}
             - name: DECORATOR_POLL_SECONDS
               value: {{ $spark.decorator.pollSeconds | quote }}
-            - name: DECORATOR_ORG_ID
-              value: {{ required "aggregator.kubecostSpark.decorator.orgId is required in decorator mode" $spark.decorator.orgId | quote }}
             - name: CH_READ_DATABASE
               value: {{ $spark.decorator.readDatabase | quote }}
             - name: CH_WRITE_DATABASE
               value: {{ $spark.decorator.writeDatabase | quote }}
             {{- end }}
             - name: JAVA_TOOL_OPTIONS
-              value: {{ $spark.javaToolOptions | quote }}
+              value: {{ $group.javaToolOptions | quote }}
             - name: CH_URL
               value: {{ include "kubecost.spark.clickhouseUrl" . | quote }}
+            {{- if not $decorator }}
             - name: CH_DATABASE
-              value: {{ $spark.clickhouseDatabase | quote }}
+              value: {{ $pipeline.clickhouseDatabase | quote }}
+            {{- end }}
             - name: CH_WRITE_CONNECTIONS
-              value: {{ $spark.clickhouseWriteConnections | quote }}
+              value: {{ $group.clickhouseWriteConnections | quote }}
+            {{- if not $decorator }}
             - name: AWS_REGION
-              value: {{ required "aggregator.kubecostSpark.awsRegion is required when aggregator.viewSupportEnabled is true" $spark.awsRegion | quote }}
+              value: {{ required "aggregator.kubecostSpark.pipeline.awsRegion is required when aggregator.viewSupportEnabled is true" $pipeline.awsRegion | quote }}
             - name: AWS_DEFAULT_REGION
-              value: {{ required "aggregator.kubecostSpark.awsRegion is required when aggregator.viewSupportEnabled is true" $spark.awsRegion | quote }}
+              value: {{ required "aggregator.kubecostSpark.pipeline.awsRegion is required when aggregator.viewSupportEnabled is true" $pipeline.awsRegion | quote }}
             - name: FJORD_QUEUE_URL
-              value: {{ required "aggregator.kubecostSpark.fjordQueueUrl is required when aggregator.viewSupportEnabled is true" $spark.fjordQueueUrl | quote }}
+              value: {{ required "aggregator.kubecostSpark.pipeline.fjordQueueUrl is required when aggregator.viewSupportEnabled is true" $pipeline.fjordQueueUrl | quote }}
             - name: FJORD_ROLE_ARN
-              value: {{ required "aggregator.kubecostSpark.fjordRoleArn is required when aggregator.viewSupportEnabled is true" $spark.fjordRoleArn | quote }}
+              value: {{ required "aggregator.kubecostSpark.pipeline.fjordRoleArn is required when aggregator.viewSupportEnabled is true" $pipeline.fjordRoleArn | quote }}
+            {{- end }}
             - name: BUSINESS_MAPPINGS_URL
-              value: {{ required "aggregator.kubecostSpark.businessMappingsUrl is required when aggregator.viewSupportEnabled is true" $spark.businessMappingsUrl | quote }}
+              value: {{ required (printf "aggregator.kubecostSpark.%s.businessMappingsUrl is required when aggregator.viewSupportEnabled is true" $groupName) $group.businessMappingsUrl | quote }}
             - name: TAG_MAPPINGS_URL
-              value: {{ required "aggregator.kubecostSpark.tagMappingsUrl is required when aggregator.viewSupportEnabled is true" $spark.tagMappingsUrl | quote }}
+              value: {{ required (printf "aggregator.kubecostSpark.%s.tagMappingsUrl is required when aggregator.viewSupportEnabled is true" $groupName) $group.tagMappingsUrl | quote }}
+            {{- if not $decorator }}
             - name: METRICS_AGENT_BUCKET
-              value: {{ required "aggregator.kubecostSpark.metricsAgentBucket is required when aggregator.viewSupportEnabled is true" $spark.metricsAgentBucket | quote }}
+              value: {{ required "aggregator.kubecostSpark.pipeline.metricsAgentBucket is required when aggregator.viewSupportEnabled is true" $pipeline.metricsAgentBucket | quote }}
             - name: METRICS_AGENT_ROOT_PREFIX
-              value: {{ $spark.metricsAgentRootPrefix | quote }}
+              value: {{ $pipeline.metricsAgentRootPrefix | quote }}
             - name: ALLOWED_ORG_IDS
-              value: {{ join "," $spark.allowedOrganizationIds | quote }}
+              value: {{ join "," $pipeline.allowedOrganizationIds | quote }}
+            {{- end }}
             - name: SPARK_LOCAL_THREADS
-              value: {{ $spark.sparkLocalThreads | quote }}
+              value: {{ $group.sparkLocalThreads | quote }}
             - name: SPARK_LOCAL_DIR
-              value: {{ $spark.sparkLocalDirectory | quote }}
+              value: {{ $group.sparkLocalDirectory | quote }}
             - name: SPARK_WAREHOUSE_DIR
-              value: {{ $spark.sparkWarehouseDirectory | quote }}
+              value: {{ $group.sparkWarehouseDirectory | quote }}
           volumeMounts:
             - name: kubecost-spark-data
               mountPath: /var/lib/kubecost-spark

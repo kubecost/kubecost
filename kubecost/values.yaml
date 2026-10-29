@@ -1159,25 +1159,33 @@ aggregator:
     imagePullPolicy: Always
     mode: decorator
     decorator:
-      orgId: ""
-      pollSeconds: 3600
+      javaToolOptions: "-Xms4g -Xmx8g -Djava.io.tmpdir=/var/lib/kubecost-spark"
+      clickhouseUrl: ""
+      clickhouseWriteConnections: 8
+      businessMappingsUrl: ""
+      tagMappingsUrl: ""
+      sparkLocalThreads: 2
+      sparkLocalDirectory: /var/lib/kubecost-spark/local
+      sparkWarehouseDirectory: /var/lib/kubecost-spark/warehouse
+      pollSeconds: 60
       readDatabase: kubecostread
       writeDatabase: kubecostwrite
-    javaToolOptions: "-Xms4g -Xmx8g -Djava.io.tmpdir=/var/lib/kubecost-spark"
-    clickhouseUrl: ""
-    clickhouseDatabase: kubecost_spark
-    clickhouseWriteConnections: 8
-    awsRegion: ""
-    fjordQueueUrl: ""
-    fjordRoleArn: ""
-    businessMappingsUrl: ""
-    tagMappingsUrl: ""
-    metricsAgentBucket: ""
-    metricsAgentRootPrefix: "production/data/metrics-agent"
-    allowedOrganizationIds: []
-    sparkLocalThreads: 2
-    sparkLocalDirectory: /var/lib/kubecost-spark/local
-    sparkWarehouseDirectory: /var/lib/kubecost-spark/warehouse
+    pipeline:
+      javaToolOptions: "-Xms4g -Xmx8g -Djava.io.tmpdir=/var/lib/kubecost-spark"
+      clickhouseUrl: ""
+      clickhouseDatabase: kubecost_spark
+      clickhouseWriteConnections: 8
+      awsRegion: ""
+      fjordQueueUrl: ""
+      fjordRoleArn: ""
+      businessMappingsUrl: ""
+      tagMappingsUrl: ""
+      metricsAgentBucket: ""
+      metricsAgentRootPrefix: "production/data/metrics-agent"
+      allowedOrganizationIds: []
+      sparkLocalThreads: 2
+      sparkLocalDirectory: /var/lib/kubecost-spark/local
+      sparkWarehouseDirectory: /var/lib/kubecost-spark/warehouse
     emptyDirSizeLimit: 20Gi
     podAnnotations: {}
     nodeSelector: {}
