@@ -1110,7 +1110,7 @@ forecasting:
   image:
     registry: null  # Default is "icr.io". null, not "", so Dependabot can track the tag
     repository: kubecost/modeling
-    tag: v0.2.3
+    tag: v0.2.4
   imagePullPolicy: IfNotPresent
 
   # Resource specification block for the forecasting container.
