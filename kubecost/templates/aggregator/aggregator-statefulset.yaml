@@ -621,6 +621,13 @@ spec:
             {{- end }}
             - name: COLLECTIONS_MEMORY_CACHE_ENABLED
               value: {{ (quote .Values.aggregator.collections.cache.enabled) }}
+            - name: COLLECTIONS_DB_CACHE_ENABLED
+              value: {{ (quote .Values.aggregator.collections.cache.enabled) }}
+            {{- with .Values.aggregator.collections.cache.maxWarmRequests }}
+            {{- if le (int64 .) 0 }}{{ fail "aggregator.collections.cache.maxWarmRequests must be a positive integer" }}{{ end }}
+            - name: COLLECTIONS_DB_CACHE_MAX_WARM_REQUESTS
+              value: {{ . | int64 | quote }}
+            {{- end }}
             {{- if ((.Values.global.integrations).turbonomic).enabled }}
             - name: TURBONOMIC_ENABLED
               value: "true"
