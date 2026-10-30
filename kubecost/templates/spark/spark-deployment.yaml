@@ -1,9 +1,6 @@
 {{- if .Values.aggregator.viewSupportEnabled }}
 {{- $spark := .Values.aggregator.kubecostSpark }}
-{{- $decorator := eq (lower (default "" $spark.mode)) "decorator" }}
-{{- $groupName := ternary "decorator" "pipeline" $decorator }}
-{{- $group := ternary $spark.decorator $spark.pipeline $decorator }}
-{{- $pipeline := $spark.pipeline }}
+{{- $decorator := $spark.decorator | default dict }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -54,90 +51,37 @@ spec:
             sizeLimit: {{ $spark.emptyDirSizeLimit }}
       containers:
         - name: business-mapping-decorator
-          image: {{ required "aggregator.kubecostSpark.image is required when aggregator.viewSupportEnabled is true" $spark.image | quote }}
+          image: {{ $spark.image | default "" | quote }}
           imagePullPolicy: {{ $spark.imagePullPolicy }}
           securityContext:
             {{- toYaml $spark.containerSecurityContext | nindent 12 }}
           resources:
             {{- toYaml $spark.resources | nindent 12 }}
-          {{- if not $decorator }}
-          ports:
-            - name: spark-health
-              containerPort: 8081
-              protocol: TCP
-          startupProbe:
-            httpGet:
-              path: /startup
-              port: spark-health
-            periodSeconds: {{ $spark.startupProbe.periodSeconds }}
-            timeoutSeconds: {{ $spark.startupProbe.timeoutSeconds }}
-            failureThreshold: {{ $spark.startupProbe.failureThreshold }}
-          readinessProbe:
-            httpGet:
-              path: /ready
-              port: spark-health
-            periodSeconds: {{ $spark.readinessProbe.periodSeconds }}
-            timeoutSeconds: {{ $spark.readinessProbe.timeoutSeconds }}
-            failureThreshold: {{ $spark.readinessProbe.failureThreshold }}
-          livenessProbe:
-            httpGet:
-              path: /live
-              port: spark-health
-            periodSeconds: {{ $spark.livenessProbe.periodSeconds }}
-            timeoutSeconds: {{ $spark.livenessProbe.timeoutSeconds }}
-            failureThreshold: {{ $spark.livenessProbe.failureThreshold }}
-          {{- end }}
           env:
-            {{- if $spark.mode }}
             - name: MODE
-              value: {{ $spark.mode | quote }}
-            {{- end }}
-            {{- if $decorator }}
+              value: "decorator"
             - name: DECORATOR_POLL_SECONDS
-              value: {{ $spark.decorator.pollSeconds | quote }}
+              value: {{ $decorator.pollSeconds | quote }}
             - name: CH_READ_DATABASE
-              value: {{ $spark.decorator.readDatabase | quote }}
+              value: {{ $decorator.readDatabase | quote }}
             - name: CH_WRITE_DATABASE
-              value: {{ $spark.decorator.writeDatabase | quote }}
-            {{- end }}
+              value: {{ $decorator.writeDatabase | quote }}
             - name: JAVA_TOOL_OPTIONS
-              value: {{ $group.javaToolOptions | quote }}
+              value: {{ $decorator.javaToolOptions | quote }}
             - name: CH_URL
               value: {{ include "kubecost.spark.clickhouseUrl" . | quote }}
-            {{- if not $decorator }}
-            - name: CH_DATABASE
-              value: {{ $pipeline.clickhouseDatabase | quote }}
-            {{- end }}
             - name: CH_WRITE_CONNECTIONS
-              value: {{ $group.clickhouseWriteConnections | quote }}
-            {{- if not $decorator }}
-            - name: AWS_REGION
-              value: {{ required "aggregator.kubecostSpark.pipeline.awsRegion is required when aggregator.viewSupportEnabled is true" $pipeline.awsRegion | quote }}
-            - name: AWS_DEFAULT_REGION
-              value: {{ required "aggregator.kubecostSpark.pipeline.awsRegion is required when aggregator.viewSupportEnabled is true" $pipeline.awsRegion | quote }}
-            - name: FJORD_QUEUE_URL
-              value: {{ required "aggregator.kubecostSpark.pipeline.fjordQueueUrl is required when aggregator.viewSupportEnabled is true" $pipeline.fjordQueueUrl | quote }}
-            - name: FJORD_ROLE_ARN
-              value: {{ required "aggregator.kubecostSpark.pipeline.fjordRoleArn is required when aggregator.viewSupportEnabled is true" $pipeline.fjordRoleArn | quote }}
-            {{- end }}
+              value: {{ $decorator.clickhouseWriteConnections | quote }}
             - name: BUSINESS_MAPPINGS_URL
-              value: {{ required (printf "aggregator.kubecostSpark.%s.businessMappingsUrl is required when aggregator.viewSupportEnabled is true" $groupName) $group.businessMappingsUrl | quote }}
+              value: {{ $decorator.businessMappingsUrl | default "" | quote }}
             - name: TAG_MAPPINGS_URL
-              value: {{ required (printf "aggregator.kubecostSpark.%s.tagMappingsUrl is required when aggregator.viewSupportEnabled is true" $groupName) $group.tagMappingsUrl | quote }}
-            {{- if not $decorator }}
-            - name: METRICS_AGENT_BUCKET
-              value: {{ required "aggregator.kubecostSpark.pipeline.metricsAgentBucket is required when aggregator.viewSupportEnabled is true" $pipeline.metricsAgentBucket | quote }}
-            - name: METRICS_AGENT_ROOT_PREFIX
-              value: {{ $pipeline.metricsAgentRootPrefix | quote }}
-            - name: ALLOWED_ORG_IDS
-              value: {{ join "," $pipeline.allowedOrganizationIds | quote }}
-            {{- end }}
+              value: {{ $decorator.tagMappingsUrl | default "" | quote }}
             - name: SPARK_LOCAL_THREADS
-              value: {{ $group.sparkLocalThreads | quote }}
+              value: {{ $decorator.sparkLocalThreads | quote }}
             - name: SPARK_LOCAL_DIR
-              value: {{ $group.sparkLocalDirectory | quote }}
+              value: {{ $decorator.sparkLocalDirectory | quote }}
             - name: SPARK_WAREHOUSE_DIR
-              value: {{ $group.sparkWarehouseDirectory | quote }}
+              value: {{ $decorator.sparkWarehouseDirectory | quote }}
           volumeMounts:
             - name: kubecost-spark-data
               mountPath: /var/lib/kubecost-spark
