@@ -619,6 +619,8 @@ spec:
             - name: RBAC_TEAMS_HELM_CONFIG_PATH
               value: "/var/configs/rbac-teams-configs/rbac-teams-configs.json"
             {{- end }}
+            - name: COLLECTIONS_MEMORY_CACHE_ENABLED
+              value: {{ (quote .Values.aggregator.collections.cache.enabled) }}
             - name: COLLECTIONS_DB_CACHE_ENABLED
               value: {{ (quote .Values.aggregator.collections.cache.enabled) }}
             {{- with .Values.aggregator.collections.cache.maxWarmRequests }}
