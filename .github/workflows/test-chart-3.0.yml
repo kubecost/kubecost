@@ -292,7 +292,7 @@ jobs:
       # Outputs: `cluster-kubeconfig`, `cluster-id`
       - name: Create Cluster
         id: create-cluster
-        uses: replicatedhq/replicated-actions/create-cluster@0fbf5395cf3e8c744f447bbc92b7de9135eead8e # v1.27.1
+        uses: replicatedhq/replicated-actions/create-cluster@ff4efc01746d2f954408e9df1d50530d73274d03 # v1.27.3
         with:
           kubernetes-distribution: ${{ matrix.cluster.distribution }}
           kubernetes-version: ${{ matrix.cluster.version }}
@@ -366,7 +366,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Create Cluster
         id: create-cluster
-        uses: replicatedhq/replicated-actions/create-cluster@0fbf5395cf3e8c744f447bbc92b7de9135eead8e # v1.27.1
+        uses: replicatedhq/replicated-actions/create-cluster@ff4efc01746d2f954408e9df1d50530d73274d03 # v1.27.3
         with:
           kubernetes-distribution: ${{ matrix.cluster.distribution }}
           kubernetes-version: ${{ matrix.cluster.version }}
