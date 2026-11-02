@@ -1,0 +1,127 @@
+# helm-unittest test suite for the Aggregator SMTP secret mount (KCM-6687).
+#
+# Run locally:
+#   helm plugin install https://github.com/helm-unittest/helm-unittest --version v1.2.0 --verify=false
+#   helm dependency build kubecost/
+#   helm unittest kubecost/
+suite: Aggregator SMTP secret mount
+
+release:
+  name: kubecost
+
+# No top-level `templates:` restriction: the StatefulSet calls
+# kubecost.configsChecksum, which reads ~15 other templates.
+
+tests:
+  - it: "config only: aggregator mounts smtp-secret and the volume exists"
+    set:
+      kubecostProductConfigs.smtp.config: '{"host": "smtp.example.com"}'
+    template: templates/aggregator/aggregator-statefulset.yaml
+    documentSelector:
+      path: kind
+      value: StatefulSet
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: StatefulSet
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "aggregator")].volumeMounts
+          content:
+            name: smtp-secret
+            mountPath: /var/configs/smtp
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: smtp-secret
+          any: true
+
+  - it: "secretname only: aggregator mounts smtp-secret from the named Secret"
+    set:
+      kubecostProductConfigs.smtp.secretname: my-smtp
+    template: templates/aggregator/aggregator-statefulset.yaml
+    documentSelector:
+      path: kind
+      value: StatefulSet
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: StatefulSet
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "aggregator")].volumeMounts
+          content:
+            name: smtp-secret
+            mountPath: /var/configs/smtp
+      - equal:
+          path: spec.template.spec.volumes[?(@.name == "smtp-secret")].secret.secretName
+          value: my-smtp
+
+  - it: "neither set: no smtp mount and no smtp volume"
+    template: templates/aggregator/aggregator-statefulset.yaml
+    documentSelector:
+      path: kind
+      value: StatefulSet
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: StatefulSet
+      - isNotEmpty:
+          path: spec.template.spec.containers[?(@.name == "aggregator")].volumeMounts
+      - notContains:
+          path: spec.template.spec.containers[?(@.name == "aggregator")].volumeMounts
+          content:
+            name: smtp-secret
+            mountPath: /var/configs/smtp
+      - notContains:
+          path: spec.template.spec.volumes
+          content:
+            name: smtp-secret
+          any: true
+
+  - it: "config and secretname: mount present and volume uses the named Secret"
+    set:
+      kubecostProductConfigs.smtp.config: '{"host": "smtp.example.com"}'
+      kubecostProductConfigs.smtp.secretname: my-smtp
+    template: templates/aggregator/aggregator-statefulset.yaml
+    documentSelector:
+      path: kind
+      value: StatefulSet
+    asserts:
+      - hasDocuments:
+          count: 1
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "aggregator")].volumeMounts
+          content:
+            name: smtp-secret
+            mountPath: /var/configs/smtp
+      - equal:
+          path: spec.template.spec.volumes[?(@.name == "smtp-secret")].secret.secretName
+          value: my-smtp
+
+  - it: "mountPath only: no smtp volume or mount, SMTP_CONFIG_MOUNT_PATH is set"
+    set:
+      kubecostProductConfigs.smtp.mountPath: /some/custom/path/smtp.json
+    template: templates/aggregator/aggregator-statefulset.yaml
+    documentSelector:
+      path: kind
+      value: StatefulSet
+    asserts:
+      - hasDocuments:
+          count: 1
+      - notContains:
+          path: spec.template.spec.containers[?(@.name == "aggregator")].volumeMounts
+          content:
+            name: smtp-secret
+            mountPath: /var/configs/smtp
+      - notContains:
+          path: spec.template.spec.volumes
+          content:
+            name: smtp-secret
+          any: true
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "aggregator")].env
+          content:
+            name: SMTP_CONFIG_MOUNT_PATH
+            value: /some/custom/path/smtp.json
