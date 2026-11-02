@@ -1,4 +1,4 @@
-# helm-unittest test suite for the Aggregator SMTP secret mount (KCM-6687).
+# helm-unittest test suite for the Aggregator SMTP secret mount.
 #
 # Run locally:
 #   helm plugin install https://github.com/helm-unittest/helm-unittest --version v1.2.0 --verify=false

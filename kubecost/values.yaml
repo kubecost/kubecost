@@ -1875,8 +1875,7 @@ kubecostProductConfigs:
     secretname: ""  # Reference an existing k8s secret created from a file named productkey.json of format { "key": "enterprise-key-here" }. If the secretname is specified, a configmap with the key will not be created.
     mountPath: ""  # (use instead of secretname) Declare the path at which the product key file is mounted (eg. "/some/custom/path/productkey.json" by a secrets provisioner). The file must be of format { "key": "enterprise-key-here" }.
 
-#   ## SMTP configuration is available in all editions. The built-in SMTP server will be discontinued on 2026-11-30.
-#   # The following block enables the use of a custom SMTP server which overrides Kubecost's built-in, external SMTP server for alerts and reports
+#   # The following block configures your own SMTP server for alerts and reports. It works in every edition and replaces Kubecost's built-in email service, which stops working on 2026-11-30.
 #   smtp:
 #     config:  |
 #       {
