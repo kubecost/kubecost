@@ -360,7 +360,7 @@ spec:
             - name: productkey-secret
               mountPath: /var/configs/productkey
             {{- end }}
-            {{- if ((.Values.kubecostProductConfigs).smtp).secretname }}
+            {{- if or ((.Values.kubecostProductConfigs).smtp).secretname ((.Values.kubecostProductConfigs).smtp).config }}
             - name: smtp-secret
               mountPath: /var/configs/smtp
             {{- end }}
