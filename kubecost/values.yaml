@@ -1566,12 +1566,12 @@ clusterController:
   ## If not set, the image will be pulled from the registry and repository specified in the image block.
   ## If set, the fullImageName will be used to pull the image.
   ## Example:
-  ## fullImageName: icr.io/kubecost/cluster-controller:v0.16.40
+  ## fullImageName: icr.io/kubecost/cluster-controller:v0.16.41
   fullImageName: ""
   image:
     registry: null  # Default is "icr.io". null, not "", so Dependabot can track the tag
     repository: kubecost/cluster-controller
-    tag: v0.16.40
+    tag: v0.16.41
   imagePullPolicy: IfNotPresent
   logLevel: info
   extraEnv: []
