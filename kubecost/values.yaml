@@ -1566,12 +1566,12 @@ clusterController:
   ## If not set, the image will be pulled from the registry and repository specified in the image block.
   ## If set, the fullImageName will be used to pull the image.
   ## Example:
-  ## fullImageName: icr.io/kubecost/cluster-controller:v0.16.40
+  ## fullImageName: icr.io/kubecost/cluster-controller:v0.16.41
   fullImageName: ""
   image:
     registry: null  # Default is "icr.io". null, not "", so Dependabot can track the tag
     repository: kubecost/cluster-controller
-    tag: v0.16.40
+    tag: v0.16.41
   imagePullPolicy: IfNotPresent
   logLevel: info
   extraEnv: []
@@ -1875,7 +1875,7 @@ kubecostProductConfigs:
     secretname: ""  # Reference an existing k8s secret created from a file named productkey.json of format { "key": "enterprise-key-here" }. If the secretname is specified, a configmap with the key will not be created.
     mountPath: ""  # (use instead of secretname) Declare the path at which the product key file is mounted (eg. "/some/custom/path/productkey.json" by a secrets provisioner). The file must be of format { "key": "enterprise-key-here" }.
 
-#   # The following block enables the use of a custom SMTP server which overrides Kubecost's built-in, external SMTP server for alerts and reports
+#   # The following block configures your own SMTP server for alerts and reports. It works in every edition and replaces Kubecost's built-in email service, which stops working on 2026-11-30.
 #   smtp:
 #     config:  |
 #       {
@@ -1887,7 +1887,7 @@ kubecostProductConfigs:
 #         "password": "",
 #         "secure": true
 #       }
-#     secretname: smtpconfigsecret # Reference an existing k8s secret created from a file named smtp.json of format specified by config above. If the secretname is specified, a configmap with the key will not be created.
+#     secretname: smtpconfigsecret # Reference an existing k8s secret created from a file named smtp.json of format specified by config above. If the secretname is specified, a Secret with the key will not be created.
 #     mountPath: "/some/custom/path/smtp.json" # (use instead of secretname) Declare the path at which the SMTP config file is mounted (eg. by a secrets provisioner). The file must be of format specified by config above.
 
   carbonEstimates: false  # Enables Kubecost beta carbon estimation endpoints /assets/carbon and /allocations/carbon
