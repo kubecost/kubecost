@@ -622,7 +622,7 @@ spec:
             - name: COLLECTIONS_MEMORY_CACHE_ENABLED
               value: {{ (quote .Values.aggregator.collections.cache.enabled) }}
             - name: COLLECTIONS_DB_CACHE_ENABLED
-              value: {{ (quote .Values.aggregator.collections.cache.enabled) }}
+              value: {{ (quote .Values.aggregator.collections.dbcache.enabled) }}
             {{- with .Values.aggregator.collections.cache.maxWarmRequests }}
             {{- if le (int64 .) 0 }}{{ fail "aggregator.collections.cache.maxWarmRequests must be a positive integer" }}{{ end }}
             - name: COLLECTIONS_DB_CACHE_MAX_WARM_REQUESTS
