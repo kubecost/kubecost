@@ -52,4 +52,7 @@ docker://
 
 # Python f-string placeholders (lychee treats these as real URLs; entries are regex)
 https://github\.com/%7Bos\.environ\['REPO_NAME'\]%7D/pull/%7Bpr\['number'\]%7D
+
+# Shell variable placeholders in workflow download URLs
+https://get\.helm\.sh/\$%7B
 http://localhost

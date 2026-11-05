@@ -18,7 +18,7 @@
   {{- if .Values.localStore.fullImageName }}
     {{- .Values.localStore.fullImageName }}
   {{- else if eq "development" .Chart.AppVersion -}}
-    gcr.io/kubecost1/cost-model-nightly:latest
+    icr.io/kubecost/cost-model-nightly:latest
   {{- else if .Values.localStore.image.tag -}}
     {{- include "kubecost.localStore.imageRegistry" . }}/{{ .Values.localStore.image.repository }}:{{ .Values.localStore.image.tag }}
   {{- else -}}

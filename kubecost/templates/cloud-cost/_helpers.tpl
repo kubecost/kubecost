@@ -39,7 +39,7 @@ support templating a chart which uses the lookup function.
   {{- if .Values.cloudCost.fullImageName }}
     {{- .Values.cloudCost.fullImageName }}
   {{- else if eq "development" .Chart.AppVersion -}}
-    gcr.io/kubecost1/cost-model-nightly:latest
+    icr.io/kubecost/cost-model-nightly:latest
   {{- else if .Values.cloudCost.image.tag -}}
     {{- include "kubecost.cloudCost.imageRegistry" . }}/{{ .Values.cloudCost.image.repository }}:{{ .Values.cloudCost.image.tag }}
   {{- else -}}

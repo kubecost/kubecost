@@ -10,7 +10,7 @@
   {{- if .Values.aggregator.fullImageName }}
     {{- .Values.aggregator.fullImageName }}
   {{- else if eq "development" .Chart.AppVersion -}}
-    gcr.io/kubecost1/cost-model-nightly:latest
+    icr.io/kubecost/cost-model-nightly:latest
   {{- else if .Values.aggregator.image.tag -}}
     {{- include "kubecost.aggregator.imageRegistry" . }}/{{ .Values.aggregator.image.repository }}:{{ .Values.aggregator.image.tag }}
   {{- else -}}
