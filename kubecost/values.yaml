@@ -1100,6 +1100,13 @@ networkCosts:
 ##
 forecasting:
   enabled: true
+  ## Which engine answers /forecasting/ (KCM-6596):
+  ##   python     - the kubecost-modeling Deployment (current behaviour).
+  ##   shadow     - the Python Deployment keeps serving the UI and the aggregator
+  ##                also serves forecasts at /model/forecast/*, so both can be scored.
+  ##   aggregator - no Python Deployment; the <release>-forecasting Service points
+  ##                at the aggregator, so nginx and the documented URLs are unchanged.
+  engine: python
   serviceAccountName: ""
   ## Override the image name and version for the forecasting.
   ## If not set, the image will be pulled from the registry and repository specified in the image block.
