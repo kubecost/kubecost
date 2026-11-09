@@ -1,0 +1,37 @@
+.github/scripts/upgrade-risk.py
+  s_9c5c9bbb35bd6d::t_eafa6c78e1523a 5-6
+.github/workflows/check_pr_labels.yaml
+  s_9c5c9bbb35bd6d::t_fa5ae6a24c2c8b 29,37
+.github/workflows/cherry-pick-checker.yaml
+  s_9c5c9bbb35bd6d::t_2f14bdff3d370c 38,41,70,167,176,187
+.github/workflows/cherry-pick.yaml
+  s_9c5c9bbb35bd6d::t_e12dc34e7e4cbb 26,30,38
+.github/workflows/link-checker.yaml
+  s_9c5c9bbb35bd6d::t_98c7a66902e647 19,23,31
+.github/workflows/stale.yaml
+  s_9c5c9bbb35bd6d::t_213e3c408b0399 12
+.github/workflows/test-chart-3.0.yml
+  s_9c5c9bbb35bd6d::t_1b3e19c36597c7 33,52,141,146,149,256,289,295,348,364,369,406
+.github/workflows/upgrade-risk.yaml
+  s_9c5c9bbb35bd6d::t_e95a6387203c6c 39,52
+.github/workflows/upgrade.yaml
+  s_9c5c9bbb35bd6d::t_0feb4ad76f6931 70,73
+.github/workflows/validate-mcp-subchart.yml
+  s_9c5c9bbb35bd6d::t_972365ae1780ad 35,38,149
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c15b5c6b5b7505d59400db240dddcee4d6d32439",
+  "prompts": {},
+  "sessions": {
+    "s_9c5c9bbb35bd6d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6b693460-8ed2-49a4-aab1-9392d0dbdac8",
+        "model": "unknown"
+      },
+      "human_author": "jesse goodier <31039225+jessegoodier@users.noreply.github.com>"
+    }
+  }
+}
