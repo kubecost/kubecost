@@ -1,0 +1,19 @@
+kubecost/values.yaml
+  s_c23ad18fc3382d::t_abe7df68eeb8e5 893,898
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ef662b02c59570a0ada30e559bf903970d21b4f0",
+  "prompts": {},
+  "sessions": {
+    "s_c23ad18fc3382d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "302d0b08-4953-4046-af51-1073ffa393ae",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "jesse goodier <31039225+jessegoodier@users.noreply.github.com>"
+    }
+  }
+}
