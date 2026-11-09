@@ -1,0 +1,23 @@
+CHANGELOG.md
+  s_f7f3949cf758a4::t_9a77b0b5417c26 9-13,16
+  s_f7f3949cf758a4::t_77c1798c60790f 27-30
+kubecost/values.yaml
+  s_f7f3949cf758a4::t_bbd418d155ad49 165-168
+  s_f7f3949cf758a4::t_5a125efec0950c 810-820
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3b6aa08e6f71e8cf6bb8214b24478906ebf12c22",
+  "prompts": {},
+  "sessions": {
+    "s_f7f3949cf758a4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "51e3f2be-0d04-4109-9b0d-acd93b2c328a",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "jesse goodier <31039225+jessegoodier@users.noreply.github.com>"
+    }
+  }
+}
