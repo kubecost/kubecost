@@ -162,6 +162,10 @@ global:
 
   ## Installs custom CA certificates onto Kubecost pods
   ##
+  ## Also applied to the mcp subchart. mcp ignores securityContext (it stays non-root, as OpenShift
+  ## restricted-v2 requires) and uses its own initImage (default registry.access.redhat.com/ubi9/ubi-minimal).
+  ## Override it with global.updateCaTrust.initImage.{registry,repository,tag,pullPolicy} for air-gapped mirrors.
+  ##
   updateCaTrust:
     enabled: false
     ## Security context settings for the init container.
@@ -802,6 +806,17 @@ mcp:
   nodeSelector: {}
   tolerations: []
   affinity: {}
+
+  ## mcp.fullImageName is used verbatim as the image, ignoring mcp.image.* and global.imageRegistry.
+  ## Ex: registry.example.com/kubecost/mcp-kubecost:v0.18.2
+  fullImageName: ""
+
+  ## mcp.extraEnv adds container env vars as standard Kubernetes EnvVar entries (valueFrom works).
+  ## Do not repeat names the chart already sets: KUBECOST_API_KEY, OIDC_CLIENT_ID,
+  ## OIDC_CLIENT_SECRET, OIDC_JWT_SIGNING_KEY, OIDC_STORAGE_ENCRYPTION_KEY.
+  extraEnv: []
+  # - name: DEFAULT_VIEW_ID
+  #   value: "0"
 
   ## Resource requests and limits default to 250m/1Gi and 1000m/1Gi in the subchart.
   ## Set them here only to override those defaults.
