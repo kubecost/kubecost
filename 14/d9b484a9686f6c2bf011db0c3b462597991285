@@ -1,0 +1,16 @@
+kubecost/Chart.yaml
+  h_cca6aa2712613d 23
+kubecost/Chart.lock
+  h_cca6aa2712613d 7-9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "14d9b484a9686f6c2bf011db0c3b462597991285",
+  "prompts": {},
+  "humans": {
+    "h_cca6aa2712613d": {
+      "author": "jesse goodier <31039225+jessegoodier@users.noreply.github.com>"
+    }
+  }
+}
