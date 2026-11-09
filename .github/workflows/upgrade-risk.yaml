@@ -36,7 +36,7 @@ jobs:
     continue-on-error: true  # Advisory: a Jev or git error must not fail the PR.
     steps:
       - name: Checkout base
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
@@ -49,7 +49,7 @@ jobs:
           helm repo add mcp-kubecost https://kubecost.github.io/mcp-kubecost
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v10.3.0
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
 
       - name: Run upgrade risk check
         env:

@@ -30,7 +30,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
@@ -49,7 +49,7 @@ jobs:
           helm version
 
       - name: Set up chart-testing
-        uses: helm/chart-testing-action@v2.9.0
+        uses: helm/chart-testing-action@720270857a28afd41e2426521a7801db09e9b510 # v2.9.0
 
       # Lint all chart values including those in the ci directory.
       - name: Run chart-testing (lint)
@@ -138,15 +138,15 @@ jobs:
     name: ${{ matrix.k8s-version.name }} test
     steps:
       - name: Checkout
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Set up chart-testing
-        uses: helm/chart-testing-action@v2.9.0
+        uses: helm/chart-testing-action@720270857a28afd41e2426521a7801db09e9b510 # v2.9.0
 
       - name: Create KinD cluster
-        uses: helm/kind-action@1544676c07bb3570fcb70166beaa07c4528fd4aa #v1.15.1
+        uses: helm/kind-action@ea822c7bf1874f08e5a491df991c228edffc3376 #v1.15.2
         with:
           version: v0.31.0
           node_image: kindest/node:${{ matrix.k8s-version.version }}
@@ -253,7 +253,7 @@ jobs:
           done
 
       - name: Checkout Target Branch
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.pull_request.base.ref }}
           path: ./target-branch
@@ -286,13 +286,13 @@ jobs:
         - distribution: openshift
           version: 4.22.0-okd
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       # Outputs: `cluster-kubeconfig`, `cluster-id`
       - name: Create Cluster
         id: create-cluster
-        uses: replicatedhq/replicated-actions/create-cluster@0fbf5395cf3e8c744f447bbc92b7de9135eead8e # v1.27.1
+        uses: replicatedhq/replicated-actions/create-cluster@ff4efc01746d2f954408e9df1d50530d73274d03 # v1.27.3
         with:
           kubernetes-distribution: ${{ matrix.cluster.distribution }}
           kubernetes-version: ${{ matrix.cluster.version }}
@@ -345,7 +345,7 @@ jobs:
         run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/name=network-costs --timeout=120s
       - name: Remove Cluster
         id: remove-cluster
-        uses: replicatedhq/replicated-actions/remove-cluster@0fbf5395cf3e8c744f447bbc92b7de9135eead8e # v1.27.1
+        uses: replicatedhq/replicated-actions/remove-cluster@ff4efc01746d2f954408e9df1d50530d73274d03 # v1.27.3
         with:
           api-token: ${{ secrets.REPLICATED_API_TOKEN }}
           cluster-id: ${{ steps.create-cluster.outputs.cluster-id }}
@@ -361,12 +361,12 @@ jobs:
         - distribution: eks
           version: v1.36
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Create Cluster
         id: create-cluster
-        uses: replicatedhq/replicated-actions/create-cluster@0fbf5395cf3e8c744f447bbc92b7de9135eead8e # v1.27.1
+        uses: replicatedhq/replicated-actions/create-cluster@ff4efc01746d2f954408e9df1d50530d73274d03 # v1.27.3
         with:
           kubernetes-distribution: ${{ matrix.cluster.distribution }}
           kubernetes-version: ${{ matrix.cluster.version }}
@@ -403,7 +403,7 @@ jobs:
         run: kubectl wait -n kubecost --for=condition=ready pod --selector app.kubernetes.io/name=network-costs --timeout=120s
       - name: Remove Cluster
         id: remove-cluster
-        uses: replicatedhq/replicated-actions/remove-cluster@0fbf5395cf3e8c744f447bbc92b7de9135eead8e # v1.27.1
+        uses: replicatedhq/replicated-actions/remove-cluster@ff4efc01746d2f954408e9df1d50530d73274d03 # v1.27.3
         continue-on-error: true
         with:
           api-token: ${{ secrets.REPLICATED_API_TOKEN }}
