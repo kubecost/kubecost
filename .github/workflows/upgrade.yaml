@@ -67,10 +67,10 @@ jobs:
     name: ${{ matrix.target }} upgrade test
     steps:
       - name: Checkout
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Create KinD cluster
-        uses: helm/kind-action@v1.15.1
+        uses: helm/kind-action@ea822c7bf1874f08e5a491df991c228edffc3376 # v1.15.2
         with:
           version: v0.31.0
           node_image: kindest/node:v1.36.4

@@ -2,8 +2,8 @@
 # /// script
 # requires-python = ">=3.12"
 # dependencies = [
-#     "pyyaml>=6.0",
-#     "typesafe-sdk>=0.7.2",
+#     "pyyaml>=6.0.3",
+#     "typesafe-sdk>=0.7.5",
 # ]
 # ///
 
