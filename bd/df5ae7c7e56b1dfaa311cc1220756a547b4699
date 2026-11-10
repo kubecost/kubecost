@@ -1,0 +1,30 @@
+kubecost/templates/aggregator/aggregator-statefulset.yaml
+  s_274e58503b0fad::t_c87b26d57cc8e3 601-602,604-605
+kubecost/tests/oidc_defaults_test.yaml
+  s_274e58503b0fad::t_90eba54362a470 1-102
+kubecost/templates/kubecost-oidc-configmap-template.yaml
+  s_274e58503b0fad::t_8f8595b92b6667 15-18
+  s_274e58503b0fad::t_e2defbfd20ce72 29-31
+kubecost/values.yaml
+  s_274e58503b0fad::t_d34398e7d8e085 336-342,345-349
+kubecost/templates/frontend/frontend-configmap.yaml
+  s_274e58503b0fad::t_b0f3fe051face7 303-304,329-330
+  s_274e58503b0fad::t_a2458248a5efaa 74-86
+  s_274e58503b0fad::t_8053c822466292 248-249,262-263
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bddf5ae7c7e56b1dfaa311cc1220756a547b4699",
+  "prompts": {},
+  "sessions": {
+    "s_274e58503b0fad": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4f83ace3-18bc-40f7-bf01-5de9bf599978",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "jesse goodier <31039225+jessegoodier@users.noreply.github.com>"
+    }
+  }
+}
