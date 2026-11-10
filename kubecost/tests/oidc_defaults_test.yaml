@@ -1,0 +1,102 @@
+# helm-unittest test suite for OIDC defaults: with only clientID, clientSecret and
+# discoveryURL set, useIDToken and skipOnlineTokenValidation are left out so the
+# aggregator chooses the tokens itself, and nginx forwards the browser's host and scheme
+# for the redirect URL.
+#
+# Run locally:
+#   helm plugin install https://github.com/helm-unittest/helm-unittest --version v1.2.0 --verify=false
+#   helm dependency build kubecost/
+#   helm unittest kubecost/
+suite: OIDC defaults
+
+release:
+  name: kubecost
+
+tests:
+  - it: "minimal config: oidc.json omits useIDToken and skipOnlineTokenValidation"
+    set:
+      oidc.enabled: true
+      oidc.clientID: kc-client
+      oidc.clientSecret: kc-secret
+      oidc.discoveryURL: https://idp.example/.well-known/openid-configuration
+    template: templates/kubecost-oidc-configmap-template.yaml
+    asserts:
+      - notMatchRegex:
+          path: data["oidc.json"]
+          pattern: useIDToken
+      - notMatchRegex:
+          path: data["oidc.json"]
+          pattern: skipOnlineTokenValidation
+      - matchRegex:
+          path: data["oidc.json"]
+          pattern: '"discoveryURL" : "https://idp.example/.well-known/openid-configuration"'
+
+  - it: "explicit useIDToken false is rendered"
+    set:
+      oidc.enabled: true
+      oidc.useIDToken: false
+      oidc.skipOnlineTokenValidation: true
+    template: templates/kubecost-oidc-configmap-template.yaml
+    asserts:
+      - matchRegex:
+          path: data["oidc.json"]
+          pattern: '"useIDToken" : false,'
+      - matchRegex:
+          path: data["oidc.json"]
+          pattern: '"skipOnlineTokenValidation" : "true",'
+
+  - it: "minimal config: aggregator gets no OIDC_SKIP_ONLINE_VALIDATION"
+    set:
+      oidc.enabled: true
+    template: templates/aggregator/aggregator-statefulset.yaml
+    documentSelector:
+      path: kind
+      value: StatefulSet
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "aggregator")].env
+          content:
+            name: OIDC_ENABLED
+            value: "true"
+      - notContains:
+          path: spec.template.spec.containers[?(@.name == "aggregator")].env
+          content:
+            name: OIDC_SKIP_ONLINE_VALIDATION
+          any: true
+
+  - it: "explicit skipOnlineTokenValidation false is passed to the aggregator"
+    set:
+      oidc.enabled: true
+      oidc.skipOnlineTokenValidation: false
+    template: templates/aggregator/aggregator-statefulset.yaml
+    documentSelector:
+      path: kind
+      value: StatefulSet
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "aggregator")].env
+          content:
+            name: OIDC_SKIP_ONLINE_VALIDATION
+            value: "false"
+
+  - it: "nginx forwards the browser's host and scheme on the OIDC routes"
+    set:
+      oidc.enabled: true
+    template: templates/frontend/frontend-configmap.yaml
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf"]
+          pattern: 'map \$http_x_forwarded_host \$kc_forwarded_host'
+      - matchRegex:
+          path: data["nginx.conf"]
+          pattern: 'location /oidc/ \{[^}]*X-Forwarded-Host \$kc_forwarded_host;[^}]*X-Forwarded-Proto \$kc_forwarded_proto;'
+      - matchRegex:
+          path: data["nginx.conf"]
+          pattern: 'location /login \{[^}]*X-Forwarded-Host \$kc_forwarded_host;'
+
+  - it: "without SSO nginx defines no forwarded-host map"
+    template: templates/frontend/frontend-configmap.yaml
+    asserts:
+      - notMatchRegex:
+          path: data["nginx.conf"]
+          pattern: kc_forwarded_host
