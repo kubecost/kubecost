@@ -71,6 +71,19 @@ data:
         {{- end }}
     }
 
+  {{- if or .Values.saml.enabled .Values.oidc.enabled }}
+    # The host and scheme the browser used, for SSO redirect URLs: the ones an ingress
+    # or load balancer in front reported, else this request's own.
+    map $http_x_forwarded_host $kc_forwarded_host {
+        ""      $http_host;
+        default $http_x_forwarded_host;
+    }
+    map $http_x_forwarded_proto $kc_forwarded_proto {
+        ""      $scheme;
+        default $http_x_forwarded_proto;
+    }
+  {{- end }}
+
   {{- if .Values.forecasting.enabled }}
     upstream forecasting {
         {{- if .Values.frontend.useDefaultFqdn }}
@@ -232,6 +245,8 @@ data:
             proxy_set_header Connection "";
             proxy_set_header  X-Real-IP  $remote_addr;
             proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header  X-Forwarded-Host $kc_forwarded_host;
+            proxy_set_header  X-Forwarded-Proto $kc_forwarded_proto;
         }
         # This location is used to remain compatible with older configurations of Kubecost SSO. All SSO logic should now be handled by the Aggregator container.
         location /model/oidc/ {
@@ -244,6 +259,8 @@ data:
             proxy_set_header Connection "";
             proxy_set_header  X-Real-IP  $remote_addr;
             proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header  X-Forwarded-Host $kc_forwarded_host;
+            proxy_set_header  X-Forwarded-Proto $kc_forwarded_proto;
         }
     {{- end }}
     {{- if .Values.saml.enabled }}
@@ -283,6 +300,8 @@ data:
             proxy_set_header  X-Real-IP  $remote_addr;
             proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header  X-Original-URI $request_uri;
+            proxy_set_header  X-Forwarded-Host $kc_forwarded_host;
+            proxy_set_header  X-Forwarded-Proto $kc_forwarded_proto;
         }
         location /logout {
             proxy_connect_timeout       180;
@@ -307,6 +326,8 @@ data:
             proxy_set_header  X-Real-IP  $remote_addr;
             proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header  X-Original-URI $request_uri;
+            proxy_set_header  X-Forwarded-Host $kc_forwarded_host;
+            proxy_set_header  X-Forwarded-Proto $kc_forwarded_proto;
         }
         # This location is used to remain compatible with older configurations of Kubecost SSO. All SSO logic should now be handled by the Aggregator container.
         location /model/logout {

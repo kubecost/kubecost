@@ -12,7 +12,10 @@ data:
     oidc.json: |-
       {
         "enabled" : {{ .Values.oidc.enabled }},
-        "useIDToken" : {{ .Values.oidc.useIDToken | default "false" }},
+        {{- /* Rendered only when set, so the aggregator can choose the tokens itself */}}
+        {{- if not (kindIs "invalid" .Values.oidc.useIDToken) }}
+        "useIDToken" : {{ .Values.oidc.useIDToken }},
+        {{- end }}
         "clientID" : "{{ .Values.oidc.clientID }}",
         {{- if .Values.oidc.existingCustomSecret.enabled }}
         "secretName" : "{{ .Values.oidc.existingCustomSecret.name }}",
@@ -23,7 +26,9 @@ data:
         "loginRedirectURL" : "{{ .Values.oidc.loginRedirectURL }}",
         "discoveryURL" : "{{ .Values.oidc.discoveryURL }}",
         "hostedDomain" : "{{ .Values.oidc.hostedDomain }}",
-        "skipOnlineTokenValidation" : "{{ .Values.oidc.skipOnlineTokenValidation | default "false" }}",
+        {{- if not (kindIs "invalid" .Values.oidc.skipOnlineTokenValidation) }}
+        "skipOnlineTokenValidation" : "{{ .Values.oidc.skipOnlineTokenValidation }}",
+        {{- end }}
         "useClientSecretPost": {{ .Values.oidc.useClientSecretPost }},
         "rbac" : {
           "enabled" : {{ .Values.oidc.rbac.enabled }},

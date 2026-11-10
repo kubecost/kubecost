@@ -598,8 +598,11 @@ spec:
             {{- if .Values.oidc.enabled }}
             - name: OIDC_ENABLED
               value: "true"
+            {{- /* Set only when configured, so the aggregator can choose the tokens itself */}}
+            {{- if not (kindIs "invalid" .Values.oidc.skipOnlineTokenValidation) }}
             - name: OIDC_SKIP_ONLINE_VALIDATION
-              value: {{ (quote .Values.oidc.skipOnlineTokenValidation) | default (quote false) }}
+              value: {{ quote .Values.oidc.skipOnlineTokenValidation }}
+            {{- end }}
             {{- end}}
             {{- if eq (include "kubecost.rbacTeams.enabled" .) "true" }}
             {{- if .Values.oidc.enabled }}
