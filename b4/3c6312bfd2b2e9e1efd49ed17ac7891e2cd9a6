@@ -1,0 +1,19 @@
+kubecost/Chart.yaml
+  s_d2772fa1899662::t_f3f9debb39c574 14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b43c6312bfd2b2e9e1efd49ed17ac7891e2cd9a6",
+  "prompts": {},
+  "sessions": {
+    "s_d2772fa1899662": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "63236b65-df85-49d1-83e2-7872fbdf55b7",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "jesse goodier <31039225+jessegoodier@users.noreply.github.com>"
+    }
+  }
+}
