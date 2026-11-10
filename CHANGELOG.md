@@ -26,7 +26,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Removed
 
-- `mcp.config.useCacViews` was removed from the MCP subchart. It is ignored if set (#4954)
 
 ## [3.3.0] - 2026-09-21
 
