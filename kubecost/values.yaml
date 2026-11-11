@@ -172,11 +172,11 @@ global:
   updateCaTrust:
     enabled: false
     ## Init container image. Needs a shell, p11-kit, and update-ca-trust (ubi9-minimal, not ubi9-micro).
-    initImage:
-      registry: icr.io
-      repository: ubi9/ubi-minimal
-      tag: latest
-      pullPolicy: IfNotPresent
+    # initImage:
+    #   registry: registry.access.redhat.com
+    #   repository: /ubi9/ubi-minimal
+    #   tag: latest
+    #   pullPolicy: IfNotPresent
     ## Security context settings for the init container.
     securityContext:
       runAsUser: 0

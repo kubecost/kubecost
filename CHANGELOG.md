@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - `mcp.extraEnv` and `mcp.fullImageName` pass additional environment variables to, and override the image of, the MCP server (#4954)
-- The MCP server now trusts the custom CAs configured through `global.updateCaTrust` (#4954). This adds an init container to the MCP pod that pulls `global.updateCaTrust.initImage` (default `icr.io/ubi9/ubi-minimal:latest`). That image does not follow `global.imageRegistry`, so installs that mirror images must also set `global.updateCaTrust.initImage.registry`
+- The MCP server now trusts the custom CAs configured through `global.updateCaTrust` (#4954). This adds an init container to the MCP pod that pulls `global.updateCaTrust.initImage`. That image does not follow `global.imageRegistry`, so installs that mirror images must also set `global.updateCaTrust.initImage.registry`
 
 ### Changed
 
