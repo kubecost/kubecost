@@ -154,26 +154,6 @@ jobs:
           IBM_CLOUD_API_KEY: ${{ secrets.IBM_CLOUD_API_KEY }}
         run: echo "$IBM_CLOUD_API_KEY" | docker login -u iamapikey --password-stdin icr.io
 
-      # Bump PRs are often opened before the release pipeline has pushed to ECR Public,
-      # which made the image check below fail until someone re-ran the job. Copy any
-      # missing public.ecr.aws image from icr.io first. crane copies registry to registry
-      # (no disk, keeps the digest and the multi-arch index, skips existing blobs) using
-      # the AWS role configured above and the icr.io login from the previous step.
-      - name: Install crane
-        uses: imjasonh/setup-crane@feee3b6bb0d4c68370f256a4502498c9227e5c6b # v0.7
-        with:
-          version: v0.22.1
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
-
-      - name: Mirror missing images to ECR Public
-        run: |
-          set -euo pipefail
-          aws ecr-public get-login-password --region us-east-1 \
-            | crane auth login public.ecr.aws --username AWS --password-stdin
-          .github/scripts/mirror-images-to-ecr.py full.yaml
-
       - name: Verify container images exist
         run: .github/scripts/check-images.sh full.yaml
 
