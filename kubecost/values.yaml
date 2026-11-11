@@ -1575,7 +1575,7 @@ clusterController:
   image:
     registry: null  # Default is "icr.io". null, not "", so Dependabot can track the tag
     repository: kubecost/cluster-controller
-    tag: v0.16.41
+    tag: v0.16.42
   imagePullPolicy: IfNotPresent
   logLevel: info
   extraEnv: []
