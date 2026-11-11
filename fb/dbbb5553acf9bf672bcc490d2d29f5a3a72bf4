@@ -1,0 +1,38 @@
+.github/workflows/test-chart-3.0.yml
+  s_7a2dcd2e725227::t_816554409bedd0 154-172
+  s_7a2dcd2e725227::t_391a8616e3964b 36-38
+  s_7a2dcd2e725227::t_0e33b880e02107 54-103
+  s_7a2dcd2e725227::t_7e0c99afbdd2f5 173
+.github/scripts/mirror-images-to-ecr.py
+  s_7a2dcd2e725227::t_fd4a67445ad842 1-82,89-90,98-108,115-126
+  s_7a2dcd2e725227::t_131aa75fba8d40 83-88,91-97,109-114
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "fbdbbb5553acf9bf672bcc490d2d29f5a3a72bf4",
+  "prompts": {},
+  "humans": {
+    "h_cca6aa2712613d": {
+      "author": "jesse goodier <31039225+jessegoodier@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_7a2dcd2e725227": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e0ef1072-de75-4a2a-ad7f-c02100d91293",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "jesse goodier <31039225+jessegoodier@users.noreply.github.com>"
+    },
+    "s_d2772fa1899662": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "63236b65-df85-49d1-83e2-7872fbdf55b7",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "jesse goodier <31039225+jessegoodier@users.noreply.github.com>"
+    }
+  }
+}
