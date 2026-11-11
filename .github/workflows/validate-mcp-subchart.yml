@@ -112,37 +112,32 @@ jobs:
             --set mcp.config.authMode=open \
             > .helm-render/mcp-httproute-open.yaml
 
-      # Ensure every rendered resource is valid Kubernetes YAML. HTTPRoute is a
-      # Gateway API CRD, so that render tolerates missing schemas.
-      - name: Kubeconform (default render — MCP follows aggregator.enabled)
-        uses: docker://ghcr.io/yannh/kubeconform:latest
+      - name: Create KinD cluster
+        uses: helm/kind-action@v1.15.0
         with:
-          entrypoint: /kubeconform
-          args: -summary -strict -kubernetes-version 1.34.0 -ignore-missing-schemas -output text .helm-render/mcp-default.yaml
+          version: v0.31.0
+          node_image: kindest/node:v1.34.3
+          kubectl_version: v1.34.3
 
-      - name: Kubeconform (core resources — mcp.enabled=true)
-        uses: docker://ghcr.io/yannh/kubeconform:latest
-        with:
-          entrypoint: /kubeconform
-          args: -summary -strict -kubernetes-version 1.34.0 -ignore-missing-schemas -output text .helm-render/mcp-enabled.yaml
+      # Validate every rendered resource against the KinD API server.
+      - name: Validate (default render — MCP follows aggregator.enabled)
+        run: kubectl create --dry-run=server --validate=strict -f .helm-render/mcp-default.yaml
 
-      - name: Kubeconform (aggregator.enabled=false — MCP absent)
-        uses: docker://ghcr.io/yannh/kubeconform:latest
-        with:
-          entrypoint: /kubeconform
-          args: -summary -strict -kubernetes-version 1.34.0 -ignore-missing-schemas -output text .helm-render/aggregator-off.yaml
+      - name: Validate (core resources — mcp.enabled=true)
+        run: kubectl create --dry-run=server --validate=strict -f .helm-render/mcp-enabled.yaml
 
-      - name: Kubeconform (aggregator.enabled=false, mcp.enabled=true — explicit override)
-        uses: docker://ghcr.io/yannh/kubeconform:latest
-        with:
-          entrypoint: /kubeconform
-          args: -summary -strict -kubernetes-version 1.34.0 -ignore-missing-schemas -output text .helm-render/mcp-forced-on.yaml
+      - name: Validate (aggregator.enabled=false — MCP absent)
+        run: kubectl create --dry-run=server --validate=strict -f .helm-render/aggregator-off.yaml
 
-      - name: Kubeconform (HTTPRoute render)
-        uses: docker://ghcr.io/yannh/kubeconform:latest
-        with:
-          entrypoint: /kubeconform
-          args: -summary -kubernetes-version 1.34.0 -ignore-missing-schemas -output text .helm-render/mcp-httproute.yaml
+      - name: Validate (aggregator.enabled=false, mcp.enabled=true — explicit override)
+        run: kubectl create --dry-run=server --validate=strict -f .helm-render/mcp-forced-on.yaml
+
+      # The Gateway API CRDs aren't installed, so skip the HTTPRoute.
+      - name: Validate (HTTPRoute render)
+        run: |
+          set -euo pipefail
+          yq 'select(.kind != "HTTPRoute")' .helm-render/mcp-httproute.yaml \
+            | kubectl create --dry-run=server --validate=warn -f -
 
       - name: Upload rendered manifests
         if: always()
