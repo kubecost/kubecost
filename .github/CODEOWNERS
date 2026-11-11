@@ -8,4 +8,14 @@
 
 # Require team-sre approval for frontend configmap changes
 # there are upstream impacts to changes here, please work with the team to verify your change
-kubecost/templates/frontend/frontend-configmap.yaml @kubecost/sre
+kubecost/templates/frontend/frontend-configmap.yaml @kubecost/kubecost-sre
+
+# Require team-sre approval for GitHub Actions workflow changes.
+# Workflows run with repository secrets and cloud credentials.
+/.github/workflows/ @kubecost/kubecost-sre
+
+# Scripts under .github/scripts/ are run by those workflows with the same secrets.
+/.github/scripts/ @kubecost/kubecost-sre
+
+# Protect this file so the rules above cannot be removed without team-sre review.
+/.github/CODEOWNERS @kubecost/kubecost-sre
