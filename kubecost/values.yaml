@@ -905,12 +905,12 @@ networkCosts:
   ## If not set, the image will be pulled from the registry and repository specified in the image block.
   ## If set, the fullImageName will be used to pull the image.
   ## Example:
-  ## fullImageName: icr.io/kubecost/network-costs:v0.19.4
+  ## fullImageName: icr.io/kubecost/network-costs:v0.19.5
   fullImageName: ""
   image:
     registry: null  # Default is "icr.io". null, not "", so Dependabot can track the tag
     repository: kubecost/network-costs
-    tag: v0.19.4
+    tag: v0.19.5
   imagePullPolicy: IfNotPresent
 
   updateStrategy:
@@ -1261,6 +1261,10 @@ aggregator:
   collections:
     cache:
       enabled: true
+    dbcache:
+      enabled: true
+      # Positive integer, caps how many cache entries are filled per hourly warm cycle. 0 = no limit (default).
+      maxWarmRequests: 0
 
   ## The aggregator pod has 2 PVCs that will need to be in the same availability zone unless using multi-zone storage.
   ## Storage classes that have 'volumeBindingMode: WaitForFirstConsumer' will do this automatically.
@@ -1586,7 +1590,7 @@ clusterController:
   image:
     registry: null  # Default is "icr.io". null, not "", so Dependabot can track the tag
     repository: kubecost/cluster-controller
-    tag: v0.16.41
+    tag: v0.16.42
   imagePullPolicy: IfNotPresent
   logLevel: info
   extraEnv: []
