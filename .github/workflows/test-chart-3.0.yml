@@ -34,7 +34,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           # Later steps run PR-controlled code, so don't leave a token in .git/config.
-          # The Chart.lock auto-fix below pushes with its own short-lived token.
+          # The Chart.lock auto-fix below commits through the API with its own short-lived token.
           persist-credentials: false
 
       # Install the latest Helm release ourselves rather than relying on the
@@ -72,7 +72,7 @@ jobs:
             echo "drift=true" >> "$GITHUB_OUTPUT"
           fi
 
-      # Only mint a write token when there is something to push. A push made with the
+      # Only mint a write token when there is something to commit. A commit made with the
       # default GITHUB_TOKEN would not trigger a new run, leaving the new head commit
       # without checks, so this uses the GitHub App like the other workflows do.
       - name: Generate app token
@@ -84,22 +84,25 @@ jobs:
           private-key: ${{ secrets.KC_ACTIONS_BOT_APP_PRIVATE_KEY }}
           permission-contents: write
 
-      # The push triggers a fresh run for the new head commit, which cancels this one
-      # through the concurrency group. The branch name is attacker-controlled, so it is
-      # passed through env rather than interpolated into the script.
+      # Commit through the contents API instead of git push, so no token goes into a
+      # remote URL or git config, and GitHub signs the commit as the App. `sha` is the
+      # blob this run checked, so the API rejects the update (409) if the branch changed
+      # Chart.lock in the meantime. The new commit triggers a fresh run, which cancels
+      # this one through the concurrency group. The branch name is attacker-controlled,
+      # so it is passed through env rather than interpolated into the script.
       - name: Commit Chart.lock (auto-fix-chart-lock)
         if: steps.lock.outputs.drift == 'true' && github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
           HEAD_REF: ${{ github.head_ref }}
         run: |
           set -euo pipefail
-          git config user.name "${APP_SLUG}[bot]"
-          git config user.email "${APP_SLUG}[bot]@users.noreply.github.com"
-          git add kubecost/Chart.lock
-          git commit -m "auto-fix-chart-lock"
-          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/${HEAD_REF}"
+          gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/kubecost/Chart.lock" \
+            -f message="auto-fix-chart-lock" \
+            -f branch="${HEAD_REF}" \
+            -f sha="$(git rev-parse HEAD:kubecost/Chart.lock)" \
+            -f content="$(base64 -w0 kubecost/Chart.lock)" \
+            --jq '.commit.html_url'
 
       - name: Set up chart-testing
         uses: helm/chart-testing-action@720270857a28afd41e2426521a7801db09e9b510 # v2.9.0
