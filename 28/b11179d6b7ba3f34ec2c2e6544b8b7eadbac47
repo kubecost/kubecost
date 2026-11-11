@@ -1,0 +1,19 @@
+.worktree/cherry-pick/4963-to-v3.3
+  s_d2772fa1899662::t_31e2c8f341b080 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "28b11179d6b7ba3f34ec2c2e6544b8b7eadbac47",
+  "prompts": {},
+  "sessions": {
+    "s_d2772fa1899662": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "63236b65-df85-49d1-83e2-7872fbdf55b7",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "jesse goodier <31039225+jessegoodier@users.noreply.github.com>"
+    }
+  }
+}
