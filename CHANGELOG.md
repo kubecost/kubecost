@@ -6,8 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `mcp.extraEnv` and `mcp.fullImageName` pass additional environment variables to, and override the image of, the MCP server (#4954)
+- The MCP server now trusts the custom CAs configured through `global.updateCaTrust` (#4954). This adds an init container to the MCP pod that pulls `global.updateCaTrust.initImage`. That image does not follow `global.imageRegistry`, so installs that mirror images must also set `global.updateCaTrust.initImage.registry`
+
 ### Changed
 
+- Bump the `mcp-kubecost` subchart to 0.18.2 (#4954). `mcp.image.registry` is now honored instead of always being overridden by `global.imageRegistry`
 - SMTP configuration through `kubecostProductConfigs.smtp` is available in all editions. Kubecost's built-in email service stops working on 2026-11-30 (#4945)
 
 ### Fixed

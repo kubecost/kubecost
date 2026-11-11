@@ -13,3 +13,4 @@ kubecost/charts/.helm_ls_cache
 .bobtmp/
 .helm-render/
 .agents/tasks/
+.worktree/

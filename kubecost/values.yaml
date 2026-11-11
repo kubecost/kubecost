@@ -162,8 +162,21 @@ global:
 
   ## Installs custom CA certificates onto Kubecost pods
   ##
+  ## Also applied to the finops-agent and mcp subcharts, which run initImage as their init container.
+  ## mcp ignores securityContext (it stays non-root, as OpenShift restricted-v2 requires).
+  ## The subcharts resolve the initImage registry differently:
+  ##   finops-agent: global.imageRegistry, falling back to initImage.registry
+  ##   mcp:          initImage.registry only (global.imageRegistry is not applied)
+  ## When mirroring images, set initImage.registry to the same value as global.imageRegistry.
+  ##
   updateCaTrust:
     enabled: false
+    ## Init container image. Needs a shell, p11-kit, and update-ca-trust (ubi9-minimal, not ubi9-micro).
+    # initImage:
+    #   registry: registry.access.redhat.com
+    #   repository: /ubi9/ubi-minimal
+    #   tag: latest
+    #   pullPolicy: IfNotPresent
     ## Security context settings for the init container.
     securityContext:
       runAsUser: 0
@@ -802,6 +815,17 @@ mcp:
   nodeSelector: {}
   tolerations: []
   affinity: {}
+
+  ## mcp.fullImageName is used verbatim as the image, ignoring mcp.image.* and global.imageRegistry.
+  ## Ex: registry.example.com/kubecost/mcp-kubecost:v0.18.2
+  fullImageName: ""
+
+  ## mcp.extraEnv adds container env vars as standard Kubernetes EnvVar entries (valueFrom works).
+  ## Do not repeat names the chart already sets: KUBECOST_API_KEY, OIDC_CLIENT_ID,
+  ## OIDC_CLIENT_SECRET, OIDC_JWT_SIGNING_KEY, OIDC_STORAGE_ENCRYPTION_KEY.
+  extraEnv: []
+  # - name: DEFAULT_VIEW_ID
+  #   value: "0"
 
   ## Resource requests and limits default to 250m/1Gi and 1000m/1Gi in the subchart.
   ## Set them here only to override those defaults.
