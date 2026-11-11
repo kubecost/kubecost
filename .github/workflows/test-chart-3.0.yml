@@ -33,6 +33,9 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+          # Later steps run PR-controlled code, so don't leave a token in .git/config.
+          # The Chart.lock auto-fix below pushes with its own short-lived token.
+          persist-credentials: false
 
       # Install the latest Helm release ourselves rather than relying on the
       # runner image's preinstalled one, which changes without notice.
@@ -47,6 +50,56 @@ jobs:
           tar -xzf "/tmp/${HELM_TARBALL}" -C /tmp
           sudo install -m 0755 /tmp/linux-amd64/helm /usr/local/bin/helm
           helm version
+
+      # Dependabot and manual edits bump dependencies in Chart.yaml without touching
+      # Chart.lock, which makes `helm dependency build` fail. Re-resolve the lock and,
+      # if it changed, commit it to the PR branch. `generated:` is a timestamp that
+      # changes on every run, so it is ignored when deciding whether the lock drifted.
+      - name: Check Chart.lock is in sync with Chart.yaml
+        id: lock
+        run: |
+          set -euo pipefail
+          helm repo add finops-agent-chart https://kubecost.github.io/finops-agent-chart
+          helm repo add mcp-kubecost https://kubecost.github.io/mcp-kubecost
+          helm repo update
+          helm dependency update kubecost/
+          if diff <(git show HEAD:kubecost/Chart.lock | grep -v '^generated:') \
+                  <(grep -v '^generated:' kubecost/Chart.lock); then
+            git checkout -- kubecost/Chart.lock
+            echo "drift=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::kubecost/Chart.lock was out of sync with Chart.yaml"
+            echo "drift=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Only mint a write token when there is something to push. A push made with the
+      # default GITHUB_TOKEN would not trigger a new run, leaving the new head commit
+      # without checks, so this uses the GitHub App like the other workflows do.
+      - name: Generate app token
+        id: app-token
+        if: steps.lock.outputs.drift == 'true' && github.event_name == 'pull_request'
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.KC_ACTIONS_BOT_APP_CLIENT_ID }}
+          private-key: ${{ secrets.KC_ACTIONS_BOT_APP_PRIVATE_KEY }}
+          permission-contents: write
+
+      # The push triggers a fresh run for the new head commit, which cancels this one
+      # through the concurrency group. The branch name is attacker-controlled, so it is
+      # passed through env rather than interpolated into the script.
+      - name: Commit Chart.lock (auto-fix-chart-lock)
+        if: steps.lock.outputs.drift == 'true' && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+          git config user.name "${APP_SLUG}[bot]"
+          git config user.email "${APP_SLUG}[bot]@users.noreply.github.com"
+          git add kubecost/Chart.lock
+          git commit -m "auto-fix-chart-lock"
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/${HEAD_REF}"
 
       - name: Set up chart-testing
         uses: helm/chart-testing-action@720270857a28afd41e2426521a7801db09e9b510 # v2.9.0
@@ -97,6 +150,26 @@ jobs:
         env:
           IBM_CLOUD_API_KEY: ${{ secrets.IBM_CLOUD_API_KEY }}
         run: echo "$IBM_CLOUD_API_KEY" | docker login -u iamapikey --password-stdin icr.io
+
+      # Bump PRs are often opened before the release pipeline has pushed to ECR Public,
+      # which made the image check below fail until someone re-ran the job. Copy any
+      # missing public.ecr.aws image from icr.io first. crane copies registry to registry
+      # (no disk, keeps the digest and the multi-arch index, skips existing blobs) using
+      # the AWS role configured above and the icr.io login from the previous step.
+      - name: Install crane
+        uses: imjasonh/setup-crane@feee3b6bb0d4c68370f256a4502498c9227e5c6b # v0.7
+        with:
+          version: v0.22.1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+
+      - name: Mirror missing images to ECR Public
+        run: |
+          set -euo pipefail
+          aws ecr-public get-login-password --region us-east-1 \
+            | crane auth login public.ecr.aws --username AWS --password-stdin
+          .github/scripts/mirror-images-to-ecr.py full.yaml
 
       - name: Verify container images exist
         run: .github/scripts/check-images.sh full.yaml
