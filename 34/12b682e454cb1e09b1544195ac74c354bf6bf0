@@ -1,0 +1,18 @@
+.gitignore
+  h_cca6aa2712613d 16
+CHANGELOG.md
+  h_cca6aa2712613d 12
+kubecost/values.yaml
+  h_cca6aa2712613d 165-170,174-179
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3412b682e454cb1e09b1544195ac74c354bf6bf0",
+  "prompts": {},
+  "humans": {
+    "h_cca6aa2712613d": {
+      "author": "jesse goodier <31039225+jessegoodier@users.noreply.github.com>"
+    }
+  }
+}
