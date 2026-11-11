@@ -1,4 +1,4 @@
-{{- if (.Values.forecasting).enabled }}
+{{- if and (.Values.forecasting).enabled (ne (include "kubecost.forecasting.engine" .) "aggregator") }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
