@@ -1255,25 +1255,17 @@ aggregator:
   ## Storage classes that have 'volumeBindingMode: WaitForFirstConsumer' will do this automatically.
   ## Settings and reports created via the UI are stored in the persistentConfigs volume.
   persistentConfigsStorage:
-    ## Set to false to stop mounting the persistent-configs PVC. /var/configs then becomes an
-    ## emptyDir, and the aggregator database volume (aggregatorDbStorage) is unaffected. Only do
-    ## this once the aggregator keeps its configuration in its database: any file on the PV
-    ## that was not migrated is no longer visible to the aggregator.
+    ## NOT YET SUPPORTED in Kubecost 3.3. enabled and removeClaimTemplate are groundwork for a
+    ## future release; leave them at their defaults on 3.3 and earlier.
     ##
-    ## Stage 1 (plain helm upgrade): enabled=false. The persistent-configs volumeClaimTemplate
-    ## and its PVC stay, but nothing mounts them. The aggregator pod restarts once. To undo,
-    ## set enabled back to true (or helm rollback); the PVC still holds the old files.
-    ##
-    ## Stage 2 (optional, later): also set removeClaimTemplate=true to drop the claim template.
-    ## This only saves the unused PVC. A StatefulSet's volumeClaimTemplates are immutable, so an
-    ## existing release needs a manual step first: back up the StatefulSet, delete it without
-    ## deleting its pods, then run helm upgrade --atomic, which recreates it and adopts the pods.
-    ##   kubectl -n <namespace> get statefulset <release>-aggregator -o yaml > aggregator-sts.yaml
-    ##   kubectl -n <namespace> delete statefulset <release>-aggregator --cascade=orphan
-    ## The old PVC (persistent-configs-*) is kept afterwards and can be deleted once nothing needs it.
-    ## Fresh installs can set both values at once.
+    ## Set enabled to false to stop mounting the persistent-configs PVC (/var/configs becomes an
+    ## emptyDir). Files that were only on the PV are no longer visible to the aggregator.
+    ## removeClaimTemplate (only with enabled=false) also drops the claim template, which needs a
+    ## manual StatefulSet delete on existing releases.
+    ## Staged steps, rollback, and PVC cleanup:
+    ## https://github.com/kubecost/kubecost/blob/develop/docs/persistent-configs-storage.md
     enabled: true
-    ## Only takes effect when enabled=false. See stage 2 above.
+    ## Only takes effect when enabled=false.
     removeClaimTemplate: false
     storageClass: ""
     ## If using high iops storage, the storageRequest may need to be increased to meet the provider's minimum ratio for gb/iops.
