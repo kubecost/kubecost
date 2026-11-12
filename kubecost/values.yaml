@@ -1255,7 +1255,7 @@ aggregator:
   ## Storage classes that have 'volumeBindingMode: WaitForFirstConsumer' will do this automatically.
   ## Settings and reports created via the UI are stored in the persistentConfigs volume.
   persistentConfigsStorage:
-    ## NOT YET SUPPORTED in Kubecost 3.3. enabled and removeClaimTemplate are groundwork for a
+    ## Disabling persistence is NOT SUPPORTED in Kubecost GA versions. The settings for enabled and removeClaimTemplate are groundwork for a
     ## future release; leave them at their defaults on 3.3 and earlier.
     ##
     ## Set enabled to false to stop mounting the persistent-configs PVC (/var/configs becomes an
