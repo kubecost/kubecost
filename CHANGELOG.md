@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `aggregator.persistentConfigsStorage.enabled` (default `true`). Set it to `false` to stop mounting the `persistent-configs` PVC: `/var/configs` becomes an emptyDir (volume `configs-scratch`) and the ClickHouse volume is unchanged. The claim template and the existing PVC stay, so this is a plain `helm upgrade` that restarts the aggregator pod and can be reverted with `helm rollback`
+- `aggregator.persistentConfigsStorage.removeClaimTemplate` (default `false`). Together with `enabled: false`, drops the `persistent-configs` claim template from the aggregator StatefulSet. On an existing release this needs `kubectl delete statefulset --cascade=orphan` before `helm upgrade`, because volumeClaimTemplates are immutable
+- `NOTES.txt` prints next steps when `aggregator.persistentConfigsStorage.enabled` is `false`: what to check, how to roll back, and how to remove the claim template and the unused PVC
+
 ### Changed
 
 - SMTP configuration through `kubecostProductConfigs.smtp` is available in all editions. Kubecost's built-in email service stops working on 2026-11-30 (#4945)
