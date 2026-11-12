@@ -1,0 +1,26 @@
+kubecost/values.yaml
+  s_f25fb4a6b91932::t_4ba9f4058a5da4 1258-1259,1261-1266,1268
+kubecost/templates/NOTES.txt
+  s_f25fb4a6b91932::t_f732deeecee203 44-47,49-50,52-53,56-57
+docs/persistent-configs-storage.md
+  s_f25fb4a6b91932::t_74361fc23c1498 1-81,83-88
+  s_f25fb4a6b91932::t_4ba9f4058a5da4 82
+CHANGELOG.md
+  s_f25fb4a6b91932::t_651797589f7966 13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "176bf779d2de75ad5d16ab8931f1e79a26add97f",
+  "prompts": {},
+  "sessions": {
+    "s_f25fb4a6b91932": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a76fc12f-8ab6-4430-a31a-4d7204ae33e3",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "jesse goodier <31039225+jessegoodier@users.noreply.github.com>"
+    }
+  }
+}
