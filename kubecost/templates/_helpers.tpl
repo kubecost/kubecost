@@ -152,6 +152,52 @@ Aggregator storage exclusivity check: make sure useEmptyDir and useHostPath are 
 {{- end -}}
 
 {{/*
+Whether the Aggregator mounts the persistent-configs PersistentVolumeClaim at
+/var/configs. Renders "true" unless aggregator.persistentConfigsStorage.enabled
+is explicitly false. hasKey is needed because `default true false` returns true.
+*/}}
+{{- define "kubecost.aggregator.persistentConfigsPVC.enabled" -}}
+  {{- $storage := (.Values.aggregator).persistentConfigsStorage | default dict -}}
+  {{- if and (hasKey $storage "enabled") (not $storage.enabled) -}}
+false
+  {{- else -}}
+true
+  {{- end -}}
+{{- end -}}
+
+{{/*
+Whether the persistent-configs volumeClaimTemplate stays on the Aggregator
+StatefulSet. Renders "false" only when the PVC is not mounted
+(persistentConfigsStorage.enabled=false) and
+persistentConfigsStorage.removeClaimTemplate is true. Removing a claim template
+from an existing StatefulSet needs a manual orphan delete, so it is a separate,
+opt-in step.
+*/}}
+{{- define "kubecost.aggregator.persistentConfigsClaimTemplate.enabled" -}}
+  {{- $storage := (.Values.aggregator).persistentConfigsStorage | default dict -}}
+  {{- if and (eq (include "kubecost.aggregator.persistentConfigsPVC.enabled" .) "false") $storage.removeClaimTemplate -}}
+false
+  {{- else -}}
+true
+  {{- end -}}
+{{- end -}}
+
+{{/*
+Name of the volume mounted at /var/configs on the Aggregator. With the PVC
+disabled and a claim template still on the StatefulSet, the emptyDir must not be
+called "persistent-configs": the StatefulSet controller replaces a pod volume of
+that name with the claim. A distinct name keeps the claim template (and the old
+PVC) in place while /var/configs stops using it.
+*/}}
+{{- define "kubecost.aggregator.configsVolumeName" -}}
+  {{- if and (eq (include "kubecost.aggregator.persistentConfigsPVC.enabled" .) "false") (not .Values.aggregator.useEmptyDir) (not .Values.aggregator.useHostPath) -}}
+configs-scratch
+  {{- else -}}
+persistent-configs
+  {{- end -}}
+{{- end -}}
+
+{{/*
 Aggregator storage warning: warn if useEmptyDir or useHostPath is configured
 */}}
 {{- define "kubecost.aggregator.storageWarning" -}}

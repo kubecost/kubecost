@@ -45,6 +45,7 @@ spec:
       resources:
         requests:
           storage:  {{ .Values.aggregator.aggregatorDbStorage.storageRequest }}
+  {{- if eq (include "kubecost.aggregator.persistentConfigsClaimTemplate.enabled" .) "true" }}
   - apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
@@ -65,6 +66,7 @@ spec:
       resources:
         requests:
           storage: {{ .Values.aggregator.persistentConfigsStorage.storageRequest }}
+  {{- end }}
   {{- end }}
   template:
     metadata:
@@ -109,6 +111,12 @@ spec:
           emptyDir:
             sizeLimit: {{ .Values.aggregator.emptyDirDbStorageSizeLimit }}
         - name: persistent-configs
+          emptyDir:
+            sizeLimit: 1Gi
+        {{- else if ne (include "kubecost.aggregator.persistentConfigsPVC.enabled" .) "true" }}
+        # persistent-configs PVC not mounted: /var/configs is scratch space only.
+        # The aggregator database volume (aggregator-db-storage) stays a PVC.
+        - name: {{ include "kubecost.aggregator.configsVolumeName" . }}
           emptyDir:
             sizeLimit: 1Gi
         {{- end }}
@@ -346,7 +354,7 @@ spec:
           resources:
             {{- toYaml .Values.aggregator.resources | nindent 12 }}
           volumeMounts:
-            - name: persistent-configs
+            - name: {{ include "kubecost.aggregator.configsVolumeName" . }}
               mountPath: /var/configs
             - name: user-helm-values
               mountPath: /var/configs/values
