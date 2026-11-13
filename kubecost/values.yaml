@@ -1571,7 +1571,7 @@ clusterController:
   image:
     registry: ""  # Default is "icr.io"
     repository: kubecost/cluster-controller
-    tag: v0.16.42
+    tag: v0.16.43
   imagePullPolicy: IfNotPresent
   logLevel: info
   extraEnv: []
