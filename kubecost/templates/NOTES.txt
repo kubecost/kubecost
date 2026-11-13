@@ -41,49 +41,20 @@ will appear at the top of the UI.
 PERSISTENT CONFIGS VOLUME NOT MOUNTED
 -------------------------------------
 
-aggregator.persistentConfigsStorage.enabled is false, so the Aggregator no longer
-mounts the persistent-configs volume at /var/configs. That path is now an emptyDir
-and anything written there is lost when the pod restarts. The Aggregator keeps its
-configuration in its database (aggregator-db-storage), which is unaffected.
-
-Files that were only on the old volume are not read anymore. Before you rely on this:
-
-1. Check that the settings, reports and budgets you expect are present in the UI.
+aggregator.persistentConfigsStorage.enabled is false. /var/configs is now an emptyDir,
+so files written there are lost on pod restart and files that were only on the old
+persistent-configs volume are no longer read. The aggregator database is unaffected.
+Check that your settings, reports and budgets are still present in the UI.
 {{- if eq (include "kubecost.aggregator.persistentConfigsClaimTemplate.enabled" .) "true" }}
-   If not, run: helm rollback {{ .Release.Name }} --namespace {{ .Release.Namespace }}
-   The old files are still on the volume, so a rollback restores them.
+The old PVC persistent-configs-{{ include "kubecost.aggregator.fullname" . }}-<ordinal> is unused but kept, so
+"helm rollback {{ .Release.Name }} --namespace {{ .Release.Namespace }}" restores it.
 {{- else }}
-   If not, set aggregator.persistentConfigsStorage.enabled=true to mount the old volume again.
-   That needs the old PVC to still exist, and removing the claim template from an existing
-   release needs the StatefulSet delete described in values.yaml, so re-adding it does too.
+The persistent-configs claim template is removed. An old PVC persistent-configs-{{ include "kubecost.aggregator.fullname" . }}-<ordinal>
+may remain, unused.
 {{- end }}
-{{- if eq (include "kubecost.aggregator.persistentConfigsClaimTemplate.enabled" .) "true" }}
 
-The persistent-configs volumeClaimTemplate is still on the StatefulSet, so a PVC named
-persistent-configs-{{ include "kubecost.aggregator.fullname" . }}-<ordinal> remains in
-this namespace, unused and holding the old files. It costs {{ .Values.aggregator.persistentConfigsStorage.storageRequest }} of storage per replica.
-
-OPTIONAL CLEANUP, once the check above has passed and you no longer want to roll back:
-
-1. Back up the StatefulSet and delete it without deleting its pods. Kubernetes does not
-   allow volumeClaimTemplates to be edited, so this is required on an existing release:
-   kubectl --namespace {{ .Release.Namespace }} get statefulset {{ include "kubecost.aggregator.fullname" . }} -o yaml > aggregator-statefulset.yaml
-   kubectl --namespace {{ .Release.Namespace }} delete statefulset {{ include "kubecost.aggregator.fullname" . }} --cascade=orphan
-
-2. Upgrade with the claim template removed. --atomic rolls back if the upgrade fails:
-   helm upgrade {{ .Release.Name }} <chart> --namespace {{ .Release.Namespace }} --reuse-values \
-     --set aggregator.persistentConfigsStorage.removeClaimTemplate=true --atomic
-
-3. Delete the unused PVC. Do not delete aggregator-db-storage-*, which holds the database:
-   kubectl --namespace {{ .Release.Namespace }} delete pvc persistent-configs-{{ include "kubecost.aggregator.fullname" . }}-<ordinal>
-{{- else }}
-
-The persistent-configs volumeClaimTemplate has been removed from the StatefulSet. On an
-existing release a PVC named persistent-configs-{{ include "kubecost.aggregator.fullname" . }}-<ordinal> may
-still exist, unused. Delete it once you no longer need the old files. Do not delete
-aggregator-db-storage-*, which holds the database:
-   kubectl --namespace {{ .Release.Namespace }} delete pvc persistent-configs-{{ include "kubecost.aggregator.fullname" . }}-<ordinal>
-{{- end }}
+Rollback, removing the claim template, and deleting the unused PVC:
+https://github.com/kubecost/kubecost/blob/develop/docs/persistent-configs-storage.md
 {{- end }}
 
 TROUBLESHOOTING
