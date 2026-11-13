@@ -13,3 +13,9 @@ kubecost/charts/.helm_ls_cache
 .bobtmp/
 .helm-render/
 .agents/tasks/
+__pycache__/
+*.py[cod]
+.venv/
+.ruff_cache/
+.pytest_cache/
+.worktree/

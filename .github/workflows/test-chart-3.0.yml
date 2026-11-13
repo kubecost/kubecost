@@ -33,6 +33,9 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+          # Later steps run PR-controlled code, so don't leave a token in .git/config.
+          # The Chart.lock auto-fix below commits through the API with its own short-lived token.
+          persist-credentials: false
 
       # Install the latest Helm release ourselves rather than relying on the
       # runner image's preinstalled one, which changes without notice.
@@ -47,6 +50,59 @@ jobs:
           tar -xzf "/tmp/${HELM_TARBALL}" -C /tmp
           sudo install -m 0755 /tmp/linux-amd64/helm /usr/local/bin/helm
           helm version
+
+      # Dependabot and manual edits bump dependencies in Chart.yaml without touching
+      # Chart.lock, which makes `helm dependency build` fail. Re-resolve the lock and,
+      # if it changed, commit it to the PR branch. `generated:` is a timestamp that
+      # changes on every run, so it is ignored when deciding whether the lock drifted.
+      - name: Check Chart.lock is in sync with Chart.yaml
+        id: lock
+        run: |
+          set -euo pipefail
+          helm repo add finops-agent-chart https://kubecost.github.io/finops-agent-chart
+          helm repo add mcp-kubecost https://kubecost.github.io/mcp-kubecost
+          helm repo update
+          helm dependency update kubecost/
+          if diff <(git show HEAD:kubecost/Chart.lock | grep -v '^generated:') \
+                  <(grep -v '^generated:' kubecost/Chart.lock); then
+            git checkout -- kubecost/Chart.lock
+            echo "drift=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::kubecost/Chart.lock was out of sync with Chart.yaml"
+            echo "drift=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Only mint a write token when there is something to commit. A commit made with the
+      # default GITHUB_TOKEN would not trigger a new run, leaving the new head commit
+      # without checks, so this uses the GitHub App like the other workflows do.
+      - name: Generate app token
+        id: app-token
+        if: steps.lock.outputs.drift == 'true' && github.event_name == 'pull_request'
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.KC_ACTIONS_BOT_APP_CLIENT_ID }}
+          private-key: ${{ secrets.KC_ACTIONS_BOT_APP_PRIVATE_KEY }}
+          permission-contents: write
+
+      # Commit through the contents API instead of git push, so no token goes into a
+      # remote URL or git config, and GitHub signs the commit as the App. `sha` is the
+      # blob this run checked, so the API rejects the update (409) if the branch changed
+      # Chart.lock in the meantime. The new commit triggers a fresh run, which cancels
+      # this one through the concurrency group. The branch name is attacker-controlled,
+      # so it is passed through env rather than interpolated into the script.
+      - name: Commit Chart.lock (auto-fix-chart-lock)
+        if: steps.lock.outputs.drift == 'true' && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+          gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/kubecost/Chart.lock" \
+            -f message="auto-fix-chart-lock" \
+            -f branch="${HEAD_REF}" \
+            -f sha="$(git rev-parse HEAD:kubecost/Chart.lock)" \
+            -f content="$(base64 -w0 kubecost/Chart.lock)" \
+            --jq '.commit.html_url'
 
       - name: Set up chart-testing
         uses: helm/chart-testing-action@720270857a28afd41e2426521a7801db09e9b510 # v2.9.0
