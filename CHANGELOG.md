@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- The aggregator and cloud-cost `update-ca-trust` init containers now run `global.updateCaTrust.initImage` (default `registry.access.redhat.com/ubi9/ubi-minimal:latest`) instead of the cost-model image, which no longer ships `update-ca-trust`. Installs that mirror images must also set `global.updateCaTrust.initImage.registry`
 - The aggregator now mounts the SMTP secret when `kubecostProductConfigs.smtp.config` is set, so an inline SMTP config takes effect. Before, only `smtp.secretname` was mounted (#4945)
 - Bump network costs image to v0.19.4 to remove CVEs, no code changes (#4877)
 - Network costs `additionalSecurityContext` now overrides `securityContext` defaults instead of being ignored (#4825)

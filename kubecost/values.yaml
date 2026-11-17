@@ -162,21 +162,21 @@ global:
 
   ## Installs custom CA certificates onto Kubecost pods
   ##
-  ## Also applied to the finops-agent and mcp subcharts, which run initImage as their init container.
+  ## Also applied to the finops-agent and mcp subcharts. All of these pods run initImage as their init container.
   ## mcp ignores securityContext (it stays non-root, as OpenShift restricted-v2 requires).
-  ## The subcharts resolve the initImage registry differently:
-  ##   finops-agent: global.imageRegistry, falling back to initImage.registry
-  ##   mcp:          initImage.registry only (global.imageRegistry is not applied)
+  ## The initImage registry is resolved differently:
+  ##   finops-agent:                 global.imageRegistry, falling back to initImage.registry
+  ##   aggregator, cloud-cost, mcp:  initImage.registry only (global.imageRegistry is not applied)
   ## When mirroring images, set initImage.registry to the same value as global.imageRegistry.
   ##
   updateCaTrust:
     enabled: false
     ## Init container image. Needs a shell, p11-kit, and update-ca-trust (ubi9-minimal, not ubi9-micro).
-    # initImage:
-    #   registry: registry.access.redhat.com
-    #   repository: /ubi9/ubi-minimal
-    #   tag: latest
-    #   pullPolicy: IfNotPresent
+    initImage:
+      registry: registry.access.redhat.com
+      repository: ubi9/ubi-minimal
+      tag: latest
+      pullPolicy: IfNotPresent
     ## Security context settings for the init container.
     securityContext:
       runAsUser: 0
