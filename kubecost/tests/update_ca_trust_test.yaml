@@ -1,0 +1,47 @@
+# helm-unittest test suite for the update-ca-trust init containers.
+#
+# Run locally:
+#   helm plugin install https://github.com/helm-unittest/helm-unittest --version v1.2.0 --verify=false
+#   helm dependency build kubecost/
+#   helm unittest kubecost/
+suite: update-ca-trust init image
+
+release:
+  name: kubecost
+
+set:
+  global.updateCaTrust.enabled: true
+
+tests:
+  - it: "aggregator runs the UBI init image, not cost-model"
+    template: templates/aggregator/aggregator-statefulset.yaml
+    documentSelector:
+      path: kind
+      value: StatefulSet
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[?(@.name == "update-ca-trust")].image
+          value: registry.access.redhat.com/ubi9/ubi-minimal:latest
+
+  - it: "cloud-cost runs the UBI init image, not cost-model"
+    template: templates/cloud-cost/cloud-cost-deployment.yaml
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[?(@.name == "update-ca-trust")].image
+          value: registry.access.redhat.com/ubi9/ubi-minimal:latest
+
+  - it: "initImage overrides apply, e.g. for mirrored registries"
+    set:
+      global.updateCaTrust.initImage.registry: mirror.example.com
+      global.updateCaTrust.initImage.tag: "9.6"
+    template: templates/aggregator/aggregator-statefulset.yaml
+    documentSelector:
+      path: kind
+      value: StatefulSet
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[?(@.name == "update-ca-trust")].image
+          value: mirror.example.com/ubi9/ubi-minimal:9.6
