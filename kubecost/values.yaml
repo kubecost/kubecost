@@ -162,7 +162,7 @@ global:
 
   ## Installs custom CA certificates onto Kubecost pods
   ##
-  ## Also applied to the finops-agent and mcp subcharts. All of these pods run initImage as their init container.
+  ## Also applied to the finops-agent and mcp subcharts, which run initImage as their init container.
   ## mcp ignores securityContext (it stays non-root, as OpenShift restricted-v2 requires).
   ## The initImage registry is resolved differently:
   ##   finops-agent:                 global.imageRegistry, falling back to initImage.registry
