@@ -147,11 +147,9 @@ spec:
       {{- end }}
       {{- if .Values.global.updateCaTrust.enabled }}
       - name: update-ca-trust
-        image: {{ include "kubecost.cloudCost.image" . }}
-        {{- if .Values.cloudCost.imagePullPolicy }}
-        imagePullPolicy: {{ .Values.cloudCost.imagePullPolicy }}
-        {{- else }}
-        imagePullPolicy: Always
+        {{- with .Values.global.updateCaTrust.initImage }}
+        image: "{{ .registry }}/{{ .repository }}:{{ .tag }}"
+        imagePullPolicy: {{ .pullPolicy }}
         {{- end }}
         {{- with .Values.global.updateCaTrust.securityContext }}
         securityContext: {{- toYaml . | nindent 12 }}

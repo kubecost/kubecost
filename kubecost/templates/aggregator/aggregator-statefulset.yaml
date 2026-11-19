@@ -290,11 +290,9 @@ spec:
       initContainers:
       {{- if .Values.global.updateCaTrust.enabled }}
         - name: update-ca-trust
-          image: {{ include "kubecost.aggregator.image" . }}
-          {{- if .Values.aggregator.imagePullPolicy }}
-          imagePullPolicy: {{ .Values.aggregator.imagePullPolicy }}
-          {{- else }}
-          imagePullPolicy: Always
+          {{- with .Values.global.updateCaTrust.initImage }}
+          image: "{{ .registry }}/{{ .repository }}:{{ .tag }}"
+          imagePullPolicy: {{ .pullPolicy }}
           {{- end }}
           {{- with .Values.global.updateCaTrust.securityContext }}
           securityContext: {{- toYaml . | nindent 12 }}
