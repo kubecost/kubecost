@@ -6,6 +6,18 @@
 {{- end -}}
 {{- end -}}
 
+{{- /* kubecost.forecasting.engine validates .Values.forecasting.engine (python, shadow, aggregator); default python. */ -}}
+{{- define "kubecost.forecasting.engine" -}}
+{{- $engine := default "python" (.Values.forecasting).engine -}}
+{{- if not (has $engine (list "python" "shadow" "aggregator")) -}}
+{{- fail (printf "forecasting.engine must be python, shadow or aggregator, got %q" $engine) -}}
+{{- end -}}
+{{- if and (ne $engine "python") (not (.Values.aggregator).enabled) -}}
+{{- fail (printf "forecasting.engine=%s requires aggregator.enabled=true" $engine) -}}
+{{- end -}}
+{{- $engine -}}
+{{- end -}}
+
 {{- define "forecasting.imageRegistry" -}}
   {{- if .Values.forecasting.image.registry -}}
     {{- .Values.forecasting.image.registry -}}
