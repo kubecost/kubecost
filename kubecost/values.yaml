@@ -572,7 +572,7 @@ localStore:
   ## kept on the local store pv.
   retention10m: 36
   retention1h: 49
-  retention1d: 15
+  retention1d: 91
 
   resources: {}
   # requests:
